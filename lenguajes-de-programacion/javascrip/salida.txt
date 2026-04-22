@@ -1,4 +1,4 @@
-===== INICIO: ./1-basics/renderizado-condicional.md =====
+===== INICIO: ./react/1-basics/renderizado-condicional.md =====
 
 # renderizado-condicional
 
@@ -89,9 +89,9 @@ function Estado({ status }) {
 // Solución: {contador !== 0 && ...}
 ```
 
-===== FIN: ./1-basics/renderizado-condicional.md =====
+===== FIN: ./react/1-basics/renderizado-condicional.md =====
 
-===== INICIO: ./1-basics/props.md =====
+===== INICIO: ./react/1-basics/props.md =====
 # props.md
 
 ## Concepto
@@ -170,9 +170,9 @@ Patrón de render props
 Pasar una función como prop que devuelve JSX (tema más avanzado, pero mencionar aquí como derivación).
 [back](../index.md)
 
-===== FIN: ./1-basics/props.md =====
+===== FIN: ./react/1-basics/props.md =====
 
-===== INICIO: ./1-basics/listas-keys.md =====
+===== INICIO: ./react/1-basics/listas-keys.md =====
 # listas-keys.md
 
 Renderizado de listas con map()
@@ -243,9 +243,9 @@ Uso de filter antes de map
 
 [back](../index.md)
 
-===== FIN: ./1-basics/listas-keys.md =====
+===== FIN: ./react/1-basics/listas-keys.md =====
 
-===== INICIO: ./1-basics/jsx.md =====
+===== INICIO: ./react/1-basics/jsx.md =====
 # ¿Qué es JSX?
 
 JSX (JavaScript XML) es una extensión de sintaxis que permite escribir estructuras similares a HTML dentro de código JavaScript. No es obligatorio en React, pero es la forma recomendada por su legibilidad y potencia.
@@ -306,9 +306,9 @@ Buenas prácticas
 - Prefiere fragmentos en lugar de div innecesarios.
 [back](../index.md)
 
-===== FIN: ./1-basics/jsx.md =====
+===== FIN: ./react/1-basics/jsx.md =====
 
-===== INICIO: ./1-basics/estado-useState.md =====
+===== INICIO: ./react/1-basics/estado-useState.md =====
 # Estado-useState.md
 
 Estado local
@@ -387,9 +387,9 @@ const conIva = precio * 1.21;
 ```
 [back](../index.md)
 
-===== FIN: ./1-basics/estado-useState.md =====
+===== FIN: ./react/1-basics/estado-useState.md =====
 
-===== INICIO: ./1-basics/estilos/styled-components.md =====
+===== INICIO: ./react/1-basics/estilos/styled-components.md =====
 # estilos/styled-components.md
 
 Styled-components (CSS-in-JS)
@@ -489,9 +489,9 @@ const Boton = styled.button`
 
 [back](../index.md)
 
-===== FIN: ./1-basics/estilos/styled-components.md =====
+===== FIN: ./react/1-basics/estilos/styled-components.md =====
 
-===== INICIO: ./1-basics/estilos/css-modules.md =====
+===== INICIO: ./react/1-basics/estilos/css-modules.md =====
 # estilos/css-modules.md
 
 ## CSS Modules
@@ -555,9 +555,9 @@ Alternativa: SCSS Modules
 Usa Boton.module.scss y tendrás anidación, variables, etc.
 [back](../index.md)
 
-===== FIN: ./1-basics/estilos/css-modules.md =====
+===== FIN: ./react/1-basics/estilos/css-modules.md =====
 
-===== INICIO: ./1-basics/estilos/tailwind.md =====
+===== INICIO: ./react/1-basics/estilos/tailwind.md =====
 # estilos/tailwind.md
 
 ## Tailwind CSS
@@ -656,9 +656,9 @@ En tailwind.config.js puedes extender colores, fuentes, breakpoints, etc.
 
 - Documenta decisiones en tus archivos markdown para futuras consultas.
 
-===== FIN: ./1-basics/estilos/tailwind.md =====
+===== FIN: ./react/1-basics/estilos/tailwind.md =====
 
-===== INICIO: ./1-basics/eventos.md =====
+===== INICIO: ./react/1-basics/eventos.md =====
 
 # eventos.md
 
@@ -726,9 +726,9 @@ Buenas prácticas
 - Extraer manejadores fuera del JSX para claridad.
 [back](../index.md)
 
-===== FIN: ./1-basics/eventos.md =====
+===== FIN: ./react/1-basics/eventos.md =====
 
-===== INICIO: ./1-basics/componentes.md =====
+===== INICIO: ./react/1-basics/componentes.md =====
 # componentes.md
 
 ## Definición
@@ -792,9 +792,9 @@ function Contenedor({ children }) {
 Cuando una parte de la UI se repite o es compleja, conviene extraerla en un componente independiente.
 [back](../index.md)
 
-===== FIN: ./1-basics/componentes.md =====
+===== FIN: ./react/1-basics/componentes.md =====
 
-===== INICIO: ./8-advanced/suspense.md =====
+===== INICIO: ./react/8-advanced/suspense.md =====
 
 📄 8-advanced/suspense.md
 Concepto
@@ -927,9 +927,9 @@ Limitaciones actuales
 - El use hook sigue experimental en React 18 (estable en React 19).
 
 - No funciona con efectos secundarios (useEffect) para cargar datos.
-===== FIN: ./8-advanced/suspense.md =====
+===== FIN: ./react/8-advanced/suspense.md =====
 
-===== INICIO: ./8-advanced/server-components.md =====
+===== INICIO: ./react/8-advanced/server-components.md =====
 # server-components.md
 
 Concepto
@@ -1064,9 +1064,9 @@ Buenas prácticas
 
 - Usa "use client" solo en hojas (componentes que necesitan estado/eventos).
 
-===== FIN: ./8-advanced/server-components.md =====
+===== FIN: ./react/8-advanced/server-components.md =====
 
-===== INICIO: ./8-advanced/forwardRef.md =====
+===== INICIO: ./react/8-advanced/forwardRef.md =====
 
 
 📄 8-advanced/forwardRef.md
@@ -1189,9 +1189,254 @@ Alternativas
 
     Contexto: para casos donde múltiples elementos necesitan acceso, pero es más pesado.
 
-===== FIN: ./8-advanced/forwardRef.md =====
+===== FIN: ./react/8-advanced/forwardRef.md =====
 
-===== INICIO: ./8-advanced/portals.md =====
+===== INICIO: ./react/8-advanced/error-boundaries.md =====
+# Error Boundaries
+
+## Concepto
+
+Un **Error Boundary** es un componente de React que **captura errores de JavaScript** en cualquier lugar de su árbol de componentes hijo, los registra y muestra una interfaz de fallback en lugar de que el componente se desmonte o la aplicación se rompa por completo.
+
+**Nota importante**: Los Error Boundaries solo capturan errores durante el **renderizado**, en métodos de ciclo de vida y en constructores. No capturan errores en:
+
+- Manejadores de eventos (`onClick`, `onChange`, etc.)
+- Código asíncrono (`setTimeout`, `requestAnimationFrame`)
+- Renderizado en el servidor
+- Errores lanzados dentro del propio Error Boundary
+
+## ¿Por qué son necesarios?
+
+Antes de React 16, un error en un componente causaba que toda la aplicación se desmontara, mostrando una pantalla en blanco. Los Error Boundaries permiten aislar el error y mostrar una UI alternativa, manteniendo el resto de la aplicación funcionando.
+
+## Creación de un Error Boundary
+
+Debe ser un **componente de clase** (no existe hook equivalente aún). Implementa `static getDerivedStateFromError()` y/o `componentDidCatch()`.
+
+```jsx
+import React from 'react';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    // Actualiza el estado para mostrar el fallback en el siguiente render
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // Puedes enviar el error a un servicio de reporte (ej. Sentry, LogRocket)
+    console.error('Error capturado:', error, errorInfo);
+    // Ejemplo: logErrorToService(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Puedes renderizar cualquier UI de fallback
+      return <h1>Algo salió mal.</h1>;
+    }
+    return this.props.children;
+  }
+}
+```
+
+Uso básico
+
+```jsx
+<ErrorBoundary>
+  <MiComponentePeligroso />
+</ErrorBoundary>
+```
+
+Personalización del fallback
+
+Puedes pasar un fallback personalizado mediante props:
+
+```jsx
+```
+
+class ErrorBoundary extends React.Component {
+  // ... mismo estado y métodos
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || <h1>Error inesperado</h1>;
+    }
+    return this.props.children;
+  }
+}
+
+// Uso
+<ErrorBoundary fallback={<div>Error en el perfil</div>}>
+  <PerfilUsuario />
+</ErrorBoundary>
+
+Múltiples Error Boundaries
+
+Puedes anidarlos para aislar errores en diferentes partes de la UI.
+jsx
+
+<ErrorBoundary fallback={<ErrorWidget />}>
+  <Sidebar />
+  <ErrorBoundary fallback={<ErrorContenido />}>
+    <ContenidoPrincipal />
+  </ErrorBoundary>
+</ErrorBoundary>
+
+Manejo de errores en eventos
+
+Los Error Boundaries no capturan errores en manejadores de eventos. Para esos casos, usa try/catch:
+
+```jsx
+function BotonPeligroso() {
+  const [error, setError] = useState(null);
+
+  const handleClick = () => {
+    try {
+      puedeLanzarError();
+    } catch (e) {
+      setError(e);
+    }
+  };
+
+  if (error) return <div>Error: {error.message}</div>;
+  return <button onClick={handleClick}>Click</button>;
+}
+```
+
+Recuperación después de un error
+
+Puedes añadir un botón para reiniciar el estado del Error Boundary y reintentar:
+
+```jsx
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  resetError = () => {
+    this.setState({ hasError: false });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div>
+          <p>Algo falló.</p>
+          <button onClick={this.resetError}>Reintentar</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+```
+
+Integración con react-router
+
+Envuelve rutas completas para que una página con error no rompa toda la app.
+
+```jsx
+<ErrorBoundary>
+  <Routes>
+    <Route path="/" element={<Home />} />
+    <Route path="/productos" element={<Productos />} />
+  </Routes>
+</ErrorBoundary>
+```
+
+Limitaciones conocidas
+
+- Solo funciona en componentes de clase. No hay useErrorBoundary hook oficial (aunque librerías como react-error-boundary ofrecen una API funcional).
+
+- No captura errores en componentes asíncronos (lazy, suspense) – esos requieren manejo aparte.
+
+- No captura errores en SSR.
+
+Librería recomendada: react-error-boundary
+
+Ofrece una API más amigable con hooks y utilidades adicionales.
+bash
+
+npm install react-error-boundary
+
+```jsx
+import { ErrorBoundary } from 'react-error-boundary';
+
+function Fallback({ error, resetErrorBoundary }) {
+  return (
+    <div role="alert">
+      <p>Algo salió mal:</p>
+      <pre>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Reintentar</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary
+      FallbackComponent={Fallback}
+      onReset={() => {
+        // reiniciar estado de la aplicación
+      }}
+    >
+      <MiApp />
+    </ErrorBoundary>
+  );
+}
+```
+
+También ofrece hook useErrorHandler para manejar errores en eventos.
+Buenas prácticas
+
+- Coloca Error Boundaries estratégicamente: no uno gigante que oculte toda la UI, ni demasiados pequeños que compliquen.
+
+- Proporciona fallbacks útiles que permitan al usuario recuperarse (recargar, volver atrás, reportar error).
+
+- Registra los errores en un servicio de monitoreo (Sentry, LogRocket, etc.) dentro de componentDidCatch.
+
+- No uses Error Boundaries para control de flujo (ej. validación de formularios) – para eso usa estado local.
+
+Ejemplo completo con reporte a Sentry
+
+```jsx
+import * as Sentry from '@sentry/react';
+
+class SentryErrorBoundary extends React.Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    Sentry.captureException(error, { extra: errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div>Error reportado a nuestro equipo.</div>;
+    }
+    return this.props.children;
+  }
+}
+```
+
+Conclusión
+
+Los Error Boundaries son esenciales para aplicaciones React robustas. Permiten aislar fallos y mantener la experiencia de usuario. Aunque requieren componentes de clase, librerías como react-error-boundary simplifican su uso en aplicaciones funcionales.
+
+===== FIN: ./react/8-advanced/error-boundaries.md =====
+
+===== INICIO: ./react/8-advanced/portals.md =====
 
 
 📄 8-advanced/portals.md
@@ -1298,9 +1543,9 @@ jsx
 
 if (typeof window === 'undefined') return null;
 return createPortal(..., document.getElementById('modal-root'));
-===== FIN: ./8-advanced/portals.md =====
+===== FIN: ./react/8-advanced/portals.md =====
 
-===== INICIO: ./8-advanced/concurrent-mode.md =====
+===== INICIO: ./react/8-advanced/concurrent-mode.md =====
 
 📄 8-advanced/concurrent-mode.md
 Concepto
@@ -1391,9 +1636,9 @@ Buenas prácticas
 
     Prepara tu código para que sea "interrumpible": evita efectos secundarios en el render (solo los reducers puros).
 
-===== FIN: ./8-advanced/concurrent-mode.md =====
+===== FIN: ./react/8-advanced/concurrent-mode.md =====
 
-===== INICIO: ./4-patterns/controlled-vs-uncontrolled.md =====
+===== INICIO: ./react/4-patterns/controlled-vs-uncontrolled.md =====
 
 # controlled-vs-uncontrolled.md
 
@@ -1507,9 +1752,9 @@ Buenas prácticas
 
 - No mezcles ambos en el mismo campo (o será de solo lectura).
 
-===== FIN: ./4-patterns/controlled-vs-uncontrolled.md =====
+===== FIN: ./react/4-patterns/controlled-vs-uncontrolled.md =====
 
-===== INICIO: ./4-patterns/atomic-design.md =====
+===== INICIO: ./react/4-patterns/atomic-design.md =====
 atomic-design.md
 
 Atomic Design es una metodología para diseñar sistemas de componentes, propuesta por Brad Frost. No es exclusiva de React, pero se lleva muy bien con componentes funcionales.
@@ -1657,9 +1902,9 @@ Alternativas similares
 - Domain-driven design (componentes por dominio funcional).
 
 
-===== FIN: ./4-patterns/atomic-design.md =====
+===== FIN: ./react/4-patterns/atomic-design.md =====
 
-===== INICIO: ./4-patterns/composicion.md =====
+===== INICIO: ./react/4-patterns/composicion.md =====
 # composicion.md
 
 La composición en React es el principio de construir componentes complejos a partir de componentes más pequeños y reutilizables, combinándolos como piezas de Lego. React favorece la composición sobre la herencia.
@@ -1785,9 +2030,9 @@ Buenas prácticas
 
 - Extrae lógica repetida en custom hooks, no en componentes heredados.
 
-===== FIN: ./4-patterns/composicion.md =====
+===== FIN: ./react/4-patterns/composicion.md =====
 
-===== INICIO: ./4-patterns/render-props.md =====
+===== INICIO: ./react/4-patterns/render-props.md =====
 # render-props.md
 
 Render Props es un patrón donde un componente recibe una función como prop (generalmente llamada render o children) que retorna JSX. El componente llama a esa función con sus propios datos internos, permitiendo al padre definir cómo renderizar.
@@ -1906,9 +2151,9 @@ Buenas prácticas
 
 - Combínalo con React.memo para evitar renders innecesarios.
 
-===== FIN: ./4-patterns/render-props.md =====
+===== FIN: ./react/4-patterns/render-props.md =====
 
-===== INICIO: ./4-patterns/higher-order-components.md =====
+===== INICIO: ./react/4-patterns/higher-order-components.md =====
 # higher-order-components.md
 
 Un Higher-Order Component (HOC) es una función que recibe un componente y devuelve un nuevo componente mejorado. Es un patrón para reutilizar lógica entre componentes, común antes de los hooks.
@@ -2039,9 +2284,9 @@ HOCs vs Hooks
 
 En proyectos nuevos, los custom hooks son la opción preferida.
 
-===== FIN: ./4-patterns/higher-order-components.md =====
+===== FIN: ./react/4-patterns/higher-order-components.md =====
 
-===== INICIO: ./3-state-management/react-query.md =====
+===== INICIO: ./react/3-state-management/react-query.md =====
 
 react-query.md
 
@@ -2171,9 +2416,9 @@ React Query vs Redux (para datos de API)
 No compiten; se complementan. React Query maneja el servidor-estado; Redux maneja el cliente-estado. Puedes usar ambos.
 
 
-===== FIN: ./3-state-management/react-query.md =====
+===== FIN: ./react/3-state-management/react-query.md =====
 
-===== INICIO: ./3-state-management/context-api.md =====
+===== INICIO: ./react/3-state-management/context-api.md =====
 # context-api.md
 
 Context API es una característica nativa de React que permite compartir datos globalmente sin tener que pasar props manualmente en cada nivel.
@@ -2271,9 +2516,9 @@ Limitaciones
 
 - El provider debe envolver todo el árbol que necesite acceso.
 
-===== FIN: ./3-state-management/context-api.md =====
+===== FIN: ./react/3-state-management/context-api.md =====
 
-===== INICIO: ./3-state-management/zustand.md =====
+===== INICIO: ./react/3-state-management/zustand.md =====
 # zustand.md
 
 Zustand es una librería de estado global minimalista para React. Su API es muy simple, sin boilerplate, basada en hooks y sin necesidad de Provider (aunque opcional).
@@ -2389,9 +2634,9 @@ Cuándo usar Zustand
 
 - Prefieres una API de hooks simple.
 
-===== FIN: ./3-state-management/zustand.md =====
+===== FIN: ./react/3-state-management/zustand.md =====
 
-===== INICIO: ./3-state-management/redux.md =====
+===== INICIO: ./react/3-state-management/redux.md =====
 # redux.md
 
 Redux es una librería de gestión de estado global predecible basada en el patrón Flux. Se usa frecuentemente con React a través de react-redux.
@@ -2538,9 +2783,9 @@ Alternativas modernas más ligeras
 
 - Zustand (siguiente archivo), Jotai, Recoil.
 
-===== FIN: ./3-state-management/redux.md =====
+===== FIN: ./react/3-state-management/redux.md =====
 
-===== INICIO: ./3-state-management/props-drilling.md =====
+===== INICIO: ./react/3-state-management/props-drilling.md =====
 # props-drilling.md
 
 Props drilling (o "perforación de props") es la situación en la que datos deben pasar a través de múltiples niveles de componentes intermedios que no necesitan esos datos, solo para llegar a un componente profundo que sí los necesita.
@@ -2622,9 +2867,9 @@ Buenas prácticas
 
 - Extrae componentes: si un componente intermedio solo pasa props, quizás puede ser eliminado o fusionado.
 
-===== FIN: ./3-state-management/props-drilling.md =====
+===== FIN: ./react/3-state-management/props-drilling.md =====
 
-===== INICIO: ./7-testing/testing-library.md =====
+===== INICIO: ./react/7-testing/testing-library.md =====
 
 📄 7-testing/testing-library.md
 Concepto
@@ -2822,9 +3067,9 @@ test('muestra el mensaje al encender y lo oculta al apagar', async () => {
 });
 
 Con esto, las carpetas 6-routing/ y 7-testing/ quedan completamente desarrolladas. ¿Necesitas que continúe con las siguientes secciones (8-advanced/, 9-react-18-plus/, etc.)?
-===== FIN: ./7-testing/testing-library.md =====
+===== FIN: ./react/7-testing/testing-library.md =====
 
-===== INICIO: ./7-testing/jest.md =====
+===== INICIO: ./react/7-testing/jest.md =====
 testing/jest.md
 
 
@@ -2932,9 +3177,9 @@ Buenas prácticas
 
 - No abuses de snapshots (se rompen fácilmente).
 
-===== FIN: ./7-testing/jest.md =====
+===== FIN: ./react/7-testing/jest.md =====
 
-===== INICIO: ./9-react-18-plus/transitions.md =====
+===== INICIO: ./react/9-react-18-plus/transitions.md =====
 
 
 📄 9-react-18-plus/transitions.md
@@ -3035,9 +3280,9 @@ Buenas prácticas
 
 - Muestra isPending para dar feedback al usuario (spinner, skeleton).
 
-===== FIN: ./9-react-18-plus/transitions.md =====
+===== FIN: ./react/9-react-18-plus/transitions.md =====
 
-===== INICIO: ./9-react-18-plus/automatic-batching.md =====
+===== INICIO: ./react/9-react-18-plus/automatic-batching.md =====
 
 📄 9-react-18-plus/automatic-batching.md
 Concepto
@@ -3104,9 +3349,9 @@ Buenas prácticas
 
 - Recuerda que el batching solo funciona si las actualizaciones están dentro del mismo event loop tick.
 
-===== FIN: ./9-react-18-plus/automatic-batching.md =====
+===== FIN: ./react/9-react-18-plus/automatic-batching.md =====
 
-===== INICIO: ./9-react-18-plus/new-hooks.md =====
+===== INICIO: ./react/9-react-18-plus/new-hooks.md =====
 
 📄 9-react-18-plus/new-hooks.md
 useId
@@ -3237,9 +3482,9 @@ function App() {
 }
 ```
 
-===== FIN: ./9-react-18-plus/new-hooks.md =====
+===== FIN: ./react/9-react-18-plus/new-hooks.md =====
 
-===== INICIO: ./2-hooks/custom-hooks.md =====
+===== INICIO: ./react/2-hooks/custom-hooks.md =====
 # custom-hooks.md
 
 Un custom hook es una función JavaScript cuyo nombre comienza con use y que puede llamar a otros hooks. Permite reutilizar lógica con estado entre componentes.
@@ -3361,9 +3606,9 @@ Custom hooks vs componentes
 
 - Si necesitas reutilizar UI + lógica, crea un componente. Si solo lógica, custom hook.
 
-===== FIN: ./2-hooks/custom-hooks.md =====
+===== FIN: ./react/2-hooks/custom-hooks.md =====
 
-===== INICIO: ./2-hooks/useState.md =====
+===== INICIO: ./react/2-hooks/useState.md =====
 # useState.md
 
 - Nota: Aunque useState ya se introdujo en 1-basics/estado-useState.md, aquí se profundiza en aspectos más avanzados y patrones.
@@ -3466,9 +3711,9 @@ Buenas prácticas
 
 - Extrae lógica de actualización compleja a funciones aparte o custom hooks.
 
-===== FIN: ./2-hooks/useState.md =====
+===== FIN: ./react/2-hooks/useState.md =====
 
-===== INICIO: ./2-hooks/useRef.md =====
+===== INICIO: ./react/2-hooks/useRef.md =====
 
 #useRef.md
 
@@ -3569,9 +3814,9 @@ Advertencias
 
 - Mutar .current no es reactivo; si necesitas que algo cambie en la UI, usa estado.
 
-===== FIN: ./2-hooks/useRef.md =====
+===== FIN: ./react/2-hooks/useRef.md =====
 
-===== INICIO: ./2-hooks/useEffect.md =====
+===== INICIO: ./react/2-hooks/useEffect.md =====
 useEffect.md
 
 Concepto
@@ -3696,9 +3941,9 @@ Buenas prácticas
 
 - Para fetching, considera librerías como React Query que abstraen efectos.
 
-===== FIN: ./2-hooks/useEffect.md =====
+===== FIN: ./react/2-hooks/useEffect.md =====
 
-===== INICIO: ./2-hooks/otros-hooks.md =====
+===== INICIO: ./react/2-hooks/otros-hooks.md =====
 # otros-hooks.md
 
 ## useId
@@ -3806,9 +4051,9 @@ const state = useSyncExternalStore(store.subscribe, store.getState);
 
 Similar a useTransition pero para valores: recibe un valor y devuelve una versión "desfasada" que se actualiza en segundo plano.
 
-===== FIN: ./2-hooks/otros-hooks.md =====
+===== FIN: ./react/2-hooks/otros-hooks.md =====
 
-===== INICIO: ./2-hooks/useContext.md =====
+===== INICIO: ./react/2-hooks/useContext.md =====
 # useContext.md
 
 ## Concepto
@@ -3916,13 +4161,112 @@ export function useAuth() {
   if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider');
   return context;
 
-===== FIN: ./2-hooks/useContext.md =====
+===== FIN: ./react/2-hooks/useContext.md =====
 
-===== INICIO: ./2-hooks/useMemo-useCallback.md =====
+===== INICIO: ./react/2-hooks/useMemo-useCallback.md =====
+useMemo-useCallback.md
+Concepto
 
-===== FIN: ./2-hooks/useMemo-useCallback.md =====
+Ambos hooks memorizan valores/funciones para evitar recrearlos en cada render, optimizando el rendimiento.
+useMemo – Memoriza valores
 
-===== INICIO: ./2-hooks/useReducer.md =====
+```jsx
+const valorMemoizado = useMemo(() => computoCostoso(a, b), [a, b]);
+```
+
+- Devuelve el resultado de la función.
+
+- Solo se recalcula cuando cambian las dependencias.
+
+Ejemplo práctico
+
+```jsx
+function Lista({ items, filtro }) {
+  const itemsFiltrados = useMemo(() => {
+    return items.filter(item => item.includes(filtro));
+  }, [items, filtro]);
+  
+  return <ul>{itemsFiltrados.map(...)}</ul>;
+}
+```
+
+useCallback – Memoriza funciones
+
+```jsx
+const funcionMemoizada = useCallback(() => {
+  hacerAlgo(a, b);
+}, [a, b]);
+```
+
+- Devuelve la misma referencia de función entre renders si las dependencias no cambian.
+
+- Evita que componentes hijos (optimizados con React.memo) se re-rendericen innecesariamente.
+
+Ejemplo
+
+```jsx
+const handleClick = useCallback(() => {
+  console.log(count);
+}, [count]);
+
+<BotonMemo onClick={handleClick} />
+```
+
+Diferencia clave
+
+|Hook|Qué memoriza|Uso típico|
+|-|-|-|
+|useMemo|Valor calculado|Operaciones costosas, objetos/arrays derivados|
+|useCallback|Función Pasar callbacks a hijos memoizados|
+
+¿CuándoNO usarlos?
+
+- No los uses en todos lados (la optimización prematura es mala).
+
+- Si el cálculo es barato (sumas, concatenaciones), no vale la pena.
+
+- Si el componente no tiene problemas de rendimiento, evita complejidad.
+
+Trampa común
+
+```jsx
+// ❌ Mal: useCallback para una función que se pasa a un div nativo (no memoizado)
+const handleClick = useCallback(() => {}, []);
+<div onClick={handleClick} />
+
+// ✅ Bien: solo cuando el hijo está envuelto en React.memo
+const HijoMemo = React.memo(({ onClick }) => ...);
+```
+
+useMemo para objetos que son dependencia de otros hooks
+
+```jsx
+const opciones = useMemo(() => ({ pageSize, sortBy }), [pageSize, sortBy]);
+useEffect(() => {
+  fetchData(opciones);
+}, [opciones]); // ahora la referencia es estable
+```
+
+Reglas de dependencias
+
+Al igual que useEffect, las dependencias deben incluir todos los valores reactivos usados dentro.
+Diferencia con React.memo
+
+- React.memo evita re-render del componente si sus props no cambiaron (comparación superficial).
+
+- useCallback y useMemo evitan que las props (funciones/objetos) cambien innecesariamente.
+
+Buenas prácticas
+
+- Medir primero (React DevTools Profiler) antes de optimizar.
+
+- Preferir useCallback/useMemo solo en hot paths (listas grandes, animaciones).
+
+- Para funciones que no dependen de estado/props, definirlas fuera del componente (mejor aún).
+
+===== FIN: ./react/2-hooks/useMemo-useCallback.md =====
+
+===== INICIO: ./react/2-hooks/useReducer.md =====
 # useReducer.md
 
 Concepto
@@ -4037,9 +4381,9 @@ Comparación de rendimiento
 
 useReducer evita pasar callbacks por muchos niveles (en lugar de setState puedes pasar dispatch). Es más eficiente para actualizaciones profundas.
 
-===== FIN: ./2-hooks/useReducer.md =====
+===== FIN: ./react/2-hooks/useReducer.md =====
 
-===== INICIO: ./5-performance/optimization-tips.md =====
+===== INICIO: ./react/5-performance/optimization-tips.md =====
 optimization-tips.md
 
 Este archivo compila técnicas prácticas de optimización de rendimiento en React.
@@ -4225,9 +4569,9 @@ Principio fundamental
 
 Optimiza solo cuando tengas un problema medible. La legibilidad y mantenibilidad del código son más importantes que micro-optimizaciones sin impacto real.
 
-===== FIN: ./5-performance/optimization-tips.md =====
+===== FIN: ./react/5-performance/optimization-tips.md =====
 
-===== INICIO: ./5-performance/code-splitting-lazy.md =====
+===== INICIO: ./react/5-performance/code-splitting-lazy.md =====
 code-splitting-lazy.md
 
 Concepto
@@ -4352,9 +4696,9 @@ Limitaciones
 
 - Solo funciona con exports por defecto (export default).
 
-===== FIN: ./5-performance/code-splitting-lazy.md =====
+===== FIN: ./react/5-performance/code-splitting-lazy.md =====
 
-===== INICIO: ./5-performance/react-memo.md =====
+===== INICIO: ./react/5-performance/react-memo.md =====
 # react-memo.md
 
 React.memo es una función de orden superior (HOC) que evita que un componente funcional se re-renderice si sus props no han cambiado (comparación superficial por defecto).
@@ -4462,9 +4806,9 @@ Buenas prácticas
 
 - Prefiere la composición para evitar pasar props innecesarias.
 
-===== FIN: ./5-performance/react-memo.md =====
+===== FIN: ./react/5-performance/react-memo.md =====
 
-===== INICIO: ./5-performance/virtual-dom.md =====
+===== INICIO: ./react/5-performance/virtual-dom.md =====
 
 📄 virtual-dom.md
 
@@ -4538,9 +4882,9 @@ Buenas prácticas
 
 - Usa key correctamente para ayudar al algoritmo de diffing.
 
-===== FIN: ./5-performance/virtual-dom.md =====
+===== FIN: ./react/5-performance/virtual-dom.md =====
 
-===== INICIO: ./5-performance/reconciliation.md =====
+===== INICIO: ./react/5-performance/reconciliation.md =====
 
 # reconciliation.md
 
@@ -4648,9 +4992,9 @@ Depuración de reconciliación
 
 - why-did-you-render librería para detectar re-renderizados innecesarios.
 
-===== FIN: ./5-performance/reconciliation.md =====
+===== FIN: ./react/5-performance/reconciliation.md =====
 
-===== INICIO: ./6-routing/react-router.md =====
+===== INICIO: ./react/6-routing/react-router.md =====
 react-router.md
 
 Concepto
@@ -5238,33 +5582,29 @@ const location = useLocation();
 useEffect(() => {
   ga.sendPageView(location.pathname);
 }, [location]);
-===== FIN: ./6-routing/react-router.md =====
+===== FIN: ./react/6-routing/react-router.md =====
 
-===== INICIO: ./11-glossary/terminos-clave.md =====
+===== INICIO: ./react/11-glossary/terminos-clave.md =====
 
-===== FIN: ./11-glossary/terminos-clave.md =====
+===== FIN: ./react/11-glossary/terminos-clave.md =====
 
-===== INICIO: ./salida.txt =====
+===== INICIO: ./react/12-resources/libros.md =====
 
-===== FIN: ./salida.txt =====
+===== FIN: ./react/12-resources/libros.md =====
 
-===== INICIO: ./12-resources/libros.md =====
+===== INICIO: ./react/12-resources/canales-youtube.md =====
 
-===== FIN: ./12-resources/libros.md =====
+===== FIN: ./react/12-resources/canales-youtube.md =====
 
-===== INICIO: ./12-resources/canales-youtube.md =====
+===== INICIO: ./react/12-resources/documentacion-oficial.md =====
 
-===== FIN: ./12-resources/canales-youtube.md =====
+===== FIN: ./react/12-resources/documentacion-oficial.md =====
 
-===== INICIO: ./12-resources/documentacion-oficial.md =====
+===== INICIO: ./react/12-resources/blogs.md =====
 
-===== FIN: ./12-resources/documentacion-oficial.md =====
+===== FIN: ./react/12-resources/blogs.md =====
 
-===== INICIO: ./12-resources/blogs.md =====
+===== INICIO: ./react/README.md =====
 
-===== FIN: ./12-resources/blogs.md =====
-
-===== INICIO: ./README.md =====
-
-===== FIN: ./README.md =====
+===== FIN: ./react/README.md =====
 
