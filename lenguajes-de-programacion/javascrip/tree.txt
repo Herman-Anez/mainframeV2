@@ -1,0 +1,79 @@
+react/
+├── 1-basics/
+│   ├── jsx.md
+│   ├── componentes.md
+│   ├── props.md
+│   ├── estado-useState.md
+│   ├── eventos.md
+│   ├── renderizado-condicional.md
+│   ├── listas-keys.md
+│   └── estilos/
+│       ├── css-modules.md
+│       ├── styled-components.md
+│       └── tailwind.md
+│
+├── 2-hooks/
+│   ├── useState.md
+│   ├── useEffect.md
+│   ├── useContext.md
+│   ├── useRef.md
+│   ├── useReducer.md
+│   ├── useMemo-useCallback.md
+│   ├── custom-hooks.md
+│   └── otros-hooks.md
+│
+├── 3-state-management/
+│   ├── props-drilling.md
+│   ├── context-api.md
+│   ├── redux.md
+│   ├── zustand.md
+│   └── react-query.md
+│
+├── 4-patterns/
+│   ├── composicion.md
+│   ├── render-props.md
+│   ├── higher-order-components.md
+│   ├── controlled-vs-uncontrolled.md
+│   └── atomic-design.md
+│
+├── 5-performance/
+│   ├── react-memo.md
+│   ├── virtual-dom.md
+│   ├── reconciliation.md
+│   ├── code-splitting-lazy.md
+│   └── optimization-tips.md
+│
+├── 6-routing/
+│   └── react-router.md
+│
+├── 7-testing/
+│   ├── jest.md
+│   └── testing-library.md
+│
+├── 8-advanced/
+│   ├── server-components.md
+│   ├── concurrent-mode.md
+│   ├── suspense.md
+│   ├── portals.md
+│   └── forwardRef.md
+│
+├── 9-react-18-plus/
+│   ├── transitions.md
+│   ├── automatic-batching.md
+│   └── new-hooks.md
+│
+├── 10-projects-examples/
+│   ├── todo-app/
+│   ├── ecommerce-cart/
+│   └── api-integration/
+│
+├── 11-glossary/
+│   └── terminos-clave.md
+│
+├── 12-resources/
+│   ├── libros.md
+│   ├── canales-youtube.md
+│   ├── blogs.md
+│   └── documentacion-oficial.md
+│
+└── README.md
