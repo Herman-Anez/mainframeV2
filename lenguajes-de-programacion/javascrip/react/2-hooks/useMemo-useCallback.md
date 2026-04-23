@@ -1,30 +1,35 @@
-useMemo-useCallback.md
-Concepto
+# 🧠 useMemo & useCallback: Optimización de Rendimiento
 
-Ambos hooks memorizan valores/funciones para evitar recrearlos en cada render, optimizando el rendimiento.
-useMemo – Memoriza valores
+Ambos hooks sirven para **memorizar** (cachear) valores o funciones, evitando cálculos innecesarios o recreaciones constantes de referencias entre renderizados.
+
+---
+
+## ⚡ useMemo: Memorizar Valores
+
+Se usa para evitar cálculos costosos en cada render.
 
 ```jsx
 const valorMemoizado = useMemo(() => computoCostoso(a, b), [a, b]);
 ```
 
-- Devuelve el resultado de la función.
-
-- Solo se recalcula cuando cambian las dependencias.
-
-Ejemplo práctico
+### 🧪 Ejemplo Práctico
 
 ```jsx
-function Lista({ items, filtro }) {
+function ListaFiltrada({ items, filtro }) {
   const itemsFiltrados = useMemo(() => {
+    console.log("Filtrando...");
     return items.filter(item => item.includes(filtro));
-  }, [items, filtro]);
+  }, [items, filtro]); // Solo se recalcula si items o filtro cambian
   
-  return <ul>{itemsFiltrados.map(...)}</ul>;
+  return <ul>{itemsFiltrados.map(i => <li key={i}>{i}</li>)}</ul>;
 }
 ```
 
-useCallback – Memoriza funciones
+---
+
+## 🖇️ useCallback: Memorizar Funciones
+
+Devuelve la misma instancia de una función entre renders, a menos que sus dependencias cambien.
 
 ```jsx
 const funcionMemoizada = useCallback(() => {
@@ -46,20 +51,38 @@ const handleClick = useCallback(() => {
 <BotonMemo onClick={handleClick} />
 ```
 
-Diferencia clave
+> [!TIP]
+> Su uso principal es pasar callbacks a componentes hijos optimizados con `React.memo` para evitar que estos se re-rendericen innecesariamente.
 
-|Hook|Qué memoriza|Uso típico|
-|-|-|-|
-|useMemo|Valor calculado|Operaciones costosas, objetos/arrays derivados|
-|useCallback|Función Pasar callbacks a hijos memoizados|
+---
 
-¿CuándoNO usarlos?
+## ⚖️ Diferencia Clave
 
-- No los uses en todos lados (la optimización prematura es mala).
+| Hook | Qué memoriza | Uso típico |
+| :--- | :--- | :--- |
+| **`useMemo`** | El **resultado** de una función | Cálculos pesados, objetos/arrays derivados. |
+| **`useCallback`**| La **función** misma | Pasar funciones estables a hijos memoizados. |
 
-- Si el cálculo es barato (sumas, concatenaciones), no vale la pena.
+---
 
-- Si el componente no tiene problemas de rendimiento, evita complejidad.
+## 🚫 ¿Cuándo NO usarlos?
+
+> [!WARNING]
+> La optimización prematura puede ser contraproducente. Memorizar tiene un costo de memoria y tiempo de ejecución.
+
+1.  **Operaciones baratas**: Sumas, concatenaciones o filtros en arrays pequeños no necesitan `useMemo`.
+2.  **Si no hay problemas de rendimiento**: Si la aplicación ya vuela, no añadidas complejidad innecesaria.
+3.  **Hijos no memoizados**: No sirve de nada usar `useCallback` si el componente hijo no está envuelto en `React.memo`.
+
+---
+
+## 📏 Reglas y Buenas Prácticas
+
+1.  **Mide primero**: Usa el Profiler de React DevTools para identificar cuellos de botella reales.
+2.  **Dependencias completas**: Al igual que `useEffect`, debes incluir todos los valores reactivos usados dentros.
+3.  **Estabilidad de referencias**: Úsalos cuando un objeto o función sea dependencia de otro hook (como `useEffect`).
+
+---
 
 Trampa común
 
@@ -97,3 +120,7 @@ Buenas prácticas
 - Preferir useCallback/useMemo solo en hot paths (listas grandes, animaciones).
 
 - Para funciones que no dependen de estado/props, definirlas fuera del componente (mejor aún).
+
+----
+
+[⬅️ Volver al Índice](../README.md)

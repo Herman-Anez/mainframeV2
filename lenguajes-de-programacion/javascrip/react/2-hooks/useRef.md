@@ -1,11 +1,15 @@
+# 📌 useRef: Referencias y Valores Persistentes
 
-#useRef.md
+`useRef` crea un objeto mutable con una propiedad `.current` que persiste durante todo el ciclo de vida del componente. A diferencia de `useState`, cambiar su valor **no provoca un re-render**.
 
-Concepto
+---
 
-useRef crea un objeto mutable .current que persiste durante todo el ciclo de vida del componente. Cambiar .current no causa re-render.
-Usos principales
-## Acceso directo a elementos del DOM
+## 🏗️ Usos Principales
+
+### 1. Acceso directo al DOM
+
+Ideal para enfocar elementos, medir dimensiones o integrar librerías externas que no son de React.
+
 ```jsx
 function InputFocus() {
   const inputRef = useRef(null);
@@ -17,27 +21,66 @@ function InputFocus() {
   return (
     <>
       <input ref={inputRef} type="text" />
-      <button onClick={focusInput}>Enfocar</button>
+      <button onClick={focusInput}>Enfocar Input</button>
     </>
   );
 }
 ```
 
+### 2. Guardar valores mutables (Variables de instancia)
 
-## Guardar valores mutables que no deben causar re-render
+Útil para timers, IDs de suscripción o cualquier dato que necesites recordar entre renders sin disparar la actualización de la UI.
+
 ```jsx
 function Timer() {
   const intervalRef = useRef();
   
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      console.log('tick');
+      console.log('Tick');
     }, 1000);
+    
     return () => clearInterval(intervalRef.current);
   }, []);
 }
 ```
 
+---
+
+## ⚖️ useState vs useRef
+
+| Característica | `useState` | `useRef` |
+| :--- | :---: | :---: |
+| **¿Provoca re-render?** | ✅ Sí | ❌ No |
+| **¿Persiste entre renders?** | ✅ Sí | ✅ Sí |
+| **Actualización** | Asíncrona (Batch) | Síncrona (Directa) |
+| **Uso típico** | Datos que se ven en UI | Datos "detrás de escena" |
+
+---
+
+## 🔗 ForwardRef: Pasar Refs a Hijos
+
+Para pasar una referencia a un componente funcional hijo, debes envolver al hijo en `forwardRef`.
+
+```jsx
+const MyInput = forwardRef((props, ref) => (
+  <input ref={ref} {...props} className="custom-input" />
+));
+
+// En el padre
+const inputRef = useRef();
+<MyInput ref={inputRef} />;
+```
+
+---
+
+## 📏 Reglas y Advertencias
+
+*   **No para renderizado**: Si usas un valor para mostrar algo en el JSX, **usa `useState`**. Si mutas `.current` en el cuerpo del render, podrías causar bugs visuales.
+*   **Mutación síncrona**: El valor de `.current` cambia inmediatamente, lo que es útil para lógica imperativa.
+*   **Persistencia**: Al igual que el estado, el valor se mantiene aunque el componente se re-renderice por otras causas.
+
+---
 
 ## Referencia a valores previos (como "prevProps" o "prevState")
 ```jsx
@@ -97,3 +140,7 @@ Advertencias
 - No abuses de ref para "solución rápida" cuando deberías usar estado.
 
 - Mutar .current no es reactivo; si necesitas que algo cambie en la UI, usa estado.
+
+
+-----
+[⬅️ Volver al Índice](../README.md)

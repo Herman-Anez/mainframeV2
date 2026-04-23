@@ -6,9 +6,9 @@ Los componentes son las piezas fundamentales de la interfaz de usuario. Son inde
 
 ## 🏗️ Tipos de Componentes
 
-### 1. Componentes Funcionales (Recomendado)
+### 🟢 Componentes Funcionales (Recomendado)
 
-Son funciones de JavaScript que devuelven JSX. Gracias a los **Hooks**, hoy en día pueden manejar estado y ciclo de vida.
+Son funciones de JavaScript que devuelven JSX. Gracias a los **Hooks**, hoy en día pueden manejar estado y ciclo de vida de forma eficiente.
 
 ```jsx
 const Welcome = ({ name }) => {
@@ -19,9 +19,10 @@ function Saludo(props) {
 }
 ```
 
-### 2. Componentes de Clase (Legado)
+### 🟠 Componentes de Clase (Legado/Obsoleto)
 
-Eran el estándar antes de 2019. Aunque siguen funcionando, la comunidad y el equipo de React recomiendan usar componentes funcionales.
+> [!CAUTION]
+> Eran el estándar antes de 2019. Aunque siguen funcionando, la comunidad y el equipo de React recomiendan usar componentes funcionales. No se recomienda su uso en proyectos nuevos.
 
 ```jsx
 class Welcome extends React.Component {
@@ -33,19 +34,21 @@ class Welcome extends React.Component {
 
 ---
 
-## Tipos de componentes según su función
+## 🎭 Categorías según su propósito
 
-- Presentacionales (tontos): Solo reciben props y renderizan UI. Sin estado propio.
+Una buena arquitectura divide los componentes según su responsabilidad:
 
-- Contenedores (inteligentes): Manejan lógica, estado, efectos secundarios.
+* **Presentacionales ("Tontos")**: Solo reciben props y renderizan UI. No deben tener lógica de negocio pesada ni estado (normalmente).
+* **Contenedores ("Inteligentes")**: Manejan la lógica, el estado y los efectos secundarios. Suelen envolver componentes presentacionales.
+* **Componentes de Alto Orden (HOC)**: Funciones que reciben un componente y devuelven uno nuevo con funcionalidades extra.
 
-- Componentes puros: Dado las mismas props, siempre renderizan el mismo JSX.
+---
 
 ## 📏 Reglas y Convenciones
 
 1. **PascalCase**: Los nombres de los componentes **siempre** deben empezar con mayúscula (ej: `MyButton`, no `myButton`). Esto permite a React distinguirlos de las etiquetas HTML estándar.
 2. **Inmutabilidad**: Un componente nunca debe modificar sus propias `props`. Deben tratarse como valores de solo lectura.
-3. **Responsabilidad Única**: Si un componente se vuelve demasiado complejo, es una señal para dividirlo en componentes más pequeños.
+3. **Responsabilidad Única**: Si un componente se vuelve demasiado complejo, es una señal para dividirlo en componentes más pequeños (Principio SOLID).
 
 ---
 
@@ -72,7 +75,8 @@ const Card = ({ children, title }) => {
 ```
 
 > [!TIP]
-> Piensa en los componentes como funciones matemáticas: **Props (Input) → JSX (Output)**.
+> Piensa en los componentes como funciones puras: **Props (Entrada) → JSX (Salida)**.
 
 ---
+
 [⬅️ Volver al Índice](../README.md)

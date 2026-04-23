@@ -1,18 +1,31 @@
-# useContext.md
+# ⚓ useContext: Consumo de Estado Global
 
-## Concepto
+El hook `useContext` permite suscribirse a un contexto de React sin necesidad de anidamientos complejos o componentes de tipo "Consumer".
 
-useContext permite consumir un contexto creado con React.createContext sin necesidad de usar Context.Consumer o anidar componentes.
+> [!IMPORTANT]
+> `useContext` solo sirve para **consumir** el contexto. Para crear y proveer los datos, sigues necesitando `createContext` y un `Provider`.
 
-## Creación del contexto
+---
+
+## ⚖️ Auditoría de Contenido
+
+> [!REDUNDANT]
+> Este archivo tiene un solapamiento del 90% con [Context API (Gestión de Estado)](../3-state-management/context-api.md). 
+> **Recomendación**: Mantener este archivo como una referencia rápida del **Hook** y usar el de Gestión de Estado para explicar la arquitectura completa y comparaciones con Redux.
+
+---
+
+## 🏗️ Implementación en 3 Pasos
+
+### 1. Crear el Contexto
 
 ```jsx
 // TemaContext.js
 import { createContext } from 'react';
-export const TemaContext = createContext('claro'); // valor por defecto
+export const TemaContext = createContext('claro');
 ```
 
-## Proveer el contexto
+### 2. Proveer el Valor
 
 ```jsx
 import { TemaContext } from './TemaContext';
@@ -26,7 +39,7 @@ function App() {
 }
 ```
 
-## Consumir con useContext
+### 3. Consumir con el Hook
 
 ```jsx
 import { useContext } from 'react';
@@ -34,9 +47,45 @@ import { TemaContext } from './TemaContext';
 
 function ComponenteHijo() {
   const tema = useContext(TemaContext);
-  return <div className={`tema-${tema}`}>Contenido</div>;
+  return <div className={`tema-${tema}`}>El tema actual es: {tema}</div>;
 }
 ```
+
+---
+
+## 📊 Ventajas y Limitaciones
+
+* **Ventaja**: Evita el "Prop Drilling" (pasar datos por niveles intermedios que no los necesitan).
+* **Limitación**: Los cambios en el contexto re-renderizan a **todos** los consumidores. No es un sistema de gestión de estado optimizado para alta frecuencia de cambios.
+
+---
+
+## 💡 Buenas Prácticas
+
+### Custom Hooks para Consumo
+
+En lugar de importar el contexto en cada componente, exporta un hook personalizado para un código más limpio y seguro:
+
+```jsx
+export function useTema() {
+  const context = useContext(TemaContext);
+  if (!context) {
+    throw new Error('useTema debe usarse dentro de un TemaProvider');
+  }
+  return context;
+}
+```
+
+### Memoización del Valor
+
+Para evitar re-renders innecesarios en los hijos cuando el proveedor se actualiza, memoiza el valor:
+
+```jsx
+const value = useMemo(() => ({ user, login }), [user]);
+return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+```
+
+---
 
 ## Contexto con estado mutable
 
@@ -104,3 +153,6 @@ export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider');
   return context;
+----
+
+[⬅️ Volver al Índice](../README.md)
