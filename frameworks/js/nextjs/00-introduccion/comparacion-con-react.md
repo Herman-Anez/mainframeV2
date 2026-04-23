@@ -1,7 +1,5 @@
 
-
 ## 📘 00-introduccion/comparacion-con-react.md
-
 
 ### Next.js vs React (con Vite / CRA)
 
@@ -49,10 +47,3 @@ Aunque Next.js está construido con React, las diferencias van mucho más allá 
 > **Conclusión:** Next.js es la opción recomendada por la documentación oficial de React para iniciar un proyecto, porque proporciona una solución completa con convenciones bien pensadas.
 
 ---
-
-
-
-
-
-
-   
