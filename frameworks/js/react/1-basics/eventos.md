@@ -1,66 +1,95 @@
+# ⚡ Eventos: Interactividad en React
 
-# eventos.md
+El manejo de eventos en React es muy similar al manejo de eventos en elementos del DOM, pero con algunas diferencias sintácticas clave para alinearse con JavaScript y JSX.
 
-## Manejo de eventos en React
+---
 
-Los eventos se nombran en camelCase y se pasan una función (no un string):
+## 🏗️ Sintaxis Básica
 
-```tsx
+Los eventos en React se nombran usando **camelCase** (ej: `onClick`) en lugar de minúsculas, y se pasa una **función** como manejador en lugar de un string.
 
+```jsx
 <button onClick={handleClick}>Click</button>
 ```
 
-## Definir manejadores
+---
 
-```tsx
+## 🚀 Definir Manejadores
+
+```jsx
 function MiComponente() {
   function handleClick(e) {
-    e.preventDefault();  // Previene comportamiento por defecto
-    console.log('Clicked');
+    e.preventDefault();  // Previene el comportamiento por defecto (ej: recarga de página)
+    console.log('Botón clickeado');
   }
-  return <button onClick={handleClick}>Click</button>;
+
+  return <button onClick={handleClick}>Click aquí</button>;
 }
 ```
 
-## Diferencia con HTML nativo
+---
 
-- No se usa addEventListener, se declara directamente en JSX.
+## ⚖️ Diferencias con HTML Nativo
 
-- El objeto e (evento sintético) es compatible con todos los navegadores.
+*   **Declarativo**: No se usa `addEventListener`. El evento se declara directamente en el JSX.
+*   **Evento Sintético**: El objeto `e` es un **SyntheticEvent**. React envuelve el evento nativo para garantizar que funcione exactamente igual en todos los navegadores.
 
-## Paso de parámetros
+---
 
-```tsx
+## 🖇️ Paso de Parámetros
+
+Si necesitas pasar un argumento extra a la función manejadora, usa una función flecha:
+
+```jsx
 <button onClick={() => eliminarItem(id)}>Eliminar</button>
 ```
 
-Cuidado: crear una nueva función en cada render puede afectar rendimiento. Para casos críticos, usa useCallback.
+> [!WARNING]
+> Crear funciones flecha directamente en el render puede afectar el rendimiento en componentes de gran tamaño. Para casos críticos, considera usar el hook `useCallback`.
 
-## Eventos comunes
+---
 
-- onClick, onChange, onSubmit, onMouseEnter, onFocus, onBlur, onKeyDown, etc.
+## 📋 Eventos en Formularios
 
-## EveNtos en formularios
+En React, los formularios suelen ser **Componentes Controlados**, donde el estado de React es la "única fuente de verdad".
 
-```tsx
+```jsx
 const [texto, setTexto] = useState('');
 
 function handleChange(e) {
   setTexto(e.target.value);
 }
-<input type="text" value={texto} onChange={handleChange} />
+
+<input type="text" value={texto} onChange={handleChange} />;
 ```
 
-Esto se llama componente controlado.
-e.preventDefault() y e.stopPropagation()
+---
 
-Funcionan igual que en DOM nativo.
-Eventos personalizados
+## 💡 Eventos Comunes
 
-React no tiene eventos personalizados como Vue; se usan props callback.
-Buenas prácticas
+React soporta casi todos los eventos nativos:
+*   **Mouse**: `onClick`, `onMouseEnter`, `onMouseLeave`.
+*   **Teclado**: `onKeyDown`, `onKeyUp`, `onFocus`, `onBlur`.
+*   **Formularios**: `onChange`, `onSubmit`, `onInput`.
 
-- No usar funciones flecha directamente en el render si afectan rendimiento (excepto componentes pequeños).
+---
 
-- Extraer manejadores fuera del JSX para claridad.
-[back](../index.md)
+## 🛡️ Propagación y Acción por Defecto
+
+Los métodos `e.preventDefault()` y `e.stopPropagation()` funcionan exactamente igual que en el DOM nativo para detener el comportamiento del navegador o la burbuja del evento.
+
+---
+
+## 💡 Buenas Prácticas
+
+*   **Extraer Lógica**: Mantén el JSX limpio extrayendo los manejadores de eventos a funciones con nombre antes del `return`.
+*   **Eventos Personalizados**: React no permite eventos personalizados nativos; en su lugar, se pasan **props callback** (ej: `onUserLogin={handleLogin}`).
+
+---
+
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>
+

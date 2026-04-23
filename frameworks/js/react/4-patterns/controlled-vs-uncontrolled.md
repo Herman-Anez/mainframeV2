@@ -1,15 +1,42 @@
+# 🕹️ Controlados vs No Controlados: Manejo de Datos
 
-# controlled-vs-uncontrolled.md
+Este documento explora las dos formas principales en que los componentes de React pueden manejar los datos de entrada (inputs), determinando quién posee la "fuente de verdad" de la información.
 
-Diferencia entre cómo un componente maneja sus datos internamente (no controlado) vs. cómo React controla sus datos a través del estado (controlado).
+---
 
-## Componentes no controlados
+## 🟢 Componentes Controlados (Recomendado)
 
-- El DOM mantiene el estado (input, select, textarea).
+En un componente controlado, **React es el dueño del estado**. El valor del input se define mediante una prop (`value`) y se actualiza a través de un manejador de eventos (`onChange`).
 
-- React solo lee el valor cuando es necesario (ej. onSubmit con ref).
+### 🚀 Ejemplo Básico
 
-- Se usa defaultValue en lugar de value.
+```jsx
+function FormularioControlado() {
+  const [nombre, setNombre] = useState('');
+
+  return (
+    <input 
+      type="text"
+      value={nombre} 
+      onChange={(e) => setNombre(e.target.value)} 
+    />
+  );
+}
+```
+
+### ✅ Cuándo usarlo
+
+* **Validación en tiempo real**: Comprobar si el texto cumple requisitos mientras el usuario escribe.
+* **Formato dinámico**: Aplicar máscaras (ej: formatos de teléfono o moneda) automáticamente.
+* **Deshabilitación condicional**: Bloquear botones de envío si los campos no son válidos.
+
+---
+
+## 🟠 Componentes No Controlados
+
+En estos componentes, el **DOM mantiene el estado interno**. React simplemente "consulta" el valor cuando lo necesita, generalmente usando una `ref`.
+
+### 🚀 Ejemplo Básico
 
 ```jsx
 function FormularioNoControlado() {
@@ -17,96 +44,99 @@ function FormularioNoControlado() {
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert(inputRef.current.value);
+    alert(`Valor actual: ${inputRef.current.value}`);
   };
   
   return (
     <form onSubmit={handleSubmit}>
-      <input ref={inputRef} defaultValue="Texto inicial" />
+      <input ref={inputRef} defaultValue="Valor inicial" />
       <button type="submit">Enviar</button>
     </form>
   );
 }
 ```
 
-## Componentes controlados
+### ✅ Cuándo usarlo
 
-- React maneja el estado con useState.
+* **Rendimiento Crítico**: Cuando tienes cientos de inputs y quieres evitar el re-renderizado constante.
+* **Librerías externas**: Integración con plugins de JS que no son de React (ej: selectores de fecha complejos).
+* **Archivos**: Los inputs de tipo `file` son **siempre** no controlados en React.
 
-- El valor del input se lee de state y se actualiza con onChange.
+---
 
-- El DOM es solo una representación del estado de React.
+## ⚖️ Comparativa Directa
 
-```jsx
-function FormularioControlado() {
-  const [valor, setValor] = useState('');
-  
-  return (
-    <input 
-      value={valor} 
-      onChange={(e) => setValor(e.target.value)} 
-    />
-  );
-}
-```
+| Característica | Controlado | No Controlado |
+| :--- | :--- | :--- |
+| **Fuente de la Verdad** | Estado de React | DOM del Navegador |
+| **Acceso al Valor** | Inmediato (State) | Diferido (Ref) |
+| **Validación** | Sencilla e instantánea | Compleja (en el submit) |
+| **Complejidad** | Más código | Menos código inicial |
+| **Re-renders** | En cada pulsación | Solo cuando cambia el componente |
 
-Comparativa
-
-|Característica|Controlado|No controlado|
-|-|-|-|
-|Fuente de la verdad|Estado de React|DOM|
-|Validación en tiempo real|Fácil|Complejo|
-|Formato dinámico (máscaras)|Fácil|Difícil|
-|Rendimiento|Ligeramente peor (re-render)|Mejor|
-|Simplicidad inicial|Más código|Menos código|
-|Acceso a valores|Inmediato (estado)|Requiere ref|
+---
 
 ## Casos de uso
 
 Controlado es mejor cuando:
 
-- Necesitas validar o transformar la entrada en cada tecla.
+* Necesitas validar o transformar la entrada en cada tecla.
 
-- El campo depende de otros campos.
+* El campo depende de otros campos.
 
-- Quieres habilitar/deshabilitar botones según el valor.
+* Quieres habilitar/deshabilitar botones según el valor.
 
-- Usas librerías de formularios (Formik, React Hook Form en modo controlado).
+* Usas librerías de formularios (Formik, React Hook Form en modo controlado).
 
 No controlado es mejor cuando:
 
-- Formularios muy simples.
+* Formularios muy simples.
 
-- Necesitas el mínimo re-renderizado posible.
+* Necesitas el mínimo re-renderizado posible.
 
-- Integras con librerías no React (ej. jQuery datepicker).
+* Integras con librerías no React (ej. jQuery datepicker).
 
-- Usas React Hook Form en modo no controlado (por defecto).
+* Usas React Hook Form en modo no controlado (por defecto).
 
-Inputs especiales
+--
 
-- Checkbox/radio controlado: checked={estado} onChange={handler}
+## 🧩 Casos Especiales
 
-- Select controlado: value={estado} onChange={handler}
+### Checkboxes y Radios
+
+Para estos elementos, la propiedad correcta es `checked` en lugar de `value`.
 
 ```jsx
 const [acepta, setAcepta] = useState(false);
-<input type="checkbox" checked={acepta} onChange={(e) => setAcepta(e.target.checked)} />
-
-React Hook Form (híbrido)
-
-React Hook Form es mayormente no controlado por defecto (usa refs), pero puede ser controlado si se desea. Ofrece buen rendimiento.
+<input 
+  type="checkbox" 
+  checked={acepta} 
+  onChange={(e) => setAcepta(e.target.checked)} 
+/>
 ```
+
+### ⚡ React Hook Form (El Enfoque Híbrido)
+
+Librerías como **React Hook Form** utilizan componentes no controlados por debajo para maximizar el rendimiento, pero exponen una API que se siente controlada y facilita la validación.
 
 ```jsx
 const { register, handleSubmit } = useForm();
-<input {...register('nombre')} /> // no controlado
+// register() aplica la lógica de ref automáticamente
+<input {...register('nombre')} />
 ```
 
-Buenas prácticas
+---
 
-- Prefiere controlado para formularios con validación o dependencias.
+## 💡 Buenas Prácticas
 
-- Usa no controlado solo si el rendimiento es crítico o el formulario es trivial.
+1. **Preferir Controlados**: Son más predecibles y fáciles de testear para la mayoría de los casos.
+2. **No Mezclar**: Nunca pases `value` y un valor por defecto al mismo tiempo; React te mostrará una advertencia de "componente cambiando de no controlado a controlado".
+3. **Default Values**: En componentes no controlados, usa `defaultValue` o `defaultChecked` para establecer el valor inicial sin tomar el control del estado.
 
-- No mezcles ambos en el mismo campo (o será de solo lectura).
+---
+
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>

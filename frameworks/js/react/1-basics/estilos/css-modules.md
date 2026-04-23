@@ -1,62 +1,82 @@
-# estilos/css-modules.md
+# 🎨 CSS Modules: Estilos Encapsulados
 
-## CSS Modules
+Los **CSS Modules** permiten escribir CSS que tiene como ámbito automático el componente donde se importa. Esto resuelve el problema global del CSS nativo, evitando colisiones de nombres de clases.
 
-Permite escribir CSS con ámbito local (por componente). Evita colisiones de nombres.
-Configuración
+---
 
-Create React App y Vite lo soportan por defecto. Los archivos deben terminar en .module.css.
-Uso
+## 🏗️ Configuración
+
+Tanto **Vite** como **Create React App** soportan CSS Modules por defecto. Solo necesitas nombrar tus archivos con la extensión `.module.css` (o `.module.scss`).
+
+---
+
+## 🚀 Uso Básico
 
 ```css
 /* Boton.module.css */
 .boton {
-  background: blue;
+  background: #3182ce;
   color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
 }
+
 .primario {
-  background: green;
+  background: #2f855a;
 }
 ```
 
-```tsx
+```jsx
 import styles from './Boton.module.css';
 
 function Boton() {
-  return <button className={styles.boton}>Click</button>;
+  // Las clases se acceden como propiedades del objeto 'styles'
+  return <button className={styles.boton}>Click aquí</button>;
 }
 ```
 
-Clases múltiples
+---
 
-```tsx
+## 🖇️ Manejo de Clases Múltiples y Props
+
+Para combinar varias clases o usar lógica condicional, puedes usar plantillas de cadena (template strings):
+
+```jsx
+// Unión de clases estáticas
 <button className={`${styles.boton} ${styles.primario}`}>
   Click
 </button>
-// o usando arrays y join
+
+// Clases condicionales basadas en props
+<button className={`${styles.boton} ${importante ? styles.urgente : ''}`}>
+  Borrar
+</button>
 ```
 
-Combinación con props
+---
 
-```tsx
-<button className={`${styles.boton} ${props.importante ? styles.importante : ''}`}>
-```
+## ⚖️ Ventajas y Limitaciones
 
-Ventajas
+### ✅ Ventajas
+*   **Encapsulamiento**: Los estilos no se filtran a otros componentes.
+*   **Nombres Limpios**: Puedes usar nombres genéricos como `.container` o `.title` en todos tus archivos.
+*   **Rendimiento**: Es CSS puro, procesado en tiempo de compilación.
 
-- Estilos encapsulados, sin fugas.
+### ❌ Desventajas
+*   **Dinamicismo limitado**: No es tan potente como CSS-in-JS para temas altamente dinámicos.
+*   **Verboso**: El acceso vía `styles.clase` puede hacer el JSX un poco más ruidoso.
 
-- Nombres de clase legibles (se generan hashes).
+---
 
-- Funciona con CSS puro.
+## 🛠️ Alternativa: SCSS Modules
 
-Desventajas
+Si prefieres usar SASS/SCSS, simplemente instala la librería y usa la extensión `.module.scss`. Podrás usar anidación, variables y mixins con la misma seguridad de los módulos.
 
-- No tiene características de CSS-in-JS (temas dinámicos complejos).
+---
 
-- Los nombres se vuelven verbosos en el JSX.
+<div align="center">
 
-Alternativa: SCSS Modules
+[⬅️ Volver al Índice](../README.md)
 
-Usa Boton.module.scss y tendrás anidación, variables, etc.
-[back](../index.md)
+</div>
+

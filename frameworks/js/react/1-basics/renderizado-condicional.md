@@ -1,43 +1,53 @@
+# 🎭 Renderizado Condicional: Lógica Dinámica
 
-# renderizado-condicional
+El renderizado condicional en React funciona de la misma manera que las condiciones en JavaScript. Permite mostrar diferentes interfaces dependiendo del estado de la aplicación o de las props recibidas.
 
-Formas de renderizar condicionalmente
+---
 
-## if / else fuera del JSX
+## 🏗️ Patrones Comunes
 
-```tsx
+### 1. `if / else` (Fuera del JSX)
+Ideal cuando la lógica de renderizado es compleja o el componente debe devolver estructuras completamente distintas.
+
+```jsx
 function Componente({ autenticado }) {
   if (autenticado) {
     return <Dashboard />;
-  } else {
-    return <Login />;
   }
+  return <Login />;
 }
 ```
 
-## Operador ternario dentro del JSX
+### 2. Operador Ternario (Dentro del JSX)
+La solución más común para elegir entre dos opciones dentro de una estructura JSX existente.
 
-```tsx
+```jsx
 <div>
   {autenticado ? <Dashboard /> : <Login />}
 </div>
 ```
 
-## && lógico (para mostrar o no mostrar)
+### 3. Operador Lógico `&&` (Cortocircuito)
+Útil cuando quieres mostrar un elemento solo si una condición es verdadera, y nada en caso contrario.
 
-```tsx
+```jsx
 <div>
   {autenticado && <Dashboard />}
-  {/* Si autenticado es true, muestra Dashboard; si false, no muestra nada */}
 </div>
 ```
 
-Cuidado: si autenticado es 0 o "" se renderizará ese valor. Mejor usar !!autenticado && ... o convertir a booleano.
+> [!CAUTION]
+> **Cuidado con los falsy values**: Si la condición es `0` o `""`, React renderizará ese valor en lugar de nada.
+> **Solución**: `{contador > 0 && <p>Valor: {contador}</p>}` o `{!!texto && <p>{texto}</p>}`.
 
+---
 
-## Variables que contienen JSX
+## 🚀 Técnicas Avanzadas
 
-```tsx
+### Variables de Elementos
+Puedes almacenar JSX en variables para mantener el `return` principal limpio y legible.
+
+```jsx
 let contenido;
 if (cargando) {
   contenido = <Spinner />;
@@ -46,44 +56,48 @@ if (cargando) {
 } else {
   contenido = <Datos />;
 }
+
 return <div>{contenido}</div>;
 ```
 
-## Retorno anticipado (early return) en componentes
+### Retorno Anticipado (Early Return)
+Evita anidamientos excesivos saliendo de la función lo antes posible si no hay nada que renderizar o si hay un estado de carga/error.
 
-```tsx
+```jsx
 function Lista({ items }) {
   if (!items.length) {
-    return <p>No hay elementos</p>;
+    return <p>La lista está vacía</p>;
   }
-  return <ul>{items.map(...)}</ul>;
+  return <ul>{items.map(item => <Item key={item.id} {...item} />)}</ul>;
 }
 ```
 
-Comparación de patrones
+### Uso de `switch`
+Excelente para manejar estados de máquinas de estado (ej: `loading`, `error`, `success`).
 
-- Ternario: cuando hay dos opciones claras.
-
-- &&: para mostrar u ocultar un solo elemento.
-
-- If/else o early return: cuando hay muchas condiciones o el JSX es extenso.
-
-## Renderizado condicional con switch
-
-```tsx
+```jsx
 function Estado({ status }) {
   switch(status) {
     case 'loading': return <Spinner />;
     case 'error': return <Error />;
-    default: return <Ok />;
+    case 'success': return <Ok />;
+    default: return null;
   }
 }
 ```
 
-## No usar && con números
+---
 
-```tsx
-{contador && <p>Valor: {contador}</p>}
-// Si contador === 0, renderiza "0" (porque 0 es falsy pero React lo muestra)
-// Solución: {contador !== 0 && ...}
-```
+## ⚖️ Comparación de Patrones
+
+*   **Ternario**: Cuando tienes dos opciones claras ("A o B").
+*   **&&**: Para mostrar u ocultar un elemento ("A o Nada").
+*   **If/else o Switch**: Cuando hay lógica compleja o más de dos estados posibles.
+
+---
+
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>

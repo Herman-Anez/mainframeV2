@@ -1,90 +1,112 @@
-# composicion.md
+# 🧱 Composición: El ADN de React
 
-La composición en React es el principio de construir componentes complejos a partir de componentes más pequeños y reutilizables, combinándolos como piezas de Lego. React favorece la composición sobre la herencia.
-Composición vs Herencia
+La **composición** es el principio fundamental de React que consiste en construir componentes complejos a partir de piezas más pequeñas, simples y reutilizables. A diferencia de la herencia (común en POO tradicional), React favorece la composición por su flexibilidad y desacoplamiento.
 
-- Herencia: extender clases (ej. class Boton extends ComponenteBase). React no la recomienda para reutilizar lógica.
+---
 
-- Composición: incluir un componente dentro de otro mediante props o children.
+## 🏗️ Composición vs Herencia
 
-## Formas de composición
+*   **Herencia**: Consiste en extender clases (ej: `class Boton extends ComponenteBase`). React **no recomienda** este patrón ya que crea jerarquías rígidas y difíciles de refactorizar.
+*   **Composición**: Consiste en incluir componentes dentro de otros mediante `props` o la prop especial `children`. Es el "modelo Lego".
 
-### props.children (contenido anidado)
+---
+
+## 🚀 Formas de Composición
+
+### 1. `props.children` (Contenido Anidado)
+Es la forma más natural de composición. Permite que un componente actúe como un "contenedor" sin conocer de antemano qué habrá dentro.
 
 ```jsx
 function Card({ children }) {
-  return <div className="card">{children}</div>;
+  return <div className="card-styled">{children}</div>;
 }
 
 function App() {
   return (
     <Card>
-      <h2>Título</h2>
-      <p>Contenido</p>
+      <h2>Título Reutilizable</h2>
+      <p>Este contenido es inyectado mediante la prop children.</p>
     </Card>
   );
 }
 ```
 
-### Props con componentes (especialización)
+### 2. Slots (Props con Componentes)
+Ideal cuando necesitas inyectar contenido en múltiples lugares específicos de un componente (ej: cabecera, lateral y pie).
 
 ```jsx
-function Dialog({ title, message, buttons }) {
+function Layout({ header, sidebar, children, footer }) {
   return (
-    <div className="dialog">
-      <h2>{title}</h2>
+    <div className="layout">
+      <header>{header}</header>
+      <div className="main">
+        <aside>{sidebar}</aside>
+        <content>{children}</content>
+      </div>
+      <footer>{footer}</footer>
+    </div>
+  );
+}
+```
+
+### 3. Especialización
+Un componente más específico renderiza uno más genérico y lo configura mediante props.
+
+```jsx
+function Dialog({ title, message, children }) {
+  return (
+    <div className="modal">
+      <h1>{title}</h1>
       <p>{message}</p>
-      <div className="buttons">{buttons}</div>
+      {children}
     </div>
   );
 }
 
-// Uso
-<Dialog
-  title="Confirmar"
-  message="¿Estás seguro?"
-  buttons={
-    <>
-      <button>Cancelar</button>
-      <button>Confirmar</button>
-    </>
-  }
-/>
-```
-
-### Props que reciben componentes (render props simplificadas)
-
-```jsx
-function ListaDeItems({ items, renderItem }) {
-  return <ul>{items.map(item => <li key={item.id}>{renderItem(item)}</li>)}</ul>;
+function WelcomeDialog() {
+  return (
+    <Dialog 
+      title="Bienvenido" 
+      message="Gracias por visitarnos"
+    >
+      <button>Empezar</button>
+    </Dialog>
+  );
 }
-
-<ListaDeItems
-  items={usuarios}
-  renderItem={user => <span>{user.nombre} ({user.email})</span>}
-/>
 ```
 
-### HOCs (aunque son una forma de composición, se tratan aparte)
+---
 
-Un HOC es una función que recibe un componente y devuelve otro componente.
-Patrón de contenedor vs presentacional (composición)
+## ⚖️ Ventajas de la Composición
+
+*   **Flexibilidad**: Puedes cambiar el orden o el tipo de los componentes hijos sin tocar el padre.
+*   **Mantenibilidad**: Favorece componentes con **Responsabilidad Única**.
+*   **Desacoplamiento**: El padre y el hijo solo se conocen a través de una interfaz mínima definida por las props.
+
+---
+
+## 🛡️ Contenedores vs Presentacionales
+
+Este es un patrón de composición donde se separa la lógica de los datos de la representación visual.
 
 ```jsx
-// Presentacional: solo UI
+// Presentacional: Solo recibe datos y los muestra
 function UserProfile({ user }) {
-  return <div>{user.name}</div>;
+  return <div>Nombre: {user.name}</div>;
 }
 
-// Contenedor: lógica y datos
+// Contenedor: Maneja la lógica y el estado
 function UserProfileContainer({ userId }) {
   const [user, setUser] = useState(null);
   useEffect(() => {
     fetchUser(userId).then(setUser);
   }, [userId]);
-  return <UserProfile user={user} />;
+
+  return user ? <UserProfile user={user} /> : <Spinner />;
 }
 ```
+----
+
 
 Composición vs Configuración
 
@@ -122,3 +144,19 @@ Buenas prácticas
 - No pases componentes por props a menos que sea necesario (render props).
 
 - Extrae lógica repetida en custom hooks, no en componentes heredados.
+
+---
+
+## 💡 Buenas Prácticas
+
+*   **Evita Props de Configuración Masivas**: En lugar de `<Button primary large disabled icon="..." />`, considera componer variantes específicas.
+*   **Children para Dinamismo**: Usa `children` para componentes que son "cajas" genéricas.
+*   **Hooks sobre Herencia**: Si necesitas compartir lógica no visual, usa **Custom Hooks** en lugar de intentar heredar de otras clases.
+
+---
+
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>
