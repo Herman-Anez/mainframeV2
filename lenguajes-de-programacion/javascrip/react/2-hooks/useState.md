@@ -17,7 +17,10 @@ const [state, setState] = useState(() => {
 
 ---
 
-## Actualizaciones basadas en el estado anterior
+## 🖇️ Actualizaciones basadas en el estado anterior
+
+> [!REDUNDANT]
+> Este concepto también se menciona en [useState Básico](../1-basics/estado-useState.md), pero es fundamental recordarlo aquí.
 
 Siempre que la nueva dependa del valor previo, usa la forma funcional para evitar bugs por closures obsoletos:
 
@@ -25,11 +28,16 @@ Siempre que la nueva dependa del valor previo, usa la forma funcional para evita
 setCount(prevCount => prevCount + 1);
 ```
 
-## Actualizaciones de objetos y arrays (inmutabilidad)
+---
+
+## 🧊 Inmutabilidad (Objetos y Arrays)
+
+> [!REDUNDANT]
+> Información duplicada con el módulo de [Fundamentos](../1-basics/estado-useState.md).
 
 React compara el estado anterior con el nuevo por referencia (Object.is). Si mutas el objeto, la referencia no cambia y React no re-renderiza.
 
-Forma correcta con objetos:
+### 📦 Con Objetos
 
 ```jsx
 const [user, setUser] = useState({ name: 'Juan', age: 30 });
@@ -37,7 +45,7 @@ setUser({ ...user, age: 31 });        // spread
 setUser(prev => ({ ...prev, age: 31 }));
 ```
 
-Con arrays:
+### 📋 Con Arrays
 
 ```jsx
 const [list, setList] = useState([]);
@@ -47,16 +55,13 @@ setList(prev => [...prev, nuevoElemento]);
 
 // Eliminar por id
 setList(prev => prev.filter(item => item.id !== id));
-
-// Actualizar un elemento
-setList(prev => prev.map(item => item.id === id ? { ...item, done: true } : item));
 ```
+
+---
 
 ## 🏎️ Agrupamiento de Actualizaciones (Batching)
 
 React agrupa múltiples actualizaciones de estado en una sola renderización por motivos de rendimiento. Esto significa que el estado no cambia inmediatamente después de llamar a la función setter.
-
-
 
 ```jsx
 const handleClick = () => {
@@ -97,44 +102,42 @@ function Parent() {
 
 ---
 
-## ¿El setter es asíncrono?
-
-setState es asíncrono. React agrupa múltiples actualizaciones para mejorar rendimiento. No confíes en que el estado cambie inmediatamente después de llamar al setter.
-
-```jsx
-setCount(count + 1);
-console.log(count); // todavía el valor anterior
-```
-
-Si necesitas leer el valor justo después de actualizar, usa useEffect con dependencia en ese estado.
-
 ## Múltiples estados vs un solo objeto
 
 * Varios useState: más legible para estados no relacionados.
 
 * Un objeto con useState: útil para estados que siempre cambian juntos (ej. formulario). Pero cuidado: al actualizar debes esparcir todo el objeto.
 
-## Estado derivado (no lo guardes en el estado)
+---
+
+## 🧪 Estado derivado
+
+> [!TIP]
+> No guardes en el estado valores que puedan ser calculados a partir de otros estados o props.
 
 ```jsx
 // Mal
 const [precio, setPrecio] = useState(100);
-const [conIva, setConIva] = useState(121); // derivado
+const [conIva, setConIva] = useState(121); // derivado ❌
 
 // Bien
-const conIva = precio * 1.21;
+const conIva = precio * 1.21; // ✅
 ```
 
 ---
 
-## 📏 Reglas Internas de React
+## 📏 Reglas Internas y Buenas Prácticas
 
 React se basa en el **orden de las llamadas** a los Hooks. Por eso:
+
 > [!CAUTION]
-> **NUNCA** llames a un Hook dentro de un `if`, `for` o función anidada. Si el orden de las llamadas cambia entre renders, React se confundirá y asignará el estado a la variable equivocada.
+> **NUNCA** llames a un Hook dentro de un `if`, `for` o función anidada. Si el orden de las llamadas cambia entre renders, React se confundirá.
+
+1. **Nomenclatura**: Usa siempre `[state, setState]`.
+2. **Atomicidad**: Mantén el estado lo más pequeño posible.
+3. **Persistencia**: Si necesitas que el estado sobreviva a una recarga de página, combínalo con `localStorage` en un efecto o usa librerías como Zustand.
 
 ---
-
 Buenas prácticas
 
 * Nombra el estado y su setter con [algo, setAlgo].
@@ -142,7 +145,5 @@ Buenas prácticas
 * Mantén el estado lo más atómico posible.
 
 * Extrae lógica de actualización compleja a funciones aparte o custom hooks.
-
---
 
 [⬅️ Volver al Índice](../README.md)

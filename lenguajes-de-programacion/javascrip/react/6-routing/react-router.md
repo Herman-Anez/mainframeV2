@@ -1,21 +1,10 @@
-react-router.md
+# 🛣️ React Router v6
 
-Concepto
+React Router es la librería estándar para manejar el enrutamiento declarativo en aplicaciones React. Permite sincronizar la interfaz de usuario con la URL, manejando navegación, parámetros y rutas anidadas de forma fluida.
 
-React Router es una librería de enrutamiento declarativo para React. Permite sincronizar la interfaz de usuario con la URL, manejar navegación, parámetros, rutas anidadas, protección de rutas y más.
-Versiones
+---
 
-- React Router v6 (actual): API moderna con Routes, Route, Outlet, hooks como useNavigate, useParams.
-
-- v5 y anteriores usaban Switch, useHistory, etc.
-
-Instalación
-
-```bash
-npm install react-router-dom
-```
-
-Configuración básica
+## 🚀 Configuración Básica
 
 ```jsx
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
@@ -26,12 +15,12 @@ function App() {
       <nav>
         <Link to="/">Inicio</Link>
         <Link to="/about">Acerca de</Link>
-        <Link to="/contacto">Contacto</Link>
       </nav>
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/contacto" element={<Contacto />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
@@ -67,6 +56,33 @@ function App() {
   About
 </NavLink>
 ```
+
+---
+
+## 📂 Rutas Anidadas y Layouts
+
+Las rutas anidadas permiten reflejar jerarquías de UI en la URL. El componente `<Outlet />` es fundamental aquí: indica dónde deben renderizarse las rutas Hijas dentro del Padre.
+
+```jsx
+const DashboardLayout = () => (
+  <div className="layout">
+    <Sidebar />
+    <main>
+      <Outlet /> {/* Aquí aparecerán las sub-rutas */}
+    </main>
+  </div>
+);
+
+// Configuración
+<Routes>
+  <Route path="dashboard" element={<DashboardLayout />}>
+    <Route index element={<Stats />} /> {/* /dashboard */}
+    <Route path="profile" element={<Profile />} /> {/* /dashboard/profile */}
+  </Route>
+</Routes>
+```
+----
+
 
 Rutas dinámicas y parámetros
 Parámetros de ruta (useParams)
@@ -121,42 +137,52 @@ function App() {
 }
 ```
 
-## Navegación programática
+---
 
+## ⚓ Hooks Esenciales
+
+| Hook | Propósito |
+| :--- | :--- |
+| **`useParams()`** | Obtiene parámetros variables de la URL (ej: `/user/:id`). |
+| **`useNavigate()`** | Permite cambiar de ruta programáticamente (después de un login, etc.). |
+| **`useLocation()`** | Devuelve el objeto de la ubicación actual (pathname, state, etc.). |
+| **`useSearchParams()`** | Permite leer y modificar los parámetros de consulta (ej: `?query=react`). |
+
+### Ejemplo: Navegación Programática
 ```jsx
-import { useNavigate } from 'react-router-dom';
+const navigate = useNavigate();
 
-function LoginButton() {
-  const navigate = useNavigate();
-  const handleLogin = async () => {
-    await login();
-    navigate('/dashboard'); // reemplaza el historial
-    // navigate('/dashboard', { replace: true }); // sin agregar entrada
-    // navigate(-1); // retroceder
-  };
-  return <button onClick={handleLogin}>Login</button>;
-}
+const handleLogout = () => {
+  auth.logout();
+  navigate('/login', { replace: true });
+};
 ```
 
-Rutas protegidas (autenticación)
+---
+
+## 🛡️ Rutas Protegidas
+
+Un patrón común para manejar la autenticación es crear un componente envoltorio que verifique el estado del usuario.
 
 ```jsx
-function RutaPrivada({ children }) {
+const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
-  const location = useLocation();
+  
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
+  
   return children;
-}
+};
 
-// Uso
-<Route path="/dashboard" element={
-  <RutaPrivada>
-    <Dashboard />
-  </RutaPrivada>
+// Uso en la configuración
+<Route path="/admin" element={
+  <PrivateRoute>
+    <AdminPanel />
+  </PrivateRoute>
 } />
 ```
+---
 
 Rutas con layout condicional (ej. dashboard vs landing)
 
@@ -183,6 +209,7 @@ Manejo de rutas no encontradas (404)
 </Routes>
 ```
 
+---
 Lazy loading con React Router v6
 
 ```jsx
@@ -198,7 +225,24 @@ const Perfil = lazy(() => import('./pages/Perfil'));
     <Route path="/perfil" element={<Perfil />} />
   </Routes>
 </Suspense>
+---
+## ⚡ Lazy Loading (Carga bajo demanda)
+
+Para mejorar el rendimiento, carga tus páginas solo cuando el usuario las visite:
+
+```jsx
+import { lazy, Suspense } from 'react';
+
+const Admin = lazy(() => import('./pages/Admin'));
+
+<Suspense fallback={<div>Cargando...</div>}>
+  <Routes>
+    <Route path="/admin" element={<Admin />} />
+  </Routes>
+</Suspense>
 ```
+
+----
 
 Historial y navegación
 
@@ -585,3 +629,8 @@ const location = useLocation();
 useEffect(() => {
   ga.sendPageView(location.pathname);
 }, [location]);
+----
+
+
+[⬅️ Volver al Índice](../README.md)
+

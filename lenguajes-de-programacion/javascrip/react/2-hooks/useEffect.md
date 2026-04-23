@@ -63,7 +63,7 @@ useEffect(() => {
 ## 💡 Casos de Uso Comunes
 
 ### Fetch de Datos (Forma Segura)
->
+
 > [!WARNING]
 > No marques el callback de `useEffect` como `async`. En su lugar, define la función dentro.
 
@@ -97,45 +97,16 @@ useEffect(() => {
 ## 📏 Reglas y Buenas Prácticas
 
 1. **Responsabilidad Única**: Es mejor tener varios `useEffect` pequeños que uno gigante que haga de todo.
-2. **No mientas sobre las dependencias**: Si usas una variable dentro del efecto, **debe** estar en el array de dependencias (o usa la forma funcional de los setters de estado).
-3. **Evita bucles infinitos**: Si modificas una variable de estado que también está en las dependencias, entrarás en un bucle infinito a menos que uses lógica condicional o setters funcionales.
+2. **No mientas sobre las dependencias**: Si usas una variable dentro del efecto, **debe** estar en el array de dependencias.
+3. **Evita bucles infinitos**: Si modificas una variable de estado que también está en las dependencias, entrarás en un bucle infinito. Usa setters funcionales: `setCount(c => c + 1)`.
+4. **No condiciones el Hook**: Al igual que todos los hooks, debe llamarse en el nivel superior. No lo metas dentro de un `if`.
 
 ---
 
-## Reglas importantes
+## 🧪 useLayoutEffect
 
-- No llames a useEffect dentro de condicionales o bucles.
+Si necesitas medir el DOM o mutar elementos **antes** de que el navegador pinte la pantalla, usa `useLayoutEffect`. Se ejecuta de forma síncrona después de todas las mutaciones del DOM.
 
-- No hagas async directamente en el callback (debe devolver función de cleanup o undefined). Usa función interna.
-
-- Si la dependencia es un objeto o función definida dentro del componente, puede causar bucles infinitos. Usa useCallback o useMemo.
-
-Efectos que se ejecutan antes del paint: useLayoutEffect
-
-Si necesitas medir el DOM o mutar elementos antes de que el navegador pinte, usa useLayoutEffect. Más adelante se detalla.
-Advertencia de dependencias faltantes (eslint-plugin-react-hooks)
-
-```jsx
-useEffect(() => {
-  setCount(count + 1); // count debería estar en dependencias
-}, []); // ❌ warning
-```
-
-Solución: incluye count o usa la forma funcional setCount(prev => prev + 1).
-Ciclo de vida completo
-
-- Montaje: se ejecuta el efecto.
-
-- Actualización: si cambian dependencias, se ejecuta cleanup anterior y luego el nuevo efecto.
-
-- Desmontaje: se ejecuta cleanup.
-
-Buenas prácticas
-
-- Cada efecto debe tener una responsabilidad única (separar varios useEffect).
-
-- Usar dependencias correctas para evitar renders innecesarios.
-
-- Para fetching, considera librerías como React Query que abstraen efectos.
+---
 
 [⬅️ Volver al Índice](../README.md)

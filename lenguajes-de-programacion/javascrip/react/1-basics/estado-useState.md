@@ -30,6 +30,9 @@ const Counter = () => {
 
 Cuando el nuevo estado depende del valor anterior, se recomienda usar una **función callback** dentro del setter para evitar inconsistencias por la naturaleza asíncrona de React.
 
+> [!REDUNDANT]
+> Esta información se repite detalladamente en [useState Avanzado](../2-hooks/useState.md).
+
 ```jsx
 // ❌ Poco seguro en actualizaciones rápidas
 setCount(count + 1);
@@ -45,7 +48,10 @@ setCount(prevCount => prevCount + 1);
 > [!CAUTION]
 > React usa una comparación superficial para detectar cambios. Si mutas un objeto o array directamente, React no detectará el cambio y no re-renderizará.
 
-### Con Objetos
+> [!REDUNDANT]
+> Los ejemplos de spread operator y manipulación de arrays están duplicados en [useState Avanzado](../2-hooks/useState.md).
+
+### 📦 Con Objetos
 
 ```jsx
 const [user, setUser] = useState({ name: 'Ana', age: 25 });
@@ -54,7 +60,7 @@ const [user, setUser] = useState({ name: 'Ana', age: 25 });
 setUser({ ...user, age: 26 });
 ```
 
-### Con Arrays
+### 📋 Con Arrays
 
 ```jsx
 const [items, setItems] = useState(['Manzana', 'Pera']);
@@ -74,33 +80,18 @@ setItems(items.filter(item => item !== 'Pera'));
 2. **Estado Atómico**: Es mejor tener tres `useState` simples que uno gigante con un objeto complejo.
 3. **No dupliques datos**: Si un valor puede calcularse a partir de otros (ej: `total = precio * cantidad`), no lo guardes en un estado. Calcúlalo durante el renderizado.
 
-4. Solo se puede usar en componentes funcionales o custom hooks.
-
-5. Siempre en el mismo orden (no dentro de condicionales o bucles).
-
-6. El argumento inicial solo se usa en la primera renderización.
+> [!REDUNDANT]
+> Las reglas de hooks se repiten en casi todos los archivos de hooks y en la sección avanzada.
 
 ---
 
-## Múltiples estados
-
-Puedes usar varios useState o un useReducer si son muchas variables relacionadas.
-¿Cuándo usar estado?
+## ❓ ¿Cuándo usar estado?
 
 - Datos que cambian por interacción del usuario (inputs, toggles).
-
 - Datos que se cargan asincrónicamente (fetch).
-
 - Valores que afectan el renderizado.
 
-No guardes en estado lo que se puede calcular
-
-```tsx
-// Mal
-const [precio, setPrecio] = useState(10);
-const [conIva, setConIva] = useState(12.1);
-// Bien
-const conIva = precio * 1.21;
+---
 
 [⬅️ Volver al Índice](../README.md)
 

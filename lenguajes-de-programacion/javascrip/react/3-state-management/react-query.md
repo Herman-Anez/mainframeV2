@@ -1,13 +1,25 @@
+# 📡 TanStack Query (React Query)
 
-react-query.md
+React Query (ahora TanStack Query) es la librería definitiva para gestionar el **Estado del Servidor** en React. A diferencia de Redux o Zustand, no se enfoca en el estado global del cliente, sino en sincronizar los datos de tu API con la UI de forma eficiente.
 
-
-React Query (ahora TanStack Query) no es una librería de estado global, sino un gestor de estado asíncrono del servidor. Maneja fetching, caching, sincronización, actualizaciones en segundo plano, etc.
 Diferencia con estado global
 
 - Estado global (Redux/Zustand): guarda datos del cliente (UI, preferencias, etc.).
 
 - React Query: guarda datos del servidor (API, base de datos) con estrategias de caché y revalidación.
+
+---
+
+## 🚀 Conceptos Clave
+
+- **Caching**: Guarda los datos en memoria para evitar peticiones duplicadas.
+- **Stale-while-revalidate**: Muestra datos "viejos" (stale) mientras descarga los nuevos en segundo plano.
+- **Auto-Refetch**: Sincroniza los datos automáticamente cuando el usuario vuelve a enfocar la ventana.
+- **Deduplicación**: Si dos componentes piden lo mismo al mismo tiempo, solo se hace una petición.
+
+---
+
+## 🛠️ Configuración Inicial
 
 Instalación
 
@@ -15,8 +27,6 @@ Instalación
 npm install @tanstack/react-query
 ```
 
-
-Configuración básica
 ```jsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -25,56 +35,39 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <MiApp />
+      <Dashboard />
     </QueryClientProvider>
   );
 }
 ```
 
+---
 
-Uso de useQuery (fetch y caché)
+## ⚓ Hooks Principales
+
+### 1. `useQuery` (Lectura)
+
+Se usa para obtener datos. Requiere una `queryKey` única y una función que devuelva una promesa.
+
 ```jsx
-import { useQuery } from '@tanstack/react-query';
-
-function ListaUsuarios() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['usuarios'],
-    queryFn: () => fetch('/api/usuarios').then(res => res.json()),
-  });
-
-  if (isLoading) return <Spinner />;
-  if (error) return <Error mensaje={error.message} />;
-  return <ul>{data.map(user => <li key={user.id}>{user.name}</li>)}</ul>;
-
-}
+const { data, isLoading, error } = useQuery({
+  queryKey: ['users'],
+  queryFn: fetchUsers
+});
 ```
 
-useMutation (para crear, actualizar, eliminar)
+### 2. `useMutation` (Escritura)
+
+Se usa para crear, actualizar o borrar datos.
 
 ```jsx
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-
-function AgregarUsuario() {
-  const queryClient = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: (nuevoUsuario) => fetch('/api/usuarios', {
-      method: 'POST',
-      body: JSON.stringify(nuevoUsuario),
-      headers: { 'Content-Type': 'application/json' },
-    }).then(res => res.json()),
-    onSuccess: () => {
-
-      // Invalida la caché de usuarios para refetch
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
-    },
-  });
-
-  return (
-    <button onClick={() => mutation.mutate({ name: 'Nuevo' })}>
-      Agregar
-    </button>
-  );
-}
+const mutation = useMutation({
+  mutationFn: (newUser) => axios.post('/users', newUser),
+  onSuccess: () => {
+    // Invalida la caché para forzar un refetch de los usuarios
+    queryClient.invalidateQueries({ queryKey: ['users'] });
+  }
+});
 ```
 
 Características avanzadas
@@ -90,6 +83,7 @@ Características avanzadas
 - Prefetching para mejorar UX.
 
 Configuración global del QueryClient
+
 ```jsx
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,7 +97,18 @@ const queryClient = new QueryClient({
 });
 ```
 
+---
 
+## 💡 ¿Por qué usarlo?
+
+| Sin React Query | Con React Query |
+| :--- | :--- |
+| `useEffect` manual + `useState` | Declarativo y automático |
+| Lógica compleja de `loading/error` | Variables `isLoading`, `isError` integradas |
+| Se pierden datos al navegar | Caché persistente entre rutas |
+| Múltiples peticiones idénticas | Deduplicación inteligente |
+
+---
 Comparación con useEffect + useState
 |Con useEffect|Con React Query|
 |-|-|
@@ -111,6 +116,8 @@ Comparación con useEffect + useState
 |Sin caché|Caché automático|
 |Solicitudes duplicadas|Deduplicación|
 |Dependencia manual de efectos|Declarativo con queryKey|
+
+---
 
 ## Buenas prácticas
 
@@ -126,3 +133,4 @@ React Query vs Redux (para datos de API)
 
 No compiten; se complementan. React Query maneja el servidor-estado; Redux maneja el cliente-estado. Puedes usar ambos.
 
+[⬅️ Volver al Índice](../README.md)

@@ -2,6 +2,10 @@
 
 Las **props** (propiedades) son el mecanismo principal para pasar datos de un componente padre a un componente hijo. Son la base de la arquitectura unidireccional de React.
 
+---
+
+## 🛡️ Inmutabilidad
+
 > [!IMPORTANT]
 > Las props son **de solo lectura** (inmutables). Un componente hijo nunca debe intentar modificar las props que recibe.
 
@@ -69,6 +73,32 @@ const Modal = ({ children, title }) => (
 
 ---
 
+## ⚙️ Componentes con Valores por Defecto
+
+Existen dos formas principales de definir valores por defecto para tus props:
+
+### 1. Parámetros por defecto de JS (Recomendado)
+
+```jsx
+function Button({ text = "Click aquí" }) {
+  return <button>{text}</button>;
+}
+```
+
+### 2. Propiedad `defaultProps`
+
+```jsx
+const Button = ({ text }) => {
+  return <button>{text}</button>;
+};
+
+Button.defaultProps = {
+  text: "Click aquí"
+};
+```
+
+---
+
 ## 🛠️ Validación con PropTypes
 
 Aunque hoy se suele usar **TypeScript**, `prop-types` es una librería estándar para validar que un componente reciba los datos correctos durante el desarrollo.
@@ -81,26 +111,9 @@ UserCard.propTypes = {
   age: PropTypes.number,
   isAdmin: PropTypes.bool
 };
-
-UserCard.defaultProps = {
-  isAdmin: false
-};
 ```
-
-----
-
-## Props por defecto (defaultProps)
-
-```tsx
-```
-
-function Boton({ texto = "Click" }) { ... }
-// o externamente:
-Boton.defaultProps = { texto: "Click" };
 
 ---
-
-----
 
 ## 📏 Reglas de Oro
 

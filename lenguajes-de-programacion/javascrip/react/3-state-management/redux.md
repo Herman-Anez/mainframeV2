@@ -1,14 +1,21 @@
-# redux.md
+# ⚛️ Redux & Redux Toolkit (RTK)
 
-Redux es una librería de gestión de estado global predecible basada en el patrón Flux. Se usa frecuentemente con React a través de react-redux.
+Redux es una librería para la gestión del estado global de las aplicaciones. Es conocida por su arquitectura predecible y estricta, basada en el patrón **Flux**.
 
-## Principios fundamentales
+> [!IMPORTANT]
+> Hoy en día, **Redux Toolkit (RTK)** es la forma oficial y recomendada de escribir lógica de Redux. Elimina el "boilerplate" excesivo del Redux clásico.
 
-- Única fuente de verdad: el estado global vive en un solo store.
+---
 
-- El estado es de solo lectura: solo se modifica emitiendo acciones.
+## 🏗️ Principios Fundamentales
 
-- Los cambios se hacen con funciones puras (reducers).
+1.  **Única fuente de verdad**: Todo el estado de tu aplicación vive en un solo objeto (Store).
+2.  **El estado es de solo lectura**: La única forma de cambiar el estado es emitiendo una **Acción**.
+3.  **Cambios con funciones puras**: Los **Reducers** especifican cómo cambian las acciones al estado.
+
+---
+
+
 
 ## Flujo básico de Redux
 
@@ -39,6 +46,38 @@ store.dispatch({ type: 'INCREMENTAR' });
 store.subscribe(() => console.log(store.getState()));
 ```
 
+
+## 🛠️ Redux Toolkit (La forma moderna)
+
+RTK simplifica radicalmente la creación de Redux. Usa `createSlice` para definir reducers y acciones en un solo lugar.
+
+```jsx
+import { createSlice, configureStore } from '@reduxjs/toolkit';
+
+// 1. Definir un "Slice"
+const counterSlice = createSlice({
+  name: 'counter',
+  initialState: { value: 0 },
+  reducers: {
+    increment: (state) => {
+      // RTK permite "mutar" el estado internamente gracias a Immer.js
+      state.value += 1;
+    },
+    decrement: (state) => {
+      state.value -= 1;
+    }
+  }
+});
+
+// 2. Exportar acciones y el store
+export const { increment, decrement } = counterSlice.actions;
+export const store = configureStore({
+  reducer: {
+    counter: counterSlice.reducer
+  }
+});
+```
+---
 ## Redux con React (react-redux)
 
 ### Proveer el store
@@ -72,6 +111,44 @@ function Contador() {
   );
 }
 ```
+
+---
+
+## 🔌 Uso en React
+
+Necesitas `react-redux` para conectar tu Store con los componentes.
+
+```jsx
+import { useSelector, useDispatch } from 'react-redux';
+import { increment } from './counterSlice';
+
+function Counter() {
+  // Leer del estado
+  const count = useSelector((state) => state.counter.value);
+  // Enviar acciones
+  const dispatch = useDispatch();
+
+  return (
+    <div>
+      <span>{count}</span>
+      <button onClick={() => dispatch(increment())}>+1</button>
+    </div>
+  );
+}
+```
+
+---
+
+## ⚡ ¿Cuándo elegir Redux?
+
+| Situación | Recomendación |
+| :--- | :--- |
+| **App Giga-Escalable** | ✅ Redux es imbatible por sus herramientas de debugging y consistencia. |
+| **Muchos Estados Cruzados** | ✅ Si muchos componentes no relacionados necesitan los mismos datos. |
+| **Lógica de Negocio Compleja** | ✅ Redux permite separar la lógica de la UI de forma muy clara. |
+| **Proyectos Pequeños** | ❌ Considera **Zustand** o **Context API** para evitar complejidad innecesaria. |
+
+---
 
 
 Redux Toolkit (recomendado hoy)
@@ -143,3 +220,11 @@ Cuándo usar Redux
 Alternativas modernas más ligeras
 
 - Zustand (siguiente archivo), Jotai, Recoil.
+
+
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>
+

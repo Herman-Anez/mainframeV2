@@ -10,7 +10,7 @@ Zustand es una librería de gestión de estado pequeña, rápida y escalable. Su
 npm install zustand
 ```
 
-### Crear un Store
+### 📦 Crear un Store
 
 A diferencia de Context, no necesitas un `Provider`. Creas el store y lo usas donde quieras.
 
@@ -29,7 +29,7 @@ const useCounterStore = create((set) => ({
 
 ## 🛠️ Uso en Componentes
 
-### Acceso Básico
+### 🖱️ Acceso Básico
 
 ```jsx
 function Counter() {
@@ -111,8 +111,4 @@ const useStore = create(
 
 ---
 
-<div align="center">
-
 [⬅️ Volver al Índice](../README.md)
-
-</div>

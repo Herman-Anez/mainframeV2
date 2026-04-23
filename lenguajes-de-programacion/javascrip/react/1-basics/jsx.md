@@ -2,11 +2,13 @@
 
 JSX es una extensión de sintaxis para JavaScript que permite escribir estructuras similares a HTML dentro de tus archivos JS. Aunque no es obligatorio, es el estándar de oro en React por su expresividad y facilidad de uso.
 
+---
+
 ## 🔍 ¿Cómo funciona?
 
 Bajo el capó, los navegadores no entienden JSX. Herramientas como **Babel** o **SWC** transforman tu JSX en llamadas a funciones estándar de `React.createElement`.
 
-### Ejemplo de transformación
+### 🧪 Ejemplo de transformación
 
 ```jsx
 // Lo que escribes
@@ -51,15 +53,18 @@ const UserProfile = () => {
 
 ---
 
-
-## JSX como valor
+## 💎 JSX como valor
 
 Puedes guardar JSX en variables, devolverlo desde funciones, pasarlo como props.
+
+---
 
 ## 🛡️ Seguridad (Inyección XSS)
 
 React se encarga de **escapar todos los valores** antes de renderizarlos. Esto significa que nunca podrás inyectar código malicioso accidentalmente a través de una variable de texto.
-Nunca uses dangerouslySetInnerHTML a menos que confíes plenamente en el contenido.
+
+> [!WARNING]
+> Nunca uses `dangerouslySetInnerHTML` a menos que confíes plenamente en el contenido.
 
 ---
 
