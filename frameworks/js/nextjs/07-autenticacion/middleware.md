@@ -4,9 +4,9 @@ El **Middleware** de Next.js se ejecuta antes de que una solicitud se complete, 
 
 ## Conceptos Básicos
 
-*   **Ubicación:** Archivo `middleware.ts` (o `.js`) en la raíz del proyecto (al mismo nivel que `app/` o `pages/`).
-*   **Función:** Exporta una función `middleware` que recibe `NextRequest` y retorna una `NextResponse`.
-*   **Filtrado:** Se aplica a todas las rutas por defecto, pero puedes restringirlo con un objeto `config.matcher`.
+* **Ubicación:** Archivo `middleware.ts` (o `.js`) en la raíz del proyecto (al mismo nivel que `app/` o `pages/`).
+* **Función:** Exporta una función `middleware` que recibe `NextRequest` y retorna una `NextResponse`.
+* **Filtrado:** Se aplica a todas las rutas por defecto, pero puedes restringirlo con un objeto `config.matcher`.
 
 ### Ejemplo: Redirección por Autenticación
 
@@ -79,10 +79,10 @@ export const config = {
 
 El middleware tiene acceso a metadatos de la solicitud que permiten decisiones granulares:
 
-*   **`req.cookies`**: Cookies de la solicitud (objeto iterable).
-*   **`req.headers`**: Cabeceras HTTP.
-*   **`req.geo`**: Información geográfica (país, ciudad, etc.) — *Solo en Vercel/Edge*.
-*   **`req.nextUrl`**: Objeto URL con información detallada de la ruta.
+* **`req.cookies`**: Cookies de la solicitud (objeto iterable).
+* **`req.headers`**: Cabeceras HTTP.
+* **`req.geo`**: Información geográfica (país, ciudad, etc.) — *Solo en Vercel/Edge*.
+* **`req.nextUrl`**: Objeto URL con información detallada de la ruta.
 
 > [!NOTE]
 > Puedes usar `NextResponse.rewrite(destination)` para realizar reescrituras internas donde el cliente no ve el cambio de URL, ideal para i18n o A/B testing.
@@ -93,21 +93,20 @@ El middleware tiene acceso a metadatos de la solicitud que permiten decisiones g
 
 Debido a que el middleware corre en el Edge, existen restricciones importantes:
 
-*   **Sin Node.js nativo:** No puedes usar `fs`, `path`, `crypto` (versión Node) ni librerías que dependan de ellas.
-*   **Sin `req.body`**: El cuerpo de la solicitud no está disponible en el middleware. Para validar datos POST, usa **Route Handlers** o **Server Actions**.
-*   **Velocidad:** Debe ser una función de ejecución rápida. Evita llamadas a APIs pesadas o procesos síncronos largos.
+* **Sin Node.js nativo:** No puedes usar `fs`, `path`, `crypto` (versión Node) ni librerías que dependan de ellas.
+* **Sin `req.body`**: El cuerpo de la solicitud no está disponible en el middleware. Para validar datos POST, usa **Route Handlers** o **Server Actions**.
+* **Velocidad:** Debe ser una función de ejecución rápida. Evita llamadas a APIs pesadas o procesos síncronos largos.
 
 ---
 
 ## Buenas Prácticas
 
-1.  **Matcher Restrictivo:** Evita usar `*` que abarque todo el sitio. Prefiere patrones específicos como `['/app/:path*', '/api/auth/:path*']`.
-2.  **Evitar Bucles:** Verifica siempre la URL actual antes de redirigir (ej. no redirijas a `/login` si el usuario ya está en `/login`).
-3.  **Seguridad en APIs:** El middleware también protege los **Route Handlers**. Úsalo para validar tokens en tus endpoints `/api`.
+1. **Matcher Restrictivo:** Evita usar `*` que abarque todo el sitio. Prefiere patrones específicos como `['/app/:path*', '/api/auth/:path*']`.
+2. **Evitar Bucles:** Verifica siempre la URL actual antes de redirigir (ej. no redirijas a `/login` si el usuario ya está en `/login`).
+3. **Seguridad en APIs:** El middleware también protege los **Route Handlers**. Úsalo para validar tokens en tus endpoints `/api`.
 
 > [!IMPORTANT]
 > El middleware es una herramienta de **control de acceso**, no de procesamiento de datos pesados. Su objetivo principal es decidir si una solicitud debe proceder, ser redirigida o bloqueada.
-
 
 ### Evitar bucles de redirección
 
@@ -126,6 +125,7 @@ Rendimiento y buenas prácticas
 ### Middleware para APIs (Route Handlers)
 
 El middleware también se ejecuta en las API routes del App Router. Puedes protegerlas de la misma manera:
+
 ```ts
 if (req.nextUrl.pathname.startsWith('/api/admin') && !req.auth?.user?.isAdmin) {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -135,4 +135,3 @@ if (req.nextUrl.pathname.startsWith('/api/admin') && !req.auth?.user?.isAdmin) {
 El middleware de autenticación es una herramienta central en el App Router para garantizar la seguridad sin tocar cada página o endpoint individualmente.
 
 Con estos cinco archivos, tienes cubierta una parte fundamental del desarrollo de aplicaciones Next.js: la visibilidad en buscadores y la autenticación robusta. Si necesitas continuar con despliegue, testing o internacionalización, avísame.
-
