@@ -1,0 +1,62 @@
+nextjs-conocimiento/
+├── 00-introduccion/
+│   ├── que-es-nextjs.md
+│   ├── comparacion-con-react.md
+│   └── instalacion-y-setup.md
+├── 01-pages-router/
+│   ├── fundamentos-pages-router.md
+│   ├── rutas-estaticas-y-dinamicas.md
+│   ├── getServerSideProps.md
+│   ├── getStaticProps-y-getStaticPaths.md
+│   ├── api-routes-pages.md
+│   ├── componente-head-y-seo.md
+│   └── diferencias-con-app-router.md
+├── 02-app-router/
+│   ├── fundamentos-app-router.md
+│   ├── server-components-vs-client.md
+│   ├── rutas-estaticas-dinamicas-paralelas.md
+│   ├── interceptacion-de-rutas.md
+│   ├── layouts-y-templates.md
+│   ├── loading-y-error.md
+│   ├── route-handlers-app.md
+│   └── server-actions.md
+├── 03-renderizado/
+│   ├── server-side-rendering-ssr.md
+│   ├── static-generation-ssg.md
+│   ├── incremental-static-regeneration-isr.md
+│   └── streaming-y-suspense.md
+├── 04-data-fetching/
+│   ├── patrones-pages-router.md
+│   ├── patrones-app-router.md
+│   ├── cache-y-revalidate.md
+│   └── librerias-cliente-swr-query.md
+├── 05-optimizacion/
+│   ├── next-image.md
+│   ├── next-font.md
+│   ├── caching-estrategias.md
+│   └── turbopack.md
+├── 06-seo-y-metadata/
+│   ├── seo-en-pages-head.md
+│   └── metadata-api-app.md
+├── 07-autenticacion/
+│   ├── patrones-pages-router.md
+│   ├── nextauth-app-router.md
+│   └── middleware.md
+├── 08-internacionalizacion/
+│   ├── i18n-pages-router.md
+│   └── i18n-app-router.md
+├── 09-deploy-y-configuracion/
+│   ├── next-config-js.md
+│   ├── variables-de-entorno.md
+│   ├── despliegue-vercel.md
+│   ├── despliegue-node.md
+│   ├── dockerizar.md
+│   └── export-estatico.md
+├── 10-testing/
+│   ├── testing-pages-router.md
+│   └── testing-app-router.md
+├── 11-typescript/
+│   ├── configuracion.md
+│   └── tipos-utiles.md
+└───12-cli-y-scripts/
+    └── comandos-next.md
