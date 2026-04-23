@@ -22,8 +22,13 @@ npm start
 Para garantizar que la aplicación se mantenga activa y se reinicie ante fallos, se recomienda el uso de **PM2**.
 
 ```bash
+# Instalación global
 npm install -g pm2
+
+# Inicio de la aplicación
 pm2 start npm --name "mi-app" -- start
+
+# Guardar configuración para reinicios del sistema
 pm2 save
 pm2 startup
 ```
@@ -106,18 +111,22 @@ Environment=PORT=3000
 WantedBy=multi-user.target
 ```
 
-Actívalo:
-
+**Comandos de activación:**
 ```bash
 systemctl enable nextjs
 systemctl start nextjs
 ```
 
-### Servidor personalizado con Express
+---
 
-Si necesitas lógica adicional (manejo de sesiones, websockets, subprocesos), puedes crear un servidor Express que importe el request handler de Next.js. Esto desactiva algunas optimizaciones, pero es posible.
+## Servidor Personalizado (Custom Server)
 
-```ts
+Si necesitas lógica adicional (manejo de sesiones, websockets, subprocesos), puedes crear un servidor Express que importe el request handler de Next.js. 
+
+> [!WARNING]
+> Usar un servidor personalizado desactiva algunas optimizaciones automáticas de Next.js como la gestión de rutas de borde y ciertas capacidades de caché.
+
+```typescript
 // server.ts
 import express from 'express'
 import next from 'next'
@@ -125,33 +134,24 @@ import next from 'next'
 const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev })
 const handle = app.getRequestHandler()
-```
 
-### app.prepare().then(() => {
+app.prepare().then(() => {
   const server = express()
   server.all('*', (req, res) => handle(req, res))
-  server.listen(3000)
+  server.listen(3000, () => {
+    console.log('> Ready on http://localhost:3000')
+  })
 })
-
-Luego compilas server.ts con tsc y lo ejecutas con Node.
-Consideraciones de rendimiento
-
-    Usa el cluster mode de PM2 para aprovechar multi-core.
-
-    Configura Nginx para compresión gzip/br.
-
-    Ajusta las cabeceras de caché de estáticos.
-
-    Monitorea con herramientas como pm2 monit o Prometheus.
+```
 
 ---
 
-## Consideraciones de Rendimiento
+## Consideraciones de Rendimiento y Monitoreo
 
-1. **Modo Cluster:** Siempre usa el modo cluster de PM2 en servidores con más de un núcleo.
-2. **Compresión:** Habilita `gzip` o `brotli` en Nginx para reducir el tamaño de las transferencias.
-3. **Caché de Estáticos:** Asegúrate de que Nginx sirva directamente la carpeta `.next/static` para liberar carga del servidor Node.
-4. **Monitoreo:** Utiliza `pm2 monit` para supervisar el consumo de memoria y CPU en tiempo real.
+1.  **Modo Cluster**: Siempre usa el modo cluster (ya sea vía PM2 o el módulo `cluster` de Node) para aprovechar todos los núcleos del procesador.
+2.  **Compresión**: Habilita `gzip` o `brotli` en Nginx (o mediante middleware como `compression` si usas un servidor custom) para reducir el tamaño de transferencia.
+3.  **Caché de Estáticos**: Asegúrate de que Nginx sirva directamente la carpeta `.next/static` para liberar carga del servidor Node.js.
+4.  **Monitoreo**: Utiliza herramientas como `pm2 monit`, Prometheus o Grafana para supervisar el consumo de recursos y la latencia.
 
 > [!IMPORTANT]
 > Al desplegar en tu propio servidor, eres responsable de la seguridad del sistema operativo, las actualizaciones de Node.js y la gestión de certificados SSL.
@@ -159,3 +159,6 @@ Consideraciones de rendimiento
 ---
 
 Desplegar en un servidor Node.js propio es la opción ideal para entornos corporativos o cuando se requiere una integración profunda con otros servicios del sistema.
+
+---
+[<- Anterior: Despliegue en Vercel](despliegue-vercel.md) | [Siguiente: Dockerizar Next.js ->](dockerizar.md)

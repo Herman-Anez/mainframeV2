@@ -1,12 +1,12 @@
-# Estrategias de caché en Next.js
+# Estrategias de Caché en Next.js
 
-Más allá de los mecanismos básicos de revalidación, Next.js ofrece varias capas de caché que pueden combinarse para obtener el mejor equilibrio entre rendimiento y frescura de datos. Este capítulo profundiza en cómo diseñar una estrategia de caché efectiva.
+Next.js ofrece varias capas de caché que pueden combinarse para obtener el mejor equilibrio entre rendimiento y frescura de datos. Este capítulo profundiza en cómo diseñar una estrategia de caché efectiva.
 
-## Capas de caché (Repaso ampliado)
+## Capas de Caché (Repaso Ampliado)
 
 | Capa | Ubicación | Duración / Propósito |
 | :--- | :--- | :--- |
-| **Router Cache** | Cliente (Navegador) | ~30s. Para navegación instantánea entre rutas ya visitadas. |
+| **Router Cache** | Cliente (Navegador) | ~30s. Navegación instantánea entre rutas ya visitadas. |
 | **Full Route Cache** | Servidor | Persiste hasta revalidación o redeploy. Almacena HTML y RSC payload. |
 | **Data Cache** | Servidor | Persistente entre despliegues. Almacena respuestas de `fetch`. |
 | **Image Cache** | Servidor | Caché específica para imágenes optimizadas. |
@@ -69,6 +69,7 @@ En Client Components, usa `router.refresh()` para invalidar la caché de navegac
 
 ```tsx
 import { useRouter } from 'next/navigation'
+
 const router = useRouter()
 router.refresh()
 ```
@@ -105,3 +106,6 @@ module.exports = {
 ---
 
 Una estrategia de caché bien diseñada permite que tu aplicación escale masivamente sin sacrificar la frescura de los datos críticos.
+
+---
+[<- Anterior: Cache y Revalidate](../04-data-fetching/cache-y-revalidate.md) | [Siguiente: Next Image ->](next-image.md)

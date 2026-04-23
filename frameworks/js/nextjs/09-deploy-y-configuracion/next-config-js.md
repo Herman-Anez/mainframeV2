@@ -41,8 +41,8 @@ images: {
 ### 2. Redirecciones y Reescrituras
 Permiten gestionar el flujo de URLs del lado del servidor.
 
-*   **`redirects`:** Cambian la URL visible y el código de estado (SEO).
-*   **`rewrites`:** Mapean internamente una URL a otra sin que el usuario lo note (útil para proxies de APIs).
+*   **`redirects`**: Cambian la URL visible y el código de estado (SEO).
+*   **`rewrites`**: Mapean internamente una URL a otra sin que el usuario lo note (útil para proxies de APIs).
 
 ```javascript
 async redirects() {
@@ -106,7 +106,7 @@ experimental: {
 
 ## Buenas Prácticas
 
-1.  **Tipado Dinámico:** Si necesitas lógica basada en el entorno (dev vs build), puedes exportar una función en lugar de un objeto:
+1.  **Tipado Dinámico**: Si necesitas lógica basada en el entorno (dev vs build), puedes exportar una función en lugar de un objeto:
     ```javascript
     module.exports = (phase, { defaultConfig }) => {
       if (phase === 'phase-development-server') {
@@ -115,12 +115,15 @@ experimental: {
       return { /* config de producción */ }
     }
     ```
-2.  **Modularización:** Si el archivo se vuelve demasiado grande, separa las redirecciones o configuraciones de plugins en archivos independientes.
-3.  **Seguridad:** Nunca incluyas secretos directamente en este archivo si planeas subirlos al repositorio. Usa variables de entorno.
+2.  **Modularización**: Si el archivo se vuelve demasiado grande, separa las redirecciones o configuraciones de plugins en archivos independientes.
+3.  **Seguridad**: Nunca incluyas secretos directamente en este archivo si planeas subirlos al repositorio. Usa variables de entorno.
 
 > [!IMPORTANT]
 > Los cambios en `next.config.js` requieren un reinicio del servidor de desarrollo para surtir efecto.
 
 ---
 
-`next-config-js` es la herramienta más potente para adaptar el framework a las necesidades específicas de tu proyecto, garantizando control total sobre el comportamiento de la aplicación.
+`next.config.js` es la herramienta más potente para adaptar el framework a las necesidades específicas de tu proyecto, garantizando control total sobre el comportamiento de la aplicación.
+
+---
+[<- Anterior: Variables de Entorno](variables-de-entorno.md) | [Siguiente: Despliegue en Vercel ->](despliegue-vercel.md)

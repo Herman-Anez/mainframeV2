@@ -1,4 +1,4 @@
-# Dockerizar una aplicación Next.js
+# Dockerizar una Aplicación Next.js
 
 Dockerizar permite empaquetar la aplicación con todas sus dependencias y desplegarla en cualquier entorno compatible con contenedores. La opción **standalone** de Next.js optimiza la imagen eliminando la necesidad de `node_modules` completos en la etapa final.
 
@@ -75,6 +75,7 @@ docker run -p 3000:3000 -e DATABASE_URL=... mi-next-app
 
 ```yaml
 version: '3.8'
+
 services:
   web:
     build: .
@@ -95,10 +96,10 @@ volumes:
 
 En entornos con múltiples contenedores (Kubernetes, Swarm), el **ISR** puede presentar inconsistencias ya que la caché reside localmente en cada instancia.
 
-**Soluciones posibles:**
-*   **Volúmenes Compartidos:** Montar un almacenamiento compartido (NFS/EFS) en `.next/cache`.
-*   **Revalidación bajo demanda:** Notificar a todas las instancias mediante webhooks tras una mutación.
-*   **Adaptadores de Caché:** Implementar un proveedor de caché externo (Redis) si la plataforma lo permite.
+### Soluciones posibles:
+*   **Volúmenes Compartidos**: Montar un almacenamiento compartido (NFS/EFS) en `.next/cache`.
+*   **Revalidación bajo demanda**: Notificar a todas las instancias mediante webhooks tras una mutación.
+*   **Adaptadores de Caché**: Implementar un proveedor de caché externo (Redis) si la plataforma lo permite.
 
 > [!IMPORTANT]
 > Al usar el modo `standalone`, los archivos estáticos (`public` y `.next/static`) deben ser copiados manualmente en el Dockerfile, ya que el servidor compilado en `server.js` espera encontrarlos en su ubicación relativa pero no los incluye por defecto en el bundle comprimido.
@@ -106,3 +107,6 @@ En entornos con múltiples contenedores (Kubernetes, Swarm), el **ISR** puede pr
 ---
 
 Dockerizar con el modo standalone genera imágenes ligeras y eficientes, listas para ser desplegadas en cualquier orquestador de contenedores moderno.
+
+---
+[<- Anterior: Despliegue en Node.js](despliegue-node.md) | [Siguiente: Export Estático ->](export-estatico.md)
