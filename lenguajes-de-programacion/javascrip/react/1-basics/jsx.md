@@ -1,59 +1,66 @@
-# ¿Qué es JSX?
+# 📝 JSX: JavaScript XML
 
-JSX (JavaScript XML) es una extensión de sintaxis que permite escribir estructuras similares a HTML dentro de código JavaScript. No es obligatorio en React, pero es la forma recomendada por su legibilidad y potencia.
-Transformación
+JSX es una extensión de sintaxis para JavaScript que permite escribir estructuras similares a HTML dentro de tus archivos JS. Aunque no es obligatorio, es el estándar de oro en React por su expresividad y facilidad de uso.
 
-JSX se compila (con Babel o swc) a llamadas React.createElement:
-jsx
+## 🔍 ¿Cómo funciona?
 
-```JSX
-// JSX
-const elemento = <h1 className="saludo">Hola, mundo</h1>;// Compilado
+Bajo el capó, los navegadores no entienden JSX. Herramientas como **Babel** o **SWC** transforman tu JSX en llamadas a funciones estándar de `React.createElement`.
 
-const elemento = React.createElement('h1', { className: 'saludo' }, 'Hola, mundo');
-```
-
-## Reglas y características importantes
-
-- Una sola raíz: Todo componente debe devolver un solo elemento envolvente. Puedes usar `<Fragment> o <> </>.`
-
-- Etiquetas deben cerrarse: `<img />, <br />, <input />.`
-
-- Expresiones JavaScript entre {}:
+### Ejemplo de transformación
 
 ```jsx
-const nombre = "Ana";
-const element = <p>Bienvenida {nombre}</p>;
+// Lo que escribes
+const element = <h1 className="title">Hola Mundo</h1>;
+
+// Lo que el navegador recibe
+const element = React.createElement('h1', { className: 'title' }, 'Hola Mundo');
 ```
 
-- Atributos con camelCase:
+---
 
-- - class → className
+## 📏 Reglas de Oro
 
-- - for → htmlFor
+Para que el compilador sea feliz, debes seguir estas reglas fundamentales:
 
-- - tabindex → tabIndex
+1.  **Un solo elemento raíz**: Todo componente o expresión debe devolver un único elemento padre.
+    > [!TIP]
+    > Usa Fragmentos (`<> ... </>`) si no quieres añadir nodos extra al DOM.
+2.  **Cierre obligatorio**: Todas las etiquetas deben cerrarse, incluso las vacías (ej: `<img />`, `<br />`).
+3.  **CamelCase para atributos**: En lugar de `onclick`, usa `onClick`. `class` se convierte en `className`.
+4.  **JavaScript en llaves**: Puedes inyectar cualquier expresión válida de JS usando `{ }`.
 
-Estilos en línea con objeto:
+---
+
+## 💡 Ejemplo Práctico
 
 ```jsx
+const UserProfile = () => {
+  const user = { name: "Ana", age: 25 };
 
-<div style={{ backgroundColor: 'red', fontSize: '16px' }}>Texto</div>
-
-/*Comentarios:*/ {/*comentario*/}
+  return (
+    <div className="card">
+      <h2>Bienvenida, {user.name}</h2>
+      <p>Edad: {user.age > 18 ? "Adulto" : "Menor"}</p>
+      <div style={{ backgroundColor: '#f0f0f0', padding: '10px' }}>
+        Perﬁl verificado
+      </div>
+    </div>
+  );
+};
 ```
+
+---
+
 
 ## JSX como valor
 
 Puedes guardar JSX en variables, devolverlo desde funciones, pasarlo como props.
-Seguridad contra inyección XSS
 
-React escapa automáticamente los valores incrustados en JSX antes de renderizarlos. Nunca uses dangerouslySetInnerHTML a menos que confíes plenamente en el contenido.
-Buenas prácticas
+## 🛡️ Seguridad (Inyección XSS)
 
-- Mantén JSX legible, extrae lógica compleja fuera del return.
+React se encarga de **escapar todos los valores** antes de renderizarlos. Esto significa que nunca podrás inyectar código malicioso accidentalmente a través de una variable de texto.
+Nunca uses dangerouslySetInnerHTML a menos que confíes plenamente en el contenido.
 
-- Usa paréntesis para envolver JSX multilínea.
+---
 
-- Prefiere fragmentos en lugar de div innecesarios.
-[back](../index.md)
+[⬅️ Volver al Índice](../README.md)

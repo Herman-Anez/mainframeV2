@@ -4,8 +4,6 @@ Props drilling (o "perforación de props") es la situación en la que datos debe
 Ejemplo del problema
 
 ```jsx
-```
-
 function App() {
   const [user, setUser] = useState({ name: 'Ana' });
   return <Header user={user} />;
@@ -22,6 +20,7 @@ function Navbar({ user }) {
 function Avatar({ user }) {
   return <img src={user.avatar} />;
 }
+```
 
 Aquí Header y Navbar solo pasan user sin usarlo directamente.
 ¿Por qué es problemático?
@@ -65,7 +64,7 @@ Sigue habiendo cierto drilling, pero más controlado.
 
 ## Context API
 
-Provee el dato en un nivel alto y lo consume donde sea necesari## (Ver siguiente archivo)
+Provee el dato en un nivel alto y lo consume donde sea necesario (Ver siguiente archivo)
 
 ## Estado global con librerías (Redux, Zustand, etc.)
 

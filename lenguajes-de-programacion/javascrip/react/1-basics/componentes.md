@@ -1,34 +1,37 @@
-# componentes.md
+# 🧱 Componentes: El Corazón de React
 
-## Definición
+Los componentes son las piezas fundamentales de la interfaz de usuario. Son independientes, reutilizables y permiten dividir la UI en partes lógicas y manejables.
 
-Un componente es una pieza de UI reutilizable e independiente. Puede ser una función o una clase. Recibe props y devuelve JSX.
+---
 
-## Componente funcional (moderno)
+## 🏗️ Tipos de Componentes
 
-```JSX
+### 1. Componentes Funcionales (Recomendado)
+
+Son funciones de JavaScript que devuelven JSX. Gracias a los **Hooks**, hoy en día pueden manejar estado y ciclo de vida.
+
+```jsx
+const Welcome = ({ name }) => {
+  return <h1>Hola, {name}</h1>;
+};
 function Saludo(props) {
   return <h1>Hola, {props.nombre}</h1>;
 }
 ```
 
-- Desde React 16.8 pueden usar hooks (estado, efectos, etc.).
+### 2. Componentes de Clase (Legado)
 
-- Son más simples y ligeros.
-
-## Componente de clase (legado)
+Eran el estándar antes de 2019. Aunque siguen funcionando, la comunidad y el equipo de React recomiendan usar componentes funcionales.
 
 ```jsx
-class Saludo extends React.Component {
+class Welcome extends React.Component {
   render() {
-    return <h1>Hola, {this.props.nombre}</h1>;
+    return <h1>Hola, {this.props.name}</h1>;
   }
 }
 ```
 
-- Necesitan render().
-
-- Usaban this.state y ciclo de vida (componentDidMount, etc.). Hoy se recomienda funciones + hooks.
+---
 
 ## Tipos de componentes según su función
 
@@ -38,25 +41,38 @@ class Saludo extends React.Component {
 
 - Componentes puros: Dado las mismas props, siempre renderizan el mismo JSX.
 
-## Reglas importantes
+## 📏 Reglas y Convenciones
 
-- Los nombres de componentes deben comenzar con mayúscula (distingue de etiquetas HTML).
+1. **PascalCase**: Los nombres de los componentes **siempre** deben empezar con mayúscula (ej: `MyButton`, no `myButton`). Esto permite a React distinguirlos de las etiquetas HTML estándar.
+2. **Inmutabilidad**: Un componente nunca debe modificar sus propias `props`. Deben tratarse como valores de solo lectura.
+3. **Responsabilidad Única**: Si un componente se vuelve demasiado complejo, es una señal para dividirlo en componentes más pequeños.
 
-- Un componente no debe modificar sus props (son de solo lectura).
+---
 
-- Todo componente debe ser una función pura respecto a sus props y estado (para evitar efectos colaterales).
+## 🧩 Composición y `children`
 
-## Composición
+React favorece la **composición sobre la herencia**. Puedes pasar otros componentes o elementos como contenido usando la prop especial `children`.
 
-Se recomienda composición sobre herencia. Puedes anidar componentes y usar props.children:
+```jsx
+const Card = ({ children, title }) => {
+  return (
+    <div className="card">
+      <h3>{title}</h3>
+      <div className="content">
+        {children}
+      </div>
+    </div>
+  );
+};
 
-```tsx
-function Contenedor({ children }) {
-  return <div className="card">{children}</div>;
-}
+// Uso:
+<Card title="Mi Perfil">
+  <p>Este es el contenido interno del card.</p>
+</Card>
 ```
 
-## Extracción de componentes
+> [!TIP]
+> Piensa en los componentes como funciones matemáticas: **Props (Input) → JSX (Output)**.
 
-Cuando una parte de la UI se repite o es compleja, conviene extraerla en un componente independiente.
-[back](../index.md)
+---
+[⬅️ Volver al Índice](../README.md)
