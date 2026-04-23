@@ -1,30 +1,23 @@
-# useState.md
+# ⚓ useState Avanzado: Más allá de lo básico
 
-- Nota: Aunque useState ya se introdujo en 1-basics/estado-useState.md, aquí se profundiza en aspectos más avanzados y patrones.
+Aunque ya conoces los fundamentos de `useState`, existen patrones y comportamientos internos que son cruciales para construir aplicaciones robustas y eficientes.
 
-Concepto avanzado
+---
 
-useState es el hook fundamental para manejar estado local en componentes funcionales. React garantiza que el valor del estado se mantenga entre renders y que al actualizarlo se programe un nuevo render.
-Formas de inicialización
-Inicialización directa
+## ⚡ Inicialización Diferida (Lazy Initialization)
 
-```jsx
-const [count, setCount] = useState(0);
-```
-
-Inicialización diferida (lazy initialization)
-
-Cuando el estado inicial requiere un cálculo costoso, pasa una función:
+Si el estado inicial requiere un cálculo costoso (por ejemplo, leer de `localStorage` o procesar una lista grande), puedes pasar una **función** a `useState`. Esta función solo se ejecutará **una vez**, en el primer montaje.
 
 ```jsx
 const [state, setState] = useState(() => {
-  const valorInicial = calcularValorCostoso();
-  return valorInicial;
+  const initialState = performExpensiveComputation();
+  return initialState;
 });
 ```
 
-Esta función solo se ejecutará en el primer render.
-Actualizaciones basadas en el estado anterior
+---
+
+## Actualizaciones basadas en el estado anterior
 
 Siempre que la nueva dependa del valor previo, usa la forma funcional para evitar bugs por closures obsoletos:
 
@@ -32,7 +25,7 @@ Siempre que la nueva dependa del valor previo, usa la forma funcional para evita
 setCount(prevCount => prevCount + 1);
 ```
 
-Actualizaciones de objetos y arrays (inmutabilidad)
+## Actualizaciones de objetos y arrays (inmutabilidad)
 
 React compara el estado anterior con el nuevo por referencia (Object.is). Si mutas el objeto, la referencia no cambia y React no re-renderiza.
 
@@ -59,7 +52,52 @@ setList(prev => prev.filter(item => item.id !== id));
 setList(prev => prev.map(item => item.id === id ? { ...item, done: true } : item));
 ```
 
-¿El setter es asíncrono?
+## 🏎️ Agrupamiento de Actualizaciones (Batching)
+
+React agrupa múltiples actualizaciones de estado en una sola renderización por motivos de rendimiento. Esto significa que el estado no cambia inmediatamente después de llamar a la función setter.
+
+
+
+```jsx
+const handleClick = () => {
+  setCount(c => c + 1);
+  setCount(c => c + 1);
+  setCount(c => c + 1);
+  // React solo re-renderizará UNA vez, no tres.
+};
+```
+
+---
+
+## 🧐 ¿useState o useReducer?
+
+A medida que el estado se vuelve más complejo, elegir entre `useState` y `useReducer` es vital:
+
+* **Usa `useState` cuando**: Tienes estados simples (booleanos, strings, números) o objetos pequeños con propiedades independientes.
+* **Usa `useReducer` cuando**: El siguiente estado depende del anterior de forma compleja, o cuando varias partes del estado deben cambiar juntas en respuesta a una acción.
+
+---
+
+## 🛡️ Patrones de Diseño: Estado Elevado
+
+Cuando dos o más componentes necesitan acceder al mismo estado, la solución estándar es **elevar el estado** al ancestro común más cercano.
+
+```jsx
+// El componente Padre gestiona el estado y lo pasa vía props
+function Parent() {
+  const [value, setValue] = useState("");
+  return (
+    <>
+      <Input value={value} onChange={setValue} />
+      <Display value={value} />
+    </>
+  );
+}
+```
+
+---
+
+## ¿El setter es asíncrono?
 
 setState es asíncrono. React agrupa múltiples actualizaciones para mejorar rendimiento. No confíes en que el estado cambie inmediatamente después de llamar al setter.
 
@@ -69,13 +107,14 @@ console.log(count); // todavía el valor anterior
 ```
 
 Si necesitas leer el valor justo después de actualizar, usa useEffect con dependencia en ese estado.
-Múltiples estados vs un solo objeto
 
-- Varios useState: más legible para estados no relacionados.
+## Múltiples estados vs un solo objeto
 
-- Un objeto con useState: útil para estados que siempre cambian juntos (ej. formulario). Pero cuidado: al actualizar debes esparcir todo el objeto.
+* Varios useState: más legible para estados no relacionados.
 
-Estado derivado (no lo guardes en el estado)
+* Un objeto con useState: útil para estados que siempre cambian juntos (ej. formulario). Pero cuidado: al actualizar debes esparcir todo el objeto.
+
+## Estado derivado (no lo guardes en el estado)
 
 ```jsx
 // Mal
@@ -86,16 +125,24 @@ const [conIva, setConIva] = useState(121); // derivado
 const conIva = precio * 1.21;
 ```
 
-useState vs useReducer
+---
 
-- useState: para estado simple (boolean, número, string, objeto pequeño).
+## 📏 Reglas Internas de React
 
-- useReducer: para estado complejo con múltiples sub-valores o transiciones interdependientes.
+React se basa en el **orden de las llamadas** a los Hooks. Por eso:
+> [!CAUTION]
+> **NUNCA** llames a un Hook dentro de un `if`, `for` o función anidada. Si el orden de las llamadas cambia entre renders, React se confundirá y asignará el estado a la variable equivocada.
+
+---
 
 Buenas prácticas
 
-- Nombra el estado y su setter con [algo, setAlgo].
+* Nombra el estado y su setter con [algo, setAlgo].
 
-- Mantén el estado lo más atómico posible.
+* Mantén el estado lo más atómico posible.
 
-- Extrae lógica de actualización compleja a funciones aparte o custom hooks.
+* Extrae lógica de actualización compleja a funciones aparte o custom hooks.
+
+--
+
+[⬅️ Volver al Índice](../README.md)

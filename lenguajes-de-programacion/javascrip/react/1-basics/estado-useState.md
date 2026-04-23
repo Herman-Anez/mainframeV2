@@ -1,58 +1,86 @@
-# Estado-useState.md
+# 💾 useState: Estado Local Básico
 
-Estado local
+El **estado** representa los datos que pueden cambiar dentro de un componente a lo largo del tiempo. Cuando el estado cambia, React vuelve a renderizar el componente automáticamente para reflejar esos cambios en la UI.
 
-El estado son datos que un componente puede modificar a lo largo del tiempo, causando un re-renderizado automático cuando cambian.
-useState – Hook básico
+---
 
-```tsx
+## 🔌 Hook `useState`
+
+Es la forma más sencilla de añadir reactividad a un componente funcional.
+
+```jsx
 import { useState } from 'react';
 
-function Contador() {
-  const [contador, setContador] = useState(0);
-  // contador = valor actual
-  // setContador = función para actualizarlo
-}
+const Counter = () => {
+  // [valor_actual, función_para_actualizar] = useState(valor_inicial)
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>Has hecho clic {count} veces</p>
+      <button onClick={() => setCount(count + 1)}>Incrementar</button>
+    </div>
+  );
+};
 ```
 
-Reglas de useState
+---
 
-- Solo se puede usar en componentes funcionales o custom hooks.
+## 🖇️ Actualización Segura
 
-- Siempre en el mismo orden (no dentro de condicionales o bucles).
+Cuando el nuevo estado depende del valor anterior, se recomienda usar una **función callback** dentro del setter para evitar inconsistencias por la naturaleza asíncrona de React.
 
-- El argumento inicial solo se usa en la primera renderización.
+```jsx
+// ❌ Poco seguro en actualizaciones rápidas
+setCount(count + 1);
 
-Actualización del estado
-
-```tsx
-setContador(contador + 1);        // actualización directa
-setContador(prev => prev + 1);    // forma segura cuando depende del valor anterior
+// ✅ Forma correcta (Functional Update)
+setCount(prevCount => prevCount + 1);
 ```
 
-## Estado con objetos o arrays
+---
 
-Debes crear una nueva copia (inmutabilidad):
+## 🧊 Inmutabilidad (Objetos y Arrays)
 
-```tsx
-const [usuario, setUsuario] = useState({ nombre: 'Ana', edad: 30 });
+> [!CAUTION]
+> React usa una comparación superficial para detectar cambios. Si mutas un objeto o array directamente, React no detectará el cambio y no re-renderizará.
 
-// Correcto
-setUsuario({ ...usuario, edad: 31 });
+### Con Objetos
 
-// Incorrecto (no provoca re-render)
-usuario.edad = 31;
-setUsuario(usuario);
+```jsx
+const [user, setUser] = useState({ name: 'Ana', age: 25 });
+
+// ✅ Siempre crea una copia con spread
+setUser({ ...user, age: 26 });
 ```
 
-Estado con arrays
+### Con Arrays
 
-```tsx
-const [items, setItems] = useState([]);
-setItems([...items, nuevoItem]);               // agregar
-setItems(items.filter(i => i.id !== id));      // eliminar
-setItems(items.map(i => i.id === id ? {...i, done: true} : i));
+```jsx
+const [items, setItems] = useState(['Manzana', 'Pera']);
+
+// ✅ Agregar
+setItems([...items, 'Plátano']);
+
+// ✅ Eliminar
+setItems(items.filter(item => item !== 'Pera'));
 ```
+
+---
+
+## 📏 Reglas y Buenas Prácticas
+
+1. **Solo en el Nivel Superior**: No llames a `useState` dentro de bucles, condiciones o funciones anidadas.
+2. **Estado Atómico**: Es mejor tener tres `useState` simples que uno gigante con un objeto complejo.
+3. **No dupliques datos**: Si un valor puede calcularse a partir de otros (ej: `total = precio * cantidad`), no lo guardes en un estado. Calcúlalo durante el renderizado.
+
+4. Solo se puede usar en componentes funcionales o custom hooks.
+
+5. Siempre en el mismo orden (no dentro de condicionales o bucles).
+
+6. El argumento inicial solo se usa en la primera renderización.
+
+---
 
 ## Múltiples estados
 
@@ -73,5 +101,6 @@ const [precio, setPrecio] = useState(10);
 const [conIva, setConIva] = useState(12.1);
 // Bien
 const conIva = precio * 1.21;
-```
-[back](../index.md)
+
+[⬅️ Volver al Índice](../README.md)
+
