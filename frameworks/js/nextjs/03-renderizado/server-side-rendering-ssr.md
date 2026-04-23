@@ -1,4 +1,3 @@
-
 ## Archivo: `03-renderizado/server-side-rendering-ssr.md`
 
 Server-Side Rendering (SSR) en Next.js
@@ -7,7 +6,6 @@ El Server-Side Rendering es una técnica donde la página se genera en el servid
 SSR en Pages Router
 
 Se logra mediante la función getServerSideProps exportada de la página. El servidor ejecuta esta función en cada petición, obtiene datos y los pasa como props al componente. El HTML resultante se envía al navegador.
-
 ```jsx
 export async function getServerSideProps(context) {
   const res = await fetch(`https://...`)
@@ -22,7 +20,6 @@ SSR en App Router
 En el App Router no existe getServerSideProps. En su lugar, usas Server Components dinámicos con fetch sin caché o utilizando las opciones dynamic = 'force-dynamic'.
 
 ### Forma 1: fetch con cache: 'no-store'
-
 ```jsx
 // app/dashboard/page.js
 export default async function Dashboard() {
@@ -37,7 +34,6 @@ Al marcar cache: 'no-store', Next.js trata la página como dinámica: se renderi
 ### Forma 2: Opciones de segmento
 
 Exporta export const dynamic = 'force-dynamic' desde la página o layout. Esto obliga a la ruta a ser completamente dinámica.
-
 ```jsx
 export const dynamic = 'force-dynamic'
 ```
@@ -71,7 +67,6 @@ Desventajas:
 Incluso con SSR, puedes añadir encabezados de caché desde el servidor (Node.js) para reducir la carga.
 
 En Pages Router:
-
 ```js
 export async function getServerSideProps({ res }) {
   res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
@@ -88,4 +83,5 @@ En App Router: Puedes usar el objeto response de NextResponse en Route Handlers,
 
     Funcionalidades que requieren lectura de cookies/headers de manera directa.
 
-En proyectos reales, rara vez todo es SSR; Next.js te permite mezclar SSG, ISR y SSR según la página
+En proyectos reales, rara vez todo es SSR; Next.js te permite mezclar SSG, ISR y SSR según la página.
+---

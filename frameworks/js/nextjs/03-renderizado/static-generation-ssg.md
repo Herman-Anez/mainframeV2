@@ -6,7 +6,6 @@ La generación de sitios estáticos implica pre-renderizar las páginas en tiemp
 SSG en Pages Router
 
 Se logra con la función getStaticProps (y getStaticPaths para rutas dinámicas). La página se construye una vez y se sirve estáticamente, lo que garantiza el mejor rendimiento posible y excelente SEO.
-
 ```jsx
 // pages/posts/[slug].js
 export async function getStaticProps({ params }) {
@@ -30,7 +29,6 @@ export default function Post({ post }) {
 En el App Router, los Server Components son estáticos por defecto cuando no utilizan fuentes de datos dinámicas (es decir, si no contienen cookies(), headers(), o fetch con cache: 'no-store'). Durante el build, Next.js renderiza esas rutas y las guarda como archivos estáticos.
 
 No necesitas exportar funciones especiales; solo escribe un Server Component normal que obtenga datos sin forzar dinamismo:
-
 ```jsx
 // app/about/page.js
 export default function About() {
@@ -39,7 +37,6 @@ export default function About() {
 ```
 
 Para contenido que proviene de una API externa:
-
 ```jsx
 export default async function Blog() {
   const posts = await fetch('https://api.../posts') // sin cache: 'no-store'
@@ -52,7 +49,6 @@ Al no indicar cache: 'no-store', fetch usa el comportamiento predeterminado de c
 Rutas dinámicas estáticas
 
 En App Router, si necesitas pre-renderizar rutas dinámicas, debes generar los parámetros estáticos usando generateStaticParams.
-
 ```jsx
 // app/blog/[slug]/page.js
 export default function BlogPost({ params }) { ... }
@@ -89,4 +85,5 @@ Para obtener lo mejor de ambos mundos, puedes agregar revalidate a tus fetch o c
 
     Cualquier página que no dependa de datos personalizados en cada solicitud.
 
-Si alguna parte de la página necesita interactividad o personalización, se puede implementar con Client Components que obtengan datos adicionales en el cliente, mientras el esqueleto estático se entrega casi instantáneamente
+Si alguna parte de la página necesita interactividad o personalización, se puede implementar con Client Components que obtengan datos adicionales en el cliente, mientras el esqueleto estático se entrega casi instantáneamente.
+---

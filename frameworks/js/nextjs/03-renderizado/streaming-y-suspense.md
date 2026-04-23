@@ -1,4 +1,4 @@
-## Archivo: `03-renderizado/streaming-y-suspense.md`
+hivo: `03-renderizado/streaming-y-suspense.md`
 
 Streaming y Suspense en Next.js
 
@@ -13,7 +13,6 @@ Implementación con loading.js
 La forma más simple de habilitar streaming es crear un archivo loading.js en el segmento que tarda. loading.js se convierte en el fallback de Suspense para esa ruta.
 
 Estructura básica:
-
 ```text
 app/
 ├── layout.js
@@ -28,7 +27,6 @@ Internamente: Next.js envuelve la página en un <Suspense fallback={<Loading />}
 Suspense manual para mayor granularidad
 
 Puedes envolver partes específicas de una página en <Suspense> para controlar exactamente qué se streamea primero.
-
 ```jsx
 // app/productos/page.js
 import { Suspense } from 'react'

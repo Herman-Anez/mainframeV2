@@ -7,7 +7,6 @@ ISR permite actualizar páginas estáticas después del build sin necesidad de r
 ISR en Pages Router
 
 Se configura mediante la propiedad revalidate en el objeto retornado por getStaticProps.
-
 ```jsx
 export async function getStaticProps() {
   const res = await fetch('https://.../posts')
@@ -36,7 +35,6 @@ ISR en App Router
 En el App Router, la ISR se configura a nivel de fetch o por segmento de ruta.
 
 ### Opción 1: fetch con next.revalidate
-
 ```jsx
 // app/products/page.js
 export default async function Products() {
@@ -51,7 +49,6 @@ Next.js almacenará en caché la respuesta de fetch (Data Cache) por 60 segundos
 ### Opción 2: Segment config revalidate
 
 Exporta una constante revalidate desde la página o layout:
-
 ```jsx
 export const revalidate = 60
 ```
@@ -67,13 +64,11 @@ Además de revalidación por tiempo, puedes regenerar páginas específicas medi
     revalidateTag('products') – revalida todos los fetch que tengan ese tag.
 
 Ejemplo con fetch etiquetado:
-
 ```jsx
 const res = await fetch('https://...', { next: { tags: ['products'] } })
 ```
 
 Luego, desde una Server Action después de una mutación:
-
 ```jsx
 import { revalidateTag } from 'next/cache'
 
@@ -104,5 +99,5 @@ Configuración avanzada
 
 Un blog con miles de artículos. Generas las páginas más populares en build, el resto con fallback: 'blocking'. Todas las páginas se regeneran si son visitadas después de 3600 segundos (revalidate: 3600). Cuando el autor edita un artículo, se activa una revalidación bajo demanda vía webhook, actualizando solo esa página.
 
-ISR te da lo mejor de SSG y SSR: velocidad estática con contenido casi en tiempo real
+ISR te da lo mejor de SSG y SSR: velocidad estática con contenido casi en tiempo real.
 ---
