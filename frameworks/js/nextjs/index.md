@@ -1,6 +1,4 @@
----
-
-*Archivo: 02-app-router/fundamentos-app-router.md*
+02-app-router/fundamentos-app-router.md
 Fundamentos del App Router
 
 El App Router es el sistema de enrutamiento introducido en Next.js 13 (estable desde 13.4) que reemplaza progresivamente al Pages Router. Está construido sobre React Server Components, Streaming y Suspense, y utiliza la carpeta app/ en lugar de pages/.
@@ -26,7 +24,8 @@ Las carpetas que no contienen page.js o route.js se vuelven privadas (no accesib
 Jerarquía de archivos especiales
 
 En una misma carpeta pueden coexistir: layout.js, page.js, loading.js, error.js, template.js. Todos estos se convierten en anidados automáticamente:
-```text
+text
+
 app/
 ├── layout.js          (Layout raíz obligatorio)
 ├── page.js            (Página principal "/")
@@ -40,19 +39,18 @@ app/
 │   ├── page.js        ("/blog")
 │   └── [slug]/
 │       └── page.js    ("/blog/123")
-```
 
-### El layout raíz
+El layout raíz
 
 Todo proyecto con App Router debe tener un layout raíz en app/layout.js. Este componente envuelve toda la aplicación y es el lugar para definir la estructura HTML, fuentes, metadatos globales y proveedores.
 jsx
 
-### export const metadata = {
+export const metadata = {
   title: 'Mi aplicación',
   description: 'Descripción global',
 }
 
-### export default function RootLayout({ children }) {
+export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body>
@@ -77,9 +75,7 @@ Ventajas del App Router
     Caché más fino: control por fetch, segmentos y rutas con revalidatePath, revalidateTag.
 
 Entender estas bases es fundamental antes de profundizar en los siguientes conceptos.
----
-
-*Archivo: 02-app-router/server-components-vs-client.md*
+02-app-router/server-components-vs-client.md
 React Server Components vs Client Components
 
 En el App Router, Next.js trata a todos los componentes como React Server Components (RSC) por defecto. Para usar interactividad, estado o efectos, necesitas un Client Component.
@@ -100,7 +96,8 @@ Características:
     El código que contienen nunca se expone al cliente, mejorando la seguridad y el tamaño del bundle.
 
 Ejemplo:
-```jsx
+jsx
+
 // app/blog/page.js
 export default async function BlogPage() {
   const posts = await fetch('https://api.../posts', { next: { revalidate: 60 } })
@@ -112,7 +109,6 @@ export default async function BlogPage() {
     </ul>
   )
 }
-```
 
 Aquí BlogPage es un Server Component: obtiene datos en el servidor y renderiza HTML sin hidratación.
 Client Components
@@ -121,26 +117,26 @@ Se definen añadiendo la directiva 'use client' en la primera línea del archivo
 
 Cuándo usarlos:
 
-###     Manejo de estado (useState, useReducer)
+    Manejo de estado (useState, useReducer)
 
-###     Efectos y ciclo de vida (useEffect, useLayoutEffect)
+    Efectos y ciclo de vida (useEffect, useLayoutEffect)
 
-###     Eventos del DOM (onClick, onChange)
+    Eventos del DOM (onClick, onChange)
 
     Contexto de cliente (useContext con un provider creado en un Client Component)
 
-###     Hooks personalizados que usan lo anterior
+    Hooks personalizados que usan lo anterior
 
-###     Librerías que dependen del navegador (gráficos, carruseles)
+    Librerías que dependen del navegador (gráficos, carruseles)
 
 Ejemplo:
-```jsx
-```
+jsx
+
 'use client'
 
-### import { useState } from 'react'
+import { useState } from 'react'
 
-### export default function Counter() {
+export default function Counter() {
   const [count, setCount] = useState(0)
   return <button onClick={() => setCount(c => c + 1)}>{count}</button>
 }
@@ -151,11 +147,11 @@ Composición: la clave para optimizar
 Es posible intercalar Server y Client Components. La regla: puedes renderizar un Client Component dentro de un Server Component, y pasar Server Components como children (o props) de un Client Component. Así mantienes el renderizado del servidor para la mayor parte del árbol.
 jsx
 
-### // app/layout.js (Server Component raíz)
+// app/layout.js (Server Component raíz)
 import ThemeProvider from './ThemeProvider' // Client Component (provee contexto)
 import Navigation from './Navigation' // Server Component
 
-### export default function RootLayout({ children }) {
+export default function RootLayout({ children }) {
   return (
     <html>
       <body>
@@ -183,7 +179,7 @@ Buenas prácticas:
 
     No conviertas innecesariamente componentes grandes en cliente solo por un pequeño hook.
 
-### Casos típicos de mezcla
+Casos típicos de mezcla
 
     Navegación interactiva: El componente Nav es Server, pero el botón hamburguesa (estado abierto/cerrado) es Client.
 
@@ -192,9 +188,7 @@ Buenas prácticas:
     Tema oscuro: Un provider Client a nivel raíz, pero las páginas son completamente Server.
 
 Entender esta separación te permite maximizar el rendimiento y la experiencia de desarrollo.
----
-
-*Archivo: 02-app-router/rutas-estaticas-dinamicas-paralelas.md*
+02-app-router/rutas-estaticas-dinamicas-paralelas.md
 Rutas estáticas, dinámicas y paralelas en App Router
 
 El App Router ofrece un modelo de enrutamiento mucho más potente que el Pages Router. Además de las rutas estáticas y dinámicas, introduce rutas paralelas e interceptación de rutas.
@@ -202,9 +196,9 @@ Rutas estáticas
 
 Simplemente crea una carpeta con un archivo page.js. Ejemplos:
 
-###     app/contacto/page.js → /contacto
+    app/contacto/page.js → /contacto
 
-###     app/acerca/nosotros/page.js → /acerca/nosotros
+    app/acerca/nosotros/page.js → /acerca/nosotros
 
 El archivo page.js exporta por defecto un componente (Server o Client). Next.js asigna la URL automáticamente.
 Rutas dinámicas (segmentos variables)
@@ -216,36 +210,36 @@ Se indican con carpetas entre corchetes: [id], [slug].
 Dentro de page.js, los parámetros se reciben mediante la prop params (en Server Components) o con useParams (en Client Components).
 
 En Server Component:
-```jsx
+jsx
+
 export default function Producto({ params }) {
   const { id } = params
   return <h1>Producto: {id}</h1>
 }
-```
 
 En TypeScript:
-```tsx
+tsx
+
 type Props = { params: { id: string } }
 
 export default function Producto({ params }: Props) { /* ... */ }
-```
 
 En Client Component:
-```jsx
-```
+jsx
+
 'use client'
 import { useParams } from 'next/navigation'
 
-### export default function Producto() {
+export default function Producto() {
   const params = useParams() // { id: '...' }
   return <h1>{params.id}</h1>
 }
 
-### Rutas catch-all (captura todas)
+Rutas catch-all (captura todas)
 
 Se definen con [...slug] y capturan cualquier cantidad de segmentos.
 
-###     app/docs/[...slug]/page.js → /docs, /docs/intro, /docs/guia/instalacion
+    app/docs/[...slug]/page.js → /docs, /docs/intro, /docs/guia/instalacion
 
 params.slug será un array de strings (['intro'], ['guia', 'instalacion']).
 
@@ -253,12 +247,13 @@ Para que la ruta base también coincida (sin segmentos extras), usa [[...slug]] 
 
     app/docs/[[...slug]]/page.js → /docs (slug = undefined/[]), /docs/uno (slug = ['uno']).
 
-### Rutas paralelas
+Rutas paralelas
 
 Las rutas paralelas permiten renderizar múltiples árboles de páginas en la misma vista, cada uno con su propio enrutamiento. Se implementan mediante slots: carpetas con el prefijo @.
 
 Ejemplo típico en un dashboard:
-```text
+text
+
 app/
 ├── layout.js
 ├── page.js              (página principal)
@@ -276,10 +271,10 @@ app/
         ├── page.js
         └── settings/
             └── page.js
-```
 
 En app/dashboard/layout.js, los slots se reciben como props:
-```jsx
+jsx
+
 export default function DashboardLayout({ children, analytics, team }) {
   return (
     <div className="dashboard">
@@ -297,7 +292,6 @@ export default function DashboardLayout({ children, analytics, team }) {
     La navegación entre páginas dentro de un slot mantiene el estado de los demás.
 
     Si un slot no tiene una ruta activa, puedes mostrar un default.js para ese slot (archivo que define el contenido por defecto cuando no hay página coincidente).
-```
 
 Default views:
 Crea un archivo default.js en el slot para que siempre haya contenido renderizado (por ejemplo, cuando navegas a una ruta que no tiene ese slot definido).
@@ -309,14 +303,12 @@ Beneficios de rutas paralelas
 
     Mejor organización del código (cada slot es autónomo).
 
-### Rutas de interceptación (ver capítulo siguiente)
+Rutas de interceptación (ver capítulo siguiente)
 
 Las rutas paralelas suelen usarse junto con rutas de interceptación para crear modales, feeds, etc.
 
 Dominar rutas estáticas, dinámicas y paralelas te da un control total sobre la estructura de URLs y la composición de la UI en el App Router.
----
-
-*Archivo: 02-app-router/interceptacion-de-rutas.md*
+02-app-router/interceptacion-de-rutas.md
 Interceptación de rutas en App Router
 
 La interceptación de rutas permite interceptar una navegación y mostrar una versión alternativa de la página de destino, manteniendo el contexto actual. Esto es ideal para modales, galerías, o feeds de detalle que no quieres que reemplacen la página completa.
@@ -324,13 +316,13 @@ Cómo funciona
 
 Se utilizan convenciones de nomenclatura especiales en las carpetas para indicar que una ruta debe interceptar a otra. Se basan en la notación de segmentos relativos:
 
-###     (.) → intercepta el mismo nivel
+    (.) → intercepta el mismo nivel
 
-###     (..) → intercepta un nivel superior
+    (..) → intercepta un nivel superior
 
-###     (..)(..) → dos niveles superiores
+    (..)(..) → dos niveles superiores
 
-###     (...) → intercepta desde la raíz
+    (...) → intercepta desde la raíz
 
 La carpeta de interceptación se coloca al mismo nivel que la ruta interceptada, usando la notación.
 Ejemplo: Modal de foto
@@ -338,7 +330,8 @@ Ejemplo: Modal de foto
 Supongamos la ruta /feed (feed de fotos) y /photo/[id] (página de detalle completa). Queremos que al hacer clic en una foto desde el feed, se abra un modal en lugar de navegar a la página completa.
 
 Estructura:
-```text
+text
+
 app/
 ├── feed/
 │   ├── page.js           # lista de fotos
@@ -349,13 +342,13 @@ app/
 │   └── [id]/
 │       └── page.js       # página de detalle completa
 └── layout.js
-```
 
 Cuando el usuario está en /feed y hace clic en una foto, Next.js busca coincidencias en el mismo nivel con (.), encuentra (.)photo/[id]/page.js y la renderiza en lugar de la página real. Si el usuario recarga la página o accede directamente a /photo/123, se carga la ruta real photo/[id]/page.js.
 Implementación común con paralelas
 
 Para que el modal se renderice sobre el feed sin perder el contenido de fondo, usarás rutas paralelas. Por ejemplo, un slot @modal que contenga la interceptación:
-```text
+text
+
 app/
 ├── layout.js            (define children y modal slots)
 ├── @modal/
@@ -369,10 +362,10 @@ app/
 └── photo/
     └── [id]/
         └── page.js
-```
 
 En app/layout.js:
-```jsx
+jsx
+
 export default function RootLayout({ children, modal }) {
   return (
     <html>
@@ -383,7 +376,6 @@ export default function RootLayout({ children, modal }) {
     </html>
   )
 }
-```
 
 modal será renderizado en paralelo. default.js en @modal puede retornar null para no mostrar nada cuando no hay modal activo.
 Navegación entre interceptación y ruta real
@@ -394,7 +386,7 @@ Navegación entre interceptación y ruta real
 
     Puedes cerrar el modal con router.back() o redirigiendo a /feed.
 
-### Estados de carga y error
+Estados de carga y error
 
 Puedes añadir loading.js y error.js dentro de la ruta interceptada para manejar la carga del modal y errores, igual que cualquier otra ruta.
 Combinación con rutas paralelas
@@ -422,9 +414,7 @@ Resumen práctico
     Aprovecha que la ruta real sigue existiendo para permitir acceso directo y compartir enlaces.
 
 Con esta técnica puedes crear experiencias de usuario fluidas manteniendo URLs normales y navegación natural.
----
-
-*Archivo: 02-app-router/layouts-y-templates.md*
+02-app-router/layouts-y-templates.md
 Layouts y Templates en App Router
 
 Next.js proporciona dos mecanismos para definir la estructura que envuelve las páginas: layouts y templates. Ambos se basan en archivos layout.js y template.js dentro de la carpeta app/.
@@ -442,14 +432,14 @@ Características clave:
 
     Puede ser asíncrono (Server Component) para obtener datos para el layout (p. ej., datos del usuario).
 
-### Ejemplo: layout con fetching
+Ejemplo: layout con fetching
 jsx
 
-### // app/dashboard/layout.js
+// app/dashboard/layout.js
 export default async function DashboardLayout({ children, params }) {
   const user = await fetchUser(params.userId)
 
-###   return (
+  return (
     <div className="dashboard">
       <aside>
         <UserMenu user={user} />
@@ -463,7 +453,8 @@ Porque el layout persiste, el menú lateral no pierde su estado (por ejemplo, sc
 Anidamiento de layouts
 
 Los layouts se anidan según la jerarquía de carpetas. Por ejemplo:
-```text
+text
+
 app/
 ├── layout.js          (RootLayout)
 ├── products/
@@ -471,7 +462,6 @@ app/
 │   └── [category]/
 │       ├── layout.js  (CategoryLayout)
 │       └── page.js
-```
 
 Cada layout envuelve al siguiente. El flujo: RootLayout → ProductsLayout → CategoryLayout → page.
 
@@ -489,7 +479,8 @@ Cuándo usarlo:
     Cuando dependes de useEffect para cierta lógica que debe ejecutarse al entrar a la página.
 
 Ejemplo:
-```jsx
+jsx
+
 // app/dashboard/template.js
 'use client'
 
@@ -506,7 +497,6 @@ export default function DashboardTemplate({ children }) {
     </motion.div>
   )
 }
-```
 
 Como no persiste, al navegar entre páginas del dashboard se reproduce la animación.
 Uso conjunto
@@ -514,22 +504,22 @@ Uso conjunto
 Puedes tener layout.js y template.js en la misma carpeta; ambos envolverán la página. El orden es: layout → template → page.
 jsx
 
-### // Layout (persistente)
+// Layout (persistente)
 export default function Layout({ children }) {
   return <div><Nav />{children}</div>
 }
 
-### // Template (se re-monta)
+// Template (se re-monta)
 export default function Template({ children }) {
   return <div className="fade">{children}</div>
 }
 
-### // Page
+// Page
 export default function Page() {
   return <h1>Contenido</h1>
 }
 
-### Estructura resultante: <Layout><Template><Page/></Template></Layout>
+Estructura resultante: <Layout><Template><Page/></Template></Layout>
 Pasar información entre layouts y páginas
 
 No hay un mecanismo directo para pasar props de layout a page. Utiliza React Context (Client Component) o cookies/headers accesibles en Server Components. También puedes usar Server Actions para modificar datos del layout desde la página.
@@ -541,9 +531,7 @@ Layouts dinámicos y revalidación
 Si un layout obtiene datos con fetch, puedes configurar revalidate para ISR, igual que en páginas.
 
 Los layouts constituyen el núcleo del App Router, facilitando la creación de interfaces complejas con mínimo esfuerzo y código repetitivo.
----
-
-*Archivo: 02-app-router/loading-y-error.md*
+02-app-router/loading-y-error.md
 loading.js y error.js: Manejo de estados en App Router
 
 El App Router simplifica drásticamente el manejo de estados de carga y errores mediante dos archivos especiales: loading.js y error.js. Ambos aprovechan React Suspense y los Error Boundaries de React para encapsular cada segmento de ruta.
@@ -560,7 +548,8 @@ Cómo funciona:
     Cuando la página está lista, se reemplaza automáticamente.
 
 Ejemplo básico:
-```jsx
+jsx
+
 // app/dashboard/loading.js
 export default function DashboardLoading() {
   return (
@@ -569,7 +558,6 @@ export default function DashboardLoading() {
     </div>
   )
 }
-```
 
 El archivo loading.js se convierte en un límite de Suspense para el segmento. Next.js lo envuelve automáticamente con <Suspense fallback={<Loading/>}>.
 
@@ -590,11 +578,11 @@ Requisitos:
 
     Exporta una función que recibe { error, reset }.
 
-```jsx
-```
+jsx
+
 'use client' // Error boundaries must be Client Components
 
-### export default function DashboardError({ error, reset }) {
+export default function DashboardError({ error, reset }) {
   return (
     <div>
       <h2>Ocurrió un error en el dashboard</h2>
@@ -616,9 +604,9 @@ not-found.js
 Aunque no es exactamente de error, es relevante. not-found.js se muestra cuando se invoca notFound() desde un Server Component o se visita una ruta inexistente. Debe ser un Client Component (opcional) y se renderiza dentro del layout sin 404 HTTP (puede mostrarse con layout conservado).
 jsx
 
-### import { notFound } from 'next/navigation'
+import { notFound } from 'next/navigation'
 
-### export default async function Page({ params }) {
+export default async function Page({ params }) {
   const post = await getPost(params.slug)
   if (!post) notFound()
   // ...
@@ -628,7 +616,8 @@ not-found.js puede estar en cualquier nivel; el más cercano se muestra.
 Combinación de loading y error
 
 Puedes tener ambos en el mismo directorio. Por ejemplo:
-```text
+text
+
 app/
 ├── dashboard/
 │   ├── loading.js
@@ -638,9 +627,8 @@ app/
     Primero se muestra loading.js mientras page.js espera.
 
     Si ocurre un error, error.js lo captura y muestra la UI de error.
-```
 
-### Manejo de errores en Server Actions
+Manejo de errores en Server Actions
 
 Los errores lanzados en Server Actions se pueden capturar en el error boundary correspondiente a la ruta donde se usó, o bien manejarlos localmente con try/catch en el Client Component.
 Caché de errores
@@ -651,9 +639,7 @@ Migración desde Pages Router
 En Pages Router tenías que implementar estados de carga manualmente (router.isFallback, estados locales para SSR). En App Router, la experiencia es declarativa, mucho más limpia y robusta.
 
 loading.js y error.js representan uno de los mayores avances del App Router: encapsulan el comportamiento esperado de cualquier aplicación moderna con mínimo código.
----
-
-*Archivo: 02-app-router/route-handlers-app.md*
+02-app-router/route-handlers-app.md
 Route Handlers en App Router
 
 Los Route Handlers reemplazan a las API Routes del Pages Router dentro del App Router. Se definen en archivos route.js (o route.ts) y te permiten crear endpoints HTTP personalizados sin renderizar una página.
@@ -662,7 +648,7 @@ Configuración básica
 En cualquier carpeta de app/ que no contenga page.js, puedes crear un archivo route.js. La carpeta define la ruta base y el archivo exporta funciones nombradas según el método HTTP.
 js
 
-### // app/api/hello/route.js
+// app/api/hello/route.js
 export async function GET(request) {
   return new Response(JSON.stringify({ message: 'Hola mundo' }), {
     status: 200,
@@ -676,13 +662,13 @@ Métodos HTTP soportados
 Exporta funciones con los nombres de los métodos HTTP que deseas manejar: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS. Si un método no está definido, Next.js retorna 405 Method Not Allowed automáticamente.
 js
 
-### export async function POST(request) {
+export async function POST(request) {
   const body = await request.json()
   // procesar...
   return new Response(JSON.stringify({ success: true }), { status: 201 })
 }
 
-### El objeto Request y Response
+El objeto Request y Response
 
 Los Route Handlers reciben un objeto Web Request estándar (no el req de Node.js). Esto los hace compatibles con entornos Edge y Node.
 
@@ -699,9 +685,9 @@ Los Route Handlers reciben un objeto Web Request estándar (no el req de Node.js
 Puedes usar NextRequest (de next/server) que extiende Request con propiedades adicionales como nextUrl, cookies, geo (en Edge). Es útil para middleware y lógica de rutas más compleja.
 js
 
-### import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-### export async function GET(request) {
+export async function GET(request) {
   // Acceso a query params de manera fácil
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
@@ -709,7 +695,7 @@ js
   return NextResponse.json({ id })
 }
 
-### NextResponse
+NextResponse
 
 NextResponse es la contraparte de Response de las API Web, con helpers como:
 
@@ -721,12 +707,12 @@ NextResponse es la contraparte de Response de las API Web, con helpers como:
 
     NextResponse.rewrite(destination) → Reescribe la URL internamente.
 
-### Segmentos dinámicos
+Segmentos dinámicos
 
 Al igual que las páginas, las rutas pueden ser dinámicas. La carpeta [id] contendrá un route.js que recibe params en un segundo argumento.
 js
 
-### // app/api/items/[id]/route.js
+// app/api/items/[id]/route.js
 export async function GET(request, { params }) {
   const id = params.id
   const item = await getItem(id)
@@ -737,17 +723,18 @@ Los parámetros son accesibles de forma síncrona en la firma de la función.
 Middleware de ruta
 
 Los Route Handlers permiten configurar el runtime y opciones de caché mediante el objeto config exportado (opcional):
-```js
+js
+
 export const runtime = 'edge' // 'nodejs' (por defecto)
 export const dynamic = 'force-dynamic' // para que no se cachee
 export const revalidate = 60 // ISR para endpoint GET (no oficial pero puede usarse)
-```
 
 Para un control más fino, usa la API de fetch con next.revalidate o cache: 'no-store'.
 Streams y procesamiento de archivos
 
 Puedes devolver streams directamente. Por ejemplo, para leer un archivo grande:
-```js
+js
+
 import { NextResponse } from 'next/server'
 
 export async function GET() {
@@ -756,13 +743,13 @@ export async function GET() {
     headers: { 'Content-Type': 'application/octet-stream' },
   })
 }
-```
 
 Esto es útil para descargas, streaming de video, etc.
 CORS y cabeceras personalizadas
 
 Configura las cabeceras CORS dentro del handler o en next.config.js. Dentro del handler puedes añadir:
-```js
+js
+
 export async function GET() {
   return new Response(JSON.stringify(data), {
     headers: {
@@ -772,7 +759,6 @@ export async function GET() {
     },
   })
 }
-```
 
 Para preflight OPTIONS, define también el manejador.
 Comparación con API Routes (Pages)
@@ -795,9 +781,7 @@ Buenas prácticas
     Aprovecha los segmentos dinámicos para mantener RESTful.
 
 Los Route Handlers te dan un backend ligero y completamente integrado con el resto de tu aplicación Next.js.
----
-
-*Archivo: 02-app-router/server-actions.md*
+02-app-router/server-actions.md
 Server Actions en App Router
 
 Las Server Actions son funciones asíncronas ejecutadas en el servidor, pero que pueden ser invocadas desde Client Components o incluso desde formularios HTML sin necesidad de crear un API endpoint. Fueron introducidas como característica experimental y ahora son estables (Next.js 14+).
@@ -805,13 +789,13 @@ Definición
 
 Una Server Action se define con la directiva 'use server' al inicio de un archivo o dentro de una función asíncrona. Pueden residir en Server Components, en archivos separados o incluso en Client Components (con restricciones).
 
-### Forma 1: Directiva en archivo independiente
+Forma 1: Directiva en archivo independiente
 js
 
-### // app/actions.js
+// app/actions.js
 'use server'
 
-### export async function createPost(formData) {
+export async function createPost(formData) {
   const title = formData.get('title')
   // Validar y guardar en BD
   await db.post.create({ data: { title } })
@@ -819,19 +803,19 @@ js
   revalidatePath('/posts')
 }
 
-### Forma 2: Dentro de un Server Component
+Forma 2: Dentro de un Server Component
 js
 
-### // app/new-post/page.js
+// app/new-post/page.js
 import { revalidatePath } from 'next/cache'
 
-### export default function NewPost() {
+export default function NewPost() {
   async function handleSubmit(formData) {
     'use server'
     // ... lógica
   }
 
-###   return (
+  return (
     <form action={handleSubmit}>
       <input name="title" />
       <button>Crear</button>
@@ -839,17 +823,17 @@ import { revalidatePath } from 'next/cache'
   )
 }
 
-### Invocación desde formularios
+Invocación desde formularios
 
 La forma más natural es usar el atributo action de un <form>. El navegador enviará automáticamente un POST a la Server Action si está en un Client Component y se usa con JavaScript habilitado (progressive enhancement). Sin JS, el formulario funciona igual (se ejecuta la acción en el servidor).
 jsx
 
-### // Client Component
+// Client Component
 'use client'
 
-### import { createPost } from '@/app/actions'
+import { createPost } from '@/app/actions'
 
-### export default function Form() {
+export default function Form() {
   return (
     <form action={createPost}>
       <input type="text" name="title" required />
@@ -861,20 +845,21 @@ jsx
 Puedes usar useFormStatus y useFormState (hooks de React DOM) para estados de carga y manejo de errores.
 
 Ejemplo con useFormStatus:
-```jsx
-```
+jsx
+
 'use client'
 import { useFormStatus } from 'react-dom'
 
-### function SubmitButton() {
+function SubmitButton() {
   const { pending } = useFormStatus()
   return <button disabled={pending}>{pending ? 'Guardando...' : 'Guardar'}</button>
 }
 
-### Acceso al request y cookies
+Acceso al request y cookies
 
 Dentro de una Server Action puedes leer cookies y headers con las funciones de next/headers (que son dinámicas), por ejemplo:
-```js
+js
+
 import { cookies } from 'next/headers'
 
 export async function updatePreferences(formData) {
@@ -882,25 +867,25 @@ export async function updatePreferences(formData) {
   const token = cookieStore.get('token')
   // ...
 }
-```
 
-### Redirecciones y manejo de errores
+Redirecciones y manejo de errores
 
 Puedes redirigir después de ejecutar una acción usando redirect de next/navigation:
-```js
+js
+
 import { redirect } from 'next/navigation'
 
 export async function login(formData) {
   // verificar credenciales...
   redirect('/dashboard')
 }
-```
 
 Para manejar errores y mostrarlos en el cliente, puedes retornar un objeto serializable desde la acción y usar useFormState (experimental) o simplemente lanzar una excepción que capture el error boundary.
 Revalidación de datos
 
 Uno de los usos principales es mutar datos y luego revalidar la caché asociada:
-```js
+js
+
 import { revalidatePath, revalidateTag } from 'next/cache'
 
 export async function addComment(commentData) {
@@ -908,7 +893,6 @@ export async function addComment(commentData) {
   revalidatePath('/posts/[slug]')  // revalida la página de ese post
   // o revalidateTag('comments')
 }
-```
 
 Con esto, la interfaz se actualiza automáticamente sin recargar.
 Invocación desde manejadores de eventos
@@ -916,20 +900,20 @@ Invocación desde manejadores de eventos
 Aunque lo común es mediante action, también puedes invocar Server Actions desde un onClick o useEffect usando la función exportada como cualquier función asíncrona normal (gracias a la integración con hooks como useTransition). Se envuelve en startTransition para manejar la navegación optimista.
 jsx
 
-### 'use client'
+'use client'
 import { createPost } from '@/app/actions'
 import { useTransition } from 'react'
 
-### export default function CreateButton() {
+export default function CreateButton() {
   const [isPending, startTransition] = useTransition()
 
-###   const handleClick = () => {
+  const handleClick = () => {
     startTransition(async () => {
       await createPost(new FormData()) // construyes FormData
     })
   }
 
-###   return <button onClick={handleClick} disabled={isPending}>Crear</button>
+  return <button onClick={handleClick} disabled={isPending}>Crear</button>
 }
 
 Esto permite usar Server Actions sin formularios.
@@ -941,7 +925,7 @@ Seguridad
 
     No expongas secretos en el código que se envía al cliente (todo lo exportado de un archivo con 'use server' no se filtra, solo el identificador).
 
-### Limitaciones
+Limitaciones
 
     Las Server Actions solo pueden ser llamadas desde el mismo proyecto (mismo origen) por defecto.
 
@@ -949,16 +933,14 @@ Seguridad
 
     El tamaño máximo del payload es 1 MB (configurable en next.config.js con serverActions.bodySizeLimit).
 
-### Cuándo usar Server Actions vs Route Handlers
+Cuándo usar Server Actions vs Route Handlers
 
     Server Actions: mutaciones estrechamente ligadas a una interfaz de usuario (formularios, likes, carritos). Ofrecen experiencia progresiva y revalidación automática.
 
     Route Handlers: APIs públicas, webhooks, integraciones de terceros, o cuando necesitas control total sobre códigos de estado, CORS, streaming.
 
 Las Server Actions simplifican el patrón tradicional de crear endpoints API para cada formulario, reuniendo la lógica del servidor con la interfaz de usuario.
----
-
-*Archivo: 03-renderizado/server-side-rendering-ssr.md*
+03-renderizado/server-side-rendering-ssr.md
 Server-Side Rendering (SSR) en Next.js
 
 El Server-Side Rendering es una técnica donde la página se genera en el servidor por cada solicitud que el cliente realiza. Next.js lo soporta de forma nativa tanto en Pages Router como en App Router, aunque con aproximaciones diferentes.
@@ -967,7 +949,7 @@ SSR en Pages Router
 Se logra mediante la función getServerSideProps exportada de la página. El servidor ejecuta esta función en cada petición, obtiene datos y los pasa como props al componente. El HTML resultante se envía al navegador.
 jsx
 
-### export async function getServerSideProps(context) {
+export async function getServerSideProps(context) {
   const res = await fetch(`https://...`)
   const data = await res.json()
   return { props: { data } }
@@ -978,10 +960,10 @@ SSR en App Router
 
 En el App Router no existe getServerSideProps. En su lugar, usas Server Components dinámicos con fetch sin caché o utilizando las opciones dynamic = 'force-dynamic'.
 
-### Forma 1: fetch con cache: 'no-store'
+Forma 1: fetch con cache: 'no-store'
 jsx
 
-### // app/dashboard/page.js
+// app/dashboard/page.js
 export default async function Dashboard() {
   const res = await fetch('https://...', { cache: 'no-store' })
   const data = await res.json()
@@ -990,14 +972,14 @@ export default async function Dashboard() {
 
 Al marcar cache: 'no-store', Next.js trata la página como dinámica: se renderiza en cada solicitud (tanto en Node.js como en Edge Runtime).
 
-### Forma 2: Opciones de segmento
+Forma 2: Opciones de segmento
 
 Exporta export const dynamic = 'force-dynamic' desde la página o layout. Esto obliga a la ruta a ser completamente dinámica.
 jsx
 
-### export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic'
 
-### Forma 3: Uso de cookies o headers
+Forma 3: Uso de cookies o headers
 
 Si el componente utiliza cookies() o headers() de next/headers, la ruta automáticamente se vuelve dinámica, porque estos datos dependen de la solicitud.
 Diferencia entre SSR y "dinámico" en App Router
@@ -1021,17 +1003,17 @@ Desventajas:
 
     Escalado más complejo (no cacheable directamente en CDN sin configuración adicional).
 
-### Estrategias de caché para SSR
+Estrategias de caché para SSR
 
 Incluso con SSR, puedes añadir encabezados de caché desde el servidor (Node.js) para reducir la carga.
 
 En Pages Router:
-```js
+js
+
 export async function getServerSideProps({ res }) {
   res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
   // ...
 }
-```
 
 En App Router: Puedes usar el objeto response de NextResponse en Route Handlers, pero para páginas no tienes acceso directo a res. En su lugar, utiliza la función revalidate o configura el Data Cache con fetch y next.revalidate. Para SSR puro sin caché, basta con no-store. Si quieres algo intermedio, considera ISR.
 ¿Cuándo elegir SSR?
@@ -1043,9 +1025,7 @@ En App Router: Puedes usar el objeto response de NextResponse en Route Handlers,
     Funcionalidades que requieren lectura de cookies/headers de manera directa.
 
 En proyectos reales, rara vez todo es SSR; Next.js te permite mezclar SSG, ISR y SSR según la página.
----
-
-*Archivo: 03-renderizado/static-generation-ssg.md*
+03-renderizado/static-generation-ssg.md
 Static Site Generation (SSG) en Next.js
 
 La generación de sitios estáticos implica pre-renderizar las páginas en tiempo de compilación (next build). El resultado son archivos HTML (y JSON para transiciones del lado del cliente) que pueden servirse directamente desde un CDN.
@@ -1054,42 +1034,42 @@ SSG en Pages Router
 Se logra con la función getStaticProps (y getStaticPaths para rutas dinámicas). La página se construye una vez y se sirve estáticamente, lo que garantiza el mejor rendimiento posible y excelente SEO.
 jsx
 
-### // pages/posts/[slug].js
+// pages/posts/[slug].js
 export async function getStaticProps({ params }) {
   const post = await getPost(params.slug)
   return { props: { post } }
 }
 
-### export async function getStaticPaths() {
+export async function getStaticPaths() {
   const posts = await getAllPosts()
   const paths = posts.map(p => ({ params: { slug: p.slug } }))
   return { paths, fallback: false }
 }
 
-### export default function Post({ post }) {
+export default function Post({ post }) {
   return <article>{post.title}</article>
 }
 
-### SSG en App Router
+SSG en App Router
 
 En el App Router, los Server Components son estáticos por defecto cuando no utilizan fuentes de datos dinámicas (es decir, si no contienen cookies(), headers(), o fetch con cache: 'no-store'). Durante el build, Next.js renderiza esas rutas y las guarda como archivos estáticos.
 
 No necesitas exportar funciones especiales; solo escribe un Server Component normal que obtenga datos sin forzar dinamismo:
-```jsx
+jsx
+
 // app/about/page.js
 export default function About() {
   return <h1>Acerca de Nosotros</h1>
 }
-```
 
 Para contenido que proviene de una API externa:
-```jsx
+jsx
+
 export default async function Blog() {
   const posts = await fetch('https://api.../posts') // sin cache: 'no-store'
   const data = await posts.json()
   return <>{data.map(...)}</>
 }
-```
 
 Al no indicar cache: 'no-store', fetch usa el comportamiento predeterminado de caché (force-cache). Entonces Next.js hará la solicitud en build, cacheará el resultado (Data Cache) y generará HTML estático. Si necesitas regenerar ese contenido más adelante, configura ISR con next.revalidate.
 Rutas dinámicas estáticas
@@ -1097,10 +1077,10 @@ Rutas dinámicas estáticas
 En App Router, si necesitas pre-renderizar rutas dinámicas, debes generar los parámetros estáticos usando generateStaticParams.
 jsx
 
-### // app/blog/[slug]/page.js
+// app/blog/[slug]/page.js
 export default function BlogPost({ params }) { ... }
 
-### export async function generateStaticParams() {
+export async function generateStaticParams() {
   const posts = await fetch('https://.../posts').then(res => res.json())
   return posts.map(post => ({ slug: post.slug }))
 }
@@ -1114,13 +1094,13 @@ Ventajas del SSG
 
     SEO óptimo: Los motores de búsqueda reciben todo el contenido.
 
-### Desventajas
+Desventajas
 
     Tiempo de build más largo para muchos miles de páginas (aunque generateStaticParams y el renderizado de build pueden demorar).
 
     Contenido desactualizado si no implementas ISR.
 
-### Combinación con ISR
+Combinación con ISR
 
 Para obtener lo mejor de ambos mundos, puedes agregar revalidate a tus fetch o configurarlo en el segmento. Así la página se vuelve estática pero se regenera en segundo plano a intervalos definidos. (Esto se trata en profundidad en el siguiente capítulo).
 ¿Cuándo usar SSG?
@@ -1132,9 +1112,7 @@ Para obtener lo mejor de ambos mundos, puedes agregar revalidate a tus fetch o c
     Cualquier página que no dependa de datos personalizados en cada solicitud.
 
 Si alguna parte de la página necesita interactividad o personalización, se puede implementar con Client Components que obtengan datos adicionales en el cliente, mientras el esqueleto estático se entrega casi instantáneamente.
----
-
-*Archivo: 03-renderizado/incremental-static-regeneration-isr.md*
+03-renderizado/incremental-static-regeneration-isr.md
 Incremental Static Regeneration (ISR)
 
 ISR permite actualizar páginas estáticas después del build sin necesidad de reconstruir todo el sitio. Next.js regenera la página en segundo plano cuando ocurre una solicitud después de que el tiempo revalidate ha expirado.
@@ -1143,11 +1121,11 @@ ISR en Pages Router
 Se configura mediante la propiedad revalidate en el objeto retornado por getStaticProps.
 jsx
 
-### export async function getStaticProps() {
+export async function getStaticProps() {
   const res = await fetch('https://.../posts')
   const posts = await res.json()
 
-###   return {
+  return {
     props: { posts },
     revalidate: 60, // regenerar como máximo cada 60 segundos
   }
@@ -1161,17 +1139,17 @@ jsx
 
     Una vez completada la regeneración, Next.js actualiza la caché y las siguientes peticiones verán la nueva versión.
 
-### ISR con fallback en rutas dinámicas
+ISR con fallback en rutas dinámicas
 
 Para rutas dinámicas con getStaticPaths, puedes combinar fallback: true o 'blocking' con revalidate. Así, las páginas no pre-renderizadas se generan bajo demanda (como ISR inicial) y luego se regeneran según revalidate.
 ISR en App Router
 
 En el App Router, la ISR se configura a nivel de fetch o por segmento de ruta.
 
-### Opción 1: fetch con next.revalidate
+Opción 1: fetch con next.revalidate
 jsx
 
-### // app/products/page.js
+// app/products/page.js
 export default async function Products() {
   const res = await fetch('https://.../products', { next: { revalidate: 60 } })
   const products = await res.json()
@@ -1180,16 +1158,16 @@ export default async function Products() {
 
 Next.js almacenará en caché la respuesta de fetch (Data Cache) por 60 segundos. La página se servirá estáticamente, pero se actualizará la data en background si hay una solicitud que lo requiere después del período.
 
-### Opción 2: Segment config revalidate
+Opción 2: Segment config revalidate
 
 Exporta una constante revalidate desde la página o layout:
-```jsx
+jsx
+
 export const revalidate = 60
-```
 
 Esto establece el revalidate para toda la ruta. Si además usas fetch sin especificar revalidate, hereda este valor.
 
-### Opción 3: Revalidación bajo demanda (On-demand revalidation)
+Opción 3: Revalidación bajo demanda (On-demand revalidation)
 
 Además de revalidación por tiempo, puedes regenerar páginas específicas mediante revalidación por etiqueta o ruta usando Server Actions o Route Handlers.
 
@@ -1198,19 +1176,19 @@ Además de revalidación por tiempo, puedes regenerar páginas específicas medi
     revalidateTag('products') – revalida todos los fetch que tengan ese tag.
 
 Ejemplo con fetch etiquetado:
-```jsx
+jsx
+
 const res = await fetch('https://...', { next: { tags: ['products'] } })
-```
 
 Luego, desde una Server Action después de una mutación:
-```jsx
+jsx
+
 import { revalidateTag } from 'next/cache'
 
 export async function updateProduct() {
   // ... actualizar
   revalidateTag('products')
 }
-```
 
 Esto limpia la caché de datos asociada a esa etiqueta y la próxima visita regenerará la página con datos frescos.
 Cómo funciona la caché de datos
@@ -1229,14 +1207,12 @@ Configuración avanzada
 
     Caché de Imágenes: next/image tiene su propio mecanismo de revalidación; no afecta al Data Cache.
 
-### Caso de uso típico
+Caso de uso típico
 
 Un blog con miles de artículos. Generas las páginas más populares en build, el resto con fallback: 'blocking'. Todas las páginas se regeneran si son visitadas después de 3600 segundos (revalidate: 3600). Cuando el autor edita un artículo, se activa una revalidación bajo demanda vía webhook, actualizando solo esa página.
 
 ISR te da lo mejor de SSG y SSR: velocidad estática con contenido casi en tiempo real.
----
-
-*Archivo: 03-renderizado/streaming-y-suspense.md*
+03-renderizado/streaming-y-suspense.md
 Streaming y Suspense en Next.js
 
 El streaming es una técnica que permite al servidor enviar partes del HTML al cliente a medida que se generan, en lugar de esperar a que toda la página esté lista. Next.js lo implementa usando React Suspense y los Server Components, permitiendo una carga progresiva y mejores métricas.
@@ -1250,13 +1226,13 @@ Implementación con loading.js
 La forma más simple de habilitar streaming es crear un archivo loading.js en el segmento que tarda. loading.js se convierte en el fallback de Suspense para esa ruta.
 
 Estructura básica:
-```text
+text
+
 app/
 ├── layout.js
 └── posts/
     ├── page.js        (obtiene datos lentos)
     └── loading.js     (UI de carga)
-```
 
 Cuando se visita /posts, Next.js envía inmediatamente el layout (que ya está listo) y muestra loading.js dentro del área de posts. Una vez que page.js termina de obtener los datos, el HTML del componente se envía y reemplaza el loading.
 
@@ -1266,12 +1242,12 @@ Suspense manual para mayor granularidad
 Puedes envolver partes específicas de una página en <Suspense> para controlar exactamente qué se streamea primero.
 jsx
 
-### // app/productos/page.js
+// app/productos/page.js
 import { Suspense } from 'react'
 import ListaProductos from './ListaProductos' // Server Component pesado
 import Filtros from './Filtros'               // Server Component ligero
 
-### export default function Page() {
+export default function Page() {
   return (
     <div>
       <h1>Productos</h1>
