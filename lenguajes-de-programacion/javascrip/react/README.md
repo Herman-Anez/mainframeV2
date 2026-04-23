@@ -97,10 +97,6 @@ Para sacarle el máximo provecho a esta documentación, te recomiendo seguir est
 
 ---
 
-<div align="center">
-
 📝 **Nota**: Esta base de conocimientos está en continua evolución.
 
 [Volver al Inicio](../../README.md)
-
-</div>
