@@ -87,7 +87,9 @@ return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 
 ---
 
-## Contexto con estado mutable
+---
+
+## 🏗️ Contexto con estado mutable
 
 ```jsx
 const AuthContext = createContext(null);
@@ -122,10 +124,15 @@ function AuthProvider({ children }) {
 const value = useMemo(() => ({ user, login, logout }), [user]);
 ```
 
-## Contexto múltiple
+---
 
-Puedes anidar varios providers. Cada useContext obtiene el contexto más cercano en el árbol.
-Uso con useReducer (mini Redux)
+## 🏗️ Contexto múltiple
+
+Puedes anidar varios providers. Cada `useContext` obtiene el contexto más cercano en el árbol.
+
+---
+
+## 🏗️ Uso con useReducer (mini Redux)
 
 ```jsx
 const StoreContext = createContext();
@@ -140,19 +147,22 @@ function StoreProvider({ children }) {
 }
 ```
 
-## Buenas prácticas
+---
 
-- Crear contextos específicos (no un solo contexto gigante).
+## 💡 Buenas prácticas
 
-- Exportar un custom hook para consumir el contexto (más limpio):
+*   Crear contextos específicos (no un solo contexto gigante).
+*   Exportar un custom hook para consumir el contexto (más limpio y seguro):
 
 ```jsx
-```
-
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider');
   return context;
-----
+}
+```
+
+> [!REDUNDANT]
+> Muchas de las secciones anteriores (uso con useReducer, estado mutable, etc.) están explicadas con mayor detalle arquitectónico en [Context API (Gestión de Estado)](../3-state-management/context-api.md). Se mantienen aquí para tener una referencia autocontenida del Hook.
 
 [⬅️ Volver al Índice](../README.md)

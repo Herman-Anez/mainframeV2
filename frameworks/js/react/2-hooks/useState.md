@@ -102,11 +102,12 @@ function Parent() {
 
 ---
 
-## Múltiples estados vs un solo objeto
+---
 
-* Varios useState: más legible para estados no relacionados.
+## 🏗️ Múltiples estados vs un solo objeto
 
-* Un objeto con useState: útil para estados que siempre cambian juntos (ej. formulario). Pero cuidado: al actualizar debes esparcir todo el objeto.
+*   **Varios `useState`**: más legible para estados no relacionados.
+*   **Un objeto con `useState`**: útil para estados que siempre cambian juntos (ej. formulario). Pero cuidado: al actualizar debes esparcir todo el objeto.
 
 ---
 
@@ -126,18 +127,23 @@ const conIva = precio * 1.21; // ✅
 
 ---
 
-## 📏 Reglas Internas y Buenas Prácticas
+---
+
+## 📏 Reglas y Buenas Prácticas
 
 React se basa en el **orden de las llamadas** a los Hooks. Por eso:
 
 > [!CAUTION]
 > **NUNCA** llames a un Hook dentro de un `if`, `for` o función anidada. Si el orden de las llamadas cambia entre renders, React se confundirá.
 
-1. **Nomenclatura**: Usa siempre `[state, setState]`.
-2. **Atomicidad**: Mantén el estado lo más pequeño posible.
-3. **Persistencia**: Si necesitas que el estado sobreviva a una recarga de página, combínalo con `localStorage` en un efecto o usa librerías como Zustand.
+*   **Nomenclatura**: Nombra el estado y su setter siempre siguiendo el patrón `[algo, setAlgo]`.
+*   **Atomicidad**: Mantén el estado lo más pequeño y atómico posible para facilitar la reutilización y el mantenimiento.
+*   **Complejidad**: Extrae la lógica de actualización compleja a funciones separadas o Custom Hooks.
+*   **Estado Derivado**: No guardes en el estado valores que puedan ser calculados a partir de otros (evita la redundancia de datos).
+*   **Persistencia**: Si necesitas que el estado sobreviva a una recarga de página, combínalo con `localStorage` o herramientas similares.
 
 ---
+
 Buenas prácticas
 
 * Nombra el estado y su setter con [algo, setAlgo].
@@ -146,4 +152,9 @@ Buenas prácticas
 
 * Extrae lógica de actualización compleja a funciones aparte o custom hooks.
 
+
+<div align="center">
+
 [⬅️ Volver al Índice](../README.md)
+
+</div>

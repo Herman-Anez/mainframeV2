@@ -48,8 +48,9 @@ function Avatar() {
 }
 ```
 
-----
-ontexto con estado complejo y reducción de re-renderizados
+---
+
+## 🏗️ Contexto con estado complejo y reducción de re-renderizados
 
 Por defecto, cualquier cambio en el value del provider provoca que todos los consumidores se re-rendericen. Para evitarlo:
 
@@ -62,10 +63,15 @@ const value = useMemo(() => ({ user, setUser }), [user]);
 <UserContext.Provider value={value}>...</UserContext.Provider>
 ```
 
-Contexto múltiple (anidado)
+---
+
+## 🏗️ Contexto múltiple (anidado)
 
 Puedes tener contextos de tema, autenticación, preferencias, etc., anidados.
-Contexto + useReducer (mini Redux)
+
+---
+
+## 🏗️ Contexto + useReducer (mini Redux)
 
 ```jsx
 const StoreContext = createContext();
@@ -78,7 +84,8 @@ function StoreProvider({ children }) {
 const { state, dispatch } = useContext(StoreContext);
 ```
 
-Contexto vs Redux
+> [!REDUNDANT]
+> Esta tabla es una versión simplificada de la comparativa detallada en la sección siguiente [⚔️ Context API vs Redux](#-context-api-vs-redux). Se mantiene por referencia histórica pero la siguiente es más exhaustiva.
 
 |Contexto|Redux|
 |-|-|
@@ -116,14 +123,18 @@ export function useUser() {
 
 ---
 
+---
+
 ## ⚠️ Limitaciones
 
-- **Rendimiento**: No es adecuado para datos que cambian miles de veces por segundo (como la posición del ratón en un canvas).
-- **Depuración**: No tiene herramientas de inspección tan potentes como Redux DevTools.
+*   **Rendimiento**: No es adecuado para datos que cambian miles de veces por segundo (como la posición del ratón en un canvas).
 
-- No es adecuado para rendimiento crítico con miles de actualizaciones por segundo (usa Zustand o Jotai).
+> [!REDUNDANT]
+> Los siguientes puntos repiten la limitación de rendimiento y añaden la necesidad de jerarquía, la cual ya se asume en la sección de implementación.
 
-- El provider debe envolver todo el árbol que necesite acceso.
+*   No es adecuado para rendimiento crítico con miles de actualizaciones por segundo (usa Zustand o Jotai).
+*   El provider debe envolver todo el árbol que necesite acceso.
+*   **Depuración**: No tiene herramientas de inspección tan potentes como Redux DevTools.
 
 ---
 

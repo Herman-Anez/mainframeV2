@@ -58,7 +58,7 @@ function Timer() {
 
 ---
 
-## 🔗 ForwardRef: Pasar Refs a Hijos
+## 🏗️ ForwardRef: Pasar Refs a Hijos
 
 Para pasar una referencia a un componente funcional hijo, debes envolver al hijo en `forwardRef`.
 
@@ -74,50 +74,10 @@ const inputRef = useRef();
 
 ---
 
-## 📏 Reglas y Advertencias
+## 🏗️ Callback Ref (Control de Grano Fino)
 
-*   **No para renderizado**: Si usas un valor para mostrar algo en el JSX, **usa `useState`**. Si mutas `.current` en el cuerpo del render, podrías causar bugs visuales.
-*   **Mutación síncrona**: El valor de `.current` cambia inmediatamente, lo que es útil para lógica imperativa.
-*   **Persistencia**: Al igual que el estado, el valor se mantiene aunque el componente se re-renderice por otras causas.
+Útil cuando necesitas ejecutar código en el momento exacto en que un elemento se monta o desmonta.
 
----
-
-## Referencia a valores previos (como "prevProps" o "prevState")
-```jsx
-function usePrevious(value) {
-  const ref = useRef();
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  return ref.current;
-}
-```
-
-
-Diferencias con useState
-
-|Característica|useState|useRef|
-|-|-|-|
-|Cambio provoca re-render|Sí|No|
-|Valor persiste entre renders|Sí|Sí|
-|Síncrono o asíncrono|Asíncrono (batch)|Síncrono (mutación directa)|
-
-
-## `ref` como prop: forwardRef
-
-Para pasar una ref a un componente hijo, usa forwardRef:
-```jsx
-const InputConRef = forwardRef((props, ref) => {
-  return <input ref={ref} {...props} />;
-});
-
-// Padre
-const inputRef = useRef();
-<InputConRef ref={inputRef} />
-```
-
-
-## Callback ref (más control)
 ```jsx
 const [medidas, setMedidas] = useState(null);
 const refCallback = (node) => {
@@ -128,19 +88,86 @@ const refCallback = (node) => {
 <div ref={refCallback}>...</div>
 ```
 
+---
+
+## 🚀 Casos Avanzados y Patrones
+
+### Referencia a valores previos (como "prevProps" o "prevState")
+
+```jsx
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
+}
+```
+
+* **Medir elementos DOM**: Combínalo con `useLayoutEffect` para leer dimensiones antes del primer pintado (paint).
+* **Evitar recreación de callbacks**: Si usas callback ref, es recomendable memoizarla con `useCallback` si se pasa a hijos optimizados.
+
+Diferencias con useState
+
+|Característica|useState|useRef|
+|-|-|-|
+|Cambio provoca re-render|Sí|No|
+|Valor persiste entre renders|Sí|Sí|
+|Síncrono o asíncrono|Asíncrono (batch)|Síncrono (mutación directa)|
+
+## `ref` como prop: forwardRef
+
+Para pasar una ref a un componente hijo, usa forwardRef:
+
+```jsx
+const InputConRef = forwardRef((props, ref) => {
+  return <input ref={ref} {...props} />;
+});
+
+// Padre
+const inputRef = useRef();
+<InputConRef ref={inputRef} />
+```
+
+## Callback ref (más control)
+
+```jsx
+const [medidas, setMedidas] = useState(null);
+const refCallback = (node) => {
+  if (node !== null) {
+    setMedidas(node.getBoundingClientRect());
+  }
+};
+<div ref={refCallback}>...</div>
+```
 
 Casos avanzados
 
-- Medir elementos DOM: combínalo con useLayoutEffect para leer dimensiones antes del paint.
+* Medir elementos DOM: combínalo con useLayoutEffect para leer dimensiones antes del paint.
 
-- Evitar recreación de callbacks: si usas callback ref, memoízala con useCallback.
+* Evitar recreación de callbacks: si usas callback ref, memoízala con useCallback.
 
 Advertencias
 
-- No abuses de ref para "solución rápida" cuando deberías usar estado.
+* No abuses de ref para "solución rápida" cuando deberías usar estado.
 
-- Mutar .current no es reactivo; si necesitas que algo cambie en la UI, usa estado.
-
+* Mutar .current no es reactivo; si necesitas que algo cambie en la UI, usa estado.
 
 -----
+
+---
+
+## 📏 Reglas y Advertencias
+
+* **No para renderizado**: Si el valor se usa en el JSX para mostrar información al usuario, **usa `useState`**. Mutar `.current` durante el render puede causar inconsistencias visuales.
+* **Mutación síncrona**: El valor de `.current` cambia inmediatamente. Úsalo para lógica imperativa, no reactiva.
+* **No abuses de las Refs**: No uses `useRef` como una "solución rápida" para evitar el flujo de datos de React (props/state).
+* **No reactividad**: Mutar `.current` no es reactivo; si necesitas que algo cambie en la UI, usa estado.
+
+---
+
+<div align="center">
+
 [⬅️ Volver al Índice](../README.md)
+
+</div>

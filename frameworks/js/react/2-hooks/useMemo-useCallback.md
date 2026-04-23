@@ -36,7 +36,6 @@ const funcionMemoizada = useCallback(() => {
   hacerAlgo(a, b);
 }, [a, b]);
 ```
-
 - Devuelve la misma referencia de función entre renders si las dependencias no cambian.
 
 - Evita que componentes hijos (optimizados con React.memo) se re-rendericen innecesariamente.
@@ -54,6 +53,8 @@ const handleClick = useCallback(() => {
 > [!TIP]
 > Su uso principal es pasar callbacks a componentes hijos optimizados con `React.memo` para evitar que estos se re-rendericen innecesariamente.
 
+*   **Estabilidad**: Evita que componentes hijos (optimizados con `React.memo`) se re-rendericen innecesariamente al recibir una "nueva" función en cada render.
+
 ---
 
 ## ⚖️ Diferencia Clave
@@ -65,16 +66,14 @@ const handleClick = useCallback(() => {
 
 ---
 
-## 🚫 ¿Cuándo NO usarlos?
+## 🚫 ¿Cuándo NO usarlos? (Trampas Comunes)
 
 > [!WARNING]
 > La optimización prematura puede ser contraproducente. Memorizar tiene un costo de memoria y tiempo de ejecución.
 
 1.  **Operaciones baratas**: Sumas, concatenaciones o filtros en arrays pequeños no necesitan `useMemo`.
-2.  **Si no hay problemas de rendimiento**: Si la aplicación ya vuela, no añadidas complejidad innecesaria.
-3.  **Hijos no memoizados**: No sirve de nada usar `useCallback` si el componente hijo no está envuelto en `React.memo`.
-
----
+2.  **Hijos no memoizados**: No sirve de nada usar `useCallback` si el componente hijo no está envuelto en `React.memo`.
+3.  **Componentes Nativos**: No uses `useCallback` para funciones que se pasan a un `div`, `button` u otros elementos nativos, ya que estos siempre se re-renderizan si el padre lo hace.
 
 ## 📏 Reglas y Buenas Prácticas
 
@@ -85,9 +84,8 @@ const handleClick = useCallback(() => {
 ---
 
 Trampa común
-
 ```jsx
-// ❌ Mal: useCallback para una función que se pasa a un div nativo (no memoizado)
+// ❌ Mal: useCallback para una función que se pasa a un div nativo
 const handleClick = useCallback(() => {}, []);
 <div onClick={handleClick} />
 
@@ -95,7 +93,12 @@ const handleClick = useCallback(() => {}, []);
 const HijoMemo = React.memo(({ onClick }) => ...);
 ```
 
-useMemo para objetos que son dependencia de otros hooks
+---
+
+## 🚀 Casos de Uso Avanzados
+
+### Objetos como dependencia
+Usa `useMemo` para objetos que son dependencia de otros hooks como `useEffect` para evitar ejecuciones infinitas.
 
 ```jsx
 const opciones = useMemo(() => ({ pageSize, sortBy }), [pageSize, sortBy]);
@@ -123,4 +126,23 @@ Buenas prácticas
 
 ----
 
+### Diferencia con React.memo
+*   **`React.memo`**: Evita re-render del componente si sus props no cambiaron (comparación superficial).
+*   **`useCallback` / `useMemo`**: Evitan que las props (funciones/objetos) cambien innecesariamente, permitiendo que `React.memo` funcione correctamente.
+
+---
+
+## 💡 Buenas Prácticas
+
+*   **Mide primero**: Usa el Profiler de React DevTools antes de optimizar. Si la aplicación no tiene problemas de rendimiento, no añadas complejidad.
+*   **Dependencias completas**: Incluye **todos** los valores reactivos usados dentro del hook en el array de dependencias.
+*   **Definición externa**: Para funciones que no dependen de estado o props, defínelas **fuera** del componente para evitar recrearlas sin necesidad de hooks.
+
+---
+
+<div align="center">
+
 [⬅️ Volver al Índice](../README.md)
+
+</div>
+

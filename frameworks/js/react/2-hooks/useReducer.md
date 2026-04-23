@@ -10,13 +10,16 @@
 const [state, dispatch] = useReducer(reducer, initialState, init);
 ```
 
-* **`reducer`**: Función pura `(state, action) => newState`.
-* **`initialState`**: El valor inicial del estado.
-* **`dispatch`**: Función para enviar acciones al reducer.
+*   **`reducer`**: Función pura `(state, action) => newState`.
+*   **`initialState`**: El valor inicial del estado.
+*   **`dispatch`**: Función para enviar acciones al reducer.
+*   **`init`**: (Opcional) Función para inicialización diferida.
 
 ---
 
-## 🚀 Ejemplo Práctico: Contador
+## 🚀 Implementación y Flujo
+
+### 1. Ejemplo Práctico: Contador
 
 ```jsx
 const initialState = { count: 0 };
@@ -43,22 +46,19 @@ function Counter() {
 }
 ```
 
-Acciones con payload
+### 2. Acciones con Payload
+Útil para pasar datos adicionales a la lógica de actualización.
 
 ```jsx
-function reducer(state, action) {
-  switch (action.type) {
-    case 'set':
-      return { count: action.payload };
-    default:
-      return state;
-  }
-}
-// uso
 dispatch({ type: 'set', payload: 10 });
+
+// En el reducer
+case 'set':
+  return { count: action.payload };
 ```
 
-Inicialización diferida
+### 3. Inicialización Diferida
+Útil para resetear el estado o cuando el estado inicial depende de una prop.
 
 ```jsx
 function init(initialCount) {
@@ -85,15 +85,16 @@ const [state, dispatch] = useReducer(reducer, initialCount, init);
 > [!TIP]
 > Si tu estado tiene más de 3 variables que cambian juntas, o si la lógica del próximo estado depende fuertemente del anterior, `useReducer` es tu mejor amigo.
 
-1. **Lógica compleja**: Cuando el estado es un objeto con múltiples campos.
-2. **Acciones predecibles**: Quieres centralizar la lógica de actualización fuera del componente.
-3. **Optimización**: Al pasar `dispatch` a componentes hijos, no cambia entre renders (referencia estable).
+*   **Lógica Compleja**: Cuando el estado es un objeto con múltiples campos que se actualizan juntos (ej. formularios grandes).
+*   **Predecibilidad**: Quieres centralizar la lógica de actualización fuera del cuerpo del componente.
+*   **Rendimiento**: Evita pasar múltiples callbacks por props; puedes pasar un único `dispatch` que tiene referencia estable.
+*   **Lógica de Negocio**: Cuando la transición de estado es difícil de seguir con múltiples `useState`.
 
 ---
 
-## 🔗 Combinación con useContext (Mini-Redux)
+## 🛡️ Patrón: Combinación con useContext (Mini-Redux)
 
-Este es un patrón muy común para evitar el prop-drilling en aplicaciones medianas.
+Para aplicaciones medianas, este patrón es ideal para evitar el prop-drilling sin añadir una librería externa.
 
 ```jsx
 const AppContext = createContext();
@@ -101,7 +102,7 @@ const AppContext = createContext();
 function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   
-  // Memoizamos el valor para evitar re-renders innecesarios
+  // Memoizamos el valor para evitar re-renders innecesarios en consumidores
   const value = useMemo(() => ({ state, dispatch }), [state]);
 
   return (
@@ -114,25 +115,18 @@ function AppProvider({ children }) {
 
 ---
 
-## 📏 Reglas de Oro
+## 📏 Reglas y Buenas Prácticas
 
-* **Reducers Puros**: No hagas llamadas a APIs ni uses `Math.random()` dentro del reducer.
-* **Inmutabilidad**: Nunca mutes el `state` directamente; siempre devuelve un objeto nuevo (usa el spread operator `...state`).
-* **Acciones Descriptivas**: Usa el estándar `{ type: 'ACTION_NAME', payload: data }`.
-
----
-Buenas prácticas
-
-- Los reducers deben ser puros (sin efectos secundarios, sin mutar state).
-
-- Usa constantes para los tipos de acción (ej. const INCREMENT = 'increment').
-
-- Separa reducers en archivos diferentes para lógica compleja.
-
-Comparación de rendimiento
-
-useReducer evita pasar callbacks por muchos niveles (en lugar de setState puedes pasar dispatch). Es más eficiente para actualizaciones profundas.
+*   **Reducers Puros**: No hagas llamadas a APIs, mutaciones de variables externas ni uses `Math.random()` dentro del reducer.
+*   **Inmutabilidad**: Nunca mutes el `state` directamente; devuelve siempre un nuevo objeto usando el spread operator (`...state`).
+*   **Acciones Descriptivas**: Usa constantes para los tipos de acción (ej. `const INCREMENT = 'increment'`) y el estándar `{ type, payload }`.
+*   **Separación de Lógica**: Para reducers muy grandes, sepáralos en archivos independientes para mejorar la legibilidad.
 
 ---
+
+<div align="center">
 
 [⬅️ Volver al Índice](../README.md)
+
+</div>
+

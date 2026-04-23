@@ -1,8 +1,12 @@
-# otros-hooks.md
+# ⚓ Otros Hooks: Identidad, Imperatividad y Concurrencia
 
-## useId
+Este documento recopila Hooks de React menos comunes pero esenciales para casos de uso específicos como accesibilidad, optimización concurrente e integración con librerías externas.
 
-Genera identificadores únicos estables para accesibilidad (atributos id). Evita problemas de hidratación en SSR.
+---
+
+## 🆔 useId
+
+Genera identificadores únicos estables para accesibilidad (atributos `id`). Es crucial para evitar problemas de hidratación en aplicaciones con SSR (Server Side Rendering).
 
 ```jsx
 function Campo() {
@@ -16,9 +20,93 @@ function Campo() {
 }
 ```
 
-- No usar para keys en listas.
+*   **No usar para keys**: No lo uses para generar la propiedad `key` en listas.
+*   **Identidad**: Cada llamada produce un ID único, garantizando que los elementos del DOM no colisionen.
 
-- Cada llamada produce un ID único entre componentes.
+---
+
+## 🏗️ useImperativeHandle
+
+Personaliza el valor que se expone a un componente padre a través de una `ref` cuando se usa `forwardRef`. Permite mantener la encapsulación al exponer solo los métodos necesarios.
+
+```jsx
+const FancyInput = forwardRef((props, ref) => {
+  const inputRef = useRef();
+  
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current.focus(),
+    customClear: () => { inputRef.current.value = ''; }
+  }));
+  
+  return <input ref={inputRef} {...props} />;
+});
+
+// Uso en el Padre
+const ref = useRef();
+<FancyInput ref={ref} />
+ref.current.focus(); // válido
+ref.current.customClear(); // método personalizado
+```
+
+---
+
+## 🧪 useDebugValue
+
+Permite etiquetar un Custom Hook en las **React DevTools**. Es puramente para mejorar la experiencia de desarrollo (DX).
+
+```jsx
+function useFriendStatus(friendID) {
+  const [isOnline, setIsOnline] = useState(null);
+  useDebugValue(isOnline ? 'Online' : 'Offline');
+  return isOnline;
+}
+```
+
+> [!TIP]
+> Para formatear valores costosos, acepta una función como segundo argumento que solo se ejecuta cuando se inspeccionan las DevTools:
+> `useDebugValue(date, date => date.toDateString());`
+
+---
+
+## ⚡ useTransition (React 18+)
+
+Permite marcar actualizaciones de estado como "no urgentes" (transiciones). Esto permite que la interfaz siga respondiendo a interacciones del usuario (como clics o escritura) mientras se procesa una actualización pesada en segundo plano.
+
+```jsx
+const [isPending, startTransition] = useTransition();
+
+const handleSearch = (input) => {
+  startTransition(() => {
+    setSearchQuery(input); // Esta actualización se procesará con menor prioridad
+  });
+};
+
+return (
+  <div>
+    <input onChange={e => handleSearch(e.target.value)} />
+    {isPending && <Spinner />}
+    <Resultados query={searchQuery} />
+  </div>
+);
+```
+
+---
+
+## 🌐 useSyncExternalStore
+
+Hook avanzado diseñado para que las librerías de gestión de estado se suscriban a fuentes de datos externas de forma segura para la renderización concurrente.
+
+```jsx
+const state = useSyncExternalStore(store.subscribe, store.getState);
+```
+
+---
+
+## ⏳ useDeferredValue
+
+Similar a `useTransition`, pero se aplica a un **valor** directamente. Recibe un valor y devuelve una versión "desfasada" del mismo que se actualiza con menor prioridad, permitiendo que la UI renderice primero el contenido urgente.
+
+---
 
 ## useLayoutEffect
 
@@ -32,75 +120,10 @@ useLayoutEffect(() => {
 ```
 
 Precaución: Bloquea el paint, puede degradar rendimiento. Usa useEffect por defecto.
-## useImperativeHandle
+---
 
-Personaliza el valor expuesto por una ref cuando se usa forwardRef. Permite controlar qué métodos o propiedades expones.
+<div align="center">
 
-```jsx
-const FancyInput = forwardRef((props, ref) => {
-  const inputRef = useRef();
-  useImperativeHandle(ref, () => ({
-    focus: () => inputRef.current.focus(),
-    customClear: () => { inputRef.current.value = ''; }
-  }));
-  return <input ref={inputRef} {...props} />;
-});
-// Padre
-const ref = useRef();
-<FancyInput ref={ref} />
-ref.current.focus(); // válido
-ref.current.customClear();
-```
+[⬅️ Volver al Índice](../README.md)
 
-## useDebugValue
-
-Etiqueta un custom hook en React DevTools. Solo útil para depuración.
-
-```jsx
-function useFriendStatus(friendID) {
-  const [isOnline, setIsOnline] = useState(null);
-  useDebugValue(isOnline ? 'Online' : 'Offline');
-  return isOnline;
-}
-```
-
-Para valores costosos, acepta una función de formato:
-
-```jsx
-useDebugValue(date, date => date.toDateString());
-```
-
-## useTransition (React 18+)
-
-Marca una actualización de estado como no urgente (transición), permitiendo que el UI siga respondiendo mientras se renderiza contenido pesado.
-
-```jsx
-```
-
-const [isPending, startTransition] = useTransition();
-
-const handleSearch = (input) => {
-  startTransition(() => {
-    setSearchQuery(input); // actualización "lenta"
-  });
-};
-
-return (
-  <div>
-    <input onChange={e => handleSearch(e.target.value)} />
-    {isPending && <Spinner />}
-    <Resultados query={searchQuery} />
-  </div>
-);
-
-## useSyncExternalStore
-
-Hook avanzado para suscribirse a fuentes de datos externas (store de Redux, estado global no React). Recomendado para autores de librerías.
-
-```jsx
-const state = useSyncExternalStore(store.subscribe, store.getState);
-```
-
-## useDeferredValue (mencionar breve)
-
-Similar a useTransition pero para valores: recibe un valor y devuelve una versión "desfasada" que se actualiza en segundo plano.
+</div>

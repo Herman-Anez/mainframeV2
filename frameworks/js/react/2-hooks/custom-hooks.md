@@ -1,15 +1,23 @@
-# custom-hooks.md
+# ⚓ Custom Hooks: Reutilización de Lógica con Estado
 
-Un custom hook es una función JavaScript cuyo nombre comienza con use y que puede llamar a otros hooks. Permite reutilizar lógica con estado entre componentes.
-Reglas
+Un **Custom Hook** es una función de JavaScript cuyo nombre comienza con `use` y que puede llamar a otros hooks. Permite extraer y reutilizar lógica compleja con estado entre diferentes componentes sin duplicar código.
 
-- Debe empezar con use (convención para que React pueda verificar reglas de hooks).
+---
 
-- Solo puede llamar hooks en el nivel superior.
+## ⚖️ Reglas de los Hooks
 
-- Puede recibir argumentos y devolver cualquier valor.
+Para que React pueda verificar que los hooks se comportan correctamente, los Custom Hooks deben seguir estas reglas:
 
-Ejemplo simple: useLocalStorage
+*   **Nomenclatura**: Debe empezar obligatoriamente con el prefijo `use` (ej: `useFetch`, `useAuth`).
+*   **Llamadas**: Solo pueden llamar a otros hooks en el nivel superior del Custom Hook (nunca dentro de condicionales o bucles).
+*   **Flexibilidad**: Pueden recibir cualquier tipo de argumentos y devolver cualquier tipo de valor (arrays, objetos, variables, etc.).
+
+---
+
+## 🚀 Ejemplos Prácticos
+
+### 1. `useLocalStorage` (Persistencia)
+Ideal para sincronizar el estado de React con el almacenamiento local del navegador.
 
 ```jsx
 function useLocalStorage(key, initialValue) {
@@ -36,7 +44,8 @@ function useLocalStorage(key, initialValue) {
 }
 ```
 
-Ejemplo: useFetch
+### 2. `useFetch` (Consumo de APIs)
+Maneja la carga, los datos y los errores de una petición HTTP de forma centralizada.
 
 ```jsx
 function useFetch(url) {
@@ -69,8 +78,8 @@ function useFetch(url) {
 }
 ```
 
-
-Ejemplo: useOnClickOutside (detectar clic fuera de un elemento)
+### 3. `useOnClickOutside` (Interacción DOM)
+Detecta clics fuera de un elemento específico (ej: cerrar un modal).
 
 ```jsx
 function useOnClickOutside(ref, handler) {
@@ -89,32 +98,43 @@ function useOnClickOutside(ref, handler) {
 }
 ```
 
+---
 
-Composición de custom hooks
+## 🏗️ Composición de Custom Hooks
 
-Puedes combinar varios hooks dentro de uno:
+Puedes combinar varios hooks existentes (nativos o personalizados) para crear lógica aún más potente:
 
 ```jsx
 function useUser(userId) {
   const { data: user, loading, error } = useFetch(`/users/${userId}`);
   const [preferences, setPrefs] = useLocalStorage(`prefs_${userId}`, {});
+  
   return { user, loading, error, preferences, setPrefs };
 }
 ```
 
+---
 
-Buenas prácticas
+## 💡 Buenas Prácticas
 
-- Un solo propósito por custom hook.
+*   **Propósito Único**: Cada hook debe tener una sola responsabilidad clara (Principio de Responsabilidad Única).
+*   **Retorno de Valores**: 
+    *   Usa **arrays** (ej: `[value, setValue]`) si el hook devuelve exactamente dos valores (estilo `useState`).
+    *   Usa **objetos** (ej: `{ data, loading, error }`) si devuelve más de dos valores para facilitar la destructuración y extensión futura.
+*   **Pruebas**: Utiliza `renderHook` de React Testing Library para probar la lógica sin necesidad de montar componentes visuales.
+*   **Desacoplamiento**: Los custom hooks no deben devolver JSX; deben ser "puros" en lógica para que cualquier componente pueda decidir cómo renderizar esa información.
 
-- Devolver un objeto con valores nombrados (en lugar de array) cuando hay más de dos valores.
+---
 
-- Escribir pruebas para custom hooks con renderHook (React Testing Library).
+## ⚖️ Custom Hooks vs Componentes
 
-- Documentar los parámetros y el retorno.
+*   **Custom Hooks**: Reutilizan **lógica de negocio** y estado. No devuelven elementos visuales.
+*   **Componentes**: Reutilizan **UI** y, opcionalmente, lógica. Si necesitas reutilizar tanto el diseño como el comportamiento, crea un componente.
 
-Custom hooks vs componentes
+---
 
-- Los custom hooks no devuelven JSX, solo lógica con estado.
+<div align="center">
 
-- Si necesitas reutilizar UI + lógica, crea un componente. Si solo lógica, custom hook.
+[⬅️ Volver al Índice](../README.md)
+
+</div>

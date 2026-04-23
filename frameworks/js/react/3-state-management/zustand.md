@@ -4,6 +4,15 @@ Zustand es una librería de gestión de estado pequeña, rápida y escalable. Su
 
 ---
 
+## ⚖️ Auditoría de Contenido
+
+> [!NOTE]
+> Este archivo sirve como la contraparte moderna a [Redux](./redux.md). Es excelente para estados globales simples o aplicaciones que no requieren la rigurosidad de RTK. Complementa perfectamente con [Context API](./context-api.md) para entender cuándo saltar a una librería externa.
+
+---
+
+---
+
 ## 🚀 Instalación y Setup
 
 ```bash
@@ -13,6 +22,10 @@ npm install zustand
 ### 📦 Crear un Store
 
 A diferencia de Context, no necesitas un `Provider`. Creas el store y lo usas donde quieras.
+
+---
+
+## 🚀 Implementación del Store
 
 ```jsx
 import { create } from 'zustand';
@@ -111,4 +124,16 @@ const useStore = create(
 
 ---
 
+## 💡 Buenas Prácticas
+
+*   **Selectores Atómicos**: Siempre usa selectores para extraer solo los datos necesarios y evitar re-renders.
+*   **Acciones en el Store**: Define la lógica de actualización dentro del store para mantener los componentes limpios.
+*   **Middlewares**: Usa `persist` para estados que deben sobrevivir a una recarga de página (ej. configuración de usuario).
+
+---
+
+<div align="center">
+
 [⬅️ Volver al Índice](../README.md)
+
+</div>
