@@ -1,35 +1,33 @@
+# ⚓ Nuevos Hooks: Especialización y Control
 
-📄 9-react-18-plus/new-hooks.md
-useId
+React 18 introdujo una serie de hooks técnicos diseñados para resolver problemas específicos relacionados con la hidratación, la sincronización con estados externos y la optimización de librerías de estilos.
 
-Genera identificadores únicos y estables para accesibilidad (evita conflictos en SSR e hidratación).
+---
+
+## 🆔 `useId`
+
+Genera identificadores únicos y, lo más importante, **estables** entre el servidor y el cliente. Es fundamental para la accesibilidad (ARIA).
 
 ```jsx
-function FormField() {
+function FormField({ label }) {
   const id = useId();
   return (
     <>
-      <label htmlFor={id}>Nombre:</label>
+      <label htmlFor={id}>{label}</label>
       <input id={id} type="text" />
     </>
   );
 }
 ```
 
-Características:
+> [!IMPORTANT]
+> **No lo uses** para generar `keys` en una lista. Las keys deben provenir de tus datos (ej: IDs de base de datos).
 
-- Los IDs son consistentes en servidor y cliente (evita advertencias de hidratación).
+---
 
-- Cada llamada produce un ID diferente.
+## 📡 `useSyncExternalStore`
 
-- No usar para keys en listas.
-
-useSyncExternalStore
-
-Hook para suscribirse a fuentes de datos externas (stores de Redux, Zustand, estado global de otras librerías) de forma segura con concurrencia.
-
-```jsx
-import { useSyncExternalStore } from 'react';
+Este hook permite suscribirse a fuentes de datos externas (como el estado de Redux, Zustand o incluso APIs del navegador como `localStorage`) de forma que sea totalmente compatible con el **Concurrent Rendering**.
 
 // Store externa simple
 let externalState = 0;
@@ -53,6 +51,7 @@ function MiComponente() {
   const state = useSyncExternalStore(subscribe, getSnapshot);
   return <div>{state}</div>;
 }
+
 ```
 
 Uso típico:
@@ -103,27 +102,77 @@ Diferencia con useLayoutEffect:
 Nota: La mayoría de los desarrolladores no necesitan este hook directamente; está pensado para autores de librerías como styled-components o Emotion.
 useDeferredValue (mencionado en transitions)
 
-```jsx
-const deferredValue = useDeferredValue(value);
-```
-
-Recibe un valor y devuelve una versión que se actualiza con menor prioridad. Útil para mantener responsivo el UI mientras se renderiza contenido pesado basado en ese valor.
+### Ejemplo: Detectar Estado de Conexión
 
 ```jsx
-function App() {
-  const [text, setText] = useState('');
-  const deferredText = useDeferredValue(text);
-  
-  const list = useMemo(() => {
-    return expensiveFilter(hugeList, deferredText);
-  }, [deferredText]);
-  
-  return (
-    <>
-      <input value={text} onChange={e => setText(e.target.value)} />
-      {deferredText !== text && <Spinner />}
-      <List items={list} />
-    </>
+import { useSyncExternalStore } from 'react';
+
+function useOnlineStatus() {
+  return useSyncExternalStore(
+    (callback) => {
+      window.addEventListener('online', callback);
+      window.addEventListener('offline', callback);
+      return () => {
+        window.removeEventListener('online', callback);
+        window.removeEventListener('offline', callback);
+      };
+    },
+    () => navigator.onLine, // Snapshot en cliente
+    () => true // Snapshot inicial en servidor (SSR)
   );
 }
 ```
+
+---
+
+## 🎨 `useInsertionEffect`
+
+Un hook especializado para autores de librerías de **CSS-in-JS**. Se ejecuta **antes** de todas las mutaciones del DOM y antes de `useLayoutEffect`.
+
+```jsx
+useInsertionEffect(() => {
+  const style = insertarReglaCSS(rule);
+  return () => limpiarReglaCSS(style);
+}, [rule]);
+```
+
+> [!TIP]
+> Si no estás construyendo una librería de estilos, lo más probable es que debas usar `useEffect` o `useLayoutEffect` en su lugar.
+
+---
+
+## ⏳ `useDeferredValue`
+
+Permite obtener una versión "retrasada" de un valor. React intentará renderizar primero con el valor actual y, si hay tiempo disponible, renderizará la parte pesada con el valor diferido.
+
+```jsx
+const [query, setQuery] = useState('');
+const deferredQuery = useDeferredValue(query);
+
+const isStale = query !== deferredQuery;
+
+return (
+  <div style={{ opacity: isStale ? 0.5 : 1 }}>
+    <LargeList query={deferredQuery} />
+  </div>
+);
+```
+
+---
+
+## 💡 Resumen de Casos de Uso
+
+| Hook | Cuándo usarlo |
+| :--- | :--- |
+| **`useId`** | Para atributos `id` en formularios y tags de accesibilidad. |
+| **`useSyncExternalStore`** | Para integrar estados que viven fuera de React (stores globales). |
+| **`useInsertionEffect`** | Solo para inyectar `<style>` dinámicamente antes del renderizado. |
+| **`useDeferredValue`** | Para retrasar la actualización de un valor pesado (como filtros). |
+
+---
+
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>

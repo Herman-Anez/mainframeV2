@@ -1,106 +1,110 @@
-testing/jest.md
+# 🃏 Jest: El Framework de Pruebas Definitivo
 
+**Jest** es un framework de pruebas de JavaScript enfocado en la simplicidad. Es el estándar de oro para aplicaciones de React, integrando todo lo necesario (assertions, mocks, spies, cobertura) en un solo paquete.
 
+---
 
-Jest es un framework de pruebas de JavaScript desarrollado por Facebook, muy popular para probar aplicaciones React. Incluye assertions, mocks, spies, cobertura y modo watch.
-Instalación (en Create React App ya viene incluido)
+## 🚀 Configuración Inicial
+
+Si usas **Create React App (CRA)**, Jest ya viene configurado. Para otros proyectos (como Vite), necesitas instalarlo:
+
 ```bash
 npm install --save-dev jest @testing-library/react @testing-library/jest-dom
 ```
 
+---
 
-Estructura básica de una prueba
+## 🏗️ Anatomía de un Test
+
+Los archivos de prueba suelen llevar la extensión `.test.js` o `.spec.js`.
+
 ```jsx
-// suma.js
-export function suma(a, b) { return a + b; }
+import { sumar } from './calculadora';
 
-// suma.test.js
-import { suma } from './suma';
+// describe: Agrupa pruebas relacionadas
+describe('Módulo de Calculadora', () => {
+  
+  // test o it: Define una prueba individual
+  test('debería sumar 1 + 2 y devolver 3', () => {
+    // expect: La aserción que define el resultado esperado
+    expect(sumar(1, 2)).toBe(3);
+  });
 
-test('suma 1 + 2 es igual a 3', () => {
-  expect(suma(1, 2)).toBe(3);
 });
 ```
 
+---
 
-Matchers comunes
-```jsx
-expect(valor).toBe(3);           // igualdad estricta (Object.is)
-expect(valor).toEqual({ a: 1 }); // igualdad profunda para objetos
-expect(valor).toBeTruthy();      // true
-expect(valor).toBeFalsy();       // false
-expect(valor).toBeNull();
-expect(valor).toBeDefined();
-expect(valor).toContain('substring');
-expect(array).toHaveLength(3);
-expect(fn).toThrow(Error);
+## 🔍 Matchers (Comparadores) más Usados
+
+Jest ofrece una gran variedad de "matchers" para verificar diferentes tipos de valores:
+
+```javascript
+expect(valor).toBe(10);           // Igualdad estricta (primitivos)
+expect(valor).toEqual({ a: 1 });  // Igualdad profunda (objetos y arrays)
+expect(valor).toBeTruthy();       // Verifica si es un valor "verdadero"
+expect(valor).toContain('React'); // Verifica si un string o array contiene el valor
+expect(array).toHaveLength(5);    // Verifica el tamaño de un array
+expect(fn).toThrow(Error);        // Verifica si una función lanza un error
 ```
 
+---
 
-Pruebas asíncronas
-```jsx
-test('fetch devuelve datos', async () => {
-  const data = await fetchData();
-  expect(data).toEqual({ id: 1 });
-});
+## ⚓ Mocks y Spies
 
-// con resolves / rejects
-expect(fetchData()).resolves.toEqual({ id: 1 });
+Los **Mocks** permiten simular el comportamiento de funciones o módulos complejos (como llamadas a APIs) para aislar la unidad de código que se está probando.
+
+### Simular una Función
+```javascript
+const miMock = jest.fn((x) => x + 10);
+
+miMock(5);
+expect(miMock).toHaveBeenCalledWith(5);
+expect(miMock).toHaveReturnedWith(15);
 ```
 
-
-Mocks y spies
-```jsx
-// Mock de función
-const mockFn = jest.fn();
-mockFn('arg');
-expect(mockFn).toHaveBeenCalledWith('arg');
-expect(mockFn).toHaveBeenCalledTimes(1);
-
-// Mock de módulo
-jest.mock('axios');
+### Simular un Módulo (ej: Axios)
+```javascript
 import axios from 'axios';
-axios.get.mockResolvedValue({ data: { id: 1 } });
+jest.mock('axios');
+
+test('debería obtener datos de usuario', async () => {
+  axios.get.mockResolvedValue({ data: { nombre: 'Ana' } });
+  // ... resto del test
+});
 ```
 
+---
 
-Cobertura de código
-```bash
-npm test -- --coverage
-```
+## 🛡️ Pruebas de Snapshots
 
+Las pruebas de **Snapshot** capturan la estructura del componente y la guardan en un archivo. Si el componente cambia en el futuro, Jest te avisará.
 
-Configuración (para proyectos que no usan CRA)
-
-```js
-// jest.config.js
-module.exports = {
-  testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/setupTests.js'],
-  transform: { '^.+\\.(js|jsx)$': 'babel-jest' }
-};
-```
-
-Pruebas de componentes React con Jest sola (sin Testing Library)
-
-No es común, pero se puede usar react-test-renderer para snapshots.
 ```jsx
 import renderer from 'react-test-renderer';
-import MiComponente from './MiComponente';
 
-test('snapshot', () => {
-  const tree = renderer.create(<MiComponente />).toJSON();
+test('Renderiza correctamente el componente Botón', () => {
+  const tree = renderer.create(<Button text="Enviar" />).toJSON();
   expect(tree).toMatchSnapshot();
 });
 ```
 
+> [!WARNING]
+> No abuses de los Snapshots. Son útiles para detectar cambios visuales inesperados, pero pueden volverse ruidosos si el componente cambia frecuentemente durante el desarrollo.
 
-Buenas prácticas
+---
 
-- Pruebas aisladas, sin dependencia entre ellas.
+## 💡 Buenas Prácticas
 
-- Usa describe para agrupar pruebas relacionadas.
+1.  **Isolation**: Cada test debe ser independiente. Nunca dependas del resultado de una prueba anterior.
+2.  **Mantenimiento**: Usa `describe` y `it` para que los reportes de error sean fáciles de leer (ej: `describe('Login', () => { it('should fail with wrong password', ... ) })`).
+3.  **Cobertura**: Ejecuta `npm test -- --coverage` para ver qué porcentaje de tu código está realmente protegido por pruebas.
+4.  **Watch Mode**: Usa `--watch` durante el desarrollo para que los tests se ejecuten automáticamente al guardar archivos.
 
-- Nombres descriptivos: 'debería mostrar el mensaje de error cuando falla'.
+---
 
-- No abuses de snapshots (se rompen fácilmente).
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>

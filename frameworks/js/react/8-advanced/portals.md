@@ -1,45 +1,63 @@
+# 🚪 Portals: Rompiendo la Jerarquía del DOM
 
+Los **Portals** proporcionan una forma de renderizar componentes hijos en un nodo del DOM que existe fuera de la jerarquía del componente padre, pero manteniendo todas las capacidades de React (eventos, props y contexto).
 
-📄 8-advanced/portals.md
-Concepto
+---
 
-Portals permiten renderizar un componente hijo en un nodo del DOM diferente al del componente padre, manteniendo el contexto de React (eventos, props, contexto).
+## 🏗️ Sintaxis Básica
 
-Sintaxis
+Se utiliza la función `createPortal` de la librería `react-dom`.
 
 ```jsx
 import { createPortal } from 'react-dom';
 
-function Modal({ children, isOpen }) {
-  if (!isOpen) return null;
+function MyPortal({ children }) {
+  // 1. Contenido a renderizar
+  // 2. Nodo del DOM donde se inyectará
   return createPortal(
-    <div className="modal-overlay">
-      <div className="modal-content">{children}</div>
-    </div>,
-    document.getElementById('modal-root') // nodo destino
+    children,
+    document.getElementById('portal-root')
   );
 }
 ```
 
-¿Por qué usar Portals?
+---
 
-- Modales, tooltips, toasts, menús desplegables: deben romper la jerarquía visual (z-index, overflow hidden) pero mantener la lógica de React (props, eventos, contexto).
+## 🤔 ¿Por qué usar Portals?
 
-- Evitar problemas de CSS donde el padre tenga overflow: hidden o z-index limitado.
+Existen casos donde un componente hijo necesita "escapar" visualmente de su padre debido a restricciones de CSS como `z-index`, `overflow: hidden` o `position: relative`.
 
-Configuración del nodo destino
+*   **Modales y Diálogos**: Deben aparecer por encima de todo el contenido.
+*   **Tooltips y Popovers**: No deben quedar cortados por contenedores con scroll.
+*   **Toasts y Notificaciones**: Suelen vivir en una capa global de la interfaz.
 
-En public/index.html:
-html
+---
 
+## 🚀 Implementación de un Modal
+
+### 1. Preparar el HTML
+En tu archivo `public/index.html`, añade un nodo hermano al `root`.
+
+```html
 <body>
   <div id="root"></div>
-  <div id="modal-root"></div>
+  <div id="modal-root"></div> <!-- Destino del Portal -->
 </body>
+```
 
-Ejemplo completo de Modal con Portal
-jsx
-
+### 2. Crear el componente Modal
+```jsx
+const Modal = ({ children, onClose }) => {
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        {children}
+        <button onClick={onClose}>Cerrar</button>
+      </div>
+    </div>,
+    document.getElementById('modal-root')
+  );
+};
 function Modal({ children, onClose }) {
   return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
@@ -51,20 +69,8 @@ function Modal({ children, onClose }) {
     document.getElementById('modal-root')
   );
 }
-
-function App() {
-  const [showModal, setShowModal] = useState(false);
-  return (
-    <div style={{ overflow: 'hidden' }}> {/*No afecta al modal*/}
-      <button onClick={() => setShowModal(true)}>Abrir modal</button>
-      {showModal && (
-        <Modal onClose={() => setShowModal(false)}>
-          <h2>Contenido del modal</h2>
-        </Modal>
-      )}
-    </div>
-  );
-}
+```
+-----
 
 Event bubbling en Portals
 
@@ -104,3 +110,39 @@ jsx
 
 if (typeof window === 'undefined') return null;
 return createPortal(..., document.getElementById('modal-root'));
+---
+
+## ⚡ Burbujeo de Eventos (Event Bubbling)
+
+Aunque un portal se renderice en un lugar diferente del DOM, se comporta como un hijo normal en el **árbol de componentes de React**.
+
+> [!IMPORTANT]
+> Un evento disparado desde dentro de un Portal burbujeará hacia los ancestros en el árbol de React, incluso si esos elementos no son ancestros en el árbol del DOM real.
+
+---
+
+## ⚖️ Ventajas y Limitaciones
+
+### ✅ Ventajas
+*   **CSS Limpio**: Evita peleas complejas con `z-index`.
+*   **Contexto**: El componente en el portal sigue teniendo acceso a los Providers de la aplicación principal.
+
+### ❌ Desventajas / Limitaciones
+*   **Accesibilidad**: Debes manejar manualmente el foco del teclado (trap focus) dentro del modal.
+*   **SSR**: Los portales no funcionan en el servidor (Node.js) porque dependen del objeto `document`. Debes renderizarlos solo en el cliente.
+
+---
+
+## 💡 Buenas Prácticas
+
+1.  **Detección de Cliente**: Comprueba que el código se ejecuta en el navegador antes de intentar acceder al DOM.
+2.  **Limpieza**: Asegúrate de que el portal no deje residuos en el DOM si el componente se desmonta de forma abrupta.
+3.  **Fragmentos**: Puedes usar portales dentro de fragmentos para inyectar múltiples elementos en diferentes partes del DOM desde un solo componente.
+
+---
+
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>

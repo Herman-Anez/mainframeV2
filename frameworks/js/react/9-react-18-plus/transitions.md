@@ -1,84 +1,85 @@
+# ⚡ Transitions: Priorizando la Experiencia de Usuario
 
+Las **Transitions** (Transiciones) en React 18+ permiten marcar ciertas actualizaciones de estado como "no urgentes". Esto asegura que las interacciones críticas (como escribir en un teclado o hacer clic) se procesen de inmediato, mientras que las tareas pesadas (como filtrar una lista gigante) ocurran en segundo plano sin bloquear la interfaz.
 
-📄 9-react-18-plus/transitions.md
-Concepto
+---
 
-Transitions son una característica de React 18+ que permiten marcar actualizaciones de estado como no urgentes, permitiendo que el UI siga siendo responsivo durante actualizaciones pesadas.
-useTransition hook
-jsx
+## 🏗️ El Hook `useTransition`
 
-const [isPending, startTransition] = useTransition();
-
-- isPending: booleano que indica si la transición está activa (útil para mostrar un spinner).
-
-- startTransition(callback): función que envuelve la actualización de estado no urgente.
-
-Ejemplo práctico
+Este hook devuelve un estado de pendiente y una función para envolver las actualizaciones de estado lentas.
 
 ```jsx
-function SearchPage() {
+const [isPending, startTransition] = useTransition();
+```
+
+*   **`isPending`**: Un booleano que indica si la transición está actualmente en progreso (útil para mostrar un spinner).
+*   **`startTransition`**: Envuelve la función que actualiza el estado.
+
+---
+
+## 🚀 Ejemplo: Búsqueda con Filtrado Pesado
+
+```jsx
+function SearchApp() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isPending, startTransition] = useTransition();
-  
-  const handleChange = (e) => {
-    const value = e.target.value;
-    setQuery(value); // Urgente: actualiza el input inmediatamente
 
+  const handleSearch = (e) => {
+    const value = e.target.value;
+
+    // 🔴 Prioridad ALTA: Actualizar el input inmediatamente
+    setQuery(value);
+
+    // 🟡 Prioridad BAJA: Filtrar la lista sin bloquear el input
     startTransition(() => {
-      // No urgente: búsqueda pesada
-      const filtered = hugeList.filter(item => item.includes(value));
+      const filtered = heavyFilter(data, value);
       setResults(filtered);
     });
   };
-  
+
   return (
     <div>
-      <input value={query} onChange={handleChange} />
-      {isPending && <Spinner />}
-      <ResultList items={results} />
+      <input type="text" value={query} onChange={handleSearch} />
+      {isPending && <p>Buscando resultados...</p>}
+      <List items={results} />
     </div>
   );
 }
 ```
 
-startTransition como función independiente
+---
 
-```jsx
-import { startTransition } from 'react';
+## ⏳ `useDeferredValue` (Alternativa)
 
-startTransition(() => {
-  setResults(heavyComputation(query));
-});
-
-useDeferredValue (alternativa)
-```
-
-Recibe un valor y devuelve una versión "desfasada" que se actualiza en segundo plano.
+A diferencia de `useTransition` que envuelve una acción, `useDeferredValue` envuelve un **valor**. Se usa cuando no tienes control directo sobre el `setState` (ej: el valor viene de una prop).
 
 ```jsx
 const [query, setQuery] = useState('');
 const deferredQuery = useDeferredValue(query);
-const results = useMemo(() => filterList(hugeList, deferredQuery), [deferredQuery]);
+
+// React priorizará el renderizado con 'query', 
+// y luego intentará renderizar 'results' con 'deferredQuery' en segundo plano.
+const results = useMemo(() => filter(data, deferredQuery), [deferredQuery]);
 ```
 
-// El input se actualiza inmediatamente con query, los resultados con deferredQuery (más lento)
+---
 
-Diferencia entre useTransition y useDeferredValue
+## ⚖️ Comparativa: Transition vs DeferredValue
 
-|useTransition|useDeferredValue|
-|-|-|
-|Controlas dónde se aplica la transición|Aplica a un valor específico|
-|Tienes isPending para feedback|No hay indicador de pendiente (aunque puedes comparar valor vs deferred)|
-|Útil para actualizaciones de estado que son costosas|Útil cuando el valor viene de props o de fuera|
+| Característica | `useTransition` | `useDeferredValue` |
+| :--- | :--- | :--- |
+| **Control** | Sobre la **acción** (update) | Sobre el **valor** (data) |
+| **Feedback** | Incluye `isPending` | No incluye estado de carga nativo |
+| **Uso Ideal** | Al llamar a `setState` en un evento | Cuando el valor llega por `props` |
 
-## Reglas importantes
+---
 
-- Solo se pueden usar con estado (setState, dispatch). No para efectos secundarios.
+## 🛡️ Reglas y Consideraciones
 
-- Si el dispositivo es rápido, la transición ocurre de forma síncrona (no se nota).
-
-- En React 18, las actualizaciones dentro de startTransition son interrumpibles.
+1.  **Solo para Estado**: Las transiciones solo funcionan con cambios de estado de React. No se pueden usar con el contenido de variables normales.
+2.  **Interrumpibles**: Si una transición está en curso y ocurre otra actualización urgente (ej: el usuario presiona otra tecla), React abandonará la transición actual y empezará la nueva.
+3.  **No para Inputs**: Nunca envuelvas el `value` de un input directo en una transición, o el campo de texto se sentirá "laggeado".
 
 ## Transiciones con Suspense
 
@@ -97,3 +98,11 @@ Buenas prácticas
 - No uses transiciones para inputs de texto (ahí la prioridad es máxima).
 
 - Muestra isPending para dar feedback al usuario (spinner, skeleton).
+
+---
+
+<div align="center">
+
+[⬅️ Volver al Índice](../README.md)
+
+</div>
