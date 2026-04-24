@@ -1,0 +1,364 @@
+📄 react-router.md
+Concepto
+
+React Router es una librería de enrutamiento declarativo para React. Permite sincronizar la interfaz de usuario con la URL, manejar navegación, parámetros, rutas anidadas, protección de rutas y más.
+Versiones
+
+    React Router v6 (actual): API moderna con Routes, Route, Outlet, hooks como useNavigate, useParams.
+
+    v5 y anteriores usaban Switch, useHistory, etc.
+
+Instalación
+bash
+
+npm install react-router-dom
+
+Configuración básica
+jsx
+
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <nav>
+        <Link to="/">Inicio</Link>
+        <Link to="/about">Acerca de</Link>
+        <Link to="/contacto">Contacto</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contacto" element={<Contacto />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+Componentes principales
+BrowserRouter
+
+    Usa la API de historial de HTML5 (URLs limpias, sin hash).
+
+    Debe envolver toda la aplicación.
+
+HashRouter (alternativa)
+
+    Usa el hash de la URL (ej. /#/about). Útil para entornos estáticos sin servidor configurado.
+
+Routes y Route
+
+    Routes evalúa las rutas de forma exclusiva (solo renderiza la primera que coincida).
+
+    Route define la correspondencia entre path y element.
+
+Link y NavLink
+
+    Link: navegación sin recarga de página.
+
+    NavLink: similar, pero añade atributos active o aria-current cuando coincide la ruta.
+
+jsx
+
+<NavLink to="/about" className={({ isActive }) => isActive ? 'active' : ''}>
+  About
+</NavLink>
+
+Rutas dinámicas y parámetros
+Parámetros de ruta (useParams)
+jsx
+
+<Route path="/producto/:id" element={<Producto />} />
+
+function Producto() {
+  const { id } = useParams();
+  return <div>Producto ID: {id}</div>;
+}
+
+Parámetros de consulta (query string)
+jsx
+
+import { useSearchParams } from 'react-router-dom';
+
+function Busqueda() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get('q') || '';
+  const setQuery = (q) => setSearchParams({ q });
+  return <input value={query} onChange={e => setQuery(e.target.value)} />;
+}
+
+Rutas anidadas (layout routes)
+jsx
+
+function Layout() {
+  return (
+    <div>
+      <Header />
+      <Outlet /> {/* Aquí se renderizan las rutas hijas */}
+      <Footer />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="about" element={<About />} />
+          <Route path="productos" element={<Productos />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+Navegación programática
+jsx
+
+import { useNavigate } from 'react-router-dom';
+
+function LoginButton() {
+  const navigate = useNavigate();
+  const handleLogin = async () => {
+    await login();
+    navigate('/dashboard'); // reemplaza el historial
+    // navigate('/dashboard', { replace: true }); // sin agregar entrada
+    // navigate(-1); // retroceder
+  };
+  return <button onClick={handleLogin}>Login</button>;
+}
+
+Rutas protegidas (autenticación)
+jsx
+
+function RutaPrivada({ children }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return children;
+}
+
+// Uso
+<Route path="/dashboard" element={
+  <RutaPrivada>
+    <Dashboard />
+  </RutaPrivada>
+} />
+
+Rutas con layout condicional (ej. dashboard vs landing)
+jsx
+
+<Routes>
+  <Route element={<PublicLayout />}>
+    <Route path="/" element={<Home />} />
+    <Route path="/login" element={<Login />} />
+  </Route>
+  <Route element={<PrivateLayout />}>
+    <Route path="/dashboard" element={<Dashboard />} />
+    <Route path="/perfil" element={<Perfil />} />
+  </Route>
+</Routes>
+
+Manejo de rutas no encontradas (404)
+jsx
+
+<Routes>
+  <Route path="/" element={<Home />} />
+  <Route path="/about" element={<About />} />
+  <Route path="*" element={<NotFound />} />
+</Routes>
+
+Lazy loading con React Router v6
+jsx
+
+import { lazy, Suspense } from 'react';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Perfil = lazy(() => import('./pages/Perfil'));
+
+// En el componente de rutas
+<Suspense fallback={<div>Cargando...</div>}>
+  <Routes>
+    <Route path="/dashboard" element={<Dashboard />} />
+    <Route path="/perfil" element={<Perfil />} />
+  </Routes>
+</Suspense>
+
+Historial y navegación
+
+React Router expone el objeto navigate y también puedes acceder al historial:
+jsx
+
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { createBrowserHistory } from 'history';
+const history = createBrowserHistory();
+<HistoryRouter history={history}>
+  <App />
+</HistoryRouter>
+
+Hooks útiles
+Hook	Uso
+useParams()	Obtener parámetros de ruta
+useLocation()	Obtener objeto location (pathname, search, state)
+useNavigate()	Navegar programáticamente
+useSearchParams()	Leer/modificar query string
+useMatch()	Verificar si una ruta coincide con el patrón actual
+useRoutes()	Definir rutas como objeto (alternativa a JSX)
+Ejemplo de useLocation con state
+jsx
+
+// Enviar estado
+navigate('/profile', { state: { fromNotification: true } });
+
+// Leer estado
+const location = useLocation();
+const fromNotification = location.state?.fromNotification;
+
+Rutas relativas y anidadas automáticas
+
+En v6, las rutas son relativas por defecto dentro de componentes anidados.
+jsx
+
+<Route path="productos" element={<Productos />}>
+  <Route path=":id" element={<ProductoDetalle />} /> {/* relativo a /productos */}
+</Route>
+
+Configuración con useRoutes (alternativa basada en objeto)
+jsx
+
+const routes = useRoutes([
+  { path: '/', element: <Home /> },
+  { path: '/about', element: <About /> },
+  { 
+    path: '/dashboard', 
+    element: <PrivateLayout />,
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: 'settings', element: <Settings /> }
+    ]
+  }
+]);
+return routes;
+
+Renderizado condicional de rutas según rol (RBAC)
+jsx
+
+function AppRoutes() {
+  const { user, role } = useAuth();
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      {role === 'admin' && <Route path="/admin" element={<AdminPanel />} />}
+      <Route path="/perfil" element={<Perfil />} />
+    </Routes>
+  );
+}
+
+Scroll restoration (volver arriba al cambiar de ruta)
+jsx
+
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => window.scrollTo(0, 0), [pathname]);
+  return null;
+}
+
+// En App
+<BrowserRouter>
+  <ScrollToTop />
+  <Routes>...</Routes>
+</BrowserRouter>
+
+Rutas con transiciones (animaciones)
+
+Usando react-transition-group o framer-motion junto con useLocation.
+jsx
+
+import { AnimatePresence, motion } from 'framer-motion';
+
+function App() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<motion.div initial={{opacity:0}} animate={{opacity:1}}>Home</motion.div>} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
+Buenas prácticas
+
+    Organiza rutas en un archivo separado (routes.jsx o AppRoutes.jsx).
+
+    Usa constantes para los pathnames (evita strings mágicos).
+
+    Protege rutas a nivel de layout, no por cada componente.
+
+    Suspense para lazy loading a nivel de ruta.
+
+    Manejo de 404 con path="*".
+
+    No anidar BrowserRouter (solo uno por aplicación).
+
+    Para servidores SPA, configura fallback a index.html (para que rutas profundas no den 404).
+
+Migración desde v5 a v6
+v5	v6
+<Switch>	<Routes>
+component prop	element prop
+useHistory()	useNavigate()
+<Redirect>	<Navigate>
+exact por defecto	Ya no se usa (las rutas son exactas por defecto)
+Rutas anidadas con render	Outlet
+Ejemplo completo de archivo de rutas
+jsx
+
+// routes.jsx
+import { lazy, Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import PrivateRoute from './components/PrivateRoute';
+
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+export default function AppRoutes() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="about" element={<About />} />
+          <Route element={<PrivateRoute />}>
+            <Route path="dashboard" element={<Dashboard />} />
+          </Route>
+        </Route>
+        <Route path="404" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
+      </Routes>
+    </Suspense>
+  );
+}
+
+Integración con TypeScript
+tsx
+
+type ProductoParams = {
+  id: string;
+};
+
+function Producto() {
+  const { id } = useParams<ProductoParams>();
+  return <div>{id}</div>;
+}
+

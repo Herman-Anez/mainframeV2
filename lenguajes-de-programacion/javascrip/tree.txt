@@ -1,79 +1,73 @@
-react/
-├── 1-basics/
-│   ├── jsx.md
-│   ├── componentes.md
-│   ├── props.md
-│   ├── estado-useState.md
-│   ├── eventos.md
-│   ├── renderizado-condicional.md
-│   ├── listas-keys.md
-│   └── estilos/
-│       ├── css-modules.md
-│       ├── styled-components.md
-│       └── tailwind.md
+js/
+├── 01-fundamentos/
+│   ├── 01-sintaxis-y-variables.md
+│   ├── 02-tipos-de-datos.md
+│   ├── 03-operadores-y-coercion.md
+│   └── 04-strict-mode.md
 │
-├── 2-hooks/
-│   ├── useState.md
-│   ├── useEffect.md
-│   ├── useContext.md
-│   ├── useRef.md
-│   ├── useReducer.md
-│   ├── useMemo-useCallback.md
-│   ├── custom-hooks.md
-│   └── otros-hooks.md
+├── 02-control-de-flujo/
+│   ├── 01-condicionales.md
+│   ├── 02-bucles.md
+│   └── 03-excepciones-trycatch.md
 │
-├── 3-state-management/
-│   ├── props-drilling.md
-│   ├── context-api.md
-│   ├── redux.md
-│   ├── zustand.md
-│   └── react-query.md
+├── 03-funciones/
+│   ├── 01-declaracion-vs-expresion.md
+│   ├── 02-arrow-functions.md
+│   ├── 03-parametros-y-spread.md
+│   ├── 04-scope-y-closures.md
+│   ├── 05-funciones-orden-superior.md
+│   └── 06-iife-y-recursividad.md
 │
-├── 4-patterns/
-│   ├── composicion.md
-│   ├── render-props.md
-│   ├── higher-order-components.md
-│   ├── controlled-vs-uncontrolled.md
-│   └── atomic-design.md
+├── 04-objetos-y-clases/
+│   ├── 01-objetos-literales.md
+│   ├── 02-propiedades-y-metodos.md
+│   ├── 03-prototipos.md
+│   ├── 04-funciones-constructoras.md
+│   ├── 05-clases-es6.md
+│   ├── 06-metodos-de-object.md
+│   └── 07-destructuring.md
 │
-├── 5-performance/
-│   ├── react-memo.md
-│   ├── virtual-dom.md
-│   ├── reconciliation.md
-│   ├── code-splitting-lazy.md
-│   └── optimization-tips.md
+├── 05-arrays-y-colecciones/
+│   ├── 01-arrays-basicos.md
+│   ├── 02-metodos-modificadores.md
+│   ├── 03-metodos-funcionales.md
+│   ├── 04-spread-y-rest.md
+│   ├── 05-set-y-map.md
+│   └── 06-iterables-generadores.md
 │
-├── 6-routing/
-│   └── react-router.md
+├── 06-asincronia/
+│   ├── 01-callbacks.md
+│   ├── 02-promesas.md
+│   ├── 03-async-await.md
+│   ├── 04-fetch-api.md
+│   ├── 05-temporizadores.md
+│   └── 06-event-loop.md
 │
-├── 7-testing/
-│   ├── jest.md
-│   └── testing-library.md
+├── 07-this-y-contexto/
+│   ├── 01-this-global-y-metodo.md
+│   ├── 02-arrow-functions-y-this.md
+│   └── 03-call-apply-bind.md
 │
-├── 8-advanced/
-│   ├── server-components.md
-│   ├── concurrent-mode.md
-│   ├── suspense.md
-│   ├── portals.md
-│   └── forwardRef.md
+├── 08-dom-y-eventos/
+│   ├── 01-seleccion-del-dom.md
+│   ├── 02-manipulacion-del-dom.md
+│   ├── 03-eventos-y-delegacion.md
+│   └── 04-web-storage.md
 │
-├── 9-react-18-plus/
-│   ├── transitions.md
-│   ├── automatic-batching.md
-│   └── new-hooks.md
+├── 09-modulos/
+│   ├── 01-es6-modules.md
+│   └── 02-commonjs.md
 │
-├── 10-projects-examples/
-│   ├── todo-app/
-│   ├── ecommerce-cart/
-│   └── api-integration/
+├── 10-apis-web/
+│   ├── 01-history-api.md
+│   ├── 02-clipboard.md
+│   ├── 03-geolocation.md
+│   └── 04-canvas-basico.md
 │
-├── 11-glossary/
-│   └── terminos-clave.md
-│
-├── 12-resources/
-│   ├── libros.md
-│   ├── canales-youtube.md
-│   ├── blogs.md
-│   └── documentacion-oficial.md
-│
-└── README.md
+├── 11-conceptos-avanzados/
+│   ├── 01-closures-aplicados.md
+│   ├── 02-currying-y-composicion.md
+│   ├── 03-proxy-y-reflect.md
+│   ├── 04-symbols-iteradores.md
+│   ├── 05-event-loop-profundo.md
+│   └── 06-web-workers.md
