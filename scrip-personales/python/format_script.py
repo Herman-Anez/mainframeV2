@@ -13,7 +13,7 @@ def main():
         'if', 'else', 'for', 'while', 'switch', 'case', 'default', 
         '}', ']', ')', 'type', 'interface', '{', '/*', '*', '//', '<', 
         '...', 'await', 'async', 'class', 'console.log', "'use", '"use',
-        'npm', 'npx', 'yarn', 'pnpm', 'node', 'git','yaml',
+        'npm', 'npx', 'yarn', 'pnpm', 'node', 'git','yaml','bash',
     }
 
     def is_text_line(line, prev_line_empty):
