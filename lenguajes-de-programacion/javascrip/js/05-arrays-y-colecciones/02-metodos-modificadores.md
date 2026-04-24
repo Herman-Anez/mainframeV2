@@ -1,69 +1,83 @@
 
-## Archivo: `02-metodos-modificadores.md`
+# Métodos Modificadores de Arrays
 
+Los métodos modificadores son aquellos que **mutan el array original**. Es fundamental identificarlos correctamente para evitar efectos laterales (side effects) no deseados en la lógica de nuestra aplicación.
 
-Estos métodos mutan el array original. Es importante reconocerlos para evitar efectos laterales no deseados.
-Agregar y eliminar al final
+## Gestión de Elementos en los Extremos
 
-    push(...items): añade uno o más elementos al final y devuelve la nueva longitud.
+### Al Final del Array
+*   **`push(...items)`:** Añade uno o más elementos al final del array. Devuelve la **nueva longitud**.
+*   **`pop()`:** Elimina el último elemento y lo devuelve. Retorna `undefined` si el array está vacío.
 
-    pop(): elimina el último elemento y lo devuelve (o undefined si el array está vacío).
+### Al Inicio del Array
+*   **`unshift(...items)`:** Añade uno o más elementos al inicio del array. Devuelve la **nueva longitud**.
+*   **`shift()`:** Elimina el primer elemento y lo devuelve.
 
-### Agregar y eliminar al inicio
+> [!NOTE]
+> **Rendimiento:** `shift()` y `unshift()` son generalmente más lentos que `push()` y `pop()`, ya que requieren reindexar todos los elementos restantes del array tras la operación.
 
-    unshift(...items): añade al inicio, devuelve nueva longitud.
+---
 
-    shift(): elimina el primer elemento y lo devuelve.
+## El Método Multipropósito: `splice()`
 
-Coste: shift y unshift deben reindexar todos los elementos, por lo que son más lentos que push/pop.
-splice(indice, cantidadAEliminar, ...itemsAAgregar)
+`splice(indice, cantidadAEliminar, ...itemsAAgregar)` es la herramienta más versátil para modificar un array en cualquier posición.
 
-Método todoterreno para modificar un array en cualquier posición.
+1.  **Eliminación:** Borra `cantidadAEliminar` elementos desde el `indice` indicado.
+2.  **Inserción:** Inserta `itemsAAgregar` en la posición especificada.
+3.  **Retorno:** Devuelve un array con los elementos que fueron eliminados.
 
-    Elimina cantidadAEliminar elementos desde indice.
+**Casos de uso comunes:**
+*   **Inserción pura:** Pasar `cantidadAEliminar = 0`.
+*   **Eliminación pura:** No pasar elementos adicionales para agregar.
+*   **Índices negativos:** Permiten contar posiciones desde el final del array.
 
-    Inserta itemsAAgregar en esa misma posición.
+```javascript
+const arr = [1, 2, 3, 4, 5];
 
-    Devuelve un array con los elementos eliminados.
+// Elimina 2 elementos desde el índice 2 (3 y 4)
+arr.splice(2, 2); 
+// Resultado: arr = [1, 2, 5]
 
-    Con cantidadAEliminar = 0 se usa como inserción pura.
-
-    Con ...itemsAAgregar vacío se usa como eliminación pura.
-
-    Los índices negativos cuentan desde el final.
-
-```js
-const arr = [1,2,3,4,5];
-arr.splice(2, 2); // elimina 3,4 → arr = [1,2,5]
-arr.splice(1, 0, 'a', 'b'); // arr = [1,'a','b',2,5]
+// Inserta 'a' y 'b' en el índice 1 sin eliminar nada
+arr.splice(1, 0, 'a', 'b'); 
+// Resultado: arr = [1, 'a', 'b', 2, 5]
 ```
 
-### Relleno y copia dentro del array
+---
 
-    fill(valor, inicio?, fin?): rellena los índices de inicio a fin (exclusivo) con valor. Si no se pasan, rellena todo. Muta el array.
+## Relleno y Copia Interna
 
-    copyWithin(target, start, end?): copia una porción del propio array a otra posición, sobrescribiendo. Útil para desplazamientos. Muta el array.
+*   **`fill(valor, inicio?, fin?)`:** Rellena los índices desde `inicio` hasta `fin` (exclusivo) con un valor estático.
+*   **`copyWithin(target, start, end?)`:** Copia una porción del propio array a otra posición dentro de sí mismo, sobrescribiendo el contenido existente.
 
-```js
-[1,2,3,4,5].copyWithin(0, 3); // [4,5,3,4,5]
+```javascript
+const data = [1, 2, 3, 4, 5];
+data.copyWithin(0, 3); 
+// Resultado: [4, 5, 3, 4, 5] (Copia desde el índice 3 al inicio)
 ```
 
-### Ordenamiento y reversa
+---
 
-    sort(fnComparacion?): ordena in-place y devuelve el array. Por defecto, convierte elementos a string y compara por código UTF-16. Para orden numérico pasar (a, b) => a - b.
+## Ordenamiento y Reversa
 
-    reverse(): invierte el orden in-place.
+*   **`sort(fnComparacion?)`:** Ordena los elementos *in-place*. 
+    *   *Por defecto:* Convierte los elementos a strings y los compara según su valor UTF-16.
+    *   *Orden numérico:* Requiere una función de comparación: `(a, b) => a - b`.
+*   **`reverse()`:** Invierte el orden de los elementos del array *in-place*.
 
-```js
-const nums = [3,1,10];
-nums.sort(); // [1, 10, 3] (orden léxico)
-nums.sort((a,b) => a - b); // [1,3,10]
+```javascript
+const nums = [3, 1, 10];
+
+nums.sort(); 
+// Resultado: [1, 10, 3] (Orden léxico por defecto)
+
+nums.sort((a, b) => a - b); 
+// Resultado: [1, 3, 10] (Orden numérico correcto)
 ```
 
-### Otros
+---
 
-    flat() y flatMap() no son mutadores (devuelven nuevo array, ver en otra sección), pero se pueden usar.
+## Consideraciones sobre Inmutabilidad
 
-### Importante
-
-Todos estos métodos modifican el array original. Si se necesita inmutabilidad, se deben hacer copias previas (con spread, slice, etc.).
+> [!WARNING]
+> Todos los métodos mencionados en este archivo modifican directamente el objeto original. Si tu arquitectura requiere inmutabilidad (muy común en frameworks como React), asegúrate de crear una copia del array antes de aplicar estos métodos utilizando técnicas como el operador spread (`[...]`) o el método `slice()`.

@@ -1,75 +1,105 @@
 
-## Archivo: `03-metodos-funcionales.md`
+# Métodos Funcionales de Arrays
 
+A diferencia de los modificadores, estos métodos **no alteran el array original** (con la excepción parcial de `forEach`). Son pilares fundamentales de la programación funcional en JavaScript, permitiendo transformaciones de datos claras y declarativas.
 
-Estos métodos no modifican el array original (a excepción de forEach que no devuelve nada, pero puede modificar elementos si el callback lo hace). Son la base de la programación funcional con arrays.
-forEach(fn)
+## Iteración: `forEach()`
 
-Ejecuta fn(elemento, indice, array) para cada elemento. Ignora índices vacíos. No devuelve nada, no se puede encadenar. Útil para efectos secundarios controlados.
-```js
-[1,2,3].forEach(n => console.log(n));
+Ejecuta una función de callback para cada elemento del array.
+
+*   **Callback:** Recibe `(elemento, indice, array)`.
+*   **Comportamiento:** Ignora índices vacíos.
+*   **Retorno:** No devuelve nada (`undefined`). Por lo tanto, no es encadenable.
+
+```javascript
+[1, 2, 3].forEach(n => console.log(n));
 ```
 
-No se puede detener con break; si se necesita interrumpir, usar for...of o some/every.
-map(fn)
+> [!WARNING]
+> No se puede detener un `forEach` con `break` o `continue`. Si necesitas interrumpir la ejecución prematuramente, utiliza un bucle `for...of` o métodos como `some()` y `every()`.
 
-Transforma cada elemento y devuelve un nuevo array con los resultados.
-```js
-const dobles = [1,2,3].map(n => n * 2); // [2,4,6]
+---
+
+## Transformación: `map()`
+
+Crea un **nuevo array** aplicando una función de transformación a cada elemento.
+
+```javascript
+const numeros = [1, 2, 3];
+const dobles = numeros.map(n => n * 2); // [2, 4, 6]
 ```
 
-La longitud del nuevo array siempre es igual a la original, aunque los índices vacíos permanecen vacíos.
-filter(fn)
+*   **Longitud:** El nuevo array siempre tendrá la misma longitud que el original.
+*   **Agujeros:** Si el array original es disperso, el nuevo mantendrá los huecos en las mismas posiciones.
 
-Devuelve un nuevo array con los elementos para los que fn devuelve un valor truthy.
-```js
-const mayores = [5, 10, 3, 15].filter(n => n > 7); // [10,15]
+---
+
+## Filtrado: `filter()`
+
+Crea un **nuevo array** que contiene únicamente los elementos que cumplen con una condición (aquellos para los que el callback devuelve un valor *truthy*).
+
+```javascript
+const edades = [5, 10, 3, 15];
+const mayores = edades.filter(n => n > 7); // [10, 15]
 ```
 
-Si ningún elemento pasa, devuelve array vacío.
-reduce(fn, valorInicial?) y reduceRight
+> [!NOTE]
+> Si ningún elemento cumple la condición, el método devuelve un array vacío (`[]`).
 
-Acumula los elementos en un solo valor. fn recibe (acumulador, elemento, indice, array).
-```js
-const suma = [1,2,3,4].reduce((acc, n) => acc + n, 0); // 10
+---
+
+## Acumulación: `reduce()` y `reduceRight()`
+
+Reducen el array a un **único valor** acumulado.
+
+```javascript
+const suma = [1, 2, 3, 4].reduce((acc, n) => acc + n, 0); // 10
 ```
 
-    Si no se da valorInicial, el primer elemento se usa como acumulador inicial y la iteración empieza desde el segundo.
+*   **Callback:** Recibe `(acumulador, elemento, indice, array)`.
+*   **Valor inicial:** Si no se proporciona, el primer elemento del array se toma como acumulador inicial y la iteración comienza desde el segundo elemento.
+*   **`reduceRight()`:** Realiza la misma operación pero iterando de derecha a izquierda.
 
-    reduceRight itera de derecha a izquierda.
+---
 
-### find(fn) y findIndex(fn)
+## Búsqueda: `find()` y `findIndex()`
 
-    find devuelve el primer elemento que cumple la condición, o undefined.
+*   **`find(fn)`:** Devuelve el **primer elemento** que cumpla la condición. Si ninguno coincide, retorna `undefined`.
+*   **`findIndex(fn)`:** Devuelve el **índice** del primer elemento que cumpla la condición. Si ninguno coincide, retorna `-1`.
 
-    findIndex devuelve el índice de ese elemento, o -1.
+---
 
-### some(fn) y every(fn)
+## Comprobación: `some()` y `every()`
 
-    some: ¿al menos un elemento cumple? → booleano.
+*   **`some(fn)`:** Devuelve `true` si **al menos un** elemento cumple la condición.
+*   **`every(fn)`:** Devuelve `true` si **todos** los elementos cumplen la condición.
 
-    every: ¿todos cumplen? → booleano.
+> [!TIP]
+> Ambos métodos utilizan **cortocircuito**: la iteración se detiene en cuanto el resultado es definitivo (el primer `true` para `some` o el primer `false` para `every`).
 
-Ambos detienen la iteración tan pronto como se conoce el resultado.
-flat(depth?) y flatMap(fn)
+---
 
-    flat(depth): "aplana" sub-arrays hasta la profundidad indicada (por defecto 1). Devuelve nuevo array.
+## Aplanamiento: `flat()` y `flatMap()`
 
-```js
-[1, [2, [3]]].flat(2); // [1,2,3]
+*   **`flat(depth?)`:** Crea un nuevo array aplanando sub-arrays hasta la profundidad indicada (por defecto 1).
+*   **`flatMap(fn)`:** Combina un `map()` seguido de un `flat(1)`. Es ideal cuando el callback devuelve un array y queremos un resultado unidimensional.
 
-    flatMap(fn): es un map() seguido de flat(1). Ideal cuando el callback devuelve un array y queremos un solo array como resultado.
+```javascript
+[1, [2, [3]]].flat(2); // [1, 2, 3]
 ```
 
-### Encadenamiento
+---
 
-Debido a que estos métodos devuelven nuevos arrays (excepto forEach), se pueden encadenar para crear pipelines de procesamiento legibles:
-```js
+## Encadenamiento (Pipelines)
+
+Dado que la mayoría de estos métodos devuelven arrays nuevos, es posible crear flujos de procesamiento muy potentes y legibles:
+
+```javascript
 const resultado = usuarios
   .filter(u => u.activo)
   .map(u => u.nombre)
   .sort();
-
+```
 ---
 
 ## Archivo: `04-spread-y-rest.md`

@@ -1,15 +1,21 @@
+# Protocolo Iterable y Generadores
 
-## Archivo: `06-iterables-generadores.md`
+JavaScript proporciona protocolos estandarizados para la iteración, permitiendo que objetos personalizados se comporten como colecciones nativas.
 
-Protocolo iterable
+---
 
-Un objeto es iterable si implementa el método [Symbol.iterator], que devuelve un objeto iterador. Un iterador debe tener un método next() que retorna { value, done }.
+## Protocolo Iterable
 
-Los bucles for...of, el spread (...), Array.from y otros consumen iterables.
+Un objeto se considera **iterable** si implementa el método `[Symbol.iterator]`. Este método debe devolver un **objeto iterador**.
 
-Ejemplo manual:
-```js
-const iterable = {
+### El Objeto Iterador
+Un iterador es un objeto que contiene un método `next()`, el cual retorna un objeto con dos propiedades:
+*   `value`: El valor actual de la iteración.
+*   `done`: Un booleano que indica si la iteración ha finalizado (`true`) o no (`false`).
+
+### Ejemplo de Implementación Manual
+```javascript
+const miIterable = {
   [Symbol.iterator]() {
     let i = 0;
     return {
@@ -20,84 +26,86 @@ const iterable = {
     };
   }
 };
-for (const v of iterable) { console.log(v); } // 1,2,3
+
+for (const valor of miIterable) { 
+  console.log(valor); // Imprime: 1, 2, 3
+}
 ```
 
-### Iterables incorporados
+> [!NOTE]
+> Muchos objetos nativos ya son iterables por defecto: `Array`, `String`, `Map`, `Set`, `NodeList` y el objeto `arguments`. Los objetos literales (`{}`) **no** son iterables directamente.
 
-    Arrays, Strings, Map, Set, NodeList, arguments (array-like pero iterable), TypedArrays.
+---
 
-    Object no es iterable, pero con Object.keys/values/entries podemos iterar.
+## Consumo de Iterables
 
-### Consumo de iterables
+Existen múltiples constructores y operadores en JavaScript que "consumen" iterables de forma nativa:
+*   **Bucles:** `for...of`
+*   **Operador Spread:** `[...iterable]`
+*   **Métodos de Array:** `Array.from(iterable)`
+*   **Constructores:** `new Map(iterable)`, `new Set(iterable)`
+*   **Promesas:** `Promise.all(iterable)`, `Promise.race(iterable)`, etc.
 
-### for...of
+---
 
-### [...iterable]
+## Generadores (`function*`)
 
-### Array.from(iterable)
+Los **Generadores** son funciones especiales que pueden pausar y reanudar su ejecución, produciendo una secuencia de valores bajo demanda. Son una forma extremadamente sencilla de crear iterables.
 
-    new Map(), new Set() reciben iterables.
+### Características Principales
+*   Se declaran con el asterisco: `function* nombre()`.
+*   Utilizan la palabra clave `yield` para devolver un valor y pausar la ejecución.
+*   Llamar a la función no ejecuta su cuerpo, sino que devuelve un objeto iterador.
 
-    Promise.all, Promise.race, Promise.any, Promise.allSettled también aceptan iterables de promesas.
-
-### Generadores (function*)
-
-Son funciones especiales que permiten pausar y reanudar su ejecución, produciendo una secuencia de valores bajo demanda. Llamar a un generador no ejecuta su cuerpo, sino que devuelve un objeto iterador (que también es iterable).
-```js
+```javascript
 function* contador(max) {
   let i = 0;
   while (i < max) {
-    yield i++;
+    yield i++; // Pausa aquí y devuelve i
   }
-  return 'fin'; // value final que puede capturarse como último value con done:true
+  return 'Fin de la cuenta'; // Último valor con done: true
 }
-```
+
 const gen = contador(3);
 console.log(gen.next()); // { value: 0, done: false }
 console.log(gen.next()); // { value: 1, done: false }
 console.log(gen.next()); // { value: 2, done: false }
-console.log(gen.next()); // { value: 'fin', done: true }
-
-    yield pausa la ejecución y devuelve un valor al llamador.
-
-    Dentro del generador se puede usar yield* otroIterable para delegar a otro iterable/generador.
-
-    Se pueden pasar valores al generador con next(valor), que es recibido como resultado de la expresión yield.
-
-```js
-function* pregunta() {
-  const nombre = yield '¿Cómo te llamas?';
-  yield `Hola ${nombre}`;
-}
-const it = pregunta();
-console.log(it.next().value); // ¿Cómo te llamas?
-console.log(it.next('Juan').value); // Hola Juan
+console.log(gen.next()); // { value: 'Fin de la cuenta', done: true }
 ```
 
-### Generadores asíncronos (async function*)
+### Comunicación Bidireccional
+Los generadores permiten recibir valores desde el exterior a través del método `next(valor)`. El valor pasado se convierte en el resultado de la expresión `yield` dentro del generador.
 
-Combinan generadores con async/await. El objeto devuelto implementa el protocolo async iterable, usando for await...of.
-```js
-async function* fetchPages(urls) {
+```javascript
+function* conversacion() {
+  const nombre = yield '¿Cómo te llamas?';
+  yield `Mucho gusto, ${nombre}`;
+}
+
+const chat = conversacion();
+console.log(chat.next().value);      // '¿Cómo te llamas?'
+console.log(chat.next('Juan').value); // 'Mucho gusto, Juan'
+```
+
+---
+
+## Generadores Asíncronos (`async function*`)
+
+Combinan la potencia de los generadores con la asincronía (`async/await`). Devuelven un objeto que implementa el protocolo **async iterable**.
+
+```javascript
+async function* obtenerPaginas(urls) {
   for (const url of urls) {
-    const res = await fetch(url);
-    yield await res.json();
+    const respuesta = await fetch(url);
+    yield await respuesta.json();
   }
 }
-for await (const data of fetchPages([...])) {
-  console.log(data);
+
+// Se consumen mediante el bucle for await...of
+for await (const datos of obtenerPaginas(listaDeUrls)) {
+  console.log(datos);
 }
 ```
 
-Producen { value, done } donde value es una promesa resuelta con el valor yieldado.
-Aplicaciones
-
-    Iteración de secuencias infinitas o perezosas (números fib, lecturas de archivos).
-
-    Simplificar lógica asíncrona secuencial.
-
-    Implementar comportamientos personalizados de for...of.
-
-### 06-asincronia
----
+> [!IMPORTANT]
+> Los generadores asíncronos son ideales para manejar flujos de datos infinitos o muy grandes (streams) que llegan de forma asíncrona, como lecturas de archivos grandes o resultados paginados de una API.
