@@ -1,0 +1,51 @@
+vite-knowledge/
+├── 01-fundamentos/
+│   ├── 01-que-es-vite.md
+│   ├── 02-primeros-pasos.md
+│   └── 03-create-vite.md
+│
+├── 02-desarrollo/
+│   ├── 01-servidor-de-desarrollo.md
+│   ├── 02-hmr.md
+│   ├── 03-pre-bundling.md
+│   ├── 04-variables-entorno.md
+│   └── 05-import-meta-glob.md
+│
+├── 03-configuracion/
+│   ├── 01-vite-config.md
+│   ├── 02-resolve-alias.md
+│   ├── 03-optimize-deps.md
+│   └── 04-modos-y-env.md
+│
+├── 04-plugins/
+│   ├── 01-introduccion-plugins.md
+│   ├── 02-plugin-vue.md
+│   ├── 03-plugin-react.md
+│   └── 04-plugin-personalizado.md
+│
+├── 05-assets-y-estilos/
+│   ├── 01-assets-estaticos.md
+│   ├── 02-css-modules.md
+│   ├── 03-postcss-preprocesadores.md
+│   └── 04-imports-especiales-raw-urls.md
+│
+├── 06-typescript-jsx/
+│   ├── 01-typescript-en-vite.md
+│   └── 02-jsx-react-vue-svelte.md
+│
+├── 07-build-produccion/
+│   ├── 01-build-rollup.md
+│   ├── 02-library-mode.md
+│   ├── 03-code-splitting.md
+│   └── 04-despliegue.md
+│
+├── 08-avanzado/
+│   ├── 01-ssr.md
+│   ├── 02-web-workers.md
+│   ├── 03-webassembly.md
+│   └── 04-integracion-backend.md
+│
+└── 09-recursos/
+    ├── 01-comandos-utiles.md
+    ├── 02-comparativa-otras-herramientas.md
+    └── 03-fuentes-oficiales.md
