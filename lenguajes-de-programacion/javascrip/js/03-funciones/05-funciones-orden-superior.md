@@ -1,81 +1,88 @@
-## Archivo: `05-funciones-orden-superior.md`
+# Funciones de Orden Superior
 
+Una función de orden superior (*Higher-Order Function*) es un concepto fundamental de la programación funcional que permite tratar a las funciones como valores de primera clase.
 
-Una función de orden superior (higher-order function) es aquella que cumple al menos una de estas condiciones:
+---
 
-    Recibe una función como argumento.
+## Definición
 
-    Retorna una función como resultado.
+Una función se considera de orden superior si cumple al menos una de estas condiciones:
+1.  **Recibe una función** como argumento (callback).
+2.  **Retorna una función** como resultado.
 
-Este concepto es central en la programación funcional y está muy presente en js.
-Funciones que reciben callbacks
+---
 
-Los callbacks son funciones pasadas como argumentos para ser ejecutadas más tarde. Ejemplos: Array.prototype.map, filter, reduce, forEach, setTimeout, manejadores de eventos.
-```js
-const numeros = [1,2,3];
-const dobles = numeros.map(n => n * 2); // map recibe una función
+## 1. Funciones que Reciben Callbacks
+
+Los *callbacks* son funciones pasadas como argumentos para ser ejecutadas en un momento posterior o bajo ciertas condiciones.
+
+### Ejemplos en el Lenguaje:
+*   **Métodos de Array:** `map`, `filter`, `reduce`, `forEach`, `find`.
+*   **Temporizadores:** `setTimeout`, `setInterval`.
+*   **Eventos:** `addEventListener`.
+
+```javascript
+const numeros = [1, 2, 3];
+const dobles = numeros.map(n => n * 2); // map es una función de orden superior
 ```
 
-### Funciones que retornan funciones
+---
 
-Permiten crear configuraciones personalizadas y reutilizar lógica.
-```js
+## 2. Funciones que Retornan Funciones
+
+Esta técnica permite la creación de funciones personalizadas y la reutilización de lógica mediante configuraciones previas.
+
+```javascript
 function multiplicarPor(factor) {
   return function(numero) {
     return numero * factor;
   };
 }
+
 const duplicar = multiplicarPor(2);
-duplicar(5); // 10
+console.log(duplicar(5)); // Output: 10
 ```
 
-### Composición de funciones
+---
 
-Se pueden combinar funciones de orden superior para crear pipelines de procesamiento. Por ejemplo:
-```js
+## 3. Métodos Funcionales de Array
+
+Son los ejemplos más comunes de funciones de orden superior en el día a día:
+
+| Método | Propósito |
+| :--- | :--- |
+| `map(fn)` | Transforma cada elemento y devuelve un nuevo array. |
+| `filter(fn)` | Selecciona elementos que cumplen una condición (predicado). |
+| `reduce(fn, init)` | Acumula todos los elementos en un único valor final. |
+| `forEach(fn)` | Ejecuta una función para cada elemento (efectos secundarios). |
+| `some(fn)` / `every(fn)` | Realiza comprobaciones lógicas sobre los elementos. |
+| `find(fn)` | Retorna el primer elemento que cumpla la condición. |
+
+> [!NOTE]
+> Todos estos métodos reciben una función con la firma: `(elemento, indice, array)`.
+
+---
+
+## 4. Composición de Funciones
+
+Permite combinar múltiples funciones para crear flujos de procesamiento complejos (*pipelines*).
+
+```javascript
 const compose = (f, g) => x => f(g(x));
 const añadirExclamación = s => s + '!';
 const gritar = s => s.toUpperCase();
+
 const emocionar = compose(añadirExclamación, gritar);
-emocionar('hola'); // 'HOLA!'
+console.log(emocionar('hola')); // Output: 'HOLA!'
 ```
 
-### Métodos funcionales de Array como funciones de orden superior
+---
 
-    map(fn): transforma cada elemento.
+## Beneficios y Recomendaciones
 
-    filter(fn): selecciona elementos según predicado.
+> [!TIP]
+> *   **Abstracción:** Separan la lógica de iteración de la lógica de negocio.
+> *   **Declaratividad:** El código describe el "qué" se quiere lograr, no el "cómo" iterar paso a paso.
+> *   **Funciones Puras:** Prefiere usar funciones puras (sin efectos secundarios) como *callbacks* para asegurar que el código sea predecible y fácil de testear.
 
-    reduce(fn, initial): acumula valor.
-
-    forEach(fn): ejecuta efecto secundario.
-
-    some(fn), every(fn): pruebas booleanas.
-
-    find(fn): primer elemento que cumple condición.
-
-Todos ellos reciben una función con una firma típica (elemento, índice?, array?).
-Beneficios
-
-    Separación de responsabilidades (la lógica de iteración se abstrae).
-
-    Código más declarativo y legible.
-
-    Reutilización de callbacks.
-
-### Ejemplo práctico: encadenamiento
-```js
-const usuarios = [
-  { nombre: 'Ana', edad: 25 },
-  { nombre: 'Luis', edad: 17 },
-  { nombre: 'Marta', edad: 30 }
-];
-const nombresAdultos = usuarios
-  .filter(u => u.edad >= 18)
-  .map(u => u.nombre);
-// ['Ana', 'Marta']
-```
-
-### Funciones puras e impuras
-
-En este contexto conviene recordar que las funciones que no modifican estado externo y siempre devuelven lo mismo para los mismos argumentos se llaman puras. Son ideales como callbacks porque son predecibles y facilitan la composición.
+---

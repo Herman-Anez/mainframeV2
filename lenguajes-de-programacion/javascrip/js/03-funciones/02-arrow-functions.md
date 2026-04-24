@@ -1,64 +1,82 @@
-## Archivo: `02-arrow-functions.md`
+# Arrow Functions (Funciones Flecha)
 
+Las *arrow functions*, introducidas en ES6 (ECMAScript 2015), ofrecen una sintaxis más concisa y un comportamiento especial en relación al contexto de ejecución (`this`).
 
-Las arrow functions (funciones flecha) introducidas en ES6 ofrecen una sintaxis más corta y un comportamiento especial en relación al this.
-Sintaxis
-```js
-// Sin parámetros: paréntesis vacío obligatorio
+---
+
+## 1. Sintaxis
+
+```javascript
+// Sin parámetros: paréntesis vacíos obligatorios
 const uno = () => 1;
-// Un parámetro: paréntesis opcionales
+
+// Un solo parámetro: paréntesis opcionales
 const doble = x => x * 2;
-// Múltiples parámetros o sin parámetros: paréntesis obligatorios
+
+// Múltiples parámetros: paréntesis obligatorios
 const suma = (a, b) => a + b;
-// Cuerpo de bloque: return explícito necesario
+
+// Cuerpo con bloque: requiere llaves y return explícito
 const saludar = (nombre) => {
   const mensaje = `Hola ${nombre}`;
   return mensaje;
 };
-// Devolver un objeto literal: envolver entre paréntesis para evitar confusión con bloque
+
+// Retornar un objeto literal: envolver entre paréntesis
 const crearUsuario = (nombre) => ({ nombre, id: Date.now() });
 ```
 
-### Características clave
+---
 
-    No tienen su propio this: heredan el this del ámbito léxico en el que están definidas. Esto elimina la necesidad de const self = this o .bind(this) en callbacks.
+## 2. Características Clave
 
-    No se pueden usar como constructoras: lanzan error si se usan con new.
+*   **`this` Léxico:** No tienen su propio `this`. Heredan el `this` del ámbito léxico en el que fueron definidas.
+*   **No Constructoras:** No se pueden usar con el operador `new`. Lanzarán un error si se intenta.
+*   **Sin Objeto `arguments`:** No tienen su propio objeto `arguments`. Acceden al de la función externa más cercana. Se recomienda usar parámetros *rest* (`...args`).
+*   **Sin Propiedad `prototype`:** Al no ser constructoras, carecen de esta propiedad.
+*   **No Generadores:** No pueden ser usadas como funciones generadoras (no admiten `yield`).
+*   **Return Implícito:** Si el cuerpo es una única expresión, se pueden omitir las llaves y la palabra clave `return`.
 
-    No tienen arguments: dentro de una arrow function, arguments hace referencia al objeto de la función externa no flecha (o no existe en ámbito global). Para capturar argumentos se usa el parámetro rest (...args).
+---
 
-    No tienen propiedad prototype.
+## 3. Comportamiento de `this`
 
-    No pueden ser usadas como generadores (no admiten yield dentro de ellas).
+El comportamiento del `this` es la diferencia más significativa respecto a las funciones tradicionales.
 
-    Se pueden omitir las llaves y el return si el cuerpo es una única expresión (return implícito).
-
-### this léxico
-```js
+```javascript
 const obj = {
   nombre: 'Ana',
   saludarNormal: function() {
     setTimeout(function() {
-      console.log(this.nombre); // undefined (this es window/global)
+      console.log(this.nombre); // undefined (this apunta al objeto global/window)
     }, 100);
   },
   saludarArrow: function() {
     setTimeout(() => {
-      console.log(this.nombre); // 'Ana' (this heredado del contexto de saludarArrow)
+      console.log(this.nombre); // 'Ana' (this heredado del contexto de obj)
     }, 100);
   }
 };
 ```
 
-En el método saludarNormal, la función pasada a setTimeout es una función normal, por lo que su this es el objeto global (o undefined en strict mode). En saludarArrow, la arrow captura el this de saludarArrow (que es obj), por lo que funciona correctamente.
-Cuándo no usar arrow functions
+> [!NOTE]
+> En `saludarNormal`, la función dentro de `setTimeout` pierde el contexto. En `saludarArrow`, la flecha captura el `this` de su entorno (el método `saludarArrow` cuyo `this` es `obj`).
 
-    Como métodos de un objeto si se espera que this haga referencia al objeto (porque usaría el this del ámbito superior, no el objeto).
+---
 
-    En funciones constructoras o definición de prototipos.
+## 4. Cuándo No Usar Arrow Functions
 
-    Cuando se necesita el objeto arguments.
+> [!WARNING]
+> Evita el uso de funciones flecha en los siguientes escenarios:
+> 1.  **Métodos de Objetos:** Si necesitas que `this` haga referencia al propio objeto.
+> 2.  **Funciones Constructoras:** No funcionan con `new`.
+> 3.  **Prototipos:** Al definir métodos en `prototype` que dependan del contexto de la instancia.
+> 4.  **Uso de `arguments`:** Si dependes estrictamente de este objeto en lugar de parámetros *rest*.
 
-### Resumen
+---
 
-Las arrow functions simplifican callbacks y código funcional, y resuelven el eterno problema del this en contextos asíncronos. Son ideales para funciones cortas y puras.
+## Resumen
+
+Las *arrow functions* simplifican enormemente los *callbacks* y el código funcional, resolviendo el problema histórico del `this` en contextos asíncronos. Son la elección ideal para funciones cortas, puras y de transformación de datos.
+
+---

@@ -1,21 +1,28 @@
+# Scope y Closures
 
-## Archivo: `04-scope-y-closures.md`
+El manejo del ámbito y las clausuras es fundamental para entender cómo JavaScript gestiona la memoria y el acceso a los datos.
 
-Scope (ámbito)
+---
 
-El ámbito determina dónde una variable es accesible. En js, hasta ES6 el ámbito solo era de función y global. Con let y const se añadió el ámbito de bloque.
+## 1. Scope (Ámbito)
 
-    Ámbito global: variables declaradas fuera de cualquier función (o con var sin función). Son propiedades del objeto global (ventana en navegador).
+El ámbito determina la visibilidad y accesibilidad de las variables en diferentes partes del código.
 
-    Ámbito de función: cada función crea su propio ámbito, las variables declaradas dentro con var, let o const son locales a esa función.
+### Tipos de Ámbito
+*   **Ámbito Global:** Variables declaradas fuera de cualquier función o bloque. Son accesibles desde cualquier lugar y, en el navegador, se convierten en propiedades del objeto `window`.
+*   **Ámbito de Función:** Cada función crea su propio contexto. Las variables declaradas con `var`, `let` o `const` dentro de una función son locales a ella.
+*   **Ámbito de Bloque:** Introducido en ES6 con `let` y `const`. Estas variables están limitadas al bloque encerrado entre llaves `{}` (`if`, `for`, `while`, etc.).
 
-    Ámbito de bloque: let y const limitan la variable al bloque {} (if, for, while, etc.).
+### Scope Chain (Cadena de Ámbitos)
+Cuando se intenta acceder a una variable, el motor de JavaScript la busca en el ámbito actual. Si no la encuentra, sube al ámbito superior inmediato, y así sucesivamente hasta llegar al ámbito global.
 
-La resolución de nombres sigue la cadena de ámbitos (scope chain): el motor busca la variable en el ámbito actual, si no la encuentra sube al ámbito superior, y así hasta el global. Si no existe, se crea una variable global en modo no estricto (error en estricto).
-Closure (clausura)
+---
 
-Un closure se produce cuando una función "recuerda" y puede acceder a variables de su ámbito léxico incluso cuando la función se ejecuta fuera de ese ámbito. En otras palabras, una función interna que referencia variables de una función externa "cierra sobre" esas variables.
-```js
+## 2. Closure (Clausura)
+
+Un *closure* ocurre cuando una función "recuerda" y mantiene acceso a las variables de su ámbito léxico original, incluso después de que dicho ámbito haya finalizado su ejecución.
+
+```javascript
 function crearContador() {
   let cuenta = 0;
   return function() {
@@ -23,40 +30,47 @@ function crearContador() {
     return cuenta;
   };
 }
+
 const contador1 = crearContador();
-console.log(contador1()); // 1
-console.log(contador1()); // 2
+console.log(contador1()); // Output: 1
+console.log(contador1()); // Output: 2
 ```
 
-Aquí la función anónima retornada mantiene viva la variable cuenta (que pertenece al ámbito de crearContador) a través del closure. Cada llamada a crearContador() genera un nuevo ámbito con su propia variable cuenta.
-Aplicaciones prácticas de closures
+> [!NOTE]
+> En este ejemplo, la función interna mantiene viva la variable `cuenta`. Cada llamada a `crearContador()` genera un nuevo contexto con su propia instancia de `cuenta`.
 
-    Encapsulación y datos privados: simular propiedades privadas (antes de los campos #).
+---
 
-    Fábricas de funciones y partial application.
+## 3. Aplicaciones Prácticas
 
-    Manejo de eventos asíncronos que necesitan contexto (similar a cómo las arrow functions capturan this, pero para variables).
+*   **Encapsulación:** Permite simular métodos o propiedades privadas (ocultación de datos).
+*   **Fábricas de Funciones:** Creación de funciones configurables con un contexto específico.
+*   **Manejo de Eventos:** Mantener el estado en funciones que se ejecutarán de forma asíncrona.
+*   **Memoización:** Almacenar resultados de operaciones costosas en un caché privado.
 
-    Memoización (cache de resultados).
-
-### Ejemplo con bucles (clásico)
-```js
+### Ejemplo Clásico: Closures en Bucles
+```javascript
+// Problema con var (ámbito de función/global)
 for (var i = 0; i < 3; i++) {
   setTimeout(function() { console.log(i); }, 100);
 }
-// Imprime 3, 3, 3 (porque i es compartida en el ámbito global/función)
-```
+// Imprime: 3, 3, 3
 
-Solución con closure (IIFE) o con let:
-```js
+// Solución con let (ámbito de bloque)
 for (let i = 0; i < 3; i++) {
-  setTimeout(() => console.log(i), 100); // 0,1,2 (cada iteración tiene su propio i)
+  setTimeout(() => console.log(i), 100);
 }
+// Imprime: 0, 1, 2
 ```
 
-### Importante
+---
 
-Los closures no copian los valores en el momento de su creación, capturan la referencia a la variable. Si la variable cambia antes de que la función se ejecute, verá el valor actualizado.
-Rendimiento
+## Consideraciones Finales
 
-Los closures mantienen referencias al ámbito exterior, lo que puede impedir que el garbage collector libere memoria si no se usan con cuidado. Sin embargo, son una herramienta fundamental y no deben evitarse por razones prematuras de rendimiento.
+> [!IMPORTANT]
+> **Referencia, no Copia:** Los *closures* capturan la referencia a la variable, no su valor en el momento de la creación. Si la variable cambia en el ámbito exterior antes de que el closure se ejecute, este verá el valor actualizado.
+
+> [!TIP]
+> **Rendimiento:** Debido a que mantienen referencias al ámbito exterior, los *closures* pueden impedir que el *Garbage Collector* libere memoria. Úsalos con sabiduría, pero no los evites; son una herramienta esencial del lenguaje.
+
+---

@@ -1,98 +1,83 @@
+# IIFE y Recursividad
 
-## Archivo: `06-iife-y-recursividad.md`
+Exploramos dos patrones avanzados de funciones: la ejecución inmediata para el aislamiento y la auto-llamada para la resolución de problemas complejos.
 
-IIFE (Immediately Invoked Function Expression)
+---
 
-Una IIFE es una función que se define y se ejecuta inmediatamente. Sintaxis básica:
-```js
+## 1. IIFE (Immediately Invoked Function Expression)
+
+Una IIFE es una función que se define y se ejecuta en el mismo instante de su creación.
+
+### Sintaxis Básica
+```javascript
 (function() {
-  // código aislado
+  // Código aislado en un ámbito privado
 })();
+
+// Opcionalmente con parámetros
+(function(nombre) {
+  console.log(`Hola ${nombre}`);
+})('Mundo');
 ```
 
-o
-```js
-(function() {
-  // código aislado
-}());
-```
+### Características y Casos de Uso
+*   **Ámbito Privado:** Evita la contaminación del ámbito global.
+*   **Encapsulamiento:** Muy utilizado antes de ES6 para crear módulos.
+*   **Patrón de Módulo Revelador:** Permite exponer solo lo necesario.
 
-    Se usa para crear un ámbito privado y evitar contaminar el ámbito global.
-
-    Muy común antes de la llegada de módulos ES6 para encapsular código.
-
-### Puede tener parámetros: (function(global) { ... }(window));
-
-### Casos de uso
-
-    Módulo revelador (revealing module pattern): retornar un objeto con métodos públicos que acceden a variables privadas del closure.
-
-```js
-const modulo = (function() {
-  let privada = 0;
+```javascript
+const moduloContador = (function() {
+  let privada = 0; // Variable inaccesible desde fuera
   return {
     incrementar() { privada++; },
-    valor() { return privada; }
+    obtenerValor() { return privada; }
   };
 })();
-modulo.incrementar();
-console.log(modulo.valor()); // 1
-console.log(modulo.privada); // undefined
 
-    Bucles y closures (antes de let): capturar valor de iterador.
+moduloContador.incrementar();
+console.log(moduloContador.obtenerValor()); // Output: 1
 ```
 
-js
+---
 
-### for (var i = 0; i < 3; i++) {
-  (function(indice) {
-    setTimeout(() => console.log(indice), 100);
-  })(i);
-}
+## 2. Recursividad
 
-    Evitar colisiones de nombres en scripts concatenados.
+La recursividad ocurre cuando una función se llama a sí misma para resolver una tarea, dividiéndola en instancias más pequeñas del mismo problema.
 
-### Recursividad
-
-Una función recursiva es aquella que se llama a sí misma para resolver un problema dividiéndolo en subproblemas más pequeños, hasta llegar a un caso base que detiene la recursión.
-```js
+```javascript
 function factorial(n) {
-  if (n <= 1) return 1;
-  return n * factorial(n - 1);
+  if (n <= 1) return 1; // Caso Base
+  return n * factorial(n - 1); // Llamada Recursiva
 }
 ```
 
-### Componentes esenciales
+### Componentes Esenciales
+1.  **Caso Base:** La condición que detiene la recursión. Sin ella, la función se llamaría infinitamente causando un *Stack Overflow*.
+2.  **Llamada Recursiva:** La auto-llamada con argumentos que deben converger hacia el caso base.
 
-    Caso base: condición que termina la recursión (sin ella hay desbordamiento de pila).
+---
 
-    Llamada recursiva: con argumentos que convergen hacia el caso base.
+## 3. Recursión de Cola (Tail Recursion)
 
-### Recursión de cola (tail recursion)
+Se produce cuando la llamada recursiva es la última operación que realiza la función. Algunos motores de JavaScript pueden optimizar esto mediante **TCO** (*Tail Call Optimization*) para no ocupar espacio adicional en la pila de ejecución.
 
-Si la llamada recursiva es la última operación que realiza la función (está en posición de cola), algunos motores pueden optimizarla para evitar acumulación de stack (TCO, Tail Call Optimization). No todos los entornos lo implementan, pero es buena práctica escribir funciones recursivas de cola cuando sea posible.
-```js
-function factorial(n, acum = 1) {
-  if (n <= 1) return acum;
-  return factorial(n - 1, n * acum); // llamada de cola
+```javascript
+function factorialCola(n, acumulador = 1) {
+  if (n <= 1) return acumulador;
+  return factorialCola(n - 1, n * acumulador); // Llamada en posición de cola
 }
 ```
 
-### Aplicaciones clásicas
+---
 
-    Recorridos de estructuras de árbol o grafo.
+## Precauciones y Aplicaciones
 
-    Algoritmos como ordenamiento (quicksort, mergesort).
+> [!WARNING]
+> **Pila de Ejecución:** Cada llamada recursiva consume memoria en el *stack*. Si la profundidad es excesiva (miles de llamadas), se producirá un error de `Maximum call stack size exceeded`.
 
-    Cálculo de secuencias (Fibonacci).
+### Aplicaciones Comunes:
+*   Recorridos de estructuras anidadas (JSON, Árboles DOM).
+*   Algoritmos de ordenamiento y búsqueda (MergeSort, QuickSort).
+*   Procesamiento de datos auto-similares (Fractales, Matemáticas).
 
-    Procesamiento de estructuras anidadas (JSON, DOM).
-
-### Precauciones
-
-    Cada llamada recursiva consume memoria en la pila de ejecución; si la profundidad es excesiva, se produce un stack overflow.
-
-    A veces una solución iterativa es más eficiente y clara; pero la recursividad puede ser más natural para problemas auto-similares.
-
-### 04-objetos-y-clases
 ---

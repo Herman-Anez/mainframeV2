@@ -1,74 +1,93 @@
+# Parámetros y Operador Spread
 
-## Archivo: `03-parametros-y-spread.md`
+JavaScript ofrece herramientas potentes para manejar los argumentos de las funciones de forma flexible y legible.
 
-Parámetros por defecto
+---
 
-Se puede asignar un valor por defecto a un parámetro que será usado si el argumento es undefined (no se aplica para null u otros valores falsy).
-```js
+## 1. Parámetros por Defecto
+
+Permiten asignar un valor predeterminado a un parámetro si el argumento enviado es `undefined`.
+
+```javascript
 function saludar(nombre = 'invitado') {
   return `Hola, ${nombre}`;
 }
-saludar();       // Hola, invitado
-saludar(undefined); // Hola, invitado
-saludar(null);   // Hola, null (no se reemplaza)
 
-    Las expresiones de los valores por defecto se evalúan en cada llamada (no en la definición), y pueden referenciar parámetros anteriores.
+saludar();          // Output: Hola, invitado
+saludar(undefined); // Output: Hola, invitado
+saludar(null);      // Output: Hola, null (null se considera un valor definido)
 ```
 
-js
+> [!TIP]
+> Las expresiones de los valores por defecto se evalúan en cada llamada (tiempo de ejecución) y pueden referenciar parámetros definidos anteriormente.
 
-### function suma(a, b = a * 2) {
+```javascript
+function suma(a, b = a * 2) {
   return a + b;
 }
-suma(3); // 9 (b = 3*2)
+suma(3); // Output: 9 (b toma el valor 3 * 2 = 6)
+```
 
-### Parámetros rest (...)
+---
 
-Permite representar un número indefinido de argumentos como un array.
-```js
+## 2. Parámetros Rest (`...`)
+
+El parámetro *rest* permite representar un número indefinido de argumentos como un array real.
+
+```javascript
 function concatenar(separador, ...palabras) {
   return palabras.join(separador);
 }
-concatenar('-', 'a', 'b', 'c'); // 'a-b-c'
+
+concatenar('-', 'a', 'b', 'c'); // Output: 'a-b-c'
 ```
 
-    Solo puede haber un parámetro rest y debe ser el último.
+### Reglas de Uso
+*   **Posición Única:** Solo puede haber un parámetro *rest* por función.
+*   **Posición Final:** Debe ser siempre el último parámetro en la lista.
+*   **Superioridad sobre `arguments`:** Sustituye al objeto `arguments` de forma más clara, proporcionando un array con todos sus métodos (map, filter, etc.).
+*   **En Arrow Functions:** Es la única forma de capturar múltiples argumentos dinámicos.
 
-    Sustituye al objeto arguments (que no es un array real) de manera más clara.
+---
 
-    En arrow functions es la única forma de capturar todos los argumentos.
+## 3. Operador Spread en Funciones
 
-### Operador spread en funciones (invocación)
+El operador `...` (*spread*) permite expandir un array u otro iterable en argumentos individuales durante la invocación de una función.
 
-El mismo operador ... permite expandir un array (o cualquier iterable) en argumentos individuales en una llamada.
-```js
+```javascript
 const numeros = [5, 10, 15];
-console.log(Math.max(...numeros)); // 15
+console.log(Math.max(...numeros)); // Equivalente a Math.max(5, 10, 15)
 
-const fecha = [2025, 4, 12];
-new Date(...fecha); // similar a new Date(2025, 4, 12)
+const fechaValores = [2025, 4, 12];
+const fecha = new Date(...fechaValores); // Output: 12 de mayo de 2025
 ```
 
-Se puede combinar con argumentos normales.
-El objeto arguments (solo funciones no flecha)
+---
 
-Es un objeto similar a un array (no tiene métodos como forEach) que contiene todos los argumentos pasados a la función. Está disponible en funciones clásicas, pero no en arrow functions.
-```js
-function test() {
-  console.log(arguments[0]); // primer argumento
-  console.log(arguments.length);
+## 4. El Objeto `arguments`
+
+Es un objeto similar a un array (pero no es un array real) disponible solo en funciones clásicas (no flecha).
+
+```javascript
+function mostrarArgumentos() {
+  console.log(arguments[0]); // Acceso por índice
+  console.log(arguments.length); // Cantidad de argumentos
 }
-test(1,2,3); // 1 y 3
 
-    Convertir a array: Array.from(arguments) o [...arguments].
+mostrarArgumentos(1, 2, 3);
 ```
 
-### Buenas prácticas
+> [!IMPORTANT]
+> Para usar métodos de array con `arguments`, debes convertirlo primero:
+> `const argsArray = Array.from(arguments);` o `const argsArray = [...arguments];`.
 
-    Prefiere parámetros rest sobre arguments (más legible y seguro).
+---
 
-    Usa valores por defecto para evitar comprobaciones manuales de undefined.
+## Buenas Prácticas
 
-    El spread simplifica mucho la invocación de funciones variádicas.
+> [!NOTE]
+> 1.  **Prioriza Parámetros Rest:** Son más legibles, seguros y proporcionan métodos de array nativos.
+> 2.  **Usa Valores por Defecto:** Evita comprobaciones manuales de `undefined` dentro del cuerpo de la función.
+> 3.  **Aprovecha el Spread:** Simplifica drásticamente la invocación de funciones que reciben múltiples argumentos a partir de colecciones de datos.
 
 ---
