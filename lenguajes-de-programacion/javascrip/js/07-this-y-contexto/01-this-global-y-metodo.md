@@ -1,28 +1,25 @@
-## Archivo: `01-this-global-y-metodo.md`
+# `this` Global y en Métodos
 
+La palabra clave `this` es una de las más poderosas y confusas de JavaScript. Su valor no se determina en tiempo de escritura, sino en tiempo de ejecución, y depende de cómo se invoca la función que lo contiene.
 
-La palabra clave this es una de las más poderosas y confusas de js. Su valor no se determina en tiempo de escritura, sino en tiempo de ejecución, y depende de cómo se invoca la función que lo contiene.
-Reglas generales de determinación de this
+## Reglas generales de determinación de `this`
 
-Existen básicamente cuatro patrones que determinan a qué apunta this:
+Existen básicamente cuatro patrones que determinan a qué apunta `this`:
 
-### Invocación global o de función simple
+### 1. Invocación global o de función simple
+### 2. Invocación como método de un objeto
+### 3. Invocación con `new` (constructor)
+### 4. Invocación explícita con `call`, `apply`, `bind`
 
-### Invocación como método de un objeto
+---
 
-### Invocación con new (constructor)
+## 1. `this` en el ámbito global
 
-### Invocación explícita con call, apply, bind
+Fuera de cualquier función, `this` hace referencia al objeto global:
 
-1. this en el ámbito global
-
-Fuera de cualquier función, this hace referencia al objeto global:
-
-    En el navegador: window (o globalThis).
-
-    En Node.js: global (o globalThis).
-
-    En módulos ES, el ámbito global no tiene this apuntando al objeto global (es undefined en el nivel superior del módulo). Pero dentro de una función no ligada, sí.
+- **En el navegador:** `window` (o `globalThis`).
+- **En Node.js:** `global` (o `globalThis`).
+- **En módulos ES:** El ámbito global no tiene `this` apuntando al objeto global (es `undefined` en el nivel superior del módulo). Pero dentro de una función no ligada, sí.
 
 ```js
 // Navegador (script normal)
@@ -30,29 +27,34 @@ console.log(this); // window
 
 // En Node REPL o script CommonJS
 console.log(this); // {}
-// Nota: en módulo CommonJS, this es el objeto module.exports (no global)
+
+// [!NOTE]
+// En módulo CommonJS, this es el objeto module.exports (no global)
 // En el ámbito de una función: this es global
 ```
 
-2. this en una función normal (no método, no new, sin call/apply/bind)
+## 2. `this` en una función normal
 
-Cuando una función ordinaria (no flecha) es invocada sin un contexto explícito, su this depende del modo:
+Cuando una función ordinaria (no flecha) es invocada sin un contexto explícito (no como método, no con `new`, sin `call`/`apply`/`bind`), su `this` depende del modo:
 
-    Modo no estricto: this apunta al objeto global (window en navegadores, global en Node).
-
-    Modo estricto ('use strict' o módulos ES): this es undefined.
+- **Modo no estricto:** `this` apunta al objeto global (`window` en navegadores, `global` en Node).
+- **Modo estricto (`'use strict'` o módulos ES):** `this` es `undefined`.
 
 ```js
 function mostrarThis() {
   console.log(this);
 }
+
 mostrarThis(); // window o global (no estricto), undefined (estricto)
 ```
 
-Este comportamiento causa problemas cuando una función se pasa como callback y se espera que this tenga un valor particular.
-3. this en un método de objeto
+> [!WARNING]
+> Este comportamiento causa problemas cuando una función se pasa como callback y se espera que `this` tenga un valor particular.
 
-Cuando una función se llama como propiedad de un objeto (método), this se refiere al objeto que está antes del punto (o corchetes) en el momento de la invocación.
+## 3. `this` en un método de objeto
+
+Cuando una función se llama como propiedad de un objeto (método), `this` se refiere al objeto que está antes del punto (o corchetes) en el momento de la invocación.
+
 ```js
 const persona = {
   nombre: 'Carlos',
@@ -60,52 +62,72 @@ const persona = {
     return `Hola, soy ${this.nombre}`;
   }
 };
+
+console.log(persona.saludar()); // Hola, soy Carlos
 ```
 
-### console.log(persona.saludar()); // Hola, soy Carlos
+### El peligro de la pérdida de contexto
 
-Peligro: si el método se extrae a una variable y se llama por separado, pierde su contexto.
+Si el método se extrae a una variable y se llama por separado, pierde su contexto original.
+
 ```js
 const saludo = persona.saludar;
 saludo(); // Hola, soy undefined (this es global/undefined)
 ```
 
-Excepción con la cadena de prototipos: si el método se encuentra en el prototipo pero se invoca a través del objeto, this sigue siendo el objeto original.
+### Excepción con la cadena de prototipos
+
+Si el método se encuentra en el prototipo pero se invoca a través del objeto, `this` sigue siendo el objeto original.
+
 ```js
-const base = { decir() { return this.valor; } };
+const base = { 
+  decir() { 
+    return this.valor; 
+  } 
+};
+
 const hijo = Object.create(base);
 hijo.valor = 10;
 console.log(hijo.decir()); // 10
 ```
 
-### 4. this en una función constructora (con new)
+## 4. `this` en una función constructora (con `new`)
 
-Cuando una función es llamada con new, se crea un objeto nuevo y this apunta a ese nuevo objeto dentro del constructor.
+Cuando una función es llamada con `new`, se crea un objeto nuevo y `this` apunta a ese nuevo objeto dentro del constructor.
+
 ```js
 function Cosa(nombre) {
   this.nombre = nombre;
 }
+
 const cosa = new Cosa('Ejemplo');
 console.log(cosa.nombre); // Ejemplo
 ```
 
-Si accidentalmente se llama sin new, this se comportará según las reglas de función normal (posiblemente contaminando el objeto global). Para protegerse, se puede usar new.target o la sintaxis class, que fuerza el uso de new.
-5. this en callbacks clásicos y event listeners
+> [!TIP]
+> Si accidentalmente se llama sin `new`, `this` se comportará según las reglas de función normal (posiblemente contaminando el objeto global). Para protegerse, se puede usar `new.target` o la sintaxis `class`, que fuerza el uso de `new`.
 
-    En addEventListener, this dentro del callback apunta al elemento DOM que disparó el evento (excepto si se usa arrow function, que no tiene this propio).
+## 5. `this` en callbacks clásicos y event listeners
 
-    En callbacks de temporizadores (setTimeout/setInterval), las funciones normales tienen this global/undefined.
-
-    En métodos de array como .forEach, el segundo argumento opcional se convierte en el this del callback.
+- **En `addEventListener`:** `this` dentro del callback apunta al elemento DOM que disparó el evento (excepto si se usa arrow function, que no tiene `this` propio).
+- **En callbacks de temporizadores (`setTimeout`/`setInterval`):** Las funciones normales tienen `this` global/undefined.
+- **En métodos de array como `.forEach`:** El segundo argumento opcional se convierte en el `this` del callback.
 
 ```js
-const obj = { factor: 10, multiplicar(arr) { arr.forEach(function(n) { console.log(this.factor * n); }, this); } };
+const obj = { 
+  factor: 10, 
+  multiplicar(arr) { 
+    arr.forEach(function(n) { 
+      console.log(this.factor * n); 
+    }, this); 
+  } 
+};
 ```
 
-### Errores comunes
+## Errores comunes
 
-    Asumir que this dentro de una función anidada es el mismo que el de la función contenedora.
+- Asumir que `this` dentro de una función anidada es el mismo que el de la función contenedora.
+- Olvidar que `this` en callbacks se desvincula.
 
-    Olvidar que this en callbacks se desvincula.
-
-La solución histórica era var self = this; o that = this;. Hoy las arrow functions resuelven esto (ver siguiente sección).
+> [!IMPORTANT]
+> La solución histórica era `var self = this;` o `var that = this;`. Hoy en día, las **arrow functions** resuelven esto de manera nativa (ver siguiente sección).

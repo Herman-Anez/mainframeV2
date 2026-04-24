@@ -1,107 +1,117 @@
-## Archivo: `03-eventos-y-delegacion.md`
+# Eventos y Delegación
 
+Los eventos permiten que nuestras aplicaciones reaccionen a las interacciones del usuario o a cambios en el estado del navegador.
 
-Los eventos permiten reaccionar a interacciones del usuario o cambios en el navegador.
-Registrar manejadores
-Propiedades on-event (onclick, onchange)
+---
+
+## Registrar manejadores de eventos
+
+### Propiedades *on-event* (`onclick`, `onchange`)
+
 ```js
-elemento.onclick = function(evento) { ... };
+elemento.onclick = function(evento) { 
+  // lógica aquí 
+};
 ```
 
-    Solo un manejador por evento (sobrescribe anterior).
+- **Limitación:** Solo permiten un manejador por evento (el último sobrescribe al anterior).
+- **Recomendación:** No se recomienda su uso en aplicaciones modernas.
 
-    No recomendado en aplicaciones modernas.
+### `addEventListener` y `removeEventListener`
 
-### addEventListener y removeEventListener
+Es la forma estándar y recomendada de gestionar eventos.
+
 ```js
 function manejarClick(e) {
-  console.log('Clicked', e.target);
+  console.log('Elemento clickeado:', e.target);
 }
+
+// Registro
 elemento.addEventListener('click', manejarClick);
-// eliminar después
+
+// Eliminación (requiere la referencia a la función original)
 elemento.removeEventListener('click', manejarClick);
 ```
 
-    Permite múltiples escuchadores para el mismo evento.
+- **Ventajas:** Permite múltiples escuchadores para el mismo evento.
+- **Opciones avanzadas:** Acepta un tercer argumento opcional (`options` o un booleano `useCapture`).
+    - `once: true`: El listener se elimina automáticamente tras ejecutarse una vez.
+    - `passive: true`: Indica que el listener no llamará a `preventDefault()`, mejorando el rendimiento en eventos de alta frecuencia como `scroll`.
 
-    Tercer argumento opcional: options (capture, once, passive) o booleano useCapture.
+---
 
-    once: true elimina el listener automáticamente tras la primera ejecución.
+## El objeto de evento (`e`)
 
-    passive: true indica que el listener no llamará a preventDefault(), importante para rendimiento en scroll.
+Cada manejador recibe automáticamente un objeto con información detallada:
 
-### El objeto evento e
+- **`e.target`**: El elemento exacto que originó el evento (el más profundo en el árbol).
+- **`e.currentTarget`**: El elemento al que se ha asociado el listener (muy útil en delegación).
+- **`e.type`**: El nombre del evento (ej: `'click'`).
+- **`e.preventDefault()`**: Cancela el comportamiento por defecto del navegador (ej: evitar que un link navegue o un form se envíe).
+- **`e.stopPropagation()`**: Detiene la propagación del evento hacia los ancestros (burbujeo).
+- **`e.stopImmediatePropagation()`**: Detiene la propagación y evita que se ejecuten otros listeners del mismo tipo en el elemento actual.
 
-Cada manejador recibe un objeto Event con propiedades clave:
+---
 
-    e.target: el elemento que originó el evento (más profundo).
+## Fases de propagación
 
-    e.currentTarget: el elemento al que se ha enlazado el listener (útil en delegación).
+Cuando ocurre un evento, este recorre tres fases:
 
-    e.type: nombre del evento.
+1. **Fase de captura:** Desde `window` hacia el elemento objetivo (*target*).
+2. **Fase de target:** El evento llega al elemento donde ocurrió la acción.
+3. **Fase de burbujeo (Bubbling):** El evento sube desde el elemento objetivo de vuelta hacia `window`.
 
-    e.preventDefault(): cancela el comportamiento por defecto (ej. envío de formulario, link).
+> [!NOTE]
+> Por defecto, los listeners se registran en la **fase de burbujeo**. Para usar la fase de captura, se debe pasar `true` o `{ capture: true }` como tercer argumento.
 
-    e.stopPropagation(): detiene la propagación del evento.
+---
 
-    e.stopImmediatePropagation(): detiene la propagación y evita que se ejecuten otros listeners en el mismo elemento.
+## Delegación de eventos
 
-### Fases de propagación
+Es una técnica optimizada que consiste en colocar un único listener en un ancestro común en lugar de muchos listeners en elementos hijos individuales. Se utiliza `e.target` para identificar qué hijo disparó el evento.
 
-Cuando ocurre un evento, atraviesa tres fases:
-
-    Fase de captura: desde window hacia el target (rara vez usada).
-
-    Fase de target: el elemento donde ocurrió.
-
-    Fase de burbuja: del target sube hacia window.
-
-Por defecto, los listeners se registran en fase de burbuja. Para captura, pasa true como tercer argumento o { capture: true }.
-Delegación de eventos
-
-Técnica que consiste en poner un único listener en un ancestro común y usar e.target para determinar qué elemento hijo lo disparó. Esencial cuando los elementos se crean dinámicamente.
 ```js
 lista.addEventListener('click', (e) => {
   if (e.target.matches('li button')) {
-    console.log('Botón clickeado en elemento', e.target.closest('li'));
+    const item = e.target.closest('li');
+    console.log('Botón clickeado en el elemento:', item);
   }
 });
 ```
 
-    Ventajas: menos listeners, mejor rendimiento, maneja elementos añadidos posteriormente.
-
-    Siempre verificar que e.target sea el deseado usando matches o closest.
-
-### Eventos comunes
-
-    Ratón: click, dblclick, mousedown, mouseup, mousemove, mouseover, mouseout, mouseenter, mouseleave (estos dos no burbujean).
-
-    Teclado: keydown, keyup, keypress (obsoleto), con propiedades e.key, e.code.
-
-    Formulario: submit, change, input, focus, blur, focusin, focusout (estos dos sí burbujean).
-
-    Documento: DOMContentLoaded, load, beforeunload.
-
-    Ventana: resize, scroll, storage (ver siguiente sección).
-
-    Táctil: touchstart, touchmove, touchend.
-
-### Eventos personalizados
-
-new CustomEvent('nombre', { detail: { ... } }) y dispatchEvent permiten crear sistemas de comunicación propios.
-```js
-elemento.addEventListener('user-login', e => console.log(e.detail));
-elemento.dispatchEvent(new CustomEvent('user-login', { detail: { id: 1 } }));
-```
-
-### Buenas prácticas
-
-    Usa delegación siempre que puedas.
-
-    Prefiere e.preventDefault() sobre return false (que además detiene propagación).
-
-    Remueve listeners cuando ya no sean necesarios para evitar memory leaks.
-
-    Para scroll y resize, usa { passive: true } para mejorar el rendimiento.
+- **Esencial para:** Elementos creados dinámicamente.
+- **Ventajas:** Menor uso de memoria (menos listeners) y código más limpio.
 
 ---
+
+## Eventos comunes
+
+- **Ratón:** `click`, `dblclick`, `mousedown`, `mouseup`, `mousemove`, `mouseover`, `mouseout`, `mouseenter`, `mouseleave`.
+- **Teclado:** `keydown`, `keyup` (usar `e.key` o `e.code`).
+- **Formulario:** `submit`, `change`, `input`, `focus`, `blur`, `focusin`, `focusout`.
+- **Documento/Ventana:** `DOMContentLoaded` (DOM listo), `load` (todo cargado), `resize`, `scroll`, `beforeunload`.
+- **Táctil:** `touchstart`, `touchmove`, `touchend`.
+
+---
+
+## Eventos personalizados
+
+Podemos crear y disparar nuestros propios eventos mediante `CustomEvent`.
+
+```js
+const loginEvent = new CustomEvent('user-login', { 
+  detail: { id: 1, name: 'Admin' } 
+});
+
+elemento.addEventListener('user-login', e => console.log(e.detail));
+elemento.dispatchEvent(loginEvent);
+```
+
+---
+
+## Buenas prácticas
+
+- **Delegación:** Úsala siempre que gestiones múltiples elementos similares o dinámicos.
+- **Prevención:** Prefiere `e.preventDefault()` sobre `return false`.
+- **Limpieza:** Remueve los listeners cuando ya no sean necesarios para evitar fugas de memoria (*memory leaks*).
+- **Rendimiento:** Usa `{ passive: true }` en eventos de `scroll` y `resize` para una experiencia más fluida.
