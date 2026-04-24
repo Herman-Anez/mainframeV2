@@ -7,13 +7,15 @@ def main():
     out_lines = []
     i = 0
     in_code_block = False
+    lines_in_block = 0
     
     code_start_keywords = {
         'import', 'export', 'const', 'let', 'var', 'function', 'return', 
         'if', 'else', 'for', 'while', 'switch', 'case', 'default', 
         '}', ']', ')', 'type', 'interface', '{', '/*', '*', '//', '<', 
         '...', 'await', 'async', 'class', 'console.log', "'use", '"use',
-        'npm', 'npx', 'yarn', 'pnpm', 'node', 'git','yaml','bash','javascript',
+        'npm', 'npx', 'yarn', 'pnpm', 'node', 'git', 'yaml', 'bash', 'javascript',
+        'cd', 'ls', 'cat', 'echo', 'mkdir', 'rm', 'cp', 'mv', 'sudo', 'docker', 'apt', 'apt-get', 'export', 'curl', 'wget'
     }
 
     def is_text_line(line, prev_line_empty):
@@ -55,6 +57,7 @@ def main():
         if not in_code_block and line.strip() in ['jsx', 'js', 'tsx', 'ts', 'text', 'html', 'css', 'json', 'bash', 'sh']:
             lang = line.strip()
             in_code_block = True
+            lines_in_block = 0
             out_lines.append(f"```{lang}")
             i += 1
             # Skip immediate empty line after language identifier if there is one
@@ -65,7 +68,7 @@ def main():
         # 3. Inside code block
         if in_code_block:
             prev_empty = (i > 0 and lines[i-1].strip() == '')
-            if is_text_line(line, prev_empty) and prev_empty:
+            if lines_in_block > 0 and is_text_line(line, prev_empty) and prev_empty:
                 in_code_block = False
                 
                 if out_lines and out_lines[-1].strip() == '':
@@ -74,6 +77,7 @@ def main():
                     out_lines.append("```")
             else:
                 out_lines.append(line)
+                lines_in_block += 1
                 i += 1
                 continue
                 
