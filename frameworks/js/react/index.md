@@ -5,42 +5,42 @@ JSX (JavaScript XML) es una extensión de sintaxis que permite escribir estructu
 Transformación
 
 JSX se compila (con Babel o swc) a llamadas React.createElement:
-jsx
-
+```jsx
 // JSX
 const elemento = <h1 className="saludo">Hola, mundo</h1>;
 
 // Compilado
 const elemento = React.createElement('h1', { className: 'saludo' }, 'Hola, mundo');
+```
 
-Reglas y características importantes
+### Reglas y características importantes
 
     Una sola raíz: Todo componente debe devolver un solo elemento envolvente. Puedes usar <Fragment> o <> </>.
 
     Etiquetas deben cerrarse: <img />, <br />, <input />.
 
     Expresiones JavaScript entre {}:
-    jsx
-
+```jsx
     const nombre = "Ana";
     const element = <p>Bienvenida {nombre}</p>;
+```
 
     Atributos con camelCase:
 
-        class → className
+### class → className
 
-        for → htmlFor
+### for → htmlFor
 
-        tabindex → tabIndex
+### tabindex → tabIndex
 
     Estilos en línea con objeto:
-    jsx
-
+```jsx
     <div style={{ backgroundColor: 'red', fontSize: '16px' }}>Texto</div>
 
     Comentarios: {/* comentario */}
+```
 
-JSX como valor
+### JSX como valor
 
 Puedes guardar JSX en variables, devolverlo desde funciones, pasarlo como props.
 Seguridad contra inyección XSS
@@ -54,24 +54,23 @@ Buenas prácticas
 
     Prefiere fragmentos en lugar de div innecesarios.
 
-📄 componentes.md
+### 📄 componentes.md
 Definición
 
 Un componente es una pieza de UI reutilizable e independiente. Puede ser una función o una clase. Recibe props y devuelve JSX.
 Componente funcional (moderno)
-jsx
-
+```jsx
 function Saludo(props) {
   return <h1>Hola, {props.nombre}</h1>;
 }
 
     Desde React 16.8 pueden usar hooks (estado, efectos, etc.).
+```
 
     Son más simples y ligeros.
 
-Componente de clase (legado)
-jsx
-
+### Componente de clase (legado)
+```jsx
 class Saludo extends React.Component {
   render() {
     return <h1>Hola, {this.props.nombre}</h1>;
@@ -81,8 +80,9 @@ class Saludo extends React.Component {
     Necesitan render().
 
     Usaban this.state y ciclo de vida (componentDidMount, etc.). Hoy se recomienda funciones + hooks.
+```
 
-Tipos de componentes según su función
+### Tipos de componentes según su función
 
     Presentacionales (tontos): Solo reciben props y renderizan UI. Sin estado propio.
 
@@ -90,7 +90,7 @@ Tipos de componentes según su función
 
     Componentes puros: Dado las mismas props, siempre renderizan el mismo JSX.
 
-Reglas importantes
+### Reglas importantes
 
     Los nombres de componentes deben comenzar con mayúscula (distingue de etiquetas HTML).
 
@@ -98,16 +98,16 @@ Reglas importantes
 
     Todo componente debe ser una función pura respecto a sus props y estado (para evitar efectos colaterales).
 
-Composición
+### Composición
 
 Se recomienda composición sobre herencia. Puedes anidar componentes y usar props.children:
-jsx
-
+```jsx
 function Contenedor({ children }) {
   return <div className="card">{children}</div>;
 }
+```
 
-Extracción de componentes
+### Extracción de componentes
 
 Cuando una parte de la UI se repite o es compleja, conviene extraerla en un componente independiente.
 📄 props.md
@@ -115,8 +115,7 @@ Concepto
 
 Las props (abreviatura de "properties") son datos de solo lectura que un componente padre pasa al hijo. Fluyen unidireccionalmente (de arriba abajo).
 Uso básico
-jsx
-
+```jsx
 // Padre
 <Saludo nombre="Carlos" edad={30} />
 
@@ -124,51 +123,52 @@ jsx
 function Saludo(props) {
   return <p>{props.nombre}, edad: {props.edad}</p>;
 }
+```
 
-Desestructuración de props (recomendado)
-jsx
-
+### Desestructuración de props (recomendado)
+```jsx
 function Saludo({ nombre, edad }) {
   return <p>{nombre}, edad: {edad}</p>;
 }
+```
 
-Props por defecto (defaultProps)
-jsx
-
+### Props por defecto (defaultProps)
+```jsx
 function Boton({ texto = "Click" }) { ... }
 // o externamente:
 Boton.defaultProps = { texto: "Click" };
+```
 
-PropTypes (validación de tipos)
+### PropTypes (validación de tipos)
 
 Instala prop-types:
-jsx
-
+```jsx
 import PropTypes from 'prop-types';
+```
 
-Saludo.propTypes = {
+### Saludo.propTypes = {
   nombre: PropTypes.string.isRequired,
   edad: PropTypes.number
 };
 
-props.children
+### props.children
 
 Para contenido anidado:
-jsx
-
+```jsx
 <Card>
   <h2>Título</h2>
   <p>Contenido</p>
 </Card>
+```
 
-function Card({ children }) {
+### function Card({ children }) {
   return <div className="card">{children}</div>;
 }
 
-Spread de props (usar con cuidado)
-jsx
-
+### Spread de props (usar con cuidado)
+```jsx
 <MiComponente {...objetoDeProps} />
+```
 
 Puede pasar props no deseadas. Prefiere listar explícitamente.
 Inmutabilidad
@@ -182,8 +182,7 @@ Estado local
 
 El estado son datos que un componente puede modificar a lo largo del tiempo, causando un re-renderizado automático cuando cambian.
 useState – Hook básico
-jsx
-
+```jsx
 import { useState } from 'react';
 
 function Contador() {
@@ -191,8 +190,9 @@ function Contador() {
   // contador = valor actual
   // setContador = función para actualizarlo
 }
+```
 
-Reglas de useState
+### Reglas de useState
 
     Solo se puede usar en componentes funcionales o custom hooks.
 
@@ -200,17 +200,16 @@ Reglas de useState
 
     El argumento inicial solo se usa en la primera renderización.
 
-Actualización del estado
-jsx
-
+### Actualización del estado
+```jsx
 setContador(contador + 1);        // actualización directa
 setContador(prev => prev + 1);    // forma segura cuando depende del valor anterior
+```
 
-Estado con objetos o arrays
+### Estado con objetos o arrays
 
 Debes crear una nueva copia (inmutabilidad):
-jsx
-
+```jsx
 const [usuario, setUsuario] = useState({ nombre: 'Ana', edad: 30 });
 
 // Correcto
@@ -219,16 +218,17 @@ setUsuario({ ...usuario, edad: 31 });
 // Incorrecto (no provoca re-render)
 usuario.edad = 31;
 setUsuario(usuario);
+```
 
-Estado con arrays
-jsx
-
+### Estado con arrays
+```jsx
 const [items, setItems] = useState([]);
 setItems([...items, nuevoItem]);               // agregar
 setItems(items.filter(i => i.id !== id));      // eliminar
 setItems(items.map(i => i.id === id ? {...i, done: true} : i));
+```
 
-Múltiples estados
+### Múltiples estados
 
 Puedes usar varios useState o un useReducer si son muchas variables relacionadas.
 ¿Cuándo usar estado?
@@ -239,26 +239,25 @@ Puedes usar varios useState o un useReducer si son muchas variables relacionadas
 
     Valores que afectan el renderizado.
 
-No guardes en estado lo que se puede calcular
-jsx
-
+### No guardes en estado lo que se puede calcular
+```jsx
 // Mal
 const [precio, setPrecio] = useState(10);
 const [conIva, setConIva] = useState(12.1);
 // Bien
 const conIva = precio * 1.21;
+```
 
-📄 eventos.md
+### 📄 eventos.md
 Manejo de eventos en React
 
 Los eventos se nombran en camelCase y se pasan una función (no un string):
-jsx
-
+```jsx
 <button onClick={handleClick}>Click</button>
+```
 
-Definir manejadores
-jsx
-
+### Definir manejadores
+```jsx
 function MiComponente() {
   function handleClick(e) {
     e.preventDefault();  // Previene comportamiento por defecto
@@ -266,33 +265,34 @@ function MiComponente() {
   }
   return <button onClick={handleClick}>Click</button>;
 }
+```
 
-Diferencia con HTML nativo
+### Diferencia con HTML nativo
 
     No se usa addEventListener, se declara directamente en JSX.
 
     El objeto e (evento sintético) es compatible con todos los navegadores.
 
-Paso de parámetros
-jsx
-
+### Paso de parámetros
+```jsx
 <button onClick={() => eliminarItem(id)}>Eliminar</button>
+```
 
 Cuidado: crear una nueva función en cada render puede afectar rendimiento. Para casos críticos, usa useCallback.
 Eventos comunes
 
     onClick, onChange, onSubmit, onMouseEnter, onFocus, onBlur, onKeyDown, etc.
 
-Eventos en formularios
-jsx
-
+### Eventos en formularios
+```jsx
 const [texto, setTexto] = useState('');
 
 function handleChange(e) {
   setTexto(e.target.value);
 }
+```
 
-<input type="text" value={texto} onChange={handleChange} />
+### <input type="text" value={texto} onChange={handleChange} />
 
 Esto se llama componente controlado.
 e.preventDefault() y e.stopPropagation()
@@ -307,11 +307,10 @@ Buenas prácticas
 
     Extraer manejadores fuera del JSX para claridad.
 
-📄 renderizado-condicional.md
+### 📄 renderizado-condicional.md
 Formas de renderizar condicionalmente
 1. if / else fuera del JSX
-jsx
-
+```jsx
 function Componente({ autenticado }) {
   if (autenticado) {
     return <Dashboard />;
@@ -319,26 +318,26 @@ function Componente({ autenticado }) {
     return <Login />;
   }
 }
+```
 
 2. Operador ternario dentro del JSX
-jsx
-
+```jsx
 <div>
   {autenticado ? <Dashboard /> : <Login />}
 </div>
+```
 
 3. && lógico (para mostrar o no mostrar)
-jsx
-
+```jsx
 <div>
   {autenticado && <Dashboard />}
   {/* Si autenticado es true, muestra Dashboard; si false, no muestra nada */}
 </div>
+```
 
 Cuidado: si autenticado es 0 o "" se renderizará ese valor. Mejor usar !!autenticado && ... o convertir a booleano.
 4. Variables que contienen JSX
-jsx
-
+```jsx
 let contenido;
 if (cargando) {
   contenido = <Spinner />;
@@ -348,18 +347,19 @@ if (cargando) {
   contenido = <Datos />;
 }
 return <div>{contenido}</div>;
+```
 
-5. Retorno anticipado (early return) en componentes
-jsx
-
+### 5. Retorno anticipado (early return) en componentes
+```jsx
 function Lista({ items }) {
   if (!items.length) {
     return <p>No hay elementos</p>;
   }
   return <ul>{items.map(...)}</ul>;
 }
+```
 
-Comparación de patrones
+### Comparación de patrones
 
     Ternario: cuando hay dos opciones claras.
 
@@ -367,9 +367,8 @@ Comparación de patrones
 
     If/else o early return: cuando hay muchas condiciones o el JSX es extenso.
 
-Renderizado condicional con switch
-jsx
-
+### Renderizado condicional con switch
+```jsx
 function Estado({ status }) {
   switch(status) {
     case 'loading': return <Spinner />;
@@ -377,24 +376,25 @@ function Estado({ status }) {
     default: return <Ok />;
   }
 }
+```
 
-No usar && con números
-jsx
-
+### No usar && con números
+```jsx
 {contador && <p>Valor: {contador}</p>}
 // Si contador === 0, renderiza "0" (porque 0 es falsy pero React lo muestra)
 // Solución: {contador !== 0 && ...}
+```
 
-📄 listas-keys.md
+### 📄 listas-keys.md
 Renderizado de listas con map()
-jsx
-
+```jsx
 const nombres = ['Ana', 'Luis', 'Carlos'];
 <ul>
   {nombres.map(nombre => <li key={nombre}>{nombre}</li>)}
 </ul>
+```
 
-La prop key
+### La prop key
 
     Ayuda a React a identificar qué elementos cambiaron, se añadieron o eliminaron.
 
@@ -404,14 +404,14 @@ La prop key
 
     No usar índices del array como key si la lista es dinámica (reordenamiento, inserciones/eliminaciones). Los índices pueden causar bugs sutiles.
 
-Buenas prácticas para keys
-jsx
-
+### Buenas prácticas para keys
+```jsx
 // Ideal: usar id único del objeto
 {usuarios.map(usuario => <li key={usuario.id}>{usuario.nombre}</li>)}
 
 // Aceptable solo si la lista es estática y sin filtrados/reordenamientos
 {items.map((item, index) => <li key={index}>{item}</li>)}
+```
 
 ¿Qué pasa si no pongo key?
 
@@ -420,8 +420,7 @@ key no es accesible como prop
 
 No puedes leer props.key en el componente hijo. React la usa internamente.
 Fragmentos con key
-jsx
-
+```jsx
 <>
   {lista.map(item => (
     <React.Fragment key={item.id}>
@@ -430,10 +429,10 @@ jsx
     </React.Fragment>
   ))}
 </>
+```
 
-Extraer componentes en listas
-jsx
-
+### Extraer componentes en listas
+```jsx
 function Lista({ items }) {
   return (
     <ul>
@@ -441,13 +440,14 @@ function Lista({ items }) {
     </ul>
   );
 }
+```
 
-Uso de filter antes de map
-jsx
-
+### Uso de filter antes de map
+```jsx
 {tareas.filter(t => t.completada).map(t => <Tarea key={t.id} {...t} />)}
+```
 
-📄 estilos/css-modules.md
+### 📄 estilos/css-modules.md
 CSS Modules
 
 Permite escribir CSS con ámbito local (por componente). Evita colisiones de nombres.
@@ -455,8 +455,7 @@ Configuración
 
 Create React App y Vite lo soportan por defecto. Los archivos deben terminar en .module.css.
 Uso
-css
-
+```css
 /* Boton.module.css */
 .boton {
   background: blue;
@@ -465,29 +464,30 @@ css
 .primario {
   background: green;
 }
+```
 
-jsx
+### jsx
 
-import styles from './Boton.module.css';
+### import styles from './Boton.module.css';
 
-function Boton() {
+### function Boton() {
   return <button className={styles.boton}>Click</button>;
 }
 
-Clases múltiples
-jsx
-
+### Clases múltiples
+```jsx
 <button className={`${styles.boton} ${styles.primario}`}>
   Click
 </button>
+```
 // o usando arrays y join
 
-Combinación con props
-jsx
-
+### Combinación con props
+```jsx
 <button className={`${styles.boton} ${props.importante ? styles.importante : ''}`}>
+```
 
-Ventajas
+### Ventajas
 
     Estilos encapsulados, sin fugas.
 
@@ -495,13 +495,13 @@ Ventajas
 
     Funciona con CSS puro.
 
-Desventajas
+### Desventajas
 
     No tiene características de CSS-in-JS (temas dinámicos complejos).
 
     Los nombres se vuelven verbosos en el JSX.
 
-Alternativa: SCSS Modules
+### Alternativa: SCSS Modules
 
 Usa Boton.module.scss y tendrás anidación, variables, etc.
 📄 estilos/styled-components.md
@@ -509,13 +509,12 @@ Styled-components (CSS-in-JS)
 
 Librería para escribir CSS dentro de JavaScript, creando componentes estilizados.
 Instalación
-bash
-
+```bash
 npm install styled-components
+```
 
-Uso básico
-jsx
-
+### Uso básico
+```jsx
 import styled from 'styled-components';
 
 const Boton = styled.button`
@@ -532,27 +531,28 @@ const Boton = styled.button`
 function App() {
   return <Boton>Click</Boton>;
 }
+```
 
-Adaptación basada en props
-jsx
-
+### Adaptación basada en props
+```jsx
 const Boton = styled.button`
   background: ${props => props.primario ? 'green' : 'gray'};
 `;
+```
 
-<Boton primario>Guardar</Boton>
+### <Boton primario>Guardar</Boton>
 
-Estilos anidados y pseudoclases
+### Estilos anidados y pseudoclases
 
 Soporta sintaxis similar a SCSS: &:hover, & > span, etc.
 Extender estilos
-jsx
-
+```jsx
 const BotonGrande = styled(Boton)`
   font-size: 24px;
 `;
+```
 
-Ventajas
+### Ventajas
 
     Estilos completamente encapsulados.
 
@@ -562,7 +562,7 @@ Ventajas
 
     Elimina clases CSS globales.
 
-Desventajas
+### Desventajas
 
     Añade runtime (aunque se puede compilar con babel-plugin-styled-components).
 
@@ -570,19 +570,18 @@ Desventajas
 
     Puede complicar el debugging en herramientas de navegador.
 
-Uso con attrs
-jsx
-
+### Uso con attrs
+```jsx
 const Input = styled.input.attrs(props => ({
   type: 'text',
   placeholder: props.placeholder || 'Escribe algo'
 }))`
   border: 1px solid #ccc;
 `;
+```
 
-Temas
-jsx
-
+### Temas
+```jsx
 import { ThemeProvider } from 'styled-components';
 
 const tema = { primary: 'blue' };
@@ -594,32 +593,32 @@ const tema = { primary: 'blue' };
 const Boton = styled.button`
   background: ${props => props.theme.primary};
 `;
+```
 
-📄 estilos/tailwind.md
+### 📄 estilos/tailwind.md
 Tailwind CSS
 
 Framework de utilidades (utility-first) que proporciona clases CSS atómicas.
 Configuración rápida en React
-bash
-
+```bash
 npm install -D tailwindcss postcss autoprefixer
 npx tailwindcss init -p
+```
 
 Configurar tailwind.config.js con las rutas de tus componentes:
-js
-
+```js
 content: ['./src/**/*.{js,jsx,ts,tsx}'],
+```
 
 Importar Tailwind en index.css:
-css
-
+```css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+```
 
-Uso básico
-jsx
-
+### Uso básico
+```jsx
 function Boton() {
   return (
     <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
@@ -627,8 +626,9 @@ function Boton() {
     </button>
   );
 }
+```
 
-Ventajas
+### Ventajas
 
     No necesitas escribir CSS personalizado.
 
@@ -638,7 +638,7 @@ Ventajas
 
     Diseño consistente gracias a la configuración de tema.
 
-Desventajas
+### Desventajas
 
     JSX se vuelve verboso (puedes extraer componentes).
 
@@ -646,30 +646,30 @@ Desventajas
 
     Dependencia de un framework de utilidades.
 
-Extracción de componentes con @apply
+### Extracción de componentes con @apply
 
 En tu archivo CSS (si usas @layer components):
-css
-
+```css
 .btn-primary {
   @apply bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700;
 }
+```
 
-Integración con clsx o classnames
+### Integración con clsx o classnames
 
 Para combinar clases condicionalmente:
-jsx
-
+```jsx
 import clsx from 'clsx';
 <div className={clsx('base-class', { 'bg-red': error, 'bg-green': success })} />
+```
 
-Plugins útiles
+### Plugins útiles
 
     @tailwindcss/forms – para resetear estilos de formularios.
 
     @tailwindcss/typography – para contenido HTML rico (blog, etc.).
 
-Personalización
+### Personalización
 
 En tailwind.config.js puedes extender colores, fuentes, breakpoints, etc.
 🧠 Resumen de buenas prácticas generales
@@ -684,51 +684,50 @@ En tailwind.config.js puedes extender colores, fuentes, breakpoints, etc.
 
     Documenta decisiones en tus archivos markdown para futuras consultas.
 
-📄 useState.md
+### 📄 useState.md
 
     Nota: Aunque useState ya se introdujo en 1-basics/estado-useState.md, aquí se profundiza en aspectos más avanzados y patrones.
 
-Concepto avanzado
+### Concepto avanzado
 
 useState es el hook fundamental para manejar estado local en componentes funcionales. React garantiza que el valor del estado se mantenga entre renders y que al actualizarlo se programe un nuevo render.
 Formas de inicialización
 Inicialización directa
-jsx
-
+```jsx
 const [count, setCount] = useState(0);
+```
 
-Inicialización diferida (lazy initialization)
+### Inicialización diferida (lazy initialization)
 
 Cuando el estado inicial requiere un cálculo costoso, pasa una función:
-jsx
-
+```jsx
 const [state, setState] = useState(() => {
   const valorInicial = calcularValorCostoso();
   return valorInicial;
 });
+```
 
 Esta función solo se ejecutará en el primer render.
 Actualizaciones basadas en el estado anterior
 
 Siempre que la nueva dependa del valor previo, usa la forma funcional para evitar bugs por closures obsoletos:
-jsx
-
+```jsx
 setCount(prevCount => prevCount + 1);
+```
 
-Actualizaciones de objetos y arrays (inmutabilidad)
+### Actualizaciones de objetos y arrays (inmutabilidad)
 
 React compara el estado anterior con el nuevo por referencia (Object.is). Si mutas el objeto, la referencia no cambia y React no re-renderiza.
 
 Forma correcta con objetos:
-jsx
-
+```jsx
 const [user, setUser] = useState({ name: 'Juan', age: 30 });
 setUser({ ...user, age: 31 });        // spread
 setUser(prev => ({ ...prev, age: 31 }));
+```
 
 Con arrays:
-jsx
-
+```jsx
 const [list, setList] = useState([]);
 // Agregar
 setList([...list, nuevoElemento]);
@@ -739,14 +738,15 @@ setList(prev => prev.filter(item => item.id !== id));
 
 // Actualizar un elemento
 setList(prev => prev.map(item => item.id === id ? { ...item, done: true } : item));
+```
 
 ¿El setter es asíncrono?
 
 setState es asíncrono. React agrupa múltiples actualizaciones para mejorar rendimiento. No confíes en que el estado cambie inmediatamente después de llamar al setter.
-jsx
-
+```jsx
 setCount(count + 1);
 console.log(count); // todavía el valor anterior
+```
 
 Si necesitas leer el valor justo después de actualizar, usa useEffect con dependencia en ese estado.
 Múltiples estados vs un solo objeto
@@ -755,23 +755,23 @@ Múltiples estados vs un solo objeto
 
     Un objeto con useState: útil para estados que siempre cambian juntos (ej. formulario). Pero cuidado: al actualizar debes esparcir todo el objeto.
 
-Estado derivado (no lo guardes en el estado)
-jsx
-
+### Estado derivado (no lo guardes en el estado)
+```jsx
 // Mal
 const [precio, setPrecio] = useState(100);
 const [conIva, setConIva] = useState(121); // derivado
 
 // Bien
 const conIva = precio * 1.21;
+```
 
-useState vs useReducer
+### useState vs useReducer
 
     useState: para estado simple (boolean, número, string, objeto pequeño).
 
     useReducer: para estado complejo con múltiples sub-valores o transiciones interdependientes.
 
-Buenas prácticas
+### Buenas prácticas
 
     Nombra el estado y su setter con [algo, setAlgo].
 
@@ -779,59 +779,58 @@ Buenas prácticas
 
     Extrae lógica de actualización compleja a funciones aparte o custom hooks.
 
-📄 useEffect.md
+### 📄 useEffect.md
 Concepto
 
 useEffect permite realizar efectos secundarios en componentes funcionales. Sustituye a los métodos de ciclo de vida de clases (componentDidMount, componentDidUpdate, componentWillUnmount).
 Sintaxis básica
-jsx
-
+```jsx
 useEffect(() => {
   // efecto aquí
   return () => {
     // cleanup (opcional)
   };
 }, [dependencias]);
+```
 
-Formas según el array de dependencias
+### Formas según el array de dependencias
 1. Sin dependencias (ejecuta en cada render)
-jsx
-
+```jsx
 useEffect(() => {
   console.log('Se ejecuta después de cada render');
 });
+```
 
 Evitar a menos que sea estrictamente necesario (problemas de rendimiento).
 2. Array vacío [] (solo montaje y desmontaje)
-jsx
-
+```jsx
 useEffect(() => {
   console.log('Solo al montar');
   return () => console.log('Al desmontar');
 }, []);
+```
 
 Útil para suscripciones, event listeners, fetch inicial.
 3. Con dependencias (se ejecuta cuando cambian)
-jsx
-
+```jsx
 useEffect(() => {
   document.title = `Has clickeado ${count} veces`;
 }, [count]);
+```
 
-Efecto con cleanup (limpieza)
+### Efecto con cleanup (limpieza)
 
 Previene memory leaks. Se ejecuta antes de desmontar y antes de la próxima ejecución del efecto.
-jsx
-
+```jsx
 useEffect(() => {
   const id = setInterval(() => setTime(Date.now()), 1000);
   return () => clearInterval(id);
 }, []);
+```
 
-Casos comunes
+### Casos comunes
 Fetch de datos
-jsx
-
+```jsx
 useEffect(() => {
   let ignore = false;
   async function fetchData() {
@@ -842,17 +841,18 @@ useEffect(() => {
   fetchData();
   return () => { ignore = true; }; // evita actualizar estado si componente desmontó
 }, [url]);
+```
 
-Suscripción a eventos
-jsx
-
+### Suscripción a eventos
+```jsx
 useEffect(() => {
   const handleResize = () => setWidth(window.innerWidth);
   window.addEventListener('resize', handleResize);
   return () => window.removeEventListener('resize', handleResize);
 }, []);
+```
 
-Reglas importantes
+### Reglas importantes
 
     No llames a useEffect dentro de condicionales o bucles.
 
@@ -860,15 +860,15 @@ Reglas importantes
 
     Si la dependencia es un objeto o función definida dentro del componente, puede causar bucles infinitos. Usa useCallback o useMemo.
 
-Efectos que se ejecutan antes del paint: useLayoutEffect
+### Efectos que se ejecutan antes del paint: useLayoutEffect
 
 Si necesitas medir el DOM o mutar elementos antes de que el navegador pinte, usa useLayoutEffect. Más adelante se detalla.
 Advertencia de dependencias faltantes (eslint-plugin-react-hooks)
-jsx
-
+```jsx
 useEffect(() => {
   setCount(count + 1); // count debería estar en dependencias
 }, []); // ❌ warning
+```
 
 Solución: incluye count o usa la forma funcional setCount(prev => prev + 1).
 Ciclo de vida completo
@@ -879,7 +879,7 @@ Ciclo de vida completo
 
     Desmontaje: se ejecuta cleanup.
 
-Buenas prácticas
+### Buenas prácticas
 
     Cada efecto debe tener una responsabilidad única (separar varios useEffect).
 
@@ -887,20 +887,19 @@ Buenas prácticas
 
     Para fetching, considera librerías como React Query que abstraen efectos.
 
-📄 useContext.md
+### 📄 useContext.md
 Concepto
 
 useContext permite consumir un contexto creado con React.createContext sin necesidad de usar Context.Consumer o anidar componentes.
 Creación del contexto
-jsx
-
+```jsx
 // TemaContext.js
 import { createContext } from 'react';
 export const TemaContext = createContext('claro'); // valor por defecto
+```
 
-Proveer el contexto
-jsx
-
+### Proveer el contexto
+```jsx
 import { TemaContext } from './TemaContext';
 
 function App() {
@@ -910,10 +909,10 @@ function App() {
     </TemaContext.Provider>
   );
 }
+```
 
-Consumir con useContext
-jsx
-
+### Consumir con useContext
+```jsx
 import { useContext } from 'react';
 import { TemaContext } from './TemaContext';
 
@@ -921,47 +920,47 @@ function ComponenteHijo() {
   const tema = useContext(TemaContext);
   return <div className={`tema-${tema}`}>Contenido</div>;
 }
+```
 
-Contexto con estado mutable
-jsx
-
+### Contexto con estado mutable
+```jsx
 const AuthContext = createContext(null);
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const login = (userData) => setUser(userData);
   const logout = () => setUser(null);
-  
+
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
+```
 
-Ventajas
+### Ventajas
 
     Evita props drilling (pasar props por muchos niveles).
 
     Centraliza datos globales: tema, autenticación, idioma, etc.
 
-Desventajas y limitaciones
+### Desventajas y limitaciones
 
     No es un sistema de gestión de estado completo: los cambios en el contexto causan re-render de todos los consumidores, sin mecanismo de memoización por defecto.
 
     Para rendimiento, combínalo con useMemo en el valor del provider.
 
-jsx
-
+```jsx
 const value = useMemo(() => ({ user, login, logout }), [user]);
 <AuthContext.Provider value={value}>
+```
 
-Contexto múltiple
+### Contexto múltiple
 
 Puedes anidar varios providers. Cada useContext obtiene el contexto más cercano en el árbol.
 Uso con useReducer (mini Redux)
-jsx
-
+```jsx
 const StoreContext = createContext();
 
 function StoreProvider({ children }) {
@@ -972,36 +971,36 @@ function StoreProvider({ children }) {
     </StoreContext.Provider>
   );
 }
+```
 
-Buenas prácticas
+### Buenas prácticas
 
     Crear contextos específicos (no un solo contexto gigante).
 
     Exportar un custom hook para consumir el contexto (más limpio):
 
-jsx
-
+```jsx
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider');
   return context;
 }
+```
 
-📄 useRef.md
+### 📄 useRef.md
 Concepto
 
 useRef crea un objeto mutable .current que persiste durante todo el ciclo de vida del componente. Cambiar .current no causa re-render.
 Usos principales
 1. Acceso directo a elementos del DOM
-jsx
-
+```jsx
 function InputFocus() {
   const inputRef = useRef(null);
-  
+
   const focusInput = () => {
     inputRef.current.focus();
   };
-  
+
   return (
     <>
       <input ref={inputRef} type="text" />
@@ -1009,13 +1008,13 @@ function InputFocus() {
     </>
   );
 }
+```
 
 2. Guardar valores mutables que no deben causar re-render
-jsx
-
+```jsx
 function Timer() {
   const intervalRef = useRef();
-  
+
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       console.log('tick');
@@ -1023,10 +1022,10 @@ function Timer() {
     return () => clearInterval(intervalRef.current);
   }, []);
 }
+```
 
 3. Referencia a valores previos (como "prevProps" o "prevState")
-jsx
-
+```jsx
 function usePrevious(value) {
   const ref = useRef();
   useEffect(() => {
@@ -1034,8 +1033,9 @@ function usePrevious(value) {
   }, [value]);
   return ref.current;
 }
+```
 
-Diferencias con useState
+### Diferencias con useState
 Característica	useState	useRef
 Cambio provoca re-render	Sí	No
 Valor persiste entre renders	Sí	Sí
@@ -1043,8 +1043,7 @@ Síncrono o asíncrono	Asíncrono (batch)	Síncrono (mutación directa)
 ref como prop: forwardRef
 
 Para pasar una ref a un componente hijo, usa forwardRef:
-jsx
-
+```jsx
 const InputConRef = forwardRef((props, ref) => {
   return <input ref={ref} {...props} />;
 });
@@ -1052,10 +1051,10 @@ const InputConRef = forwardRef((props, ref) => {
 // Padre
 const inputRef = useRef();
 <InputConRef ref={inputRef} />
+```
 
-Callback ref (más control)
-jsx
-
+### Callback ref (más control)
+```jsx
 const [medidas, setMedidas] = useState(null);
 const refCallback = (node) => {
   if (node !== null) {
@@ -1063,26 +1062,26 @@ const refCallback = (node) => {
   }
 };
 <div ref={refCallback}>...</div>
+```
 
-Casos avanzados
+### Casos avanzados
 
     Medir elementos DOM: combínalo con useLayoutEffect para leer dimensiones antes del paint.
 
     Evitar recreación de callbacks: si usas callback ref, memoízala con useCallback.
 
-Advertencias
+### Advertencias
 
     No abuses de ref para "solución rápida" cuando deberías usar estado.
 
     Mutar .current no es reactivo; si necesitas que algo cambie en la UI, usa estado.
 
-📄 useReducer.md
+### 📄 useReducer.md
 Concepto
 
 useReducer es una alternativa a useState para manejar estados complejos con múltiples sub-valores o transiciones que dependen de acciones. Está inspirado en Redux.
 Sintaxis
-jsx
-
+```jsx
 const [state, dispatch] = useReducer(reducer, initialState, init);
 
     reducer: función pura (state, action) => newState.
@@ -1090,10 +1089,10 @@ const [state, dispatch] = useReducer(reducer, initialState, init);
     initialState: valor inicial.
 
     init (opcional): función para inicialización diferida.
+```
 
-Ejemplo básico: contador
-jsx
-
+### Ejemplo básico: contador
+```jsx
 const initialState = { count: 0 };
 
 function reducer(state, action) {
@@ -1115,10 +1114,10 @@ function Counter() {
     </>
   );
 }
+```
 
-Acciones con payload
-jsx
-
+### Acciones con payload
+```jsx
 function reducer(state, action) {
   switch (action.type) {
     case 'set':
@@ -1129,14 +1128,15 @@ function reducer(state, action) {
 }
 // uso
 dispatch({ type: 'set', payload: 10 });
+```
 
-Inicialización diferida
-jsx
-
+### Inicialización diferida
+```jsx
 function init(initialCount) {
   return { count: initialCount };
 }
 const [state, dispatch] = useReducer(reducer, initialCount, init);
+```
 
 ¿Cuándo usar useReducer sobre useState?
 
@@ -1148,9 +1148,8 @@ const [state, dispatch] = useReducer(reducer, initialCount, init);
 
     Prefieres un patrón de acciones predecible.
 
-Combinación con useContext (mini Redux)
-jsx
-
+### Combinación con useContext (mini Redux)
+```jsx
 const AppContext = createContext();
 
 function AppProvider({ children }) {
@@ -1161,16 +1160,17 @@ function AppProvider({ children }) {
     </AppContext.Provider>
   );
 }
+```
 
-Tipado con TypeScript (útil aunque no obligatorio)
-tsx
-
+### Tipado con TypeScript (útil aunque no obligatorio)
+```tsx
 type State = { count: number };
 type Action = { type: 'increment' } | { type: 'decrement' };
 
 const reducer = (state: State, action: Action): State => { ... };
+```
 
-Buenas prácticas
+### Buenas prácticas
 
     Los reducers deben ser puros (sin efectos secundarios, sin mutar state).
 
@@ -1178,7 +1178,7 @@ Buenas prácticas
 
     Separa reducers en archivos diferentes para lógica compleja.
 
-Comparación de rendimiento
+### Comparación de rendimiento
 
 useReducer evita pasar callbacks por muchos niveles (en lugar de setState puedes pasar dispatch). Es más eficiente para actualizaciones profundas.
 📄 useMemo-useCallback.md
@@ -1186,46 +1186,46 @@ Concepto
 
 Ambos hooks memorizan valores/funciones para evitar recrearlos en cada render, optimizando el rendimiento.
 useMemo – Memoriza valores
-jsx
-
+```jsx
 const valorMemoizado = useMemo(() => computoCostoso(a, b), [a, b]);
+```
 
     Devuelve el resultado de la función.
 
     Solo se recalcula cuando cambian las dependencias.
 
-Ejemplo práctico
-jsx
-
+### Ejemplo práctico
+```jsx
 function Lista({ items, filtro }) {
   const itemsFiltrados = useMemo(() => {
     return items.filter(item => item.includes(filtro));
   }, [items, filtro]);
-  
+
   return <ul>{itemsFiltrados.map(...)}</ul>;
 }
+```
 
-useCallback – Memoriza funciones
-jsx
-
+### useCallback – Memoriza funciones
+```jsx
 const funcionMemoizada = useCallback(() => {
   hacerAlgo(a, b);
 }, [a, b]);
+```
 
     Devuelve la misma referencia de función entre renders si las dependencias no cambian.
 
     Evita que componentes hijos (optimizados con React.memo) se re-rendericen innecesariamente.
 
-Ejemplo
-jsx
-
+### Ejemplo
+```jsx
 const handleClick = useCallback(() => {
   console.log(count);
 }, [count]);
+```
 
-<BotonMemo onClick={handleClick} />
+### <BotonMemo onClick={handleClick} />
 
-Diferencia clave
+### Diferencia clave
 Hook	Qué memoriza	Uso típico
 useMemo	Valor calculado	Operaciones costosas, objetos/arrays derivados
 useCallback	Función	Pasar callbacks a hijos memoizados
@@ -1237,25 +1237,25 @@ useCallback	Función	Pasar callbacks a hijos memoizados
 
     Si el componente no tiene problemas de rendimiento, evita complejidad.
 
-Trampa común
-jsx
-
+### Trampa común
+```jsx
 // ❌ Mal: useCallback para una función que se pasa a un div nativo (no memoizado)
 const handleClick = useCallback(() => {}, []);
 <div onClick={handleClick} />
 
 // ✅ Bien: solo cuando el hijo está envuelto en React.memo
 const HijoMemo = React.memo(({ onClick }) => ...);
+```
 
-useMemo para objetos que son dependencia de otros hooks
-jsx
-
+### useMemo para objetos que son dependencia de otros hooks
+```jsx
 const opciones = useMemo(() => ({ pageSize, sortBy }), [pageSize, sortBy]);
 useEffect(() => {
   fetchData(opciones);
 }, [opciones]); // ahora la referencia es estable
+```
 
-Reglas de dependencias
+### Reglas de dependencias
 
 Al igual que useEffect, las dependencias deben incluir todos los valores reactivos usados dentro.
 Diferencia con React.memo
@@ -1264,7 +1264,7 @@ Diferencia con React.memo
 
     useCallback y useMemo evitan que las props (funciones/objetos) cambien innecesariamente.
 
-Buenas prácticas
+### Buenas prácticas
 
     Medir primero (React DevTools Profiler) antes de optimizar.
 
@@ -1272,7 +1272,7 @@ Buenas prácticas
 
     Para funciones que no dependen de estado/props, definirlas fuera del componente (mejor aún).
 
-📄 custom-hooks.md
+### 📄 custom-hooks.md
 Concepto
 
 Un custom hook es una función JavaScript cuyo nombre comienza con use y que puede llamar a otros hooks. Permite reutilizar lógica con estado entre componentes.
@@ -1284,9 +1284,8 @@ Reglas
 
     Puede recibir argumentos y devolver cualquier valor.
 
-Ejemplo simple: useLocalStorage
-jsx
-
+### Ejemplo simple: useLocalStorage
+```jsx
 function useLocalStorage(key, initialValue) {
   const [storedValue, setStoredValue] = useState(() => {
     try {
@@ -1296,7 +1295,7 @@ function useLocalStorage(key, initialValue) {
       return initialValue;
     }
   });
-  
+
   const setValue = (value) => {
     try {
       const valueToStore = value instanceof Function ? value(storedValue) : value;
@@ -1306,18 +1305,18 @@ function useLocalStorage(key, initialValue) {
       console.log(error);
     }
   };
-  
+
   return [storedValue, setValue];
 }
+```
 
-Ejemplo: useFetch
-jsx
-
+### Ejemplo: useFetch
+```jsx
 function useFetch(url) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   useEffect(() => {
     let ignore = false;
     const fetchData = async () => {
@@ -1338,13 +1337,13 @@ function useFetch(url) {
     fetchData();
     return () => { ignore = true; };
   }, [url]);
-  
+
   return { data, loading, error };
 }
+```
 
-Ejemplo: useOnClickOutside (detectar clic fuera de un elemento)
-jsx
-
+### Ejemplo: useOnClickOutside (detectar clic fuera de un elemento)
+```jsx
 function useOnClickOutside(ref, handler) {
   useEffect(() => {
     const listener = (event) => {
@@ -1359,19 +1358,20 @@ function useOnClickOutside(ref, handler) {
     };
   }, [ref, handler]);
 }
+```
 
-Composición de custom hooks
+### Composición de custom hooks
 
 Puedes combinar varios hooks dentro de uno:
-jsx
-
+```jsx
 function useUser(userId) {
   const { data: user, loading, error } = useFetch(`/users/${userId}`);
   const [preferences, setPrefs] = useLocalStorage(`prefs_${userId}`, {});
   return { user, loading, error, preferences, setPrefs };
 }
+```
 
-Buenas prácticas
+### Buenas prácticas
 
     Un solo propósito por custom hook.
 
@@ -1381,7 +1381,7 @@ Buenas prácticas
 
     Documentar los parámetros y el retorno.
 
-Custom hooks vs componentes
+### Custom hooks vs componentes
 
     Los custom hooks no devuelven JSX, solo lógica con estado.
 
@@ -1391,8 +1391,7 @@ Custom hooks vs componentes
 useId
 
 Genera identificadores únicos estables para accesibilidad (atributos id). Evita problemas de hidratación en SSR.
-jsx
-
+```jsx
 function Campo() {
   const id = useId();
   return (
@@ -1402,27 +1401,27 @@ function Campo() {
     </>
   );
 }
+```
 
     No usar para keys en listas.
 
     Cada llamada produce un ID único entre componentes.
 
-useLayoutEffect
+### useLayoutEffect
 
 Similar a useEffect, pero se ejecuta síncronamente después de mutar el DOM y antes de que el navegador pinte. Útil para medir el DOM o hacer ajustes visuales inmediatos.
-jsx
-
+```jsx
 useLayoutEffect(() => {
   const { height } = ref.current.getBoundingClientRect();
   setAltura(height);
 }, []);
+```
 
 Precaución: Bloquea el paint, puede degradar rendimiento. Usa useEffect por defecto.
 useImperativeHandle
 
 Personaliza el valor expuesto por una ref cuando se usa forwardRef. Permite controlar qué métodos o propiedades expones.
-jsx
-
+```jsx
 const FancyInput = forwardRef((props, ref) => {
   const inputRef = useRef();
   useImperativeHandle(ref, () => ({
@@ -1437,28 +1436,28 @@ const ref = useRef();
 <FancyInput ref={ref} />
 ref.current.focus(); // válido
 ref.current.customClear();
+```
 
-useDebugValue
+### useDebugValue
 
 Etiqueta un custom hook en React DevTools. Solo útil para depuración.
-jsx
-
+```jsx
 function useFriendStatus(friendID) {
   const [isOnline, setIsOnline] = useState(null);
   useDebugValue(isOnline ? 'Online' : 'Offline');
   return isOnline;
 }
+```
 
 Para valores costosos, acepta una función de formato:
-jsx
-
+```jsx
 useDebugValue(date, date => date.toDateString());
+```
 
-useTransition (React 18+)
+### useTransition (React 18+)
 
 Marca una actualización de estado como no urgente (transición), permitiendo que el UI siga respondiendo mientras se renderiza contenido pesado.
-jsx
-
+```jsx
 const [isPending, startTransition] = useTransition();
 
 const handleSearch = (input) => {
@@ -1474,28 +1473,28 @@ return (
     <Resultados query={searchQuery} />
   </div>
 );
+```
 
-useSyncExternalStore
+### useSyncExternalStore
 
 Hook avanzado para suscribirse a fuentes de datos externas (store de Redux, estado global no React). Recomendado para autores de librerías.
-jsx
-
+```jsx
 const state = useSyncExternalStore(store.subscribe, store.getState);
+```
 
-useDeferredValue (mencionar breve)
+### useDeferredValue (mencionar breve)
 
 Similar a useTransition pero para valores: recibe un valor y devuelve una versión "desfasada" que se actualiza en segundo plano.
 Conclusión
 
 Estos hooks cubren la mayoría de casos de uso. Para más detalles, consulta la documentación oficial de React (especialmente la sección de Hooks API Reference).
 
-📄 props-drilling.md
+### 📄 props-drilling.md
 Concepto
 
 Props drilling (o "perforación de props") es la situación en la que datos deben pasar a través de múltiples niveles de componentes intermedios que no necesitan esos datos, solo para llegar a un componente profundo que sí los necesita.
 Ejemplo del problema
-jsx
-
+```jsx
 function App() {
   const [user, setUser] = useState({ name: 'Ana' });
   return <Header user={user} />;
@@ -1512,6 +1511,7 @@ function Navbar({ user }) {
 function Avatar({ user }) {
   return <img src={user.avatar} />;
 }
+```
 
 Aquí Header y Navbar solo pasan user sin usarlo directamente.
 ¿Por qué es problemático?
@@ -1524,7 +1524,7 @@ Aquí Header y Navbar solo pasan user sin usarlo directamente.
 
     Ruido visual: el código se vuelve verboso.
 
-Señales de que necesitas otra solución
+### Señales de que necesitas otra solución
 
     Una prop pasa por más de 2-3 niveles sin ser usada.
 
@@ -1532,12 +1532,11 @@ Señales de que necesitas otra solución
 
     El árbol de componentes es profundo y anidado.
 
-Soluciones a props drilling
+### Soluciones a props drilling
 1. Composición (elevar el contenido)
 
 En lugar de pasar datos a través de intermediarios, pasa el componente ya construido.
-jsx
-
+```jsx
 function App() {
   const [user, setUser] = useState({ name: 'Ana' });
   return <Header avatar={<Avatar user={user} />} />;
@@ -1548,6 +1547,7 @@ function Header({ avatar }) {
 function Navbar({ avatar }) {
   return <div>{avatar}</div>;
 }
+```
 
 Sigue habiendo cierto drilling, pero más controlado.
 2. Context API
@@ -1563,20 +1563,19 @@ Buenas prácticas
 
     Extrae componentes: si un componente intermedio solo pasa props, quizás puede ser eliminado o fusionado.
 
-📄 context-api.md
+### 📄 context-api.md
 Concepto
 
 Context API es una característica nativa de React que permite compartir datos globalmente sin tener que pasar props manualmente en cada nivel.
 Creación y uso (repaso pero más profundo)
 1. Crear contexto
-jsx
-
+```jsx
 import { createContext } from 'react';
 const UserContext = createContext(null);
+```
 
 2. Proveedor
-jsx
-
+```jsx
 function App() {
   const [user, setUser] = useState(null);
   return (
@@ -1585,17 +1584,18 @@ function App() {
     </UserContext.Provider>
   );
 }
+```
 
 3. Consumir en cualquier componente hijo
-jsx
-
+```jsx
 import { useContext } from 'react';
 function Avatar() {
   const { user } = useContext(UserContext);
   return <img src={user?.avatar} />;
 }
+```
 
-Contexto con estado complejo y reducción de re-renderizados
+### Contexto con estado complejo y reducción de re-renderizados
 
 Por defecto, cualquier cambio en el value del provider provoca que todos los consumidores se re-rendericen. Para evitarlo:
 
@@ -1603,17 +1603,16 @@ Por defecto, cualquier cambio en el value del provider provoca que todos los con
 
     Memoizar el value con useMemo:
 
-jsx
-
+```jsx
 const value = useMemo(() => ({ user, setUser }), [user]);
 <UserContext.Provider value={value}>...</UserContext.Provider>
+```
 
-Contexto múltiple (anidado)
+### Contexto múltiple (anidado)
 
 Puedes tener contextos de tema, autenticación, preferencias, etc., anidados.
 Contexto + useReducer (mini Redux)
-jsx
-
+```jsx
 const StoreContext = createContext();
 function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -1622,8 +1621,9 @@ function StoreProvider({ children }) {
 }
 // Uso
 const { state, dispatch } = useContext(StoreContext);
+```
 
-Contexto vs Redux
+### Contexto vs Redux
 Contexto	Redux
 Nativo de React	Librería externa
 Bueno para datos estáticos o poco frecuentes	Para lógica compleja y actualizaciones frecuentes
@@ -1635,8 +1635,7 @@ Buenas prácticas
 
     Validar que el hook se use dentro del provider:
 
-jsx
-
+```jsx
 export function useUser() {
   const context = useContext(UserContext);
   if (!context) throw new Error('useUser must be used within UserProvider');
@@ -1646,14 +1645,15 @@ export function useUser() {
     No meter datos que cambian muy rápido (ej. posición del mouse) en un contexto grande.
 
     Dividir contextos por dominio (UserContext, ThemeContext, etc.).
+```
 
-Limitaciones
+### Limitaciones
 
     No es adecuado para rendimiento crítico con miles de actualizaciones por segundo (usa Zustand o Jotai).
 
     El provider debe envolver todo el árbol que necesite acceso.
 
-📄 redux.md
+### 📄 redux.md
 Concepto
 
 Redux es una librería de gestión de estado global predecible basada en el patrón Flux. Se usa frecuentemente con React a través de react-redux.
@@ -1665,14 +1665,13 @@ Principios fundamentales
 
     Los cambios se hacen con funciones puras (reducers).
 
-Flujo básico de Redux
-text
-
+### Flujo básico de Redux
+```text
 Componente → dispatch(action) → Reducer → Nuevo estado → Componente se actualiza
+```
 
-Núcleo de Redux (sin React)
-jsx
-
+### Núcleo de Redux (sin React)
+```jsx
 import { createStore } from 'redux';
 
 // Reducer
@@ -1692,15 +1691,16 @@ store.dispatch({ type: 'INCREMENTAR' });
 
 // Suscripción
 store.subscribe(() => console.log(store.getState()));
+```
 
-Redux con React (react-redux)
+### Redux con React (react-redux)
 1. Proveer el store
-jsx
-
+```jsx
 import { Provider } from 'react-redux';
 import { store } from './store';
+```
 
-ReactDOM.render(
+### ReactDOM.render(
   <Provider store={store}>
     <App />
   </Provider>,
@@ -1708,8 +1708,7 @@ ReactDOM.render(
 );
 
 2. Conectar un componente (hooks modernos)
-jsx
-
+```jsx
 import { useSelector, useDispatch } from 'react-redux';
 
 function Contador() {
@@ -1722,12 +1721,12 @@ function Contador() {
     </div>
   );
 }
+```
 
-Redux Toolkit (recomendado hoy)
+### Redux Toolkit (recomendado hoy)
 
 Simplifica la configuración, reduce boilerplate.
-jsx
-
+```jsx
 import { configureStore, createSlice } from '@reduxjs/toolkit';
 
 const contadorSlice = createSlice({
@@ -1742,16 +1741,16 @@ const contadorSlice = createSlice({
 
 export const { incrementar, decrementar, incrementarPor } = contadorSlice.actions;
 export const store = configureStore({ reducer: contadorSlice.reducer });
+```
 
 En el componente:
-jsx
-
+```jsx
 import { incrementar } from './store';
 dispatch(incrementar());
+```
 
-Middleware (ej. Redux Thunk para acciones asíncronas)
-jsx
-
+### Middleware (ej. Redux Thunk para acciones asíncronas)
+```jsx
 const fetchUser = (id) => async (dispatch) => {
   dispatch({ type: 'FETCH_USER_REQUEST' });
   try {
@@ -1762,8 +1761,9 @@ const fetchUser = (id) => async (dispatch) => {
     dispatch({ type: 'FETCH_USER_FAILURE', error });
   }
 };
+```
 
-Buenas prácticas
+### Buenas prácticas
 
     Usa Redux Toolkit siempre.
 
@@ -1773,7 +1773,7 @@ Buenas prácticas
 
     Usa Selectors memoizados con createSelector (Reselect) para evitar cálculos innecesarios.
 
-Cuándo usar Redux
+### Cuándo usar Redux
 
     Estado global muy complejo y compartido por muchos componentes.
 
@@ -1783,22 +1783,21 @@ Cuándo usar Redux
 
     Equipo grande que requiere patrones estrictos.
 
-Alternativas modernas más ligeras
+### Alternativas modernas más ligeras
 
     Zustand (siguiente archivo), Jotai, Recoil.
 
-📄 zustand.md
+### 📄 zustand.md
 Concepto
 
 Zustand es una librería de estado global minimalista para React. Su API es muy simple, sin boilerplate, basada en hooks y sin necesidad de Provider (aunque opcional).
 Instalación
-bash
-
+```bash
 npm install zustand
+```
 
-Crear un store
-jsx
-
+### Crear un store
+```jsx
 import { create } from 'zustand';
 
 const useCounterStore = create((set) => ({
@@ -1807,10 +1806,10 @@ const useCounterStore = create((set) => ({
   decrement: () => set((state) => ({ count: state.count - 1 })),
   reset: () => set({ count: 0 }),
 }));
+```
 
-Usar en un componente
-jsx
-
+### Usar en un componente
+```jsx
 function Contador() {
   const { count, increment, decrement } = useCounterStore();
   return (
@@ -1821,24 +1820,24 @@ function Contador() {
     </div>
   );
 }
+```
 
-Selección parcial (evita re-renderizados innecesarios)
-jsx
-
+### Selección parcial (evita re-renderizados innecesarios)
+```jsx
 const count = useCounterStore((state) => state.count);
 const increment = useCounterStore((state) => state.increment);
+```
 
 O con un selector:
-jsx
-
+```jsx
 const { count, increment } = useCounterStore((state) => ({
   count: state.count,
   increment: state.increment,
 }), shallow); // comparación superficial
+```
 
-Estado asíncrono
-jsx
-
+### Estado asíncrono
+```jsx
 const useUserStore = create((set) => ({
   user: null,
   loading: false,
@@ -1849,10 +1848,10 @@ const useUserStore = create((set) => ({
     set({ user, loading: false });
   },
 }));
+```
 
-Middlewares (persistencia, devtools, logger)
-jsx
-
+### Middlewares (persistencia, devtools, logger)
+```jsx
 import { persist } from 'zustand/middleware';
 
 const useStore = create(
@@ -1861,16 +1860,17 @@ const useStore = create(
     { name: 'counter-storage' } // localStorage key
   )
 );
+```
 
-Store con slices (modularización)
-jsx
-
+### Store con slices (modularización)
+```jsx
 const useBoundStore = create((...a) => ({
   ...counterSlice(...a),
   ...userSlice(...a),
 }));
+```
 
-Ventajas sobre Redux
+### Ventajas sobre Redux
 
     Sin Provider (opcional).
 
@@ -1880,13 +1880,13 @@ Ventajas sobre Redux
 
     Curva de aprendizaje baja.
 
-Desventajas
+### Desventajas
 
     Menos tooling que Redux (aunque tiene DevTools).
 
     Menos estructura para equipos grandes (puede volverse desordenado).
 
-Cuándo usar Zustand
+### Cuándo usar Zustand
 
     Proyectos pequeños a medianos.
 
@@ -1894,7 +1894,7 @@ Cuándo usar Zustand
 
     Prefieres una API de hooks simple.
 
-📄 react-query.md
+### 📄 react-query.md
 Concepto
 
 React Query (ahora TanStack Query) no es una librería de estado global, sino un gestor de estado asíncrono del servidor. Maneja fetching, caching, sincronización, actualizaciones en segundo plano, etc.
@@ -1904,14 +1904,13 @@ Diferencia con estado global
 
     React Query: guarda datos del servidor (API, base de datos) con estrategias de caché y revalidación.
 
-Instalación
-bash
-
+### Instalación
+```bash
 npm install @tanstack/react-query
+```
 
-Configuración básica
-jsx
-
+### Configuración básica
+```jsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
@@ -1923,10 +1922,10 @@ function App() {
     </QueryClientProvider>
   );
 }
+```
 
-Uso de useQuery (fetch y caché)
-jsx
-
+### Uso de useQuery (fetch y caché)
+```jsx
 import { useQuery } from '@tanstack/react-query';
 
 function ListaUsuarios() {
@@ -1939,10 +1938,10 @@ function ListaUsuarios() {
   if (error) return <Error mensaje={error.message} />;
   return <ul>{data.map(user => <li key={user.id}>{user.name}</li>)}</ul>;
 }
+```
 
-useMutation (para crear, actualizar, eliminar)
-jsx
-
+### useMutation (para crear, actualizar, eliminar)
+```jsx
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 function AgregarUsuario() {
@@ -1965,8 +1964,9 @@ function AgregarUsuario() {
     </button>
   );
 }
+```
 
-Características avanzadas
+### Características avanzadas
 
     Caché persistente (tiempo de vida configurable).
 
@@ -1978,9 +1978,8 @@ Características avanzadas
 
     Prefetching para mejorar UX.
 
-Configuración global del QueryClient
-jsx
-
+### Configuración global del QueryClient
+```jsx
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -1991,8 +1990,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+```
 
-Comparación con useEffect + useState
+### Comparación con useEffect + useState
 Con useEffect	Con React Query
 Manual handling de loading/error	Automático
 Sin caché	Caché automático
@@ -2008,11 +2008,11 @@ Buenas prácticas
 
     Combínalo con Zustand/Redux solo para estado local del cliente.
 
-React Query vs Redux (para datos de API)
+### React Query vs Redux (para datos de API)
 
 No compiten; se complementan. React Query maneja el servidor-estado; Redux maneja el cliente-estado. Puedes usar ambos.
 
-📄 composicion.md
+### 📄 composicion.md
 Concepto
 
 La composición en React es el principio de construir componentes complejos a partir de componentes más pequeños y reutilizables, combinándolos como piezas de Lego. React favorece la composición sobre la herencia.
@@ -2022,10 +2022,9 @@ Composición vs Herencia
 
     Composición: incluir un componente dentro de otro mediante props o children.
 
-Formas de composición
+### Formas de composición
 1. props.children (contenido anidado)
-jsx
-
+```jsx
 function Card({ children }) {
   return <div className="card">{children}</div>;
 }
@@ -2038,10 +2037,10 @@ function App() {
     </Card>
   );
 }
+```
 
 2. Props con componentes (especialización)
-jsx
-
+```jsx
 function Dialog({ title, message, buttons }) {
   return (
     <div className="dialog">
@@ -2053,7 +2052,7 @@ function Dialog({ title, message, buttons }) {
 }
 
 // Uso
-<Dialog 
+<Dialog
   title="Confirmar"
   message="¿Estás seguro?"
   buttons={
@@ -2063,25 +2062,25 @@ function Dialog({ title, message, buttons }) {
     </>
   }
 />
+```
 
 3. Props que reciben componentes (render props simplificadas)
-jsx
-
+```jsx
 function ListaDeItems({ items, renderItem }) {
   return <ul>{items.map(item => <li key={item.id}>{renderItem(item)}</li>)}</ul>;
 }
+```
 
-<ListaDeItems 
-  items={usuarios} 
+### <ListaDeItems
+  items={usuarios}
   renderItem={user => <span>{user.nombre} ({user.email})</span>}
 />
 
-4. HOCs (aunque son una forma de composición, se tratan aparte)
+### 4. HOCs (aunque son una forma de composición, se tratan aparte)
 
 Un HOC es una función que recibe un componente y devuelve otro componente.
 Patrón de contenedor vs presentacional (composición)
-jsx
-
+```jsx
 // Presentacional: solo UI
 function UserProfile({ user }) {
   return <div>{user.name}</div>;
@@ -2095,12 +2094,12 @@ function UserProfileContainer({ userId }) {
   }, [userId]);
   return <UserProfile user={user} />;
 }
+```
 
-Composición vs Configuración
+### Composición vs Configuración
 
 En lugar de tener un componente enorme con muchas props booleanas para variantes, compón variantes como componentes separados.
-jsx
-
+```jsx
 // ❌ Mal: muchas props de configuración
 <Button primary large disabled icon="save" />
 
@@ -2108,8 +2107,9 @@ jsx
 <PrimaryButton large>Guardar</PrimaryButton>
 // o
 <Button variant="primary" size="large">Guardar</Button> // pero sigue siendo configuración
+```
 
-Ventajas de la composición
+### Ventajas de la composición
 
     Reutilización de lógica y UI.
 
@@ -2119,7 +2119,7 @@ Ventajas de la composición
 
     Sin acoplamiento entre padre e hijo más allá de la interfaz (children o props).
 
-Composición con contexto
+### Composición con contexto
 
 El contexto se combina perfectamente con la composición: un Provider envuelve componentes hijos.
 Buenas prácticas
@@ -2132,7 +2132,7 @@ Buenas prácticas
 
     Extrae lógica repetida en custom hooks, no en componentes heredados.
 
-📄 render-props.md
+### 📄 render-props.md
 Concepto
 
 Render Props es un patrón donde un componente recibe una función como prop (generalmente llamada render o children) que retorna JSX. El componente llama a esa función con sus propios datos internos, permitiendo al padre definir cómo renderizar.
@@ -2140,13 +2140,12 @@ Origen
 
 Popularizado antes de los hooks. Sigue siendo útil, aunque muchos casos se resuelven con custom hooks.
 Ejemplo básico
-jsx
-
+```jsx
 // Componente que maneja el ratón
 function MouseTracker({ children }) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const handleMouseMove = (e) => setPosition({ x: e.clientX, y: e.clientY });
-  
+
   return (
     <div onMouseMove={handleMouseMove}>
       {children(position)}
@@ -2160,30 +2159,30 @@ function MouseTracker({ children }) {
     <p>La posición del ratón es ({x}, {y})</p>
   )}
 </MouseTracker>
+```
 
-Patrón con prop render (alternativa a children)
-jsx
-
+### Patrón con prop render (alternativa a children)
+```jsx
 function MouseTracker({ render }) {
   // ... mismo estado
   return <div onMouseMove={handleMouseMove}>{render(position)}</div>;
 }
+```
 
-<MouseTracker render={({ x, y }) => <p>{x},{y}</p>} />
+### <MouseTracker render={({ x, y }) => <p>{x},{y}</p>} />
 
-Ejemplo real: componente de solicitud de datos
-jsx
-
+### Ejemplo real: componente de solicitud de datos
+```jsx
 function Fetch({ url, children }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     fetch(url)
       .then(res => res.json())
       .then(data => { setData(data); setLoading(false); });
   }, [url]);
-  
+
   return children({ data, loading });
 }
 
@@ -2193,8 +2192,9 @@ function Fetch({ url, children }) {
     loading ? <Spinner /> : <UserInfo user={data} />
   )}
 </Fetch>
+```
 
-Ventajas
+### Ventajas
 
     Máxima flexibilidad: el componente padre decide completamente el renderizado.
 
@@ -2202,7 +2202,7 @@ Ventajas
 
     Composición dinámica.
 
-Desventajas
+### Desventajas
 
     Callback hell si se anidan muchos render props.
 
@@ -2210,11 +2210,10 @@ Desventajas
 
     Rendimiento porque se crea una nueva función en cada render (aunque es manejable).
 
-Render props vs Hooks
+### Render props vs Hooks
 
 Con la llegada de los custom hooks, los render props han perdido popularidad:
-jsx
-
+```jsx
 // Con hook
 function useMousePosition() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -2231,6 +2230,7 @@ function MiComponente() {
   const { x, y } = useMousePosition();
   return <p>{x},{y}</p>;
 }
+```
 
 ¿Cuándo usar render props hoy?
 
@@ -2240,7 +2240,7 @@ function MiComponente() {
 
     Para mantener compatibilidad con código antiguo.
 
-Buenas prácticas
+### Buenas prácticas
 
     Nombra la prop children o render según el caso.
 
@@ -2248,18 +2248,17 @@ Buenas prácticas
 
     Combínalo con React.memo para evitar renders innecesarios.
 
-📄 higher-order-components.md
+### 📄 higher-order-components.md
 Concepto
 
 Un Higher-Order Component (HOC) es una función que recibe un componente y devuelve un nuevo componente mejorado. Es un patrón para reutilizar lógica entre componentes, común antes de los hooks.
 Firma
-jsx
-
+```jsx
 const EnhancedComponent = higherOrderComponent(WrappedComponent);
+```
 
-Ejemplo básico: HOC de logging
-jsx
-
+### Ejemplo básico: HOC de logging
+```jsx
 function withLogger(WrappedComponent) {
   return function(props) {
     useEffect(() => {
@@ -2271,10 +2270,10 @@ function withLogger(WrappedComponent) {
 }
 
 const UserPageWithLogger = withLogger(UserPage);
+```
 
-HOC que añade props
-jsx
-
+### HOC que añade props
+```jsx
 function withUser(WrappedComponent) {
   return function(props) {
     const [user, setUser] = useState(null);
@@ -2286,18 +2285,18 @@ function withUser(WrappedComponent) {
 }
 
 const UserProfileWithData = withUser(UserProfile);
+```
 
-Composición de HOCs
-jsx
-
+### Composición de HOCs
+```jsx
 const EnhancedComponent = withLogger(withUser(withTheme(BaseComponent)));
 // o con una función compose (Redux)
 import compose from 'lodash/fp/compose';
 const EnhancedComponent = compose(withLogger, withUser, withTheme)(BaseComponent);
+```
 
-HOCs con configuración (fábrica de HOCs)
-jsx
-
+### HOCs con configuración (fábrica de HOCs)
+```jsx
 function withFetch(url) {
   return function(WrappedComponent) {
     return function(props) {
@@ -2311,8 +2310,9 @@ function withFetch(url) {
 }
 
 const UserListWithFetch = withFetch('/api/users')(UserList);
+```
 
-Convenciones importantes
+### Convenciones importantes
 
     Pasar props no relacionadas al componente envuelto (usar spread).
 
@@ -2322,8 +2322,7 @@ Convenciones importantes
 
     Ref forwarding con forwardRef.
 
-jsx
-
+```jsx
 function withLogger(WrappedComponent) {
   const WithLogger = React.forwardRef((props, ref) => {
     // ... lógica
@@ -2336,8 +2335,9 @@ function withLogger(WrappedComponent) {
 function getDisplayName(WrappedComponent) {
   return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 }
+```
 
-Ventajas
+### Ventajas
 
     Reutilización de lógica (antes de hooks).
 
@@ -2345,7 +2345,7 @@ Ventajas
 
     Aislamiento de lógica compleja.
 
-Desventajas
+### Desventajas
 
     Wrapper hell (muchos niveles de componentes en React DevTools).
 
@@ -2355,7 +2355,7 @@ Desventajas
 
     Menos legible que los hooks.
 
-HOCs vs Hooks
+### HOCs vs Hooks
 HOC	Hook
 Envuelve el componente	Se llama dentro del componente
 Puede causar wrapper hell	No añade componentes extra
@@ -2382,16 +2382,15 @@ Componentes no controlados
 
     Se usa defaultValue en lugar de value.
 
-jsx
-
+```jsx
 function FormularioNoControlado() {
   const inputRef = useRef();
-  
+
   const handleSubmit = (e) => {
     e.preventDefault();
     alert(inputRef.current.value);
   };
-  
+
   return (
     <form onSubmit={handleSubmit}>
       <input ref={inputRef} defaultValue="Texto inicial" />
@@ -2399,8 +2398,9 @@ function FormularioNoControlado() {
     </form>
   );
 }
+```
 
-Componentes controlados
+### Componentes controlados
 
     React maneja el estado con useState.
 
@@ -2408,20 +2408,20 @@ Componentes controlados
 
     El DOM es solo una representación del estado de React.
 
-jsx
-
+```jsx
 function FormularioControlado() {
   const [valor, setValor] = useState('');
-  
+
   return (
-    <input 
-      value={valor} 
-      onChange={(e) => setValor(e.target.value)} 
+    <input
+      value={valor}
+      onChange={(e) => setValor(e.target.value)}
     />
   );
 }
+```
 
-Comparativa
+### Comparativa
 Característica	Controlado	No controlado
 Fuente de la verdad	Estado de React	DOM
 Validación en tiempo real	Fácil	Complejo
@@ -2450,26 +2450,26 @@ No controlado es mejor cuando:
 
     Usas React Hook Form en modo no controlado (por defecto).
 
-Inputs especiales
+### Inputs especiales
 
-    Checkbox/radio controlado: checked={estado} onChange={handler}
+### Checkbox/radio controlado: checked={estado} onChange={handler}
 
-    Select controlado: value={estado} onChange={handler}
+### Select controlado: value={estado} onChange={handler}
 
-jsx
-
+```jsx
 const [acepta, setAcepta] = useState(false);
 <input type="checkbox" checked={acepta} onChange={(e) => setAcepta(e.target.checked)} />
+```
 
-React Hook Form (híbrido)
+### React Hook Form (híbrido)
 
 React Hook Form es mayormente no controlado por defecto (usa refs), pero puede ser controlado si se desea. Ofrece buen rendimiento.
-jsx
-
+```jsx
 const { register, handleSubmit } = useForm();
 <input {...register('nombre')} /> // no controlado
+```
 
-Buenas prácticas
+### Buenas prácticas
 
     Prefiere controlado para formularios con validación o dependencias.
 
@@ -2477,7 +2477,7 @@ Buenas prácticas
 
     No mezcles ambos en el mismo campo (o será de solo lectura).
 
-📄 atomic-design.md
+### 📄 atomic-design.md
 Concepto
 
 Atomic Design es una metodología para diseñar sistemas de componentes, propuesta por Brad Frost. No es exclusiva de React, pero se lleva muy bien con componentes funcionales.
@@ -2485,8 +2485,7 @@ Los 5 niveles atómicos
 1. Átomos
 
 Componentes básicos e indivisibles: botones, inputs, etiquetas, íconos.
-jsx
-
+```jsx
 // Átomo: Button
 function Button({ children, onClick, variant = 'primary' }) {
   return <button className={`btn btn-${variant}`} onClick={onClick}>{children}</button>;
@@ -2496,12 +2495,12 @@ function Button({ children, onClick, variant = 'primary' }) {
 function Input({ type = 'text', placeholder }) {
   return <input type={type} placeholder={placeholder} className="input" />;
 }
+```
 
 2. Moléculas
 
 Combinación de dos o más átomos que funcionan juntos como una unidad.
-jsx
-
+```jsx
 // Molécula: SearchField (Input + Button)
 function SearchField({ onSearch }) {
   const [query, setQuery] = useState('');
@@ -2512,12 +2511,12 @@ function SearchField({ onSearch }) {
     </div>
   );
 }
+```
 
 3. Organismos
 
 Componentes más complejos formados por moléculas, átomos y/o otros organismos. Representan secciones de la interfaz.
-jsx
-
+```jsx
 // Organismo: Header (Logo + SearchField + NavMenu)
 function Header() {
   return (
@@ -2528,12 +2527,12 @@ function Header() {
     </header>
   );
 }
+```
 
-4. Plantillas (Templates)
+### 4. Plantillas (Templates)
 
 Combinan organismos en una estructura de página sin contenido final (esqueletos). No tienen lógica de datos, solo layout.
-jsx
-
+```jsx
 // Template: ProductPageTemplate
 function ProductPageTemplate({ header, sidebar, content, footer }) {
   return (
@@ -2547,12 +2546,12 @@ function ProductPageTemplate({ header, sidebar, content, footer }) {
     </div>
   );
 }
+```
 
-5. Páginas
+### 5. Páginas
 
 Instancias concretas de plantillas con datos reales. Son los componentes que se enrutan.
-jsx
-
+```jsx
 function ProductPage({ productId }) {
   const { product, related } = useProductData(productId);
   return (
@@ -2564,10 +2563,10 @@ function ProductPage({ productId }) {
     />
   );
 }
+```
 
-Estructura de carpetas sugerida para Atomic Design
-text
-
+### Estructura de carpetas sugerida para Atomic Design
+```text
 src/
 ├── components/
 │   ├── atoms/
@@ -2584,8 +2583,9 @@ src/
 │   │   └── ProductPageTemplate/
 │   └── pages/
 │       └── ProductPage/
+```
 
-Ventajas
+### Ventajas
 
     Reutilización máxima.
 
@@ -2595,7 +2595,7 @@ Ventajas
 
     Fácil testing de componentes pequeños.
 
-Desventajas
+### Desventajas
 
     Sobreesfuerzo para apps pequeñas.
 
@@ -2603,7 +2603,7 @@ Desventajas
 
     Verboso en carpetas.
 
-Consejos prácticos
+### Consejos prácticos
 
     No es necesario seguir al pie de la letra; adapta el concepto.
 
@@ -2611,20 +2611,20 @@ Consejos prácticos
 
     Combínalo con Storybook para documentar cada nivel.
 
-Alternativas similares
+### Alternativas similares
 
     Componentes compuestos (sin jerarquía estricta).
 
     Domain-driven design (componentes por dominio funcional).
 
-📄 react-memo.md
+### 📄 react-memo.md
 Concepto
 
 React.memo es una función de orden superior (HOC) que evita que un componente funcional se re-renderice si sus props no han cambiado (comparación superficial por defecto).
 Sintaxis
-jsx
-
+```jsx
 const ComponenteMemoizado = React.memo(ComponenteOriginal);
+```
 
 ¿Cuándo usar React.memo?
 
@@ -2634,9 +2634,8 @@ const ComponenteMemoizado = React.memo(ComponenteOriginal);
 
     Componentes pesados (con cálculos costosos o muchos elementos DOM).
 
-Ejemplo básico
-jsx
-
+### Ejemplo básico
+```jsx
 const Hijo = React.memo(({ valor }) => {
   console.log('Hijo renderizado');
   return <div>{valor}</div>;
@@ -2645,7 +2644,7 @@ const Hijo = React.memo(({ valor }) => {
 function Padre() {
   const [contador, setContador] = useState(0);
   const [texto, setTexto] = useState('Hola');
-  
+
   return (
     <div>
       <button onClick={() => setContador(c => c + 1)}>Contador: {contador}</button>
@@ -2654,13 +2653,13 @@ function Padre() {
     </div>
   );
 }
+```
 
 El componente Hijo solo se renderizará una vez, aunque el padre se re-renderice al cambiar contador o texto.
 Personalización de la comparación
 
 Por defecto, React.memo hace una comparación superficial (shallow compare) de las props. Si necesitas control personalizado, pasa una función como segundo argumento:
-jsx
-
+```jsx
 const MemoComponent = React.memo(
   Componente,
   (prevProps, nextProps) => {
@@ -2668,28 +2667,29 @@ const MemoComponent = React.memo(
     return prevProps.usuario.id === nextProps.usuario.id;
   }
 );
+```
 
 Cuidado: la función debe ser pura y rápida.
 Limitaciones importantes
 1. Las funciones como props siempre cambian (a menos que uses useCallback)
-jsx
-
+```jsx
 // ❌ Mal: handleClick se recrea en cada render
 <HijoMemo onClick={() => console.log('click')} />
 
 // ✅ Bien: con useCallback
 const handleClick = useCallback(() => console.log('click'), []);
 <HijoMemo onClick={handleClick} />
+```
 
 2. Los objetos/arrays literales también cambian cada vez
-jsx
-
+```jsx
 // ❌ Mal: objeto nuevo cada vez
 <HijoMemo config={{ tema: 'oscuro' }} />
 
 // ✅ Bien: usar useMemo o definir fuera
 const config = useMemo(() => ({ tema: 'oscuro' }), []);
 <HijoMemo config={config} />
+```
 
 3. React.memo solo mira las props, no el estado interno ni el contexto
 
@@ -2702,7 +2702,7 @@ Si el componente usa useContext y el contexto cambia, se re-renderizará igualme
 
     En toda la aplicación sin medir (optimización prematura).
 
-Medir antes de optimizar
+### Medir antes de optimizar
 
 Usa React DevTools → Profiler para identificar componentes que se re-renderizan innecesariamente. Solo entonces aplica React.memo.
 React.memo vs PureComponent
@@ -2711,7 +2711,7 @@ React.memo vs PureComponent
 
     PureComponent para componentes de clase (implementa shouldComponentUpdate con shallow compare).
 
-Buenas prácticas
+### Buenas prácticas
 
     Envuelve solo los componentes que realmente lo necesitan.
 
@@ -2719,7 +2719,7 @@ Buenas prácticas
 
     Prefiere la composición para evitar pasar props innecesarias.
 
-📄 virtual-dom.md
+### 📄 virtual-dom.md
 Concepto
 
 El Virtual DOM es una representación liviana del DOM real en memoria, como un árbol de objetos JavaScript. React lo usa para optimizar las actualizaciones de la interfaz.
@@ -2738,9 +2738,8 @@ Algoritmo básico de React
 
     Commit: React aplica esos cambios al DOM real.
 
-Ejemplo conceptual
-jsx
-
+### Ejemplo conceptual
+```jsx
 // Virtual DOM simplificado (no es exactamente así)
 const vDOM = {
   type: 'div',
@@ -2750,8 +2749,9 @@ const vDOM = {
     { type: 'button', props: { onClick: fn }, children: ['Click'] }
   ]
 };
+```
 
-Ventajas del Virtual DOM
+### Ventajas del Virtual DOM
 
     Rendimiento: evita operaciones costosas del DOM real.
 
@@ -2759,7 +2759,7 @@ Ventajas del Virtual DOM
 
     Declarativo: no necesitas manipular el DOM manualmente.
 
-Desventajas
+### Desventajas
 
     No es el más rápido posible: para apps con actualizaciones ultra frecuentes (animaciones 60fps), puede haber soluciones más óptimas (manipulación directa del DOM, WebGL, etc.).
 
@@ -2776,19 +2776,19 @@ Comparativa con otros enfoques
 
     Solid: similar a Svelte, pero con sintaxis similar a React.
 
-Conceptos erróneos comunes
+### Conceptos erróneos comunes
 
     "El Virtual DOM es más rápido que el DOM real" → Falso. El Virtual DOM es una capa de abstracción; el DOM real sigue siendo la base. La optimización está en minimizar las operaciones.
 
     "React usa Virtual DOM para todo" → React también puede usar dangerouslySetInnerHTML o findDOMNode (legado).
 
-Buenas prácticas
+### Buenas prácticas
 
     No pienses demasiado en el Virtual DOM; confía en React, pero evita patrones que causen re-renderizados masivos (ej. modificar el estado raíz frecuentemente).
 
     Usa key correctamente para ayudar al algoritmo de diffing.
 
-📄 reconciliation.md
+### 📄 reconciliation.md
 Concepto
 
 La reconciliación es el algoritmo que React utiliza para comparar dos árboles del Virtual DOM y determinar qué cambios aplicar al DOM real.
@@ -2800,13 +2800,12 @@ React hace dos suposiciones principales para lograr un algoritmo O(n) (lineal) e
 
     El atributo key permite identificar elementos que se mueven entre renders.
 
-Reglas del algoritmo
+### Reglas del algoritmo
 1. Comparación de nodos raíz
 
     Tipos diferentes (ej. <div> → <span>): React desmonta el árbol antiguo y monta el nuevo. Todos los componentes hijos se destruyen (se ejecutan efectos de limpieza) y se crean nuevos.
 
-jsx
-
+```jsx
 // Antes
 <div><Counter /></div>
 // Después
@@ -2814,6 +2813,7 @@ jsx
 // Resultado: Counter se desmonta y remonta (pierde su estado interno)
 
     Mismo tipo (ej. <div> → <div>): React actualiza los atributos del elemento y luego recorre los hijos recursivamente.
+```
 
 2. Comparación de elementos del mismo tipo
 
@@ -2821,8 +2821,7 @@ Cuando el tipo es el mismo, React actualiza las props del elemento existente par
 3. Comparación de listas (importancia de key)
 
 Sin key, React usa un algoritmo ingenuo que puede ser ineficiente. Con key, React puede reordenar, insertar y eliminar elementos de manera óptima.
-jsx
-
+```jsx
 // Sin key (ineficiente)
 <ul>
   <li>Ana</li>
@@ -2841,6 +2840,7 @@ jsx
   <li key="luis">Luis</li>
 </ul>
 // React solo reordena los nodos existentes (eficiente)
+```
 
 ¿Qué pasa con el estado durante la reconciliación?
 
@@ -2850,23 +2850,23 @@ jsx
 
     Para forzar la reinicialización del estado, usa la key diferente.
 
-jsx
-
+```jsx
 // Reiniciar estado de un formulario cambiando la key
 const [resetKey, setResetKey] = useState(0);
 <Form key={resetKey} /> // Cambiar resetKey para reiniciar el formulario
+```
 
-Ciclo de vida de la reconciliación (versión simplificada)
+### Ciclo de vida de la reconciliación (versión simplificada)
 
-    Render (crea Virtual DOM)
+### Render (crea Virtual DOM)
 
-    Diff (compara con versión anterior)
+### Diff (compara con versión anterior)
 
-    Commit (aplica cambios al DOM real)
+### Commit (aplica cambios al DOM real)
 
-    Efectos (ejecuta useEffect, useLayoutEffect)
+### Efectos (ejecuta useEffect, useLayoutEffect)
 
-Algoritmo de reconciliación y Fibers (React 16+)
+### Algoritmo de reconciliación y Fibers (React 16+)
 
 React 16 introdujo Fibers (re-arquitectura) que permite:
 
@@ -2876,7 +2876,7 @@ React 16 introdujo Fibers (re-arquitectura) que permite:
 
     Hacer que el renderizado no bloquee el hilo principal.
 
-Buenas prácticas para ayudar a la reconciliación
+### Buenas prácticas para ayudar a la reconciliación
 
     Usa key únicas y estables (no índices de array si la lista es dinámica).
 
@@ -2884,20 +2884,19 @@ Buenas prácticas para ayudar a la reconciliación
 
     Prefiere if condicional a display: none si el componente es costoso (así React lo desmonta).
 
-Depuración de reconciliación
+### Depuración de reconciliación
 
     React DevTools → Highlight updates cuando se renderizan componentes.
 
     why-did-you-render librería para detectar re-renderizados innecesarios.
 
-📄 code-splitting-lazy.md
+### 📄 code-splitting-lazy.md
 Concepto
 
 Code splitting (división de código) y lazy loading (carga diferida) son técnicas para reducir el tamaño del bundle inicial, cargando solo el código necesario para la vista actual.
 División de código en React
 1. React.lazy + Suspense
-jsx
-
+```jsx
 import { lazy, Suspense } from 'react';
 
 const ComponentePesado = lazy(() => import('./ComponentePesado'));
@@ -2912,10 +2911,10 @@ function App() {
     </div>
   );
 }
+```
 
 2. Lazy con rutas (React Router)
-jsx
-
+```jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 
@@ -2936,8 +2935,9 @@ function App() {
     </BrowserRouter>
   );
 }
+```
 
-Estrategias de división
+### Estrategias de división
 
     Por rutas: cada página es un chunk separado.
 
@@ -2945,11 +2945,10 @@ Estrategias de división
 
     Por librerías: si una librería es grande y no se usa siempre (ej. moment.js, lodash), se puede cargar bajo demanda.
 
-Límites de errores con lazy
+### Límites de errores con lazy
 
 Si falla la carga de un componente lazy, puedes usar un Error Boundary:
-jsx
-
+```jsx
 class ErrorBoundary extends React.Component {
   state = { hasError: false };
   static getDerivedStateFromError() { return { hasError: true }; }
@@ -2965,29 +2964,30 @@ class ErrorBoundary extends React.Component {
     <ComponenteLazy />
   </Suspense>
 </ErrorBoundary>
+```
 
-Prefetching (carga anticipada)
+### Prefetching (carga anticipada)
 
 Puedes cargar un componente antes de que se necesite (ej. cuando el usuario pasa el mouse sobre un enlace):
-jsx
-
+```jsx
 const prefetchComponente = () => import('./ComponentePesado');
+```
 
-<Link 
+### <Link
   to="/ruta"
   onMouseEnter={prefetchComponente}
 >
   Ir
 </Link>
 
-Configuración de Webpack/Vite
+### Configuración de Webpack/Vite
 
 Ambos soportan import() dinámico nativamente. Puedes personalizar los nombres de los chunks:
-jsx
-
+```jsx
 const Componente = lazy(() => import(/* webpackChunkName: "mi-componente" */ './Componente'));
+```
 
-División de código con React 18+ y Server Components
+### División de código con React 18+ y Server Components
 
 En Next.js App Router, los Server Components permiten división automática. En React 18 con frameworks como Vite, sigue funcionando React.lazy.
 Buenas prácticas
@@ -3000,13 +3000,13 @@ Buenas prácticas
 
     Monitorea el tamaño de los bundles con herramientas como webpack-bundle-analyzer.
 
-Limitaciones
+### Limitaciones
 
     React.lazy no funciona con Server Side Rendering (SSR) nativo. Necesitas librerías como loadable-components.
 
     Solo funciona con exports por defecto (export default).
 
-📄 optimization-tips.md
+### 📄 optimization-tips.md
 
 Este archivo compila técnicas prácticas de optimización de rendimiento en React.
 1. Evitar renderizados innecesarios
@@ -3014,8 +3014,7 @@ Usar React.memo, useMemo, useCallback
 
 Ya vistos en detalle.
 Mover el estado hacia abajo (State colocation)
-jsx
-
+```jsx
 // ❌ Mal: estado en el padre, causa re-render de toda la lista
 function App() {
   const [texto, setTexto] = useState('');
@@ -3036,16 +3035,16 @@ function App() {
     </div>
   );
 }
+```
 
-Extraer componentes que cambian frecuentemente
+### Extraer componentes que cambian frecuentemente
 
 Mantén los componentes estables separados de los que cambian.
 2. Optimizar listas grandes
 Virtualización (react-window, react-virtualized)
 
 Renderiza solo los elementos visibles en la ventana.
-jsx
-
+```jsx
 import { FixedSizeList as List } from 'react-window';
 
 function ListaVirtualizada({ items }) {
@@ -3063,33 +3062,33 @@ function ListaVirtualizada({ items }) {
     </List>
   );
 }
+```
 
-Paginación o carga infinita
+### Paginación o carga infinita
 
 No cargues 10,000 elementos de una vez.
 3. Evitar funciones anónimas en props (cuando sea posible)
-jsx
-
+```jsx
 // ❌ Mal (crea nueva función en cada render)
 <button onClick={() => handleClick(id)}>Eliminar</button>
 
 // ✅ Bien (usar useCallback o definir función fuera)
 const handleClickMemo = useCallback(() => handleClick(id), [id]);
 <button onClick={handleClickMemo}>Eliminar</button>
+```
 
 Si el componente hijo no está memoizado, la diferencia es mínima. Solo es crítica con React.memo.
 4. Memoizar valores costosos
-jsx
-
+```jsx
 // ❌ Mal: recalcula en cada render
 const total = items.reduce((sum, i) => sum + i.price, 0);
 
 // ✅ Bien: solo cuando items cambia
 const total = useMemo(() => items.reduce((sum, i) => sum + i.price, 0), [items]);
+```
 
-5. Usar useTransition para actualizaciones no urgentes (React 18)
-jsx
-
+### 5. Usar useTransition para actualizaciones no urgentes (React 18)
+```jsx
 const [isPending, startTransition] = useTransition();
 const [query, setQuery] = useState('');
 
@@ -3099,12 +3098,12 @@ const handleChange = (e) => {
     setQuery(value); // no urgente
   });
 };
+```
 
-6. Evitar la propagación de contextos grandes
+### 6. Evitar la propagación de contextos grandes
 
 Si usas Context API, divide contextos por dominio y memoiza el value.
-jsx
-
+```jsx
 // ❌ Mal: contexto gigante que cambia todo el tiempo
 <AppContext.Provider value={{ user, theme, notifications, ... }}>
 
@@ -3116,10 +3115,10 @@ jsx
     </NotificationsProvider>
   </ThemeProvider>
 </UserProvider>
+```
 
-7. Evitar objetos literales en dependencias de efectos
-jsx
-
+### 7. Evitar objetos literales en dependencias de efectos
+```jsx
 // ❌ Mal: objeto nuevo en cada render
 useEffect(() => {
   fetchData({ page, limit });
@@ -3129,8 +3128,9 @@ useEffect(() => {
 useEffect(() => {
   fetchData({ page, limit });
 }, [page, limit]);
+```
 
-8. Imágenes optimizadas
+### 8. Imágenes optimizadas
 
     Usar loading="lazy" en <img> (nativo del navegador).
 
@@ -3138,7 +3138,7 @@ useEffect(() => {
 
     Pre-dimensionar imágenes (evitar reflow).
 
-9. Web Workers para tareas pesadas
+### 9. Web Workers para tareas pesadas
 
 Si tienes procesamiento intensivo (ordenar 1M de registros, cálculos criptográficos), muévelo a un Web Worker.
 10. Medir y monitorear
@@ -3149,20 +3149,20 @@ Si tienes procesamiento intensivo (ordenar 1M de registros, cálculos criptográ
 
     Web Vitals: Core Web Vitals de Google.
 
-Herramientas de análisis de bundles
-bash
-
+### Herramientas de análisis de bundles
+```bash
 npm install --save-dev webpack-bundle-analyzer
 # o para Vite
 npm install --save-dev rollup-plugin-visualizer
+```
 
-Checklist de optimización (antes de optimizar)
+### Checklist de optimización (antes de optimizar)
 
-    ¿Hay re-renderizados innecesarios visibles? (Profiler)
+### ¿Hay re-renderizados innecesarios visibles? (Profiler)
 
-    ¿El bundle inicial es demasiado grande? (Bundle analyzer)
+### ¿El bundle inicial es demasiado grande? (Bundle analyzer)
 
-    ¿Hay operaciones costosas en el hilo principal? (Performance tab de Chrome)
+### ¿Hay operaciones costosas en el hilo principal? (Performance tab de Chrome)
 
     ¿Las imágenes están optimizadas?
 
@@ -3170,27 +3170,26 @@ Checklist de optimización (antes de optimizar)
 
     ¿Se puede virtualizar una lista larga?
 
-Principio fundamental
+### Principio fundamental
 
     "Las optimizaciones tempranas son la raíz de todos los males" – Donald Knuth.
 
 Optimiza solo cuando tengas un problema medible. La legibilidad y mantenibilidad del código son más importantes que micro-optimizaciones sin impacto real.
 
-📄 react-router.md
+### 📄 react-router.md
 Concepto
 
 React Router es la librería estándar para manejar enrutamiento (navegación entre páginas) en aplicaciones React. Permite sincronizar la interfaz con la URL del navegador, creando una experiencia de Single Page Application (SPA) con múltiples vistas.
 Instalación
-bash
-
+```bash
 npm install react-router-dom
+```
 
-Componentes principales (v6)
+### Componentes principales (v6)
 1. BrowserRouter
 
 Envuelve la aplicación para habilitar el enrutamiento. Usa la API History de HTML5.
-jsx
-
+```jsx
 import { BrowserRouter } from 'react-router-dom';
 ReactDOM.render(
   <BrowserRouter>
@@ -3198,12 +3197,12 @@ ReactDOM.render(
   </BrowserRouter>,
   document.getElementById('root')
 );
+```
 
 2. Routes y Route
 
 Definen las rutas y qué componente renderizar en cada una.
-jsx
-
+```jsx
 import { Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -3215,12 +3214,12 @@ function App() {
     </Routes>
   );
 }
+```
 
 3. Link y NavLink
 
 Para navegación sin recargar la página.
-jsx
-
+```jsx
 import { Link, NavLink } from 'react-router-dom';
 
 // Link básico
@@ -3230,11 +3229,11 @@ import { Link, NavLink } from 'react-router-dom';
 <NavLink to="/about" className={({ isActive }) => isActive ? 'active' : ''}>
   Acerca
 </NavLink>
+```
 
-Parámetros de ruta
+### Parámetros de ruta
 Parámetros dinámicos (:id)
-jsx
-
+```jsx
 // Definición
 <Route path="/users/:userId" element={<UserProfile />} />
 
@@ -3245,15 +3244,15 @@ function UserProfile() {
   const { userId } = useParams();
   return <div>Usuario ID: {userId}</div>;
 }
+```
 
 Parámetros opcionales (con ? - no soportado directamente, usa dos rutas o patrón)
-jsx
-
+```jsx
 <Route path="/products/:category?/:id?" element={<Products />} />
+```
 
-Query strings (parámetros en URL después de ?)
-jsx
-
+### Query strings (parámetros en URL después de ?)
+```jsx
 // URL: /search?q=react&page=2
 import { useSearchParams } from 'react-router-dom';
 
@@ -3261,23 +3260,23 @@ function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q');       // 'react'
   const page = searchParams.get('page');     // '2'
-  
+
   const updateQuery = (newQuery) => {
     setSearchParams({ q: newQuery, page: 1 });
   };
-  
+
   return <div>Buscando: {query}</div>;
 }
+```
 
-Navegación programática
+### Navegación programática
 useNavigate
-jsx
-
+```jsx
 import { useNavigate } from 'react-router-dom';
 
 function LoginButton() {
   const navigate = useNavigate();
-  
+
   const handleLogin = async () => {
     await login();
     navigate('/dashboard');        // redirige
@@ -3285,14 +3284,14 @@ function LoginButton() {
     // navigate(1)                // adelante
     // navigate('/about', { replace: true })  // reemplazar historial
   };
-  
+
   return <button onClick={handleLogin}>Login</button>;
 }
+```
 
-Rutas anidadas (Nested Routes)
+### Rutas anidadas (Nested Routes)
 Layouts compartidos
-jsx
-
+```jsx
 import { Outlet } from 'react-router-dom';
 
 function Layout() {
@@ -3319,27 +3318,27 @@ function Layout() {
     <Route path="blog/:slug" element={<Post />} />
   </Route>
 </Routes>
+```
 
-Outlet con contexto (opcional)
-jsx
-
+### Outlet con contexto (opcional)
+```jsx
 <Outlet context={{ user: currentUser }} />
+```
 
-// En componente hijo
+### // En componente hijo
 import { useOutletContext } from 'react-router-dom';
 const { user } = useOutletContext();
 
-Rutas protegidas (Authentication)
-jsx
-
+### Rutas protegidas (Authentication)
+```jsx
 function PrivateRoute({ children }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     if (!user) navigate('/login');
   }, [user, navigate]);
-  
+
   return user ? children : null;
 }
 
@@ -3352,23 +3351,24 @@ function PrivateRoute({ children }) {
     </PrivateRoute>
   } />
 </Routes>
+```
 
 O usando un wrapper layout:
-jsx
-
+```jsx
 <Route element={<ProtectedLayout />}>
   <Route path="/dashboard" element={<Dashboard />} />
   <Route path="/profile" element={<Profile />} />
 </Route>
+```
 
-Rutas con lazy loading (code splitting)
-jsx
-
+### Rutas con lazy loading (code splitting)
+```jsx
 import { lazy, Suspense } from 'react';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+```
 
-<Routes>
+### <Routes>
   <Route path="/dashboard" element={
     <Suspense fallback={<div>Cargando...</div>}>
       <Dashboard />
@@ -3376,29 +3376,29 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
   } />
 </Routes>
 
-Manejo de rutas no encontradas (404)
-jsx
-
+### Manejo de rutas no encontradas (404)
+```jsx
 <Routes>
   <Route path="/" element={<Home />} />
   <Route path="/about" element={<About />} />
   <Route path="*" element={<NotFound />} />  // * captura todas las demás
 </Routes>
+```
 
-Redirecciones
+### Redirecciones
 Con Navigate componente
-jsx
-
+```jsx
 import { Navigate } from 'react-router-dom';
+```
 
-<Route path="/old-route" element={<Navigate to="/new-route" replace />} />
+### <Route path="/old-route" element={<Navigate to="/new-route" replace />} />
 
-Redirección condicional en componente
-jsx
-
+### Redirección condicional en componente
+```jsx
 if (!user) return <Navigate to="/login" />;
+```
 
-Hooks útiles adicionales
+### Hooks útiles adicionales
 
     useLocation(): obtiene el objeto de ubicación actual (pathname, search, state).
 
@@ -3406,9 +3406,8 @@ Hooks útiles adicionales
 
     useRouteError() (v6.4+): captura errores en rutas.
 
-Ejemplo completo
-jsx
-
+### Ejemplo completo
+```jsx
 // App.jsx
 import { BrowserRouter, Routes, Route, Link, Outlet } from 'react-router-dom';
 
@@ -3445,8 +3444,9 @@ export default function App() {
     </BrowserRouter>
   );
 }
+```
 
-Buenas prácticas
+### Buenas prácticas
 
     Organiza las rutas en un archivo separado (ej. routes.jsx) para mantenibilidad.
 
@@ -3460,7 +3460,7 @@ Buenas prácticas
 
     Lazy loading por ruta para reducir el bundle inicial.
 
-Errores comunes
+### Errores comunes
 
     Olvidar el BrowserRouter alrededor de la app.
 
@@ -3472,7 +3472,7 @@ Errores comunes
 
     No manejar rutas 404 – siempre poner path="*" al final.
 
-Comparativa con otras librerías
+### Comparativa con otras librerías
 
     React Router v6 – Estándar, potente, API declarativa.
 
@@ -3482,49 +3482,48 @@ Comparativa con otras librerías
 
     TanStack Router – Tipado fuerte, rutas anidadas automáticas, más nuevo.
 
-Conclusión
+### Conclusión
 
 React Router es esencial para cualquier SPA mediana o grande. Su API en v6 es más limpia y predecible que versiones anteriores.
 
-📄 jest.md
+### 📄 jest.md
 Concepto
 
 Jest es un framework de pruebas unitarias desarrollado por Meta. Es rápido, tiene断言 (expectations), mocking, y cobertura de código. Se integra perfectamente con React y es el corredor de pruebas por defecto en Create React App y Vite.
 Instalación en un proyecto React manual
-bash
-
+```bash
 npm install --save-dev jest @testing-library/react @testing-library/jest-dom
+```
 
-Configuración básica (opcional, Create React App ya la trae)
-js
-
+### Configuración básica (opcional, Create React App ya la trae)
+```js
 // jest.config.js
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
 };
+```
 
 js
 
-// src/setupTests.js
+### // src/setupTests.js
 import '@testing-library/jest-dom';
 
-Estructura de una prueba con Jest
-jsx
-
+### Estructura de una prueba con Jest
+```jsx
 // suma.js
 export const suma = (a, b) => a + b;
 
 // suma.test.js
 import { suma } from './suma';
+```
 
-test('suma 1 + 2 es igual a 3', () => {
+### test('suma 1 + 2 es igual a 3', () => {
   expect(suma(1, 2)).toBe(3);
 });
 
-Expects y matchers comunes
-js
-
+### Expects y matchers comunes
+```js
 expect(valor).toBe(3);                 // igualdad estricta (Object.is)
 expect(valor).toEqual({ a: 1 });       // igualdad profunda para objetos
 expect(valor).toBeTruthy();            // truthy
@@ -3538,10 +3537,10 @@ expect(fn).toThrow();                  // lanza error
 expect(mock).toHaveBeenCalled();       // fue llamado
 expect(mock).toHaveBeenCalledTimes(2);
 expect(mock).toHaveBeenCalledWith(arg);
+```
 
-Pruebas asíncronas
-jsx
-
+### Pruebas asíncronas
+```jsx
 // callback con done (no recomendado, mejor async/await)
 test('async con async/await', async () => {
   const data = await fetchData();
@@ -3552,63 +3551,64 @@ test('async con async/await', async () => {
 test('usando resolves', () => {
   return expect(Promise.resolve('leche')).resolves.toBe('leche');
 });
+```
 
-Mocking de funciones y módulos
+### Mocking de funciones y módulos
 Mock de función
-jsx
-
+```jsx
 const mockFn = jest.fn();
 mockFn('arg1');
 expect(mockFn).toHaveBeenCalledWith('arg1');
 mockFn.mockReturnValue('valor fijo');
 mockFn.mockResolvedValue('promesa resuelta');
+```
 
-Mock de módulo completo (ej. axios)
-jsx
-
+### Mock de módulo completo (ej. axios)
+```jsx
 jest.mock('axios');
 import axios from 'axios';
 axios.get.mockResolvedValue({ data: { id: 1 } });
+```
 
-Mock parcial (solo una función)
-jsx
-
+### Mock parcial (solo una función)
+```jsx
 jest.spyOn(api, 'fetchUser').mockImplementation(() => Promise.resolve({ name: 'Ana' }));
+```
 
-Mocks manuales (carpeta __mocks__)
+### Mocks manuales (carpeta __mocks__)
 
 Crea __mocks__/axios.js y Jest lo usará automáticamente.
 Cobertura de código
-bash
-
+```bash
 npm test -- --coverage
+```
 
 Genera reporte de líneas, funciones, ramas y statements cubiertos.
 Pruebas de componentes React con Jest + Testing Library
-jsx
-
+```jsx
 import { render, screen } from '@testing-library/react';
 import Saludo from './Saludo';
+```
 
-test('muestra el nombre prop', () => {
+### test('muestra el nombre prop', () => {
   render(<Saludo nombre="Ana" />);
   expect(screen.getByText(/Hola, Ana/)).toBeInTheDocument();
 });
 
-Correr pruebas
-bash
-
+### Correr pruebas
+```bash
 npm test                 # modo watch
 npm test -- --coverage   # con cobertura
 npm test -- -u           # actualizar snapshots
+```
 
-Snapshots (uso moderado)
-jsx
-
+### Snapshots (uso moderado)
+```jsx
 test('componente coincide con snapshot', () => {
   const { asFragment } = render(<MiComponente />);
   expect(asFragment()).toMatchSnapshot();
 });
+```
 
 Los snapshots son útiles para estructuras estables, pero pueden llevar a pruebas frágiles.
 Buenas prácticas en Jest
@@ -3625,7 +3625,7 @@ Buenas prácticas en Jest
 
     No probar implementación, probar comportamiento.
 
-Debugging
+### Debugging
 
     Usa console.log dentro de la prueba (se muestra en consola).
 
@@ -3633,7 +3633,7 @@ Debugging
 
     Usa node --inspect-brk y depurador de Chrome.
 
-📄 testing-library.md
+### 📄 testing-library.md
 Concepto
 
 React Testing Library (RTL) es la extensión oficial de Testing Library para React. Su filosofía es probar componentes desde la perspectiva del usuario, no los detalles de implementación.
@@ -3647,24 +3647,24 @@ Principios clave
 
     Usar fireEvent o userEvent para simular interacciones reales.
 
-Instalación
-bash
-
+### Instalación
+```bash
 npm install --save-dev @testing-library/react @testing-library/jest-dom @testing-library/user-event
+```
 
-Renderizado y consultas básicas
-jsx
-
+### Renderizado y consultas básicas
+```jsx
 import { render, screen } from '@testing-library/react';
 import MiComponente from './MiComponente';
+```
 
-test('renderiza el título', () => {
+### test('renderiza el título', () => {
   render(<MiComponente />);
   const titulo = screen.getByText('Bienvenido');
   expect(titulo).toBeInTheDocument();
 });
 
-Tipos de consultas (queries)
+### Tipos de consultas (queries)
 Query	Encuentra por	Devuelve
 getByRole	Rol ARIA (button, heading, link)	Elemento o error
 getByLabelText	<label> asociado o atributo aria-label	Elemento o error
@@ -3683,80 +3683,79 @@ Además de getBy*, existen:
 
     getAllBy*, queryAllBy*, findAllBy*: para múltiples elementos.
 
-Orden de preferencia de consultas (recomendado)
+### Orden de preferencia de consultas (recomendado)
 
-    getByRole (más accesible)
+### getByRole (más accesible)
 
-    getByLabelText
+### getByLabelText
 
-    getByPlaceholderText
+### getByPlaceholderText
 
-    getByText
+### getByText
 
-    getByDisplayValue
+### getByDisplayValue
 
-    getByAltText
+### getByAltText
 
-    getByTitle
+### getByTitle
 
-    getByTestId (solo si no hay otra opción)
+### getByTestId (solo si no hay otra opción)
 
-Simular eventos: fireEvent vs userEvent
+### Simular eventos: fireEvent vs userEvent
 fireEvent (síncrono, más bajo nivel)
-jsx
-
+```jsx
 import { fireEvent } from '@testing-library/react';
-
 fireEvent.click(button);
 fireEvent.change(input, { target: { value: 'nuevo texto' } });
+```
 
-userEvent (recomendado, simula interacciones completas)
-jsx
 
+### userEvent (recomendado, simula interacciones completas)
+```jsx
 import userEvent from '@testing-library/user-event';
-
 test('click en botón llama a función', async () => {
   const user = userEvent.setup();
   await user.click(button);    // incluye focus, hover, etc.
 });
+```
 
-Prueba de componentes asíncronos (datos de API)
-jsx
 
+### Prueba de componentes asíncronos (datos de API)
+```jsx
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-test('carga datos al hacer click', async () => {
+ test('carga datos al hacer click', async () => {
   render(<FetchButton />);
   const button = screen.getByRole('button', { name: /cargar/i });
   await userEvent.click(button);
-  
-  // Esperar a que aparezca el texto "Usuario: Ana"
+
+ // Esperar a que aparezca el texto "Usuario: Ana"
   const usuario = await screen.findByText(/Usuario: Ana/i);
   expect(usuario).toBeInTheDocument();
 });
+```
 
-Prueba de formularios
-jsx
-
+### Prueba de formularios
+```jsx
 test('envía formulario con datos', async () => {
   const user = userEvent.setup();
   const onSubmit = jest.fn();
   render(<Formulario onSubmit={onSubmit} />);
-  
-  await user.type(screen.getByLabelText(/nombre/i), 'Carlos');
+ await user.type(screen.getByLabelText(/nombre/i), 'Carlos');
   await user.type(screen.getByLabelText(/email/i), 'carlos@mail.com');
   await user.click(screen.getByRole('button', { name: /enviar/i }));
-  
-  expect(onSubmit).toHaveBeenCalledWith({
+
+ expect(onSubmit).toHaveBeenCalledWith({
     nombre: 'Carlos',
     email: 'carlos@mail.com'
   });
 });
+```
 
-Prueba de componentes con contexto personalizado
-jsx
 
+### Prueba de componentes con contexto personalizado
+```jsx
 function renderWithContext(component, providerProps) {
   return render(
     <AuthProvider value={providerProps}>
@@ -3764,10 +3763,10 @@ function renderWithContext(component, providerProps) {
     </AuthProvider>
   );
 }
+```
 
-Prueba de routing (React Router)
-jsx
-
+### Prueba de routing (React Router)
+```jsx
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import MiRuta from './MiRuta';
@@ -3780,29 +3779,29 @@ test('ruta /productos muestra Productos', () => {
   );
   expect(screen.getByText(/lista de productos/i)).toBeInTheDocument();
 });
+```
 
-Mock de fetch o axios
-jsx
-
+### Mock de fetch o axios
+```jsx
 global.fetch = jest.fn(() =>
   Promise.resolve({ json: () => Promise.resolve({ name: 'Ana' }) })
 );
-
-// después de la prueba
+ // después de la prueba
 global.fetch.mockRestore();
+```
 
-Depuración visual con screen.debug()
-jsx
 
+### Depuración visual con screen.debug()
+```jsx
 test('debug', () => {
   render(<Componente />);
   screen.debug();                 // imprime todo el DOM
   screen.debug(screen.getByRole('button')); // imprime solo el botón
 });
+```
 
-Prueba de errores (Error Boundaries)
-jsx
-
+### Prueba de errores (Error Boundaries)
+```jsx
 test('muestra fallback cuando hay error', () => {
   const ThrowError = () => { throw new Error('boom'); };
   render(
@@ -3812,8 +3811,9 @@ test('muestra fallback cuando hay error', () => {
   );
   expect(screen.getByText('Error!')).toBeInTheDocument();
 });
+```
 
-Buenas prácticas con Testing Library
+### Buenas prácticas con Testing Library
 
     No uses waitFor a menos que sea estrictamente necesario (prefiere findBy).
 
@@ -3825,9 +3825,8 @@ Buenas prácticas con Testing Library
 
     Usa jest.spyOn en lugar de mocks manuales cuando sea posible.
 
-Ejemplo completo de un componente con eventos asíncronos
-jsx
-
+### Ejemplo completo de un componente con eventos asíncronos
+```jsx
 // ListaUsuarios.jsx
 function ListaUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -3850,30 +3849,31 @@ function ListaUsuarios() {
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ListaUsuarios from './ListaUsuarios';
+```
 
-global.fetch = jest.fn();
+### global.fetch = jest.fn();
 
-test('carga y muestra usuarios al hacer click', async () => {
+### test('carga y muestra usuarios al hacer click', async () => {
   const mockUsers = [{ id: 1, name: 'Ana' }, { id: 2, name: 'Luis' }];
   fetch.mockResolvedValue({ json: async () => mockUsers });
-  
-  const user = userEvent.setup();
+
+### const user = userEvent.setup();
   render(<ListaUsuarios />);
-  
-  await user.click(screen.getByRole('button', { name: /cargar/i }));
-  
-  expect(await screen.findByText('Ana')).toBeInTheDocument();
+
+### await user.click(screen.getByRole('button', { name: /cargar/i }));
+
+### expect(await screen.findByText('Ana')).toBeInTheDocument();
   expect(screen.getByText('Luis')).toBeInTheDocument();
   expect(fetch).toHaveBeenCalledTimes(1);
-  
-  fetch.mockRestore();
+
+### fetch.mockRestore();
 });
 
-Conclusión
+### Conclusión
 
 La combinación de Jest + Testing Library es la recomendada oficialmente para probar React. Testing Library promueve pruebas robustas que se rompen solo cuando la funcionalidad real para el usuario se rompe, no cuando cambian los detalles internos.
 
-📄 server-components.md
+### 📄 server-components.md
 Concepto
 
 React Server Components (RSC) es una arquitectura que permite ejecutar componentes en el servidor, generando un formato especial que se envía al cliente sin incluir su código JavaScript. Se introdujo oficialmente en React 18 con frameworks como Next.js App Router.
@@ -3894,17 +3894,16 @@ Hidratación	Necesaria	No aplica
 
     Mejor SEO: contenido generado en servidor.
 
-Sintaxis y uso (con Next.js App Router)
+### Sintaxis y uso (con Next.js App Router)
 
 Por defecto, en Next.js 13+ los componentes dentro de app/ son Server Components a menos que declares 'use client'.
-jsx
-
+```jsx
 // app/page.js - Server Component por defecto
 import { db } from '@/lib/db';
 
 async function HomePage() {
   const users = await db.user.findMany(); // consulta directa a DB
-  
+
   return (
     <div>
       <h1>Usuarios</h1>
@@ -3925,8 +3924,9 @@ function LikeButton({ userId }) {
   const [liked, setLiked] = useState(false);
   return <button onClick={() => setLiked(!liked)}>{liked ? '❤️' : '🤍'}</button>;
 }
+```
 
-Limitaciones de Server Components
+### Limitaciones de Server Components
 
     No pueden usar hooks de estado o efectos (useState, useEffect, etc.).
 
@@ -3938,9 +3938,8 @@ Limitaciones de Server Components
 
     No se pueden anidar Client Components dentro de Server Components? Sí se puede, pero al revés no.
 
-Patrón de composición: Server → Client
-jsx
-
+### Patrón de composición: Server → Client
+```jsx
 // Server Component
 import { ClientCounter } from './ClientCounter';
 
@@ -3959,8 +3958,9 @@ export function ClientCounter({ initialCount }) {
   const [count, setCount] = useState(initialCount);
   return <button onClick={() => setCount(c => c+1)}>{count}</button>;
 }
+```
 
-Server Components puros (sin framework)
+### Server Components puros (sin framework)
 
 Teóricamente, se puede usar con React 18 + un bundler que soporte el protocolo RSC, pero en la práctica la mayoría usa Next.js o Remix.
 Ventajas profundas
@@ -3971,7 +3971,7 @@ Ventajas profundas
 
     Mejor seguridad: código sensible (credenciales de DB) nunca llega al cliente.
 
-Desventajas y retos
+### Desventajas y retos
 
     Curva de aprendizaje: entender cuándo usar 'use client'.
 
@@ -3979,7 +3979,7 @@ Desventajas y retos
 
     No todas las apps necesitan RSC: una SPA tradicional puede seguir con solo client components.
 
-Buenas prácticas
+### Buenas prácticas
 
     Usa Server Components para todo lo que no requiera interacción (layouts, páginas, listas estáticas).
 
@@ -3989,7 +3989,7 @@ Buenas prácticas
 
     No abuses de 'use client' (cada vez que lo usas, todo el subárbol se envía al cliente).
 
-📄 concurrent-mode.md
+### 📄 concurrent-mode.md
 Concepto
 
 Concurrent Mode (Modo Concurrente) es un conjunto de características en React 18+ que permite que React prepare múltiples versiones de la UI al mismo tiempo, pausando, priorizando o retomando el trabajo según la urgencia. El objetivo es mantener la aplicación respondiendo incluso durante renders pesados.
@@ -4001,7 +4001,7 @@ Concurrent Mode (Modo Concurrente) es un conjunto de características en React 1
 
     Mejor experiencia en dispositivos lentos.
 
-Principios del modo concurrente
+### Principios del modo concurrente
 
     Interrumpibilidad: React puede pausar un render costoso para atender una actualización urgente (ej. el usuario escribe).
 
@@ -4009,11 +4009,10 @@ Principios del modo concurrente
 
     Transiciones: marcar actualizaciones como "no urgentes" con useTransition.
 
-Cómo habilitar el modo concurrente
+### Cómo habilitar el modo concurrente
 
 En React 18, ya no existe un "modo" separado. En su lugar, usas nuevas APIs como createRoot:
-jsx
-
+```jsx
 // Antes (React 17)
 ReactDOM.render(<App />, document.getElementById('root'));
 
@@ -4021,28 +4020,28 @@ ReactDOM.render(<App />, document.getElementById('root'));
 import { createRoot } from 'react-dom/client';
 const root = createRoot(document.getElementById('root'));
 root.render(<App />);
+```
 
-Características clave
+### Características clave
 1. useTransition
 
 Permite marcar una actualización como no urgente.
-jsx
-
+```jsx
 function SearchResults() {
   const [query, setQuery] = useState('');
   const [isPending, startTransition] = useTransition();
-  
+
   const handleChange = (e) => {
     const value = e.target.value;
     // Actualización urgente (input del usuario)
     setQuery(value);
-    
+
     // Actualización no urgente (búsqueda pesada)
     startTransition(() => {
       setSearchQuery(value);
     });
   };
-  
+
   return (
     <div>
       <input value={query} onChange={handleChange} />
@@ -4051,16 +4050,16 @@ function SearchResults() {
     </div>
   );
 }
+```
 
 2. useDeferredValue
 
 Similar a useTransition pero para valores, no para actualizaciones de estado.
-jsx
-
+```jsx
 function App() {
   const [text, setText] = useState('');
   const deferredText = useDeferredValue(text);
-  
+
   return (
     <>
       <input value={text} onChange={e => setText(e.target.value)} />
@@ -4068,6 +4067,7 @@ function App() {
     </>
   );
 }
+```
 
 3. Suspense mejorado
 
@@ -4080,20 +4080,20 @@ Cómo React prioriza las actualizaciones
 
     Suspense y fetching → puede pausar hasta que los datos lleguen.
 
-Ejemplo visual de concurrencia
+### Ejemplo visual de concurrencia
 
 Sin concurrencia:
-text
-
+```text
 Usuario escribe "hola" → React bloquea por 200ms renderizando lista → input se actualiza después → sensación de lag.
+```
 
 Con concurrencia:
-text
-
+```text
 Usuario escribe "h" → React actualiza input inmediatamente.
 React empieza a renderizar lista con "h" → el usuario escribe "o" → React pausa render de lista, actualiza input, luego retoma render de lista.
+```
 
-Beneficios reales
+### Beneficios reales
 
     Aplicaciones más fluidas (especialmente en dispositivos de gama baja).
 
@@ -4101,7 +4101,7 @@ Beneficios reales
 
     Mejor manejo de errores con Suspense.
 
-Limitaciones
+### Limitaciones
 
     No todas las librerías soportan concurrencia (aquellas que usan refs o mutaciones sincrónicas pueden fallar).
 
@@ -4109,7 +4109,7 @@ Limitaciones
 
     Solo funciona con createRoot (no con ReactDOM.render legacy).
 
-Buenas prácticas
+### Buenas prácticas
 
     Envuelve actualizaciones costosas en startTransition (cambios de ruta, filtros de listas grandes).
 
@@ -4119,7 +4119,7 @@ Buenas prácticas
 
     Combina con Suspense para experiencias de carga fluidas.
 
-React 18 sin concurrencia explícita
+### React 18 sin concurrencia explícita
 
 Si no usas useTransition ni useDeferredValue, tu app seguirá funcionando como antes, pero ganarás automatic batching y otras mejoras.
 📄 suspense.md
@@ -4132,9 +4132,8 @@ Historia
 
     React 18: Suspense para data fetching (con librerías compatibles como Relay, Next.js, o implementación manual con fetch y Suspense aún no estable).
 
-Suspense para lazy loading (código)
-jsx
-
+### Suspense para lazy loading (código)
+```jsx
 const LazyComponent = lazy(() => import('./HeavyComponent'));
 
 function App() {
@@ -4144,12 +4143,12 @@ function App() {
     </Suspense>
   );
 }
+```
 
-Suspense para data fetching (concepto)
+### Suspense para data fetching (concepto)
 
 La idea es que un componente puede "suspender" (lanzar una promesa) mientras carga datos. React captura esa promesa y muestra el fallback hasta que se resuelva.
-jsx
-
+```jsx
 // Ejemplo con una librería que soporta Suspense (Relay, SWR con suspense: true)
 function UserProfile({ userId }) {
   const user = useSuspenseQuery(fetchUser, userId); // lanza promesa si no hay datos
@@ -4163,10 +4162,10 @@ function Page({ userId }) {
     </Suspense>
   );
 }
+```
 
-Implementación manual de Suspense (solo entendimiento)
-jsx
-
+### Implementación manual de Suspense (solo entendimiento)
+```jsx
 let resource = null;
 
 function fetchResource(id) {
@@ -4190,35 +4189,35 @@ function User({ id }) {
   const user = resource.read();
   return <p>{user.name}</p>;
 }
+```
 
-Suspense con múltiples componentes
-jsx
-
+### Suspense con múltiples componentes
+```jsx
 <Suspense fallback={<Spinner />}>
   <ComponenteA />
   <ComponenteB />
 </Suspense>
 // Espera a que todos los componentes hijos que suspenden estén listos
+```
 
 Si quieres fallbacks independientes, anida Suspense:
-jsx
-
+```jsx
 <Suspense fallback={<SpinnerA />}>
   <ComponenteA />
 </Suspense>
 <Suspense fallback={<SpinnerB />}>
   <ComponenteB />
 </Suspense>
+```
 
-Suspense vs useEffect + loading
+### Suspense vs useEffect + loading
 Con useEffect	Con Suspense
 Estado de loading manual	Declarativo (fallback)
 Riesgo de waterfall (carga secuencial)	Permite carga paralela
 Más boilerplate	Menos código
 No integrado con transiciones	Integración con useTransition
 Suspense + Transiciones (evita fallbacks parpadeantes)
-jsx
-
+```jsx
 const [isPending, startTransition] = useTransition();
 
 const handleRefresh = () => {
@@ -4236,10 +4235,10 @@ return (
     </Suspense>
   </div>
 );
+```
 
-Suspense para imágenes (react-experimental)
-jsx
-
+### Suspense para imágenes (react-experimental)
+```jsx
 function Image({ src, alt }) {
   const [isLoaded, setIsLoaded] = useState(false);
   // Sin suspender, solo ejemplo conceptual
@@ -4250,8 +4249,9 @@ function Image({ src, alt }) {
     </>
   );
 }
+```
 
-Buenas prácticas
+### Buenas prácticas
 
     Usa Suspense en el nivel más alto posible para evitar múltiples fallbacks anidados.
 
@@ -4261,13 +4261,13 @@ Buenas prácticas
 
     No abuses de Suspense para todo (en aplicaciones simples, useEffect sigue siendo válido).
 
-Limitaciones actuales (React 18)
+### Limitaciones actuales (React 18)
 
     Suspense para data fetching no es estable para uso general (solo con frameworks o implementaciones muy específicas). En Next.js App Router sí es estable.
 
     No evita waterfalls automáticamente (necesitas prefetch o cargar datos en paralelo).
 
-📄 portals.md
+### 📄 portals.md
 Concepto
 
 Portals permiten renderizar un componente en un nodo DOM diferente al del componente padre, manteniendo el contexto de React (eventos, contextos) intacto.
@@ -4279,9 +4279,8 @@ Portals permiten renderizar un componente en un nodo DOM diferente al del compon
 
     Widgets flotantes (chat, ayuda) que se montan al final del body.
 
-Sintaxis básica
-jsx
-
+### Sintaxis básica
+```jsx
 import { createPortal } from 'react-dom';
 
 function Modal({ children, isOpen }) {
@@ -4293,41 +4292,41 @@ function Modal({ children, isOpen }) {
     document.getElementById('modal-root') // nodo destino
   );
 }
+```
 
-Configuración del nodo destino
+### Configuración del nodo destino
 
 En index.html:
-html
-
+```html
 <body>
   <div id="root"></div>
   <div id="modal-root"></div>
 </body>
+```
 
-Mantenimiento del contexto
+### Mantenimiento del contexto
 
 Aunque el modal se renderiza fuera del árbol DOM, el contexto de React (ej. ThemeContext) sigue funcionando porque el portal sigue siendo hijo lógico.
-jsx
-
+```jsx
 <ThemeProvider value="dark">
   <Modal isOpen={true}>
     <p>Este modal tendrá tema oscuro aunque esté en el body</p>
   </Modal>
 </ThemeProvider>
+```
 
-Eventos con Portals
+### Eventos con Portals
 
 Los eventos de React (burbujeo) siguen el árbol de React, no el DOM. Si haces clic dentro del portal, el evento burbujeará hacia arriba en el árbol de componentes de React, no en el DOM real.
 Portal con refs (acceder al nodo interno)
-jsx
-
+```jsx
 function Modal({ children }) {
   const modalRef = useRef();
-  
+
   useEffect(() => {
     // modalRef.current es el div .modal-content que está en el portal
   }, []);
-  
+
   return createPortal(
     <div className="modal-overlay">
       <div ref={modalRef} className="modal-content">{children}</div>
@@ -4335,32 +4334,32 @@ function Modal({ children }) {
     document.getElementById('modal-root')
   );
 }
+```
 
-Portal condicional (mount/desmount)
+### Portal condicional (mount/desmount)
 
 Puedes crear y destruir el portal dinámicamente. El nodo destino puede ser creado a demanda.
-jsx
-
+```jsx
 function DynamicPortal({ children }) {
   const [portalRoot, setPortalRoot] = useState(null);
-  
+
   useEffect(() => {
     const div = document.createElement('div');
     document.body.appendChild(div);
     setPortalRoot(div);
     return () => document.body.removeChild(div);
   }, []);
-  
+
   if (!portalRoot) return null;
   return createPortal(children, portalRoot);
 }
+```
 
-Portal para eventos globales (escuchar fuera)
-jsx
-
+### Portal para eventos globales (escuchar fuera)
+```jsx
 function ClickOutside({ onOutsideClick, children }) {
   const ref = useRef();
-  
+
   useEffect(() => {
     const handleClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
@@ -4370,14 +4369,15 @@ function ClickOutside({ onOutsideClick, children }) {
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
   }, [onOutsideClick]);
-  
+
   return createPortal(
     <div ref={ref}>{children}</div>,
     document.body
   );
 }
+```
 
-Buenas prácticas
+### Buenas prácticas
 
     Úsalos solo cuando sea necesario (no abuses).
 
@@ -4387,13 +4387,13 @@ Buenas prácticas
 
     No hagas estilos globales excesivos que asuman que el portal está dentro de un contenedor específico.
 
-Alternativas a Portals
+### Alternativas a Portals
 
     CSS z-index y position: fixed dentro de un contenedor (a veces funciona, pero puede romperse por overflow: hidden).
 
     Librerías como react-modal (usan portals internamente).
 
-Depuración
+### Depuración
 
 En React DevTools, los portales aparecen con un ícono especial, pero su ubicación en el árbol de componentes sigue la lógica de React, no el DOM.
 📄 forwardRef.md
@@ -4403,18 +4403,17 @@ forwardRef es una función de React que permite pasar una ref desde un component
 ¿Por qué existe?
 
 En React, los componentes funcionales no reciben ref como prop (es una prop especial como key). Si intentas pasar ref a un componente funcional, React la ignora.
-jsx
-
+```jsx
 // ❌ No funciona
 function MiInput(props) {
   return <input {...props} />;
 }
 const ref = useRef();
 <MiInput ref={ref} /> // ref no se asigna a nada
+```
 
-Solución con forwardRef
-jsx
-
+### Solución con forwardRef
+```jsx
 import { forwardRef } from 'react';
 
 const MiInput = forwardRef((props, ref) => {
@@ -4425,31 +4424,31 @@ const MiInput = forwardRef((props, ref) => {
 const inputRef = useRef();
 <MiInput ref={inputRef} />;
 inputRef.current.focus();
+```
 
-forwardRef con componentes de clase (legado)
-jsx
-
+### forwardRef con componentes de clase (legado)
+```jsx
 class MiInputClase extends React.Component {
   render() { return <input ref={this.props.forwardedRef} />; }
 }
 const MiInput = forwardRef((props, ref) => (
   <MiInputClase {...props} forwardedRef={ref} />
 ));
+```
 
-forwardRef con múltiples refs (uso de useImperativeHandle)
+### forwardRef con múltiples refs (uso de useImperativeHandle)
 
 A veces quieres exponer solo ciertos métodos, no todo el nodo DOM.
-jsx
-
+```jsx
 const InputConImperative = forwardRef((props, ref) => {
   const inputRef = useRef();
-  
+
   useImperativeHandle(ref, () => ({
     focus: () => inputRef.current.focus(),
     clear: () => { inputRef.current.value = ''; },
     getValue: () => inputRef.current.value
   }));
-  
+
   return <input ref={inputRef} {...props} />;
 });
 
@@ -4458,10 +4457,10 @@ const inputRef = useRef();
 <InputConImperative ref={inputRef} />;
 inputRef.current.focus(); // OK
 inputRef.current.clear(); // OK
+```
 
-forwardRef en componentes de orden superior (HOC)
-jsx
-
+### forwardRef en componentes de orden superior (HOC)
+```jsx
 function withLogging(WrappedComponent) {
   const WithLogging = forwardRef((props, ref) => {
     useEffect(() => console.log('montado'), []);
@@ -4473,10 +4472,10 @@ function withLogging(WrappedComponent) {
 const EnhancedInput = withLogging(MiInput);
 const ref = useRef();
 <EnhancedInput ref={ref} />; // la ref llega al input interno
+```
 
-forwardRef con TypeScript
-tsx
-
+### forwardRef con TypeScript
+```tsx
 interface InputProps {
   placeholder: string;
 }
@@ -4484,8 +4483,9 @@ interface InputProps {
 const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
   return <input ref={ref} {...props} />;
 });
+```
 
-forwardRef con elementos HTML personalizados (sin librería)
+### forwardRef con elementos HTML personalizados (sin librería)
 
 Si necesitas pasar una ref a un componente que no es un elemento nativo, forwardRef es la única manera.
 Buenas prácticas
@@ -4498,18 +4498,18 @@ Buenas prácticas
 
     Nombra la prop interna (ej. innerRef) si el componente ya usa ref para otra cosa (poco común).
 
-Alternativas a forwardRef
+### Alternativas a forwardRef
 
     Callback refs: puedes pasar una función que recibe el nodo.
 
-jsx
-
+```jsx
 function MiComponente({ innerRef }) {
   return <input ref={innerRef} />;
 }
 // Uso
 const inputRef = useRef();
 <MiComponente innerRef={(node) => (inputRef.current = node)} />
+```
 
 Pero es menos estándar.
 forwardRef vs useRef en el mismo componente
@@ -4518,11 +4518,11 @@ forwardRef vs useRef en el mismo componente
 
     Para pasar ref a un hijo: usas forwardRef en el hijo.
 
-Depuración
+### Depuración
 
 En React DevTools, los componentes envueltos con forwardRef aparecen con una etiqueta ForwardRef.
 
-📄 transitions.md
+### 📄 transitions.md
 Concepto
 
 Las transiciones en React 18 permiten marcar actualizaciones de estado como no urgentes, manteniendo la interfaz responsiva mientras se renderizan componentes pesados. Son parte del modo concurrente.
@@ -4530,8 +4530,7 @@ Problema que resuelven
 
 Sin transiciones, cualquier actualización de estado bloquea el hilo principal hasta que termina de renderizar. Si el render es costoso (filtrar una lista enorme, cambiar una ruta pesada), la interfaz se congela y el usuario siente "lag".
 API principal: useTransition
-jsx
-
+```jsx
 import { useTransition, useState } from 'react';
 
 function SearchPage() {
@@ -4543,7 +4542,7 @@ function SearchPage() {
     const value = e.target.value;
     // Actualización urgente: lo que el usuario ve inmediatamente
     setQuery(value);
-    
+
     // Actualización no urgente: la búsqueda pesada
     startTransition(() => {
       const results = performExpensiveSearch(value);
@@ -4559,8 +4558,9 @@ function SearchPage() {
     </div>
   );
 }
+```
 
-isPending
+### isPending
 
 Indica si la transición está activa (aún no ha terminado). Útil para mostrar indicadores de carga sin bloquear la UI.
 Diferencia entre useTransition y useDeferredValue
@@ -4571,12 +4571,11 @@ Devuelve isPending para feedback	Solo devuelve el valor diferido
 Ideal para manejadores de eventos	Ideal para props que vienen de un padre
 
 Ejemplo con useDeferredValue:
-jsx
-
+```jsx
 function App() {
   const [text, setText] = useState('');
   const deferredText = useDeferredValue(text); // versión "lenta"
-  
+
   return (
     <>
       <input value={text} onChange={e => setText(e.target.value)} />
@@ -4584,12 +4583,12 @@ function App() {
     </>
   );
 }
+```
 
-Transiciones con Suspense
+### Transiciones con Suspense
 
 Puedes combinar startTransition con código que suspende (data fetching) para evitar que los fallbacks parpadeen:
-jsx
-
+```jsx
 const [isPending, startTransition] = useTransition();
 
 const handleRefresh = () => {
@@ -4607,6 +4606,7 @@ return (
     </Suspense>
   </div>
 );
+```
 
 ¿Cuándo usar transiciones?
 
@@ -4626,7 +4626,7 @@ return (
 
     Validaciones en tiempo real que deben aparecer al instante.
 
-Limitaciones
+### Limitaciones
 
     startTransition solo puede usarse dentro de componentes o hooks.
 
@@ -4634,7 +4634,7 @@ Limitaciones
 
     Solo funciona si el render se puede interrumpir; si tu componente tiene efectos secundarios no preparados para concurrencia, pueden ejecutarse múltiples veces.
 
-Buenas prácticas
+### Buenas prácticas
 
     Envuelve solo la actualización no urgente dentro de startTransition, no todo el manejador.
 
@@ -4644,15 +4644,14 @@ Buenas prácticas
 
     Si usas librerías de estado (Redux, Zustand), asegúrate de que soporten transiciones (la mayoría sí, pero la actualización debe estar envuelta).
 
-📄 automatic-batching.md
+### 📄 automatic-batching.md
 Concepto
 
 Automatic batching (agrupación automática) es una optimización que React realiza para combinar múltiples actualizaciones de estado en un solo re-render, mejorando el rendimiento.
 En React 17 y anteriores
 
 El batching solo ocurría dentro de manejadores de eventos de React (como onClick, onChange). Fuera de ellos (promesas, setTimeout, fetch, eventos nativos), no había batching y cada setState causaba un re-render independiente.
-jsx
-
+```jsx
 // React 17: sin batching fuera de eventos
 function App() {
   const [count, setCount] = useState(0);
@@ -4670,12 +4669,12 @@ function App() {
     });
   };
 }
+```
 
-En React 18 (con createRoot)
+### En React 18 (con createRoot)
 
 El batching automático funciona en cualquier lugar, incluso dentro de promesas, setTimeout, eventos nativos, etc.
-jsx
-
+```jsx
 // React 18: batching automático siempre
 const root = createRoot(document.getElementById('root'));
 root.render(<App />);
@@ -4692,12 +4691,12 @@ function App() {
     });
   };
 }
+```
 
 ¿Qué pasa si necesitas forzar un re-render intermedio?
 
 Puedes usar flushSync (importado de react-dom) para salir del batching:
-jsx
-
+```jsx
 import { flushSync } from 'react-dom';
 
 const handleClick = () => {
@@ -4709,6 +4708,7 @@ const handleClick = () => {
     setFlag(f => !f);    // otro re-render
   });
 };
+```
 
 Usar flushSync raramente es necesario y puede dañar el rendimiento.
 Beneficios del automatic batching
@@ -4719,12 +4719,11 @@ Beneficios del automatic batching
 
     Comportamiento consistente dentro y fuera de eventos.
 
-Detalles técnicos
+### Detalles técnicos
 
 React agrupa actualizaciones que ocurren en la misma "tarea" (microtask o macrotask) usando el scheduler interno. Las actualizaciones dentro de startTransition también se agrupan, pero con prioridad más baja.
 Ejemplo complejo con múltiples fuentes
-jsx
-
+```jsx
 function Componente() {
   const [a, setA] = useState(0);
   const [b, setB] = useState(0);
@@ -4737,8 +4736,9 @@ function Componente() {
     // a y b se agrupan en 1 render, c puede ser en otro microtask
   }, []);
 }
+```
 
-Compatibilidad con librerías
+### Compatibilidad con librerías
 
 Librerías como Redux, Zustand, React Query se benefician automáticamente porque sus actualizaciones también se agrupan si usan setState o hooks internos de React.
 Buenas prácticas
@@ -4749,14 +4749,13 @@ Buenas prácticas
 
     Actualiza múltiples estados independientes en secuencia; React los agrupará.
 
-📄 new-hooks.md
+### 📄 new-hooks.md
 
 React 18 introdujo varios hooks nuevos. Aquí se detallan los más importantes: useId, useSyncExternalStore, useInsertionEffect, y también useDeferredValue (ya mencionado en transiciones) y useTransition (visto arriba).
 1. useId
 
 Genera identificadores únicos y estables para accesibilidad (atributos id). Es especialmente útil en SSR (Server Side Rendering) para evitar inconsistencias entre servidor y cliente.
-jsx
-
+```jsx
 import { useId } from 'react';
 
 function CampoNombre() {
@@ -4768,6 +4767,7 @@ function CampoNombre() {
     </>
   );
 }
+```
 
 Características:
 
@@ -4780,8 +4780,7 @@ Características:
     No usar para key en listas.
 
 Ejemplo con múltiples elementos relacionados:
-jsx
-
+```jsx
 function Formulario() {
   const id = useId();
   return (
@@ -4793,6 +4792,7 @@ function Formulario() {
     </div>
   );
 }
+```
 
 ¿Por qué no usar Math.random() o useState(0)+1?
 
@@ -4803,8 +4803,7 @@ function Formulario() {
 2. useSyncExternalStore
 
 Hook avanzado para suscribirse a fuentes de datos externas (stores fuera de React) y mantener la UI sincronizada. Fue diseñado para autores de librerías (Redux, Zustand, etc.) pero puede usarse directamente.
-jsx
-
+```jsx
 import { useSyncExternalStore } from 'react';
 
 // Store externa simple (ejemplo)
@@ -4836,6 +4835,7 @@ function TodoList() {
     </ul>
   );
 }
+```
 
 Parámetros:
 
@@ -4846,14 +4846,14 @@ Parámetros:
     getServerSnapshot (opcional): para SSR, devuelve el estado inicial en el servidor.
 
 Uso típico con Redux:
-jsx
-
+```jsx
 import { useSyncExternalStore } from 'react';
 import store from './reduxStore';
 
 function useReduxStore() {
   return useSyncExternalStore(store.subscribe, store.getState);
 }
+```
 
 ¿Por qué no useState + useEffect?
 
@@ -4864,8 +4864,7 @@ function useReduxStore() {
 3. useInsertionEffect
 
 Hook para inyectar estilos dinámicos en el DOM antes de que se apliquen los efectos de layout. Es útil para librerías de CSS-in-JS que necesitan insertar <style> etiquetas y evitar conflictos de medición.
-jsx
-
+```jsx
 import { useInsertionEffect } from 'react';
 
 function useDynamicStyles(className, styles) {
@@ -4887,6 +4886,7 @@ function Button({ color, background }) {
   useDynamicStyles(className, { color, background });
   return <button className={className}>Click</button>;
 }
+```
 
 Diferencia con useEffect y useLayoutEffect:
 
@@ -4904,12 +4904,12 @@ Cuándo usarlo:
 
     No lo necesitas en aplicaciones típicas que usan CSS modules o Tailwind.
 
-4. useDeferredValue (repaso)
+### 4. useDeferredValue (repaso)
 
 Permite diferir una actualización de valor. Ya se mencionó en transiciones, pero aquí se detalla como hook independiente.
-jsx
-
+```jsx
 const deferredValue = useDeferredValue(value, { timeoutMs: 5000 });
+```
 
     Devuelve una versión "atrasada" de value.
 
@@ -4918,17 +4918,16 @@ const deferredValue = useDeferredValue(value, { timeoutMs: 5000 });
     Opcionalmente, puedes establecer un timeoutMs para forzar la actualización después de un tiempo.
 
 Ejemplo con lista grande:
-jsx
-
+```jsx
 function Search() {
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
-  
-  const results = useMemo(() => 
+
+  const results = useMemo(() =>
     searchInBigList(deferredQuery),
     [deferredQuery]
   );
-  
+
   return (
     <>
       <input value={query} onChange={e => setQuery(e.target.value)} />
@@ -4938,8 +4937,9 @@ function Search() {
     </>
   );
 }
+```
 
-5. useEvent (experimental, no estable)
+### 5. useEvent (experimental, no estable)
 
 En futuras versiones (React 18+ experimental), useEvent permite crear funciones con referencias estables pero que siempre acceden a las props/estado más recientes. No incluido en estable aún.
 Resumen de hooks nuevos (React 18+)
