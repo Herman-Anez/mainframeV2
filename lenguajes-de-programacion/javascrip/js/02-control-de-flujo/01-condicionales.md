@@ -1,72 +1,81 @@
+# Estructuras de Control: Condicionales
 
-02-control-de-flujo
----
+## `if` / `else if` / `else`
 
-## Archivo: `01-condicionales.md`
+Es la estructura fundamental para la toma de decisiones basada en condiciones lógicas.
 
-if / else if / else
-
-La estructura básica de toma de decisiones.
-```js
-if (condición) {
-  // bloque si verdadero
-} else if (otraCondición) {
+```javascript
+if (condicion) {
+  // bloque si es verdadero
+} else if (otraCondicion) {
   // bloque si la anterior es falsa y esta es verdadera
 } else {
   // bloque si todas las anteriores son falsas
 }
-
-    La condición se evalúa y se fuerza a booleano (truthy/falsy).
 ```
 
-    Se pueden anidar sin límite, pero un exceso de else if se puede sustituir por switch o un objeto de mapeo.
+> [!NOTE]
+> La **condición** se evalúa y se fuerza automáticamente a un valor booleano (*truthy* o *falsy*). Se pueden anidar sin límite técnico, pero un exceso de `else if` suele indicar la necesidad de un `switch` o un objeto de mapeo para mejorar la legibilidad.
 
-### Operador ternario
+---
 
-Forma concisa de devolver un valor u otro según condición.
-```js
-const access = edad >= 18 ? 'Permitido' : 'Denegado';
+## Operador Ternario
+
+Es una forma concisa de devolver un valor basado en una condición. Es ideal para asignaciones directas.
+
+```javascript
+const acceso = edad >= 18 ? 'Permitido' : 'Denegado';
 ```
 
-    Se puede anidar, pero pierde legibilidad rápidamente; mejor evitarlo en casos complejos.
+*   **Anidamiento:** Aunque es técnicamente posible anidarlos, se pierde legibilidad rápidamente. Se recomienda evitarlos en casos complejos.
 
-### Switch
+---
 
-Evalúa una expresión y compara su valor con cada caso usando comparación estricta (===).
-```js
+## `switch`
+
+Evalúa una expresión y compara su valor con diferentes casos utilizando **comparación estricta (`===`)**.
+
+```javascript
 switch (fruta) {
   case 'manzana':
     precio = 1;
     break;
   case 'pera':
-  case 'uva':   // ambos casos comparten el mismo bloque
+  case 'uva':   // Casos agrupados: comparten el mismo bloque
     precio = 2;
     break;
   default:
     precio = 0;
 }
-
-    Fall-through: si no se coloca break, la ejecución continúa con el siguiente caso hasta encontrar un break o el final. A veces se usa a propósito (como en el ejemplo), pero debe documentarse.
 ```
 
-    El default es opcional; se ejecuta si ningún caso coincide.
-
-    La expresión del switch y los case pueden ser cualquier valor (no solo números o strings).
-
-### Condicionales de cortocircuito
-
-Uso de && y || para ejecutar código condicionalmente.
-```js
-isLogged && mostrarDashboard();  // equivale a if (isLogged) mostrarDashboard();
-config = opciones || {};         // asigna opciones si es truthy, si no, {}
-```
-
-### Patrones recomendados
-
-    Preferir if para condiciones binarias simples.
-
-    Usar switch cuando hay múltiples valores discretos a comparar (más legible que muchos else if).
-
-    Evaluar las condiciones de la más específica a la más general, o usar early returns en funciones.
+*   **Fall-through:** Si se omite el `break`, la ejecución continúa en el siguiente bloque `case` hasta encontrar un `break` o llegar al final del `switch`.
+*   **Default:** Es opcional y actúa como el bloque de escape si ninguna coincidencia ocurre.
+*   **Flexibilidad:** Tanto la expresión del `switch` como los `case` pueden ser de cualquier tipo de dato.
 
 ---
+
+## Condicionales de Cortocircuito
+
+Aprovechan el comportamiento de los operadores `&&` y `||` para ejecutar código de forma condicional y compacta.
+
+```javascript
+// Equivale a: if (isLogged) mostrarDashboard();
+isLogged && mostrarDashboard();
+
+// Asigna 'opciones' si es truthy, de lo contrario asigna un objeto vacío
+config = opciones || {};
+```
+
+---
+
+> [!TIP]
+> ### Patrones Recomendados
+> 
+> *   **Simplicidad:** Preferir `if` para condiciones binarias directas.
+> *   **Legibilidad:** Usar `switch` cuando se manejan múltiples valores discretos para una misma variable.
+> *   **Especificidad:** Evaluar condiciones de la más específica a la más general.
+> *   **Early Return:** En funciones, es preferible usar retornos tempranos para evitar niveles profundos de anidamiento.
+
+---
+

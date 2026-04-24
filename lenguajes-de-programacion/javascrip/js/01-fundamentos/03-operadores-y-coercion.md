@@ -1,69 +1,66 @@
+# Operadores y Coerción
 
+## Operadores Principales
 
-## Archivo: `03-operadores-y-coercion.md`
+| Categoría | Operadores |
+| :--- | :--- |
+| **Aritméticos** | `+`, `-`, `*`, `/`, `%`, `**` (exponenciación) |
+| **Asignación** | `=`, `+=`, `-=`, `*=`, `/=`, etc. |
+| **Comparación** | `==`, `!=`, `===`, `!==`, `>`, `<`, `>=`, `Ratio <=` |
+| **Lógicos** | `&&`, `||`, `??` (*nullish coalescing*) |
+| **Ternario** | `condición ? valorVerdadero : valorFalso` |
+| **Unarios** | `!`, `++`, `--`, `typeof`, `void`, `delete` |
+| **Relacionales** | `in`, `instanceof` |
 
-Operadores más importantes
-Categoría	Operadores
-Aritméticos	+, -, *, /, %, ** (exponenciación)
-Asignación	=, +=, -=, etc.
-Comparación	==, !=, ===, !==, >, <, >=, <=
-Lógicos	&&, ||, ?? (nullish coalescing)
-Ternario	condición ? valorVerdadero : valorFalso
-Unarios	!, ++, --, typeof, void
-Relacionales	in, instanceof
-Coerción de tipos
+---
+
+## Coerción de Tipos
 
 La coerción es la conversión automática o manual de un tipo a otro.
-Coerción explícita (recomendada)
 
-### String(valor)
+### Coerción Explícita (Recomendada)
 
-### Number(valor), parseInt(), parseFloat()
+Se realiza mediante funciones nativas para asegurar el tipo de dato:
 
-### Boolean(valor)
+*   **`String(valor)`**: Convierte a cadena de texto.
+*   **`Number(valor)`**, **`parseInt()`**, **`parseFloat()`**: Conversión a números.
+*   **`Boolean(valor)`**: Conversión a booleano.
+*   **`BigInt(valor)`**: Conversión a enteros de precisión arbitraria.
+*   **`Symbol(valor)`**: Creación de símbolos.
 
-### BigInt(valor)
+---
 
-### Symbol(valor)
+### Coerción Implícita
 
-### Coerción implícita
+Muchos operadores fuerzan la conversión de forma automática. Reglas básicas:
 
-Muchos operadores fuerzan la conversión. Reglas básicas:
+1.  **Suma (`+`)**:
+    *   Si algún operando es `string`, el otro se convierte a `string` y se concatenan.
+    *   En otro caso, ambos se convierten a `number` (si es posible) y se suman.
+    *   `null` se convierte a `0`, `undefined` a `NaN` en contexto numérico.
+2.  **Otros Aritméticos (`-`, `*`, `/`, etc.)**: Ambos operandos se convierten a `number`.
+3.  **Comparación Débil (`==`)**:
+    > [!WARNING]
+    > Compara sin verificar el tipo, aplicando un algoritmo complejo de coerción. Si los tipos son distintos, fuerza la conversión de uno o ambos lados. **Se recomienda evitar su uso y preferir `===` (igualdad estricta).**
 
-    Suma +:
+4.  **Contexto Lógico**: Todos los valores tienen un valor booleano asociado.
+    *   **Valores *Falsy*:** `false`, `0`, `""`, `null`, `undefined`, `NaN`.
+    *   **Valores *Truthy*:** Todo lo demás (incluyendo `[]`, `{}`, `"false"`).
 
-        Si algún operando es string, el otro se convierte a string y se concatenan.
+5.  **Cortocircuitos (`&&` y `||`)**: No necesariamente devuelven booleanos; devuelven uno de los operandos.
+    *   `a || b`: Si `a` es *truthy*, devuelve `a`; si no, devuelve `b`.
+    *   `a && b`: Si `a` es *falsy*, devuelve `a`; si no, devuelve `b`.
 
-        En otro caso, ambos se convierten a number (si es posible) y se suman.
+6.  **Operador de Fusión Nula (`??`)**: Devuelve el operando derecho solo si el izquierdo es `null` o `undefined`. Es ideal para asignar valores por defecto sin verse afectado por otros valores *falsy* como `0` o `""`.
 
-        null se convierte a 0, undefined a NaN en contexto numérico.
-
-    Resta -, multiplicación *, división /, etc.: Ambos operandos se convierten a número.
-
-    Comparación débil ==:
-
-        Compara sin verificar tipo. Aplica un algoritmo complejo de coerción.
-
-        Si los tipos son distintos, se fuerza la conversión de uno o ambos lados a número, string o booleano.
-
-        Evitarla siempre que sea posible; usar === (igualdad estricta).
-
-    Booleanos en contexto lógico: Todos los valores tienen un valor verdadero/falso asociado. Valores falsy: false, 0, "", null, undefined, NaN. Todo lo demás es truthy (incluyendo [], {}, "false").
-
-    Operador lógico && y ||: No necesariamente devuelven booleanos; devuelven uno de los operandos.
-
-        a || b: si a es truthy, devuelve a; si no, devuelve b.
-
-        a && b: si a es falsy, devuelve a; si no, devuelve b.
-
-    Operador de fusión nula ??: Devuelve el operando derecho solo si el izquierdo es null o undefined (no por falsy general). Ideal para valores por defecto.
-```js
-    const valor = 0 ?? 'default'; // 0 (porque 0 no es null/undefined)
-    const valor2 = 0 || 'default'; // 'default' (porque 0 es falsy)
+```javascript
+const valor = 0 ?? 'default';  // 0 (porque 0 no es null/undefined)
+const valor2 = 0 || 'default'; // 'default' (porque 0 es falsy)
 ```
 
-### Ejemplo de trampas con coerción
-```js
+### Ejemplos de Coerción "Curiosa"
+
+```javascript
 [] + []        // ""  (ambos se convierten a string vacío)
 [] + {}        // "[object Object]"
 {} + []        // 0 (si se interpreta como bloque + [])
@@ -72,12 +69,14 @@ true + true    // 2
 '5' + 3        // "53"
 ```
 
-### Recomendaciones
+---
 
-    Usar siempre === y !==.
-
-    Convertir explícitamente antes de operar si hay incertidumbre.
-
-    Preferir ?? para valores por defecto cuando 0 o "" son válidos.
+> [!TIP]
+> ### Recomendaciones Finales
+> 
+> *   **Igualdad Estricta:** Usar siempre `===` y `!==` para evitar sorpresas por coerción.
+> *   **Claridad:** Convertir explícitamente (`Number()`, `String()`) antes de operar si hay incertidumbre sobre el tipo.
+> *   **Valores por Defecto:** Preferir `??` para valores por defecto cuando el `0` o las cadenas vacías `""` son valores válidos en tu lógica.
 
 ---
+

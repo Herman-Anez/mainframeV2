@@ -1,60 +1,75 @@
 
-## Archivo: `04-strict-mode.md`
+# Modo Estricto (`"use strict"`)
 
-¿Qué es?
+## ¿Qué es?
 
-El modo estricto ("use strict") es una forma de ejecutar js bajo un conjunto de restricciones que corrigen malas prácticas y convierten algunos errores silenciosos en excepciones.
-Activación
+El modo estricto es una funcionalidad que permite ejecutar JavaScript bajo un conjunto de restricciones más rigurosas. Su objetivo es corregir malas prácticas comunes y convertir errores que antes fallaban silenciosamente en excepciones explícitas.
 
-    A nivel de script: añadir "use strict"; al principio del archivo (antes de cualquier otra sentencia).
+## Activación
 
-    A nivel de función: dentro de una función, al inicio del cuerpo.
+*   **A nivel de script:** Añadir `"use strict";` al principio del archivo (antes de cualquier otra sentencia).
+*   **A nivel de función:** Colocar la directiva dentro de una función, justo al inicio del cuerpo.
 
-    Los módulos ES6 y las clases automáticamente corren en modo estricto; no hace falta declararlo.
+> [!NOTE]
+> Los **módulos de ES6** y las **clases** siempre se ejecutan en modo estricto de forma automática; no es necesario declararlo explícitamente en estos casos.
 
-### Cambios principales que introduce
+---
 
-    Prohíbe variables implícitas globales. Asignar a una variable no declarada lanza ReferenceError.
-```js
-    "use strict";
-    x = 5; // ReferenceError: x is not defined
+## Cambios Principales
+
+### 1. Prohibición de variables globales implícitas
+Asignar un valor a una variable no declarada lanza un `ReferenceError` en lugar de crear una variable global accidentalmente.
+
+```javascript
+"use strict";
+x = 5; // ReferenceError: x is not defined
 ```
 
-    Elimina la coerción de this a objeto global. En una función normal, this es undefined en lugar de window/global.
-```js
-    function normal() { return this; }
-    normal(); // undefined
+### 2. Comportamiento de `this`
+Elimina la coerción de `this` al objeto global. En una función normal invocada sin contexto, `this` será `undefined` en lugar de `window` o `global`.
+
+```javascript
+"use strict";
+function normal() {
+  return this;
+}
+console.log(normal()); // undefined
 ```
 
-    Prohíbe parámetros duplicados en funciones.
-```js
-    function sum(a, a) { "use strict"; } // SyntaxError
+### 3. Parámetros duplicados
+Prohíbe el uso de parámetros con el mismo nombre en la declaración de una función.
 
-    Bloquea la eliminación de variables, funciones o argumentos con delete (antes fallaba silenciosamente).
-    js
-
-    var x = 1;
-    delete x; // SyntaxError
-
-    Prohíbe los octales literales, como var num = 010;. Se debe usar 0o10.
+```javascript
+"use strict";
+function suma(a, a, b) { // SyntaxError
+  return a + a + b;
+}
 ```
 
-    Impide que eval y arguments se usen como nombres de variable o parámetro y limita su manipulación.
+### 4. Restricciones con `delete`
+Bloquea el intento de eliminar variables, funciones o argumentos mediante el operador `delete` (lo cual antes fallaba de forma silenciosa).
 
-    eval y arguments no introducen variables en el ámbito circundante.
+```javascript
+"use strict";
+var x = 1;
+delete x; // SyntaxError: Delete of an unqualified identifier in strict mode.
+```
 
-    Lanza error al escribir propiedades de solo lectura o sobre objetos no extensibles.
+### 5. Otras restricciones técnicas
+*   **Literales Octales:** Prohíbe el uso de octales antiguos (ej. `010`). Se debe usar el formato moderno `0o10`.
+*   **`eval` y `arguments`:** Impide que estas palabras se usen como nombres de variable o parámetros. Además, `eval` no puede introducir variables nuevas en el ámbito que lo rodea.
+*   **Seguridad de Objetos:** Lanza un error al intentar escribir en propiedades de solo lectura o en objetos no extensibles.
 
-### Consecuencias prácticas
+---
 
-    Obliga a declarar variables correctamente.
+## Consecuencias Prácticas
 
-    Previene fugas accidentales al objeto global.
+*   **Seguridad:** Previene fugas accidentales al objeto global.
+*   **Predictibilidad:** Obliga a una declaración de variables correcta y explícita.
+*   **Depuración:** Facilita la detección de errores al lanzar excepciones inmediatas.
 
-    Hace que el código sea más seguro y predecible.
+> [!IMPORTANT]
+> **¿Cuándo usarlo?**
+> La recomendación es usarlo **siempre**. Aunque herramientas modernas como ESLint o TypeScript ya incorporan estas reglas, y los módulos ES lo activan por defecto, mantener la costumbre de usarlo en scripts clásicos garantiza un código más robusto y profesional.
 
-    Herramientas modernas (ESLint, TypeScript) ya incorporan estas reglas, pero "use strict" da garantía en tiempo de ejecución.
-
-¿Cuándo usarlo?
-
-Siempre. En proyectos modernos con módulos ES no es necesario explícitamente, pero en scripts clásicos es obligatorio colocarlo al inicio.
+---

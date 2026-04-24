@@ -1,85 +1,98 @@
 
-## Archivo: `02-bucles.md`
+# Estructuras de Control: Bucles e Iteración
 
-Bucle for clásico
-```js
+## Bucle `for` Clásico
+
+Es la estructura de repetición más común cuando se conoce de antemano el número de iteraciones.
+
+```javascript
 for (inicialización; condición; expresión final) {
-  // cuerpo
+  // cuerpo del bucle
 }
-
-    Se puede omitir cualquiera de las tres partes (por ejemplo, for(;;) es un bucle infinito).
-
-    Todas las variables declaradas con var comparten ámbito; con let se crea un nuevo enlace en cada iteración (muy útil con closures).
-
-while y do...while
-
-    while: evalúa la condición antes de cada iteración. Puede no ejecutarse nunca.
-
-    do...while: ejecuta el cuerpo al menos una vez y luego evalúa la condición.
 ```
 
-js
+*   **Flexibilidad:** Se puede omitir cualquiera de las tres partes (por ejemplo, `for(;;)` crea un bucle infinito).
+*   **Ámbito:** Las variables declaradas con `var` comparten ámbito; con `let` se crea un nuevo enlace en cada iteración, lo cual es fundamental al trabajar con *closures*.
 
-### while (hayDatos()) { procesar(); }
-do { intentar(); } while (reintentar);
+---
 
-### for...in
+## `while` y `do...while`
 
-Recorre las claves enumerables de un objeto (incluyendo las heredadas a través de la cadena de prototipos).
-```js
+*   **`while`:** Evalúa la condición **antes** de cada iteración. Es posible que el cuerpo no se ejecute nunca si la condición es falsa desde el inicio.
+*   **`do...while`:** Ejecuta el cuerpo **al menos una vez** y luego evalúa la condición para decidir si continúa.
+
+```javascript
+while (hayDatos()) {
+  procesar();
+}
+
+do {
+  intentar();
+} while (reintentar);
+```
+
+---
+
+## `for...in`
+
+Recorre las **claves enumerables** de un objeto, incluyendo aquellas heredadas a través de la cadena de prototipos.
+
+```javascript
 for (const key in objeto) {
   if (Object.hasOwn(objeto, key)) {
     console.log(key, objeto[key]);
   }
 }
-
-    No usar para arrays (recorre índices como strings y puede incluir propiedades añadidas).
 ```
 
-    El orden no está garantizado para propiedades no numéricas.
+> [!WARNING]
+> **No usar para arrays.** `for...in` recorre los índices como cadenas de texto (`strings`) y puede incluir propiedades adicionales añadidas al prototipo, lo que genera resultados inesperados.
+> *   El orden de iteración no está garantizado para propiedades no numéricas.
+> *   Se recomienda filtrar siempre con `Object.hasOwn()` para evitar propiedades heredadas.
 
-    Para evitar propiedades heredadas, filtrar con Object.hasOwn() (o Object.prototype.hasOwnProperty.call()).
+---
 
-### for...of
+## `for...of`
 
-Introducido en ES6, recorre los valores de un objeto iterable (arrays, strings, mapas, sets, generadores, NodeList, etc.).
-```js
+Introducido en ES6, recorre los **valores** de un objeto iterable (arrays, strings, Map, Set, generadores, NodeList, etc.).
+
+```javascript
 for (const valor of iterable) {
   console.log(valor);
 }
 ```
 
-    No funciona sobre objetos planos a menos que implementen Symbol.iterator.
+*   **Orden:** Respeta el orden natural del iterable.
+*   **Objetos Planos:** No funciona sobre objetos planos (`{}`) a menos que implementen `Symbol.iterator`.
+*   **Índices:** Es ideal para arrays cuando no se necesita el índice, aunque se puede combinar con `.entries()` si es necesario: `for (const [i, v] of arr.entries())`.
 
-    Sí respeta el orden natural del iterable.
+---
 
-    Muy útil para arrays cuando no se necesita el índice.
+## Control de Flujo: `break` y `continue`
 
-    Se puede combinar con entries(): for (const [i, v] of arr.entries()).
+*   **`break`:** Termina inmediatamente la ejecución del bucle.
+*   **`continue`:** Salta el resto del cuerpo y pasa directamente a la siguiente iteración.
 
-### Control de flujo dentro de bucles: break y continue
+> [!NOTE]
+> Ambos afectan al bucle más cercano. Se pueden usar **etiquetas** (*labels*) para controlar bucles anidados exteriores.
 
-    break: termina inmediatamente el bucle.
-
-    continue: salta a la siguiente iteración.
-
-    Ambos afectan al bucle más cercano. Se pueden usar etiquetas (label:) para saltar de un bucle anidado exterior.
-
-```js
+```javascript
 exterior: for (let i = 0; i < 3; i++) {
   for (let j = 0; j < 3; j++) {
-    if (i === j) continue exterior; // salta a la siguiente iteración de 'i'
+    if (i === j) continue exterior; // Salta a la siguiente iteración del bucle 'i'
     console.log(i, j);
   }
 }
 ```
 
-### Buenas prácticas
+---
 
-    Preferir for...of (o métodos funcionales como .forEach, .map) para arrays sobre el for clásico.
-
-    No usar for...in en arrays; para objetos, considerar Object.keys()/Object.values()/Object.entries() con for...of.
-
-    Cuidado con modificar la longitud de un array mientras se itera con un for clásico.
+> [!TIP]
+> ### Buenas Prácticas
+> 
+> *   **Preferencia:** Preferir `for...of` o métodos funcionales (`.forEach`, `.map`) para arrays sobre el `for` clásico.
+> *   **Objetos:** Para iterar objetos, es mejor usar `Object.keys()`, `Object.values()` o `Object.entries()` junto con `for...of`.
+> *   **Mutación:** Tener precaución al modificar la longitud de un array mientras se itera con un `for` clásico para evitar saltos de elementos o bucles infinitos.
 
 ---
+

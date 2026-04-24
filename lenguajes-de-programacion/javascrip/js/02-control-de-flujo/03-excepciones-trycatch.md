@@ -1,38 +1,46 @@
 
-## Archivo: `03-excepciones-trycatch.md`
+# Manejo de Excepciones: `try`, `catch` y `finally`
 
-Estructura básica
-```js
+## Estructura Básica
+
+Permite gestionar errores en tiempo de ejecución para evitar que la aplicación se detenga inesperadamente.
+
+```javascript
 try {
-  // código que puede lanzar una excepción
+  // Código que puede lanzar una excepción
 } catch (error) {
-  // manejo del error
+  // Manejo del error
 } finally {
-  // se ejecuta siempre, haya o no error
+  // Se ejecuta siempre, haya o no error
 }
 ```
 
-    Si ocurre un error en try, la ejecución salta inmediatamente al bloque catch. Luego, pase lo que pase, se ejecuta finally.
+*   **Flujo de Ejecución:** Si ocurre un error en el bloque `try`, la ejecución salta inmediatamente al bloque `catch`. Independientemente del resultado, el bloque `finally` se ejecutará al final.
+*   **Objeto Error:** Aunque se puede lanzar cualquier valor, se recomienda encarecidamente lanzar instancias de `Error` o sus subclases para mantener la coherencia y obtener la pila de llamadas (*stack trace*).
+*   **Catch Opcional (ES2019+):** Es posible omitir el parámetro del error si no se requiere su información: `catch { ... }`.
 
-    El objeto error en catch puede ser cualquier cosa lanzada, pero se recomienda que sea una instancia de Error o sus subclases.
+---
 
-    catch puede omitir el paréntesis y la variable si no se necesita la información del error (ES2019+): catch { ... }.
+## Lanzar Errores: `throw`
 
-### Lanzar errores: throw
-```js
+Se utiliza para generar una excepción de forma manual.
+
+```javascript
 throw new Error('Mensaje descriptivo');
-throw new TypeError('valor inválido');
-throw 'esto no es buena práctica'; // evítalo
+throw new TypeError('Valor inválido');
 ```
 
-El motor crea un objeto Error con información de pila de llamadas (stack trace).
-Copy constructor: new Error(message)
+> [!WARNING]
+> Evita lanzar tipos primitivos como cadenas de texto: `throw 'Error';`. Al hacerlo, pierdes el *stack trace* y dificultas la depuración profesional.
 
-    Error, TypeError, RangeError, SyntaxError, ReferenceError, URIError, EvalError.
+### Tipos de Errores Nativos
+JavaScript incluye varios constructores de error especializados:
+*   `Error`, `TypeError`, `RangeError`, `SyntaxError`, `ReferenceError`, `URIError`, `EvalError`.
 
-    Se pueden crear errores personalizados extendiendo Error:
+### Errores Personalizados
+Es posible extender la clase `Error` para crear excepciones específicas del dominio de tu aplicación.
 
-```js
+```javascript
 class ValidationError extends Error {
   constructor(message, campo) {
     super(message);
@@ -40,41 +48,59 @@ class ValidationError extends Error {
     this.field = campo;
   }
 }
+
 throw new ValidationError('Campo requerido', 'email');
 ```
 
-¿Qué sucede si no se captura un error?
+---
 
-El error se propaga hacia arriba en la pila de llamadas. Si llega al ámbito global sin ser capturado, el script se detiene y se muestra en consola (navegador) o se termina el proceso (Node.js, a menos que haya un listener de uncaughtException). Esto provoca una mala experiencia de usuario.
-Finally y return
+## Propagación de Errores
 
-El bloque finally se ejecuta incluso si try o catch tienen una sentencia return. La única forma de evitarlo es un cierre forzado del proceso (ej. process.exit()) o un bucle infinito. Si finally también tiene un return, ese valor sobreescribe cualquier return anterior. Se recomienda que finally no devuelva valores.
-Patrones de uso
+Si un error no es capturado en el nivel actual, se propaga hacia arriba en la pila de llamadas (*call stack*).
 
-    Capturar errores en operaciones de entrada/salida (fetch, lectura de archivos) y mostrar mensajes amigables.
+> [!IMPORTANT]
+> Si un error llega al ámbito global sin ser capturado:
+> *   En el **navegador**: El script se detiene y el error se muestra en la consola.
+> *   En **Node.js**: El proceso termina abruptamente (a menos que exista un *listener* de `uncaughtException`).
+> Esto suele resultar en una pésima experiencia de usuario o inestabilidad en el servidor.
 
-    En entornos asíncronos con async/await, usar try/catch alrededor del await.
+---
 
-    En promesas, el equivalente es .catch().
+## `finally` y Sentencias `return`
 
-    En frameworks frontend, a menudo se usan barreras globales de error (componentDidCatch en React, o manejadores de ventana).
+El bloque `finally` tiene prioridad de ejecución. Incluso si existen sentencias `return` en `try` o `catch`, `finally` se ejecutará antes de que la función devuelva el valor.
 
-### Ejemplo robusto
-```js
+> [!NOTE]
+> Si el bloque `finally` contiene un `return`, este valor **sobrescribirá** cualquier valor devuelto previamente en `try` o `catch`. Por esta razón, se recomienda no devolver valores desde `finally`.
+
+---
+
+## Patrones de Uso y Buenas Prácticas
+
+*   **E/S:** Capturar errores en operaciones de entrada/salida (como `fetch` o lectura de archivos).
+*   **Async/Await:** Usar siempre `try/catch` envolviendo las llamadas con `await`.
+*   **Promesas:** Utilizar el método `.catch()` para gestionar fallos en cadenas de promesas.
+*   **Barreras de Error:** Implementar manejadores globales o "Error Boundaries" en frameworks modernos para una recuperación elegante.
+
+### Ejemplo Robusto con `fetch`
+
+```javascript
 async function getUsers() {
   try {
     const response = await fetch('/api/users');
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      throw new Error(`HTTP Error: ${response.status}`);
     }
+    
     return await response.json();
   } catch (error) {
     console.error('Fallo al obtener usuarios:', error.message);
-    // Opcional: relanzar o devolver valor por defecto
-    return [];
+    return []; // Devolver un valor seguro por defecto
   } finally {
-    console.log('Petición finalizada');
+    console.log('Operación de obtención de usuarios finalizada.');
   }
 }
 ```
 
+---
