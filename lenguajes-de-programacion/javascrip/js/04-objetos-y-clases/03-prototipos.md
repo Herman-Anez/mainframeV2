@@ -1,42 +1,64 @@
-## Archivo: `03-prototipos.md`
+# Prototipos en JavaScript
 
+JavaScript es un lenguaje basado en **prototipos**. Cada objeto tiene un enlace interno a otro objeto llamado su prototipo, del cual hereda propiedades y métodos.
 
-js es un lenguaje basado en prototipos. Cada objeto tiene un enlace interno a otro objeto llamado su prototipo, y de él hereda propiedades.
-Propiedad __proto__ y Object.getPrototypeOf()
+## Propiedad `__proto__` y `Object.getPrototypeOf()`
 
-    __proto__ es un accessor heredado de Object.prototype (no recomendado en producción, pero expuesto en la mayoría de navegadores).
+*   **`__proto__`**: Es un *accessor* heredado de `Object.prototype`. Aunque está expuesto en la mayoría de los navegadores, **no se recomienda su uso en producción**.
+*   **Estándar**: La forma recomendada de interactuar con el prototipo es mediante `Object.getPrototypeOf(obj)` y `Object.setPrototypeOf(obj, proto)`.
 
-    La forma estándar es Object.getPrototypeOf(obj) y Object.setPrototypeOf(obj, proto).
+## Cadena de Prototipos
 
-### Cadena de prototipos
+Cuando accedemos a una propiedad, el motor de JavaScript la busca primero en el propio objeto. Si no existe, sube al prototipo, y continúa así sucesivamente hasta llegar a `Object.prototype` (cuyo prototipo es `null`). Este es el mecanismo fundamental de la **herencia** en JavaScript.
 
-Cuando accedemos a una propiedad, el motor la busca primero en el propio objeto. Si no existe, sube al prototipo, y así sucesivamente hasta llegar a Object.prototype (cuyo prototipo es null). Este es el mecanismo de herencia en js.
-```js
+```javascript
 const animal = { tipo: 'desconocido' };
 const perro = Object.create(animal);
 perro.ladrar = function() { return 'guau'; };
+
 console.log(perro.tipo); // 'desconocido' (heredado)
 console.log(perro.ladrar()); // 'guau'
-console.log(perro.toString()); // método heredado de Object.prototype
+console.log(perro.toString()); // Método heredado de Object.prototype
 ```
 
-### Propiedad constructor
+## Propiedad `constructor`
 
-Las funciones (que pueden actuar como constructor) tienen una propiedad prototype que es un objeto con una propiedad constructor que apunta de vuelta a la función. Cuando creamos un objeto con new, su prototipo se establece a ese prototype. Así, los objetos creados con new Func() heredan métodos definidos en Func.prototype.
-Herencia prototípica clásica (antes de clases)
+Las funciones (que pueden actuar como constructores) tienen una propiedad `prototype`. Este es un objeto con una propiedad `constructor` que apunta de vuelta a la función original.
 
-Los desarrolladores manipulaban prototype para simular herencia:
-```js
-function Animal(nombre) { this.nombre = nombre; }
-Animal.prototype.hablar = function() { return '...'; };
+> [!NOTE]
+> Cuando creamos un objeto con `new`, su prototipo se establece automáticamente al `prototype` de la función constructora.
 
-function Perro(nombre) { Animal.call(this, nombre); }
+## Herencia Prototípica Clásica
+
+Antes de la llegada de las clases en ES6, los desarrolladores manipulaban el `prototype` manualmente para simular herencia:
+
+```javascript
+function Animal(nombre) {
+  this.nombre = nombre;
+}
+Animal.prototype.hablar = function() {
+  return '...';
+};
+
+function Perro(nombre) {
+  Animal.call(this, nombre); // Llamada al "super" constructor
+}
+
+// Establecer la herencia
 Perro.prototype = Object.create(Animal.prototype);
 Perro.prototype.constructor = Perro;
-Perro.prototype.ladrar = function() { return 'guau'; };
+
+Perro.prototype.ladrar = function() {
+  return 'guau';
+};
 ```
 
-Este patrón es engorroso y fue reemplazado por la sintaxis class (azúcar sintáctico sobre prototipos).
-Impacto en el rendimiento
+> [!TIP]
+> Este patrón es engorroso y ha sido reemplazado mayoritariamente por la sintaxis `class`, que es "azúcar sintáctico" sobre este mismo mecanismo de prototipos.
 
-Recorrer la cadena de prototipos es rápido, pero modificar __proto__ o Object.setPrototypeOf es una operación lenta que debe evitarse en código de alto rendimiento. Lo recomendable es establecer el prototipo al crear el objeto con Object.create().
+## Impacto en el Rendimiento
+
+Recorrer la cadena de prototipos es una operación rápida. Sin embargo:
+
+> [!WARNING]
+> Modificar el prototipo de un objeto existente con `Object.setPrototypeOf` es una operación extremadamente lenta que debe evitarse en código de alto rendimiento. Lo recomendable es establecer el prototipo al momento de crear el objeto usando `Object.create()`.

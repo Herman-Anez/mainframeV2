@@ -1,89 +1,93 @@
+# Clases en ES6
 
-## Archivo: `05-clases-es6.md`
+La sintaxis `class` introducida en ES6 proporciona una manera más clara, familiar y estructurada de crear objetos y manejar la herencia, aunque internamente sigue basándose en prototipos.
 
+## Declaración de Clase
 
-La sintaxis class introduce una manera más clara y familiar de crear objetos y manejar la herencia, basada internamente en prototipos.
-Declaración de clase
-```js
+```javascript
 class Persona {
   constructor(nombre, edad) {
     this.nombre = nombre;
     this.edad = edad;
   }
+
   saludar() {
     return `Hola, soy ${this.nombre}`;
   }
+
   static especie() {
     return 'humano';
   }
 }
-
-    El método constructor se ejecuta al hacer new Persona(...). Si no se define, se usa uno vacío por defecto.
-
-    Los métodos definidos en el cuerpo de la clase van al prototype (no son propios de cada instancia).
-
-    static define un método en la propia clase (no en las instancias).
 ```
 
-### Herencia con extends y super
-```js
+*   **`constructor`**: Método especial que se ejecuta al instanciar con `new`. Si no se define, JavaScript utiliza uno vacío por defecto.
+*   **Métodos de instancia**: Se definen en el cuerpo de la clase y se añaden automáticamente al `prototype`.
+*   **`static`**: Define métodos que pertenecen a la clase misma, no a las instancias.
+
+## Herencia con `extends` y `super`
+
+```javascript
 class Estudiante extends Persona {
   constructor(nombre, edad, curso) {
-    super(nombre, edad); // debe llamarse a super antes de usar this
+    super(nombre, edad); // Debe llamarse a super antes de usar this
     this.curso = curso;
   }
+
   saludar() {
     return `${super.saludar()}. Estudio ${this.curso}`;
   }
 }
-
-    extends establece la cadena de prototipos (tanto Estudiante.prototype como Estudiante.__proto__).
-
-    super dentro del constructor invoca al constructor padre.
-
-    super.metodo() llama a la versión del padre de un método.
 ```
 
-### Miembros privados (ES2022)
+*   **`extends`**: Establece la cadena de prototipos entre las clases.
+*   **`super()`**: En el constructor, invoca al constructor del padre. **Es obligatorio llamarlo antes de acceder a `this`**.
+*   **`super.metodo()`**: Permite acceder a métodos definidos en la clase superior.
 
-Se prefijan con #. No son accesibles fuera de la clase.
-```js
+## Miembros Privados (ES2022)
+
+Las propiedades y métodos privados se definen prefijándolos con el símbolo `#`.
+
+```javascript
 class Cuenta {
   #saldo = 0;
+
   depositar(monto) {
     this.#saldo += monto;
   }
+
   getSaldo() {
     return this.#saldo;
   }
 }
-
-    No pueden ser accedidos ni desde subclases (a menos que se expongan mediante métodos protegidos, no nativos).
 ```
 
-### Campos públicos (class fields)
+> [!NOTE]
+> Los miembros privados no son accesibles desde fuera de la clase ni desde sus subclases, garantizando una encapsulación real.
 
-Las propiedades pueden declararse directamente en el cuerpo de la clase (sin this en el constructor) y se inicializan antes del constructor:
-```js
+## Campos Públicos (Class Fields)
+
+Permiten declarar propiedades directamente en el cuerpo de la clase sin necesidad de usar `this` dentro del constructor:
+
+```javascript
 class Rectangulo {
   alto = 10;
   ancho = 5;
-  area = this.alto * this.ancho; // cuidado: se evalúa cuando se crea la instancia
 }
 ```
 
-Estos campos son propios de la instancia.
-Getters y setters en clases
+## Getters y Setters en Clases
 
-Igual que en objetos literales, con get y set.
-Diferencias con funciones constructoras
+Al igual que en los objetos literales, las clases permiten el uso de `get` y `set` para interceptar el acceso a propiedades.
 
-    El código de una clase siempre se ejecuta en modo estricto.
+## Diferencias con Funciones Constructoras
 
-    Las clases no se pueden llamar sin new (error TypeError).
+> [!IMPORTANT]
+> Aunque parezcan similares, las clases tienen reglas más estrictas:
+> 1. **Modo Estricto**: Todo el código dentro de una clase se ejecuta automáticamente en `strict mode`.
+> 2. **Llamada Obligatoria con `new`**: No se pueden invocar como funciones normales; lanzarán un `TypeError`.
+> 3. **Hoisting**: Las clases no tienen *hoisting* (elevación) total; se encuentran en la Zona Muerta Temporal (TDZ) hasta su declaración.
 
-    Las declaraciones de clase no son izadas (hoisting temporal pero con TDZ, a diferencia de las funciones que si se elevan).
+## Resumen
 
-### Resumen
-
-Las clases no reemplazan los prototipos; son un envoltorio sintáctico que facilita la programación orientada a objetos en js, especialmente para desarrolladores que vienen de lenguajes basados en clases.
+Las clases no reemplazan el modelo de prototipos; son una capa de "azúcar sintáctico" que facilita la programación orientada a objetos (POO) en JavaScript, haciendo el código más legible y mantenible.

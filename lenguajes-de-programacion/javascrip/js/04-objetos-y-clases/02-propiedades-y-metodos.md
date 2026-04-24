@@ -1,21 +1,21 @@
+# Propiedades y Métodos
 
-## Archivo: `02-propiedades-y-metodos.md`
+## Propiedades
 
-Propiedades
+Las propiedades de un objeto asocian una clave (nombre) con un valor. Además del valor, cada propiedad tiene **atributos (descriptores)** que definen su comportamiento:
 
-Las propiedades de un objeto asocian una clave (nombre) con un valor. Además del valor, cada propiedad tiene atributos (descriptores):
+*   **`writable`**: Si el valor puede cambiarse.
+*   **`enumerable`**: Si aparece en bucles `for...in` y `Object.keys()`.
+*   **`configurable`**: Si la propiedad puede eliminarse o si sus descriptores pueden ser modificados.
 
-    writable: si el valor puede cambiarse.
+> [!NOTE]
+> Por defecto, las propiedades definidas de forma literal son `writable`, `enumerable` y `configurable`.
 
-    enumerable: si aparece en bucles for...in y Object.keys().
+## Definición de Propiedades con Control Preciso
 
-    configurable: si la propiedad puede eliminarse o cambiar sus descriptores.
+`Object.defineProperty(obj, prop, descriptor)` permite establecer estos atributos de forma explícita.
 
-Por defecto, las propiedades definidas de forma literal son writable, enumerable y configurable.
-Definición de propiedades con control preciso
-
-Object.defineProperty(obj, prop, descriptor) permite establecer esos atributos.
-```js
+```javascript
 const obj = {};
 Object.defineProperty(obj, 'id', {
   value: 123,
@@ -23,17 +23,24 @@ Object.defineProperty(obj, 'id', {
   enumerable: true,
   configurable: false
 });
-obj.id = 456; // no tiene efecto (o lanza error en strict mode)
+
+obj.id = 456; // No tiene efecto (o lanza error en strict mode)
 ```
 
-Object.defineProperties para múltiples propiedades.
-Métodos
+También existe `Object.defineProperties` para definir múltiples propiedades a la vez.
 
-Son funciones almacenadas como propiedades del objeto. Pueden referirse al objeto a través de this. En métodos definidos con sintaxis abreviada, this apunta al objeto sobre el que se invoca el método.
-Getters y Setters
+## Métodos
 
-Se definen con las palabras clave get y set, permitiendo ejecutar lógica al leer o escribir una propiedad.
-```js
+Los métodos son funciones almacenadas como propiedades de un objeto. Pueden referirse al objeto a través de la palabra clave `this`.
+
+> [!TIP]
+> En métodos definidos con sintaxis abreviada, `this` apunta al objeto sobre el que se invoca el método.
+
+## Getters y Setters
+
+Se definen con las palabras clave `get` y `set`, permitiendo ejecutar lógica personalizada al leer o escribir una propiedad.
+
+```javascript
 const persona = {
   nombre: 'Juan',
   apellido: 'Perez',
@@ -46,30 +53,32 @@ const persona = {
     this.apellido = partes[1];
   }
 };
+
 console.log(persona.nombreCompleto); // Juan Perez
 persona.nombreCompleto = 'Ana Lopez';
 console.log(persona.nombre); // Ana
 ```
 
-### Método this en métodos
+## El valor de `this` en métodos
 
-El valor de this depende de cómo se invoca la función:
+El valor de `this` depende de **cómo se invoca** la función:
 
-    Llamada directa como método: obj.metodo() → this es obj.
+*   **Llamada directa como método:** `obj.metodo()` → `this` es `obj`.
+*   **Función extraída:** `const fn = obj.metodo; fn()` → `this` es el objeto global (o `undefined` en modo estricto).
+*   **Arrow functions:** No tienen `this` propio; heredan el valor de `this` del contexto donde fueron creadas.
 
-    Función extraída: const fn = obj.metodo; fn() → this es objeto global (o undefined en estricto).
+## Borrado de Propiedades
 
-    Arrow functions: no tienen this propio, heredan el del contexto.
+El operador `delete` elimina una propiedad del objeto. Fallará si la propiedad tiene el descriptor `configurable: false`.
 
-### Borrado de propiedades
+```javascript
+delete persona.edad;
+```
 
-El operador delete elimina la propiedad del objeto. Fallará si la propiedad es no configurable.
-Verificación de existencia
+## Verificación de Existencia
 
-    prop in obj (verifica cadena de prototipos).
+Existen varias formas de comprobar si una propiedad existe en un objeto:
 
-    obj.hasOwnProperty(prop) (solo propiedades propias).
-
-    obj[prop] !== undefined (puede fallar si el valor es undefined).
-
----
+*   **`prop in obj`**: Verifica la propiedad tanto en el objeto como en su cadena de prototipos.
+*   **`obj.hasOwnProperty(prop)`**: Verifica solo las propiedades **propias** del objeto.
+*   **`obj[prop] !== undefined`**: Puede fallar si la propiedad existe pero su valor es explícitamente `undefined`.

@@ -1,20 +1,21 @@
-## Archivo: `04-funciones-constructoras.md`
+# Funciones Constructoras
 
+Una función constructora es una función convencional que se invoca con el operador `new`. Su propósito principal es crear e inicializar un nuevo objeto.
 
-Una función constructora es una función normal que se invoca con el operador new. Su propósito es crear e inicializar un objeto.
-Convención
+## Convenciones
 
-    Nombre en PascalCase (primera letra mayúscula) para distinguirla de funciones normales.
+*   **PascalCase**: El nombre debe comenzar con mayúscula (ej. `Persona`) para distinguirla de funciones normales.
+*   **Uso de `this`**: Internamente utiliza `this` para asignar propiedades al nuevo objeto.
+*   **Retorno**: No debe devolver explícitamente un objeto. Si devuelve un valor primitivo, se ignora; si devuelve un objeto, ese objeto será el resultado final en lugar de la instancia creada.
 
-    Internamente usa this para asignar propiedades al nuevo objeto.
+## Ejemplo de Uso
 
-    No debe devolver explícitamente un objeto (si devuelve un valor primitivo, se ignora; si devuelve un objeto, ese objeto será el resultado en lugar de la instancia).
-
-```js
+```javascript
 function Coche(marca, modelo) {
   this.marca = marca;
   this.modelo = modelo;
 }
+
 Coche.prototype.arrancar = function() {
   return `${this.marca} ${this.modelo} arrancado`;
 };
@@ -23,30 +24,35 @@ const coche1 = new Coche('Toyota', 'Yaris');
 console.log(coche1.arrancar()); // Toyota Yaris arrancado
 ```
 
-### Qué ocurre al usar new
+## ¿Qué ocurre al usar `new`?
 
-    Se crea un nuevo objeto vacío.
+> [!IMPORTANT]
+> Cuando se ejecuta una función con el operador `new`, ocurren los siguientes pasos:
+> 1. Se crea un **nuevo objeto vacío**.
+> 2. El **prototipo** del nuevo objeto se enlaza a `Func.prototype`.
+> 3. Dentro de la función, `this` se vincula al nuevo objeto.
+> 4. Se ejecuta el cuerpo de la función (inicializando propiedades).
+> 5. Si la función no retorna un objeto explícitamente, se devuelve el objeto creado automáticamente.
 
-    El prototipo del nuevo objeto se enlaza a Func.prototype.
+## Detección de llamadas con `new`
 
-    Dentro de la función, this apunta al nuevo objeto.
+Desde ES6, podemos usar `new.target` para verificar si una función fue invocada correctamente:
 
-    Se ejecuta el cuerpo de la función (normalmente para añadir propiedades).
+*   **`new.target`**: Es una referencia a la función constructora si se llamó con `new`.
+*   Si la función se llamó de forma normal, `new.target` será `undefined`.
 
-    Si la función no retorna un objeto, se devuelve el nuevo objeto creado.
+```javascript
+function Usuario() {
+  if (!new.target) {
+    throw new Error('Debe usar "new" para crear un usuario');
+  }
+}
+```
 
-### Cómo detectar si una función fue llamada con new
+## Limitaciones y Problemas
 
-    new.target: dentro de la función, si fue llamada con new es una referencia a la función constructora; si no, es undefined.
+Aunque potentes, las funciones constructoras presentan algunos inconvenientes:
 
-    Con eso se puede lanzar un error si se omite new.
-
-### Problemas
-
-    Requiere manejar el prototype para métodos, lo que puede ser confuso.
-
-    No es obvio que deba usarse new; se puede invocar sin new, causando efectos laterales en el ámbito global.
-
-    La sintaxis de clases resuelve estos problemas con un diseño más claro.
-
----
+*   **Manejo manual de `prototype`**: Definir métodos requiere manipular el prototipo por separado, lo que puede ser confuso.
+*   **Ambigüedad**: No es visualmente obvio que una función deba usarse con `new`. Si se omite, puede causar efectos colaterales inesperados en el ámbito global.
+*   **Sustitución**: La sintaxis de **clases** resuelve estos problemas con un diseño más limpio y restricciones nativas.

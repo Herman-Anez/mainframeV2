@@ -1,71 +1,67 @@
+# Métodos Estáticos de Object
 
-## Archivo: `06-metodos-de-object.md`
+El objeto global `Object` proporciona una amplia gama de métodos estáticos esenciales para manipular, proteger e inspeccionar objetos.
 
+## Iteración y Conversión
 
-El objeto global Object proporciona métodos estáticos muy útiles para trabajar con objetos.
-Métodos de iteración y conversión
+Estos métodos permiten transformar objetos en arrays para facilitar su iteración:
 
-    Object.keys(obj): devuelve un array con las claves propias enumerables.
+*   **`Object.keys(obj)`**: Devuelve un array con las claves propias enumerables.
+*   **`Object.values(obj)`**: Devuelve un array con los valores propios enumerables.
+*   **`Object.entries(obj)`**: Devuelve un array de pares `[clave, valor]`.
 
-    Object.values(obj): array con los valores propios enumerables.
-
-    Object.entries(obj): array de pares [clave, valor].
-
-```js
+```javascript
 const obj = { a: 1, b: 2 };
-Object.entries(obj); // [['a',1], ['b',2]]
+Object.entries(obj); // [['a', 1], ['b', 2]]
 ```
 
-Estos ignoran propiedades no enumerables y las heredadas.
-Métodos para control de propiedades
+> [!NOTE]
+> Estos métodos ignoran las propiedades no enumerables y aquellas heredadas a través de la cadena de prototipos.
 
-    Object.defineProperty(obj, prop, descriptor) y Object.defineProperties: ya vistos.
+## Control de Propiedades
 
-    Object.getOwnPropertyDescriptor(obj, prop): devuelve el descriptor de una propiedad propia.
+*   **`Object.getOwnPropertyDescriptor(obj, prop)`**: Devuelve los atributos (descriptores) de una propiedad específica.
+*   **`Object.getOwnPropertyNames(obj)`**: Devuelve un array con todas las claves (incluyendo las no enumerables).
+*   **`Object.hasOwn(obj, prop)`**: (ES2022) Forma segura y moderna de verificar si una propiedad es propia del objeto.
 
-    Object.getOwnPropertyNames(obj): array de todas las claves propias (incluyendo no enumerables, excluyendo Symbols).
+## Protección de Objetos (Inmutabilidad)
 
-    Object.getOwnPropertySymbols(obj): array de símbolos propios.
+JavaScript ofrece tres niveles de protección para objetos:
 
-    Object.hasOwn(obj, prop) (ES2022): método más seguro que obj.hasOwnProperty para verificar propiedad propia.
+1.  **`Object.preventExtensions(obj)`**: Impide añadir nuevas propiedades.
+2.  **`Object.seal(obj)`**: Impide añadir/eliminar propiedades, pero permite modificar los valores de las existentes.
+3.  **`Object.freeze(obj)`**: Hace que el objeto sea completamente inmutable (superficialmente).
 
-### Protección de objetos (inmutabilidad)
-
-    Object.preventExtensions(obj): impide añadir nuevas propiedades.
-
-    Object.seal(obj): preventExtensions + configura configurable: false para todas las propiedades existentes (no se pueden eliminar).
-
-    Object.freeze(obj): seal + configura writable: false (objeto completamente inmutable de forma superficial). Las subpropiedades si son objetos pueden seguir modificándose.
-    Para cada uno existen sus comprobadores: Object.isExtensible, Object.isSealed, Object.isFrozen.
-
-```js
-const config = Object.freeze({ api: 'https://...' });
-config.api = 'otra'; // falla silenciosamente o lanza error en estricto
+```javascript
+const config = Object.freeze({ api: 'https://api.com' });
+config.api = 'otra'; // Fallará (en modo estricto lanza error)
 ```
 
-### Creación y manipulación de prototipos
+> [!WARNING]
+> La protección es **superficial**. Si una propiedad es a su vez un objeto, sus propiedades internas aún podrán ser modificadas a menos que también se congelen recursivamente.
 
-    Object.create(proto, [descriptors]): crea un nuevo objeto con el prototipo especificado.
+## Manipulación de Prototipos
 
-    Object.getPrototypeOf(obj) y Object.setPrototypeOf(obj, proto).
+*   **`Object.create(proto)`**: Crea un nuevo objeto utilizando el objeto proporcionado como prototipo.
+*   **`Object.getPrototypeOf(obj)`**: Obtiene el prototipo de un objeto.
+*   **`Object.setPrototypeOf(obj, proto)`**: Cambia el prototipo (operación costosa en rendimiento).
 
-    Object.setPrototypeOf es lento; mejor usar Object.create.
+## Copia y Composición
 
-### Métodos de copia y composición
+*   **`Object.assign(target, ...sources)`**: Copia las propiedades de uno o más objetos fuente a un objeto destino.
 
-    Object.assign(target, ...sources): copia las propiedades propias enumerables de los objetos fuente al objeto destino (copia superficial). Retorna el destino. Muy usado para combinar objetos.
-
-```js
+```javascript
 const base = { a: 1 };
-const copia = Object.assign({}, base, { b: 2 }); // { a:1, b:2 }
+const extendido = Object.assign({}, base, { b: 2 }); // { a: 1, b: 2 }
 ```
 
-    No copia getters/setters, sino sus valores evaluados.
+> [!TIP]
+> `Object.assign` realiza una **copia superficial**. Para copias profundas, se deben utilizar otros mecanismos como `structuredClone()`.
 
-### De objeto a otros formatos
+## Conversión a otros Formatos
 
-    Object.fromEntries(iterable): inverso de Object.entries, construye un objeto a partir de pares clave-valor.
-
+*   **`Object.fromEntries(iterable)`**: El inverso de `entries()`. Crea un objeto a partir de una lista de pares clave-valor.
+*   **`JSON.stringify()` / `JSON.parse()`**: Aunque pertenecen al objeto `JSON`, son herramientas fundamentales para la serialización de objetos.
 ```js
 Object.fromEntries([['nombre','Juan'], ['edad',30]]); // {nombre:'Juan', edad:30}
 ```
