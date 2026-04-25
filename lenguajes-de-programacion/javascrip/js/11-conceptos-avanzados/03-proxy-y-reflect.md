@@ -1,72 +1,82 @@
+# Proxy y Reflect
 
-## Archivo: `03-proxy-y-reflect.md`
+JavaScript proporciona dos herramientas extremadamente potentes para la metaprogramación: **Proxy**, que permite interceptar operaciones, y **Reflect**, que permite ejecutarlas de forma controlada.
 
-Proxy
+---
 
-Permite interceptar y redefinir operaciones fundamentales sobre un objeto (get, set, delete, has, enumerate, construct, apply...). Se crea con new Proxy(target, handler).
+## Proxy
+
+Un objeto `Proxy` permite envolver otro objeto (o función) e interceptar sus operaciones fundamentales, como la lectura/escritura de propiedades, la eliminación o incluso la invocación.
+
+Se crea mediante: `new Proxy(target, handler)`
+
 ```js
 const persona = { nombre: 'Ana', edad: 28 };
+
 const manejador = {
   get(target, prop) {
     if (prop === 'edad') return `${target.edad} años`;
     return Reflect.get(target, prop);
   },
   set(target, prop, valor) {
-    if (prop === 'edad' && valor < 0) throw new Error('Edad no válida');
+    if (prop === 'edad' && valor < 0) {
+      throw new Error('La edad no puede ser negativa');
+    }
     target[prop] = valor;
-    return true;
+    return true; // Indica que la asignación fue exitosa
   }
 };
+
 const proxy = new Proxy(persona, manejador);
-console.log(proxy.edad); // '28 años'
-proxy.edad = -5; // lanza Error
+console.log(proxy.edad); // "28 años"
+proxy.edad = -5;         // Lanza Error
 ```
 
-### Métodos interceptables (trampas)
-
-    get, set, deleteProperty, has (operador in), ownKeys, getOwnPropertyDescriptor, defineProperty, preventExtensions, isExtensible, apply (para funciones), construct (para new).
-
-### Casos de uso
-
-    Validación y saneamiento de datos.
-
-    PropTypes en tiempo de ejecución.
-
-    Observadores reactivos: frameworks como Vue 3 utilizan Proxy para la reactividad.
-
-    Logging y profiling.
-
-    APIs de objetos negativos (ej. valores por defecto: const cero = new Proxy({}, { get: (t,p) => p in t ? t[p] : 0 })).
-
-    Virtualización de objetos (simular propiedades que no existen realmente).
-
-### Reflect
-
-Objeto incorporado con métodos estáticos que replican las operaciones internas del lenguaje (las mismas trampas de Proxy). Su propósito es normalizar la manipulación de objetos y proporcionar una forma segura de invocar la operación predeterminada dentro de un proxy.
-
-    Reflect.get(obj, prop, receiver?) en lugar de obj[prop].
-
-    Reflect.set(...), Reflect.deleteProperty, Reflect.apply, etc.
-
-Dentro de un proxy, en lugar de target[prop] se recomienda Reflect.get(target, prop, receiver) para respetar la cadena de prototipos y posibles proxies anidados.
-Relación Proxy y Reflect
-
-Han sido diseñados para trabajar juntos; cada trampa de Proxy tiene un método correspondiente en Reflect que ejecuta el comportamiento por defecto.
-```js
-const manejador = {
-  set(target, prop, value, receiver) {
-    // alguna validación
-    return Reflect.set(target, prop, value, receiver);
-  }
-};
-```
-
-### Precauciones
-
-    Los proxies no son totalmente transparentes: proxy !== target, typeof, comparaciones pueden fallar.
-
-    El rendimiento de proxies es inferior al acceso directo (aunque para la mayoría de aplicaciones es aceptable).
-
-    No se pueden polifillar; requieren soporte nativo ES6.
+### Trampas (*Traps*) disponibles
+Las "trampas" son los métodos del manejador que interceptan las operaciones:
+- `get` / `set`: Lectura y escritura.
+- `has`: Intercepta el operador `in`.
+- `deleteProperty`: Intercepta `delete`.
+- `apply`: Intercepta la llamada a una función.
+- `construct`: Intercepta el uso de `new`.
 
 ---
+
+## Reflect
+
+Es un objeto incorporado que proporciona métodos estáticos para las mismas operaciones internas que intercepta un Proxy. Su propósito es facilitar la invocación del comportamiento predeterminado del lenguaje.
+
+> [!TIP]
+> Dentro de un Proxy, se recomienda usar siempre `Reflect` para realizar la operación original. Esto asegura que se respeten comportamientos complejos como la cadena de prototipos y el contexto de `this` (`receiver`).
+
+```js
+const manejador = {
+  get(target, prop, receiver) {
+    console.log(`Accediendo a: ${prop}`);
+    return Reflect.get(target, prop, receiver);
+  }
+};
+```
+
+---
+
+## Casos de uso comunes
+
+1. **Validación de datos:** Asegurar que las propiedades de un objeto cumplan ciertos criterios antes de guardarlas.
+2. **Reactividad:** Seguimiento automático de cambios en objetos (base de frameworks como **Vue 3**).
+3. **Logging y Profiling:** Observar qué partes de un objeto se utilizan y con qué frecuencia.
+4. **Valores por defecto:** Crear objetos que devuelven un valor predefinido en lugar de `undefined` para claves inexistentes.
+5. **APIs de Solo Lectura:** Crear proxies que lancen errores al intentar modificar cualquier propiedad.
+
+---
+
+## Limitaciones y Precauciones
+
+> [!WARNING]
+> **Rendimiento:** El uso de Proxies añade una capa de indirección que es ligeramente más lenta que el acceso directo. Úsalos con sabiduría en secciones críticas de rendimiento.
+
+> [!IMPORTANT]
+> **Identidad:** Un Proxy es un objeto distinto al original (`proxy !== target`). Esto puede causar problemas si tu código depende de comparaciones de identidad o de referencias directas.
+
+- **Polifills:** Los Proxies **no pueden** ser polifillados para navegadores antiguos de forma completa, ya que requieren soporte profundo a nivel de motor de JavaScript.
+- **Transparencia:** Algunos objetos internos (como `Map`, `Set` o fechas) pueden fallar al ser envueltos en un Proxy si no se gestionan correctamente los enlaces internos (*internal slots*).

@@ -1,9 +1,13 @@
+# Canvas API (Fundamentos 2D)
 
-## Archivo: `04-canvas-basico.md`
+El elemento `<canvas>` proporciona un área de dibujo basada en píxeles que se manipula mediante scripts. Es ideal para gráficos dinámicos, juegos y visualización de datos.
 
+---
 
-El elemento <canvas> proporciona un área de dibujo de píxeles mediante scripts (API de Canvas 2D, WebGL para 3D). Aquí veremos los fundamentos del contexto 2D.
-Obtener el contexto
+## Obtener el contexto
+
+Para dibujar, primero definimos el elemento en HTML y luego obtenemos su contexto de dibujo en JavaScript.
+
 ```html
 <canvas id="lienzo" width="400" height="300"></canvas>
 ```
@@ -13,101 +17,109 @@ const canvas = document.getElementById('lienzo');
 const ctx = canvas.getContext('2d');
 ```
 
-### Dibujo de formas
+---
 
-    Rectángulos:
+## Dibujo de formas básicas
 
-        fillRect(x, y, width, height): rectángulo relleno.
+### Rectángulos
+- **`fillRect(x, y, w, h)`**: Dibuja un rectángulo relleno.
+- **`strokeRect(x, y, w, h)`**: Dibuja el contorno de un rectángulo.
+- **`clearRect(x, y, w, h)`**: Borra los píxeles en el área especificada (los hace transparentes).
 
-        strokeRect(x, y, w, h): rectángulo contorneado.
+### Caminos (*Paths*)
+Para crear formas complejas, se definen rutas de puntos:
 
-        clearRect(x, y, w, h): borra píxeles.
-
-    Caminos (paths):
 ```js
-    ctx.beginPath();
-    ctx.moveTo(50, 50);
-    ctx.lineTo(100, 100);
-    ctx.lineTo(50, 100);
-    ctx.closePath(); // cierra la figura
-    ctx.stroke(); // dibuja la línea
-    ctx.fill(); // rellena el interior
+ctx.beginPath();       // Inicia un nuevo camino
+ctx.moveTo(50, 50);    // Mueve el "lápiz" a una posición
+ctx.lineTo(100, 100);  // Dibuja una línea hasta otra posición
+ctx.lineTo(50, 100);
+ctx.closePath();       // Cierra la figura volviendo al inicio
+ctx.stroke();          // Dibuja el contorno
+ctx.fill();            // Rellena el interior
 ```
 
-    Arcos/círculos:
-    ctx.arc(x, y, radius, startAngle, endAngle, anticlockwise?).
-    Ángulos en radianes. Ej: ctx.arc(100, 100, 50, 0, Math.PI * 2).
+### Arcos y Círculos
+`ctx.arc(x, y, radio, anguloInicio, anguloFin, sentidoAntihorario?)`
+*Nota: Los ángulos se miden en **radianes**.*
 
-### Estilos de trazo y relleno
+---
 
-### ctx.fillStyle = 'red' | '#00FF00' | 'rgba(...)' | gradiente | patrón
+## Estilos y Colores
 
-    ctx.strokeStyle = ...
+- **`ctx.fillStyle`**: Color de relleno (nombres, hex, RGB, gradientes).
+- **`ctx.strokeStyle`**: Color del contorno.
+- **`ctx.lineWidth`**: Grosor de la línea.
+- **`ctx.lineCap`**: Estilo de los extremos de la línea (`butt`, `round`, `square`).
 
-### ctx.lineWidth = 5
+### Gradientes y Patrones
+- **Lineal:** `const grad = ctx.createLinearGradient(x0, y0, x1, y1);`
+- **Radial:** `ctx.createRadialGradient(x0, y0, r0, x1, y1, r1);`
+- **Patrón:** `ctx.createPattern(imagen, 'repeat');`
 
-### ctx.lineCap, ctx.lineJoin
+---
 
-### Gradientes y patrones
+## Texto
 
-    Lineal: const grad = ctx.createLinearGradient(x0,y0, x1,y1); grad.addColorStop(0, 'white'); grad.addColorStop(1, 'black');
+```js
+ctx.font = '20px Arial';
+ctx.fillText('Hola Canvas', x, y);   // Texto relleno
+ctx.strokeText('Hola Canvas', x, y); // Contorno de texto
+```
 
-### Radial: ctx.createRadialGradient(x0,y0,r0, x1,y1,r1)
+---
 
-### Patrón: ctx.createPattern(imagen, 'repeat')
+## Transformaciones
 
-### Texto
+Permiten modificar cómo se dibuja en el lienzo de forma global:
+- **`translate(x, y)`**: Desplaza el punto de origen (0,0).
+- **`rotate(radianes)`**: Rota el lienzo alrededor del origen.
+- **`scale(x, y)`**: Escala los dibujos.
 
-### ctx.font = '20px Arial'
+> [!TIP]
+> Usa **`ctx.save()`** antes de aplicar transformaciones y **`ctx.restore()`** al terminar. Esto permite guardar y recuperar el estado original (estilos, posición, etc.) del contexto.
 
-### ctx.fillText('texto', x, y) (relleno)
+---
 
-### ctx.strokeText('texto', x, y) (contorno)
+## Imágenes
 
-### ctx.textAlign, ctx.textBaseline
-
-### Transformaciones
-
-    ctx.translate(x, y): desplaza el origen.
-
-    ctx.rotate(rad): rota el lienzo.
-
-    ctx.scale(sx, sy): escala.
-
-    ctx.save() y ctx.restore(): apilan y restauran el estado (transformaciones, estilos).
-
-### Imágenes
 ```js
 const img = new Image();
-img.onload = () => ctx.drawImage(img, x, y, width?, height?);
 img.src = 'ruta.png';
+img.onload = () => {
+  ctx.drawImage(img, x, y, width, height);
+};
 ```
+*También es posible recortar imágenes usando los 9 parámetros de `drawImage`.*
 
-También se puede recortar con drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh).
-Animaciones
+---
 
-Canvas no mantiene estado entre fotogramas; hay que redibujar todo en cada frame. Típico bucle:
+## Animaciones
+
+El lienzo es un mapa de bits estático; para animar, debemos borrar y redibujar todo el contenido en cada fotograma.
+
 ```js
 function animar() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // actualizar y dibujar
-  requestAnimationFrame(animar);
+  // 1. Actualizar posiciones
+  // 2. Dibujar elementos
+  requestAnimationFrame(animar); // Sincroniza con el refresco de pantalla
 }
 animar();
 ```
 
-### Pixel manipulation
+---
 
-ctx.getImageData(x,y,w,h) devuelve un objeto ImageData con .data (Uint8ClampedArray en formato RGBA). Permite leer y escribir píxeles directamente. ctx.putImageData(imageData, x, y) para escribir.
-Buenas prácticas
+## Manipulación de Píxeles
 
-    Especificar width y height en el elemento o en js; no modificar con CSS (distorsiona).
+`ctx.getImageData(x, y, w, h)` devuelve un objeto `ImageData` con una propiedad `.data` (un `Uint8ClampedArray` en formato **RGBA**). Esto permite procesar imágenes píxel a píxel a nivel de bajo nivel.
 
-    Limpiar el lienzo al inicio de cada frame.
+---
 
-    Usar requestAnimationFrame para animaciones suaves.
+## Buenas prácticas
 
-    Para gráficos complejos, considerar librerías como Fabric.js, PixiJS, Konva.
-
+- **Dimensiones:** Define siempre el `width` y `height` directamente en el atributo del elemento o mediante JS. Evita usar CSS para cambiar el tamaño, ya que esto escala la imagen y causa distorsión.
+- **Optimización:** Limpia el lienzo al inicio de cada frame de animación para evitar rastros.
+- **Librerías:** Para proyectos complejos de juegos o escenas interactivas, considera usar librerías como **Fabric.js**, **PixiJS** o **Konva**.
 ### 11-conceptos-avanzados
 ---

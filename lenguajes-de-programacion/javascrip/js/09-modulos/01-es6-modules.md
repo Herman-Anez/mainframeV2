@@ -1,135 +1,140 @@
+# ES6 Modules (ESM)
 
-## Archivo: `01-es6-modules.md`
+Los **módulos ES6** (ECMAScript 2015) son el sistema de módulos nativo de JavaScript. Permiten encapsular código, exportar e importar funcionalidades y gestionar dependencias de forma declarativa y eficiente.
 
+---
 
-Los módulos ES6 (ECMAScript 2015) son el sistema de módulos nativo de js. Permiten encapsular código, exportar e importar funcionalidades y cargar dependencias de forma declarativa.
-Conceptos básicos
+## Conceptos fundamentales
 
-    Cada archivo .js que use import/export es un módulo.
+- **Ámbito propio:** Cada archivo `.js` que utiliza `import`/`export` es un módulo independiente. Las variables, funciones y clases definidas no se filtran al ámbito global a menos que se exporten explícitamente.
+- **Modo estricto:** Los módulos se ejecutan en modo estricto (`'use strict'`) automáticamente.
+- **Carga diferida:** Los módulos se cargan de forma asíncrona y diferida por defecto (equivalente a `<script type="module">`), evitando bloqueos en el renderizado del HTML.
 
-    Los módulos se ejecutan en modo estricto automáticamente.
+---
 
-    El ámbito de un módulo es propio: las variables, funciones y clases definidas no se filtran al ámbito global a menos que se exporten y se importen expresamente.
+## Exportaciones
 
-    Los módulos se cargan de forma asíncrona y diferida (como <script type="module">), lo que evita bloqueos del HTML.
+Se puede exportar cualquier declaración (variables, funciones, clases) o valores literales de dos formas principales:
 
-### Exportaciones
+### 1. Exportaciones nombradas (*Named exports*)
 
-Se puede exportar cualquier declaración (variables, funciones, clases) o valores directamente.
-Exportaciones nombradas (named exports)
+Permiten exportar múltiples entidades desde un mismo módulo. Los nombres deben coincidir al importar.
 
-Permiten exportar varias cosas desde un módulo.
 ```js
 // matematicas.js
 export const PI = 3.1416;
-export function suma(a, b) { return a + b; }
+
+export function suma(a, b) { 
+  return a + b; 
+}
+
 export class Calculadora { /* ... */ }
 ```
 
-También se puede exportar al final con una sola sentencia:
+También se pueden exportar varias entidades al final del archivo:
 ```js
 const PI = 3.1416;
 function suma(a, b) { return a + b; }
+
 export { PI, suma };
 ```
 
-Se pueden renombrar con as:
-```js
-export { suma as sumar };
-```
+> [!TIP]
+> Puedes renombrar exportaciones usando la palabra clave `as`:
+> `export { suma as sumar };`
 
-### Exportación por defecto (default export)
+### 2. Exportación por defecto (*Default export*)
 
-Un módulo puede tener una única exportación por defecto. Se suele usar para exportar la entidad principal del módulo (una función, una clase, un objeto).
+Un módulo puede tener una **única** exportación por defecto. Se utiliza generalmente para la entidad principal del archivo.
+
 ```js
 // calculadora.js
 export default class Calculadora {
   // ...
 }
-// o bien:
+
+// También es posible:
 // export { Calculadora as default };
 ```
 
-También se puede exportar una función anónima o un valor directamente:
-```js
-export default function() { /* ... */ }
-```
+> [!WARNING]
+> No se recomienda abusar de las exportaciones por defecto, ya que pueden hacer que las importaciones sean menos explícitas y dificulten el mantenimiento en proyectos grandes.
 
-No se debe abusar de las exportaciones por defecto; tienden a hacer menos explícita la importación.
-Importaciones
-Importación nombrada
+---
+
+## Importaciones
+
+### Importación nombrada
+
 ```js
 import { PI, suma, Calculadora } from './matematicas.js';
-
-    Las rutas deben ser completas (incluyendo extensión) en muchos entornos (navegador, Deno). En Node con módulos ES se puede omitir .js si el empaquetador lo resuelve.
 ```
 
-    Los nombres deben coincidir con los exportados, a menos que se use alias:
-
-```js
-import { suma as add } from './matematicas.js';
-```
+- **Rutas:** En navegadores y entornos como Deno, las rutas deben ser completas (incluyendo la extensión `.js`).
+- **Alias:** Puedes renombrar importaciones para evitar colisiones de nombres:
+  ```js
+  import { suma as add } from './matematicas.js';
+  ```
 
 ### Importación por defecto
-```js
-import Calculadora from './calculadora.js';
-```
 
-Puede tener cualquier nombre (no está ligado sintácticamente).
-Importación combinada
 ```js
+import MiCalculadora from './calculadora.js';
+```
+*Nota: Al ser una exportación por defecto, puedes asignarle cualquier nombre en el archivo de destino.*
+
+### Importación combinada y Namespace
+
+```js
+// Combinada: default y nombradas
 import React, { useState, useEffect } from 'react';
-```
 
-### Importación de todo el módulo (namespace)
-```js
+// Todo el módulo como un objeto (Namespace)
 import * as Mat from './matematicas.js';
-console.log(Mat.PI, Mat.suma(2,3));
+console.log(Mat.PI, Mat.suma(2, 3));
 ```
 
-Crea un objeto módulo con todas las exportaciones nombradas (no incluye la exportación por defecto, o la incluye como .default).
-Importación solo para efectos secundarios
+### Efectos secundarios
+
 ```js
-import './estilos.css'; // ejecuta el módulo sin importar nada
+import './estilos.css'; // Ejecuta el módulo sin importar ninguna variable específica
 ```
+Se utiliza comúnmente para cargar CSS, polyfills o configuraciones globales.
 
-Se usa para cargar CSS, polyfills o configurar librerías.
-Ejecución de módulos
+---
 
-    Las importaciones son estáticas: el motor resuelve todas las dependencias en tiempo de compilación (no se puede usar import dentro de condicionales).
+## Ejecución y Carga Dinámica
 
-    Para importación dinámica existe la función import().
+- **Estática:** Las importaciones normales son estáticas; el motor de JS las resuelve antes de ejecutar el código. No pueden estar dentro de condicionales.
+- **Referencias vivas:** Las exportaciones nombradas son enlaces en tiempo real. Si el módulo original modifica una variable exportada, el importador verá el cambio.
 
-    Los módulos se evalúan solo la primera vez que se importan; las exportaciones son enlazadas (no copiadas): si el módulo exporta una variable y la modifica internamente, los importadores ven el nuevo valor (referencia viva, solo para exportaciones nombradas).
+### `import()` dinámico
 
-### import() dinámico
+Permite cargar módulos bajo demanda, devolviendo una promesa. Es la base del *code splitting* y *lazy loading*.
 
-Devuelve una promesa del módulo completo. Permite cargar módulos bajo demanda (code splitting).
 ```js
 const modulo = await import('./utilidades.js');
 modulo.funcion();
 ```
 
-Se puede usar en cualquier contexto, no solo en el nivel superior. Es común en SPA para lazy loading de rutas.
-Compatibilidad en navegadores
+---
 
-Para usar módulos en un HTML:
+## Ámbito del Navegador
+
+Para habilitar módulos en el navegador, se debe especificar el tipo en la etiqueta script:
+
 ```html
 <script type="module" src="app.js"></script>
 ```
 
-Los módulos se cargan con CORS, así que no funcionan desde file:// (necesitan un servidor). Se pueden usar importmap para controlar la resolución de módulos.
-Tree shaking y agrupadores
-
-Los bundlers (Webpack, Vite, Rollup) analizan las importaciones estáticas para eliminar código no usado (tree shaking). Por eso las exportaciones nombradas suelen facilitar este proceso.
-Buenas prácticas
-
-    Prefiere exportaciones nombradas para APIs claras.
-
-    Usa default solo para componentes principales (un componente React, por ejemplo).
-
-    Mantén los módulos pequeños y cohesivos.
-
-    No mezcles lógica y efectos secundarios; los módulos con efectos secundarios dificultan el testing y el tree-shaking.
+> [!IMPORTANT]
+> Los módulos se cargan mediante CORS. Por seguridad, no funcionan a través del protocolo `file://`; requieren ser servidos mediante un servidor web (HTTP/HTTPS).
 
 ---
+
+## Buenas prácticas
+
+- **Claridad:** Prefiere exportaciones nombradas para APIs más descriptivas y seguras.
+- **Tree-shaking:** Los empaquetadores (Webpack, Vite, Rollup) eliminan código no usado más fácilmente con exportaciones nombradas.
+- **Cohesión:** Mantén los módulos pequeños, enfocados en una única responsabilidad.
+- **Pureza:** Evita efectos secundarios en módulos lógicos; facilita el testing y la optimización.

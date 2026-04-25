@@ -1,55 +1,72 @@
+# Event Loop (Profundo)
 
-## Archivo: `05-event-loop-profundo.md`
+Comprender el funcionamiento interno del **Event Loop** es crucial para escribir aplicaciones JavaScript de alto rendimiento y evitar bloqueos en la interfaz de usuario.
 
+---
 
-Ya vimos la base del event loop. Ahora exploramos la interacción precisa entre microtareas, macrotareas y el renderizado, y las implicaciones prácticas.
-Orden exacto de ejecución
+## Orden de Ejecución Exacto
 
-Ciclo típico en el navegador:
+El ciclo de vida de un "tick" en el navegador sigue un orden estrictamente definido:
 
-    Ejecutar una macrotarea (task): script inicial, evento UI, setTimeout, setInterval, I/O, etc.
+1. **Macrotarea (Task):** Se ejecuta una sola macrotarea de la cola (ej: script inicial, eventos de usuario, `setTimeout`, `setInterval`, I/O).
+2. **Microtareas (Microtasks):** Se vacía **completamente** la cola de microtareas (Promesas, `queueMicrotask`, `MutationObserver`). Si una microtarea genera nuevas microtareas, estas se ejecutan en este mismo paso.
+3. **Renderizado:** El navegador decide si es necesario repintar la UI (típicamente cada 16.6ms para mantener 60fps).
+   - Se ejecutan los callbacks de `requestAnimationFrame` (rAF) justo antes del repintado.
+4. **Repetición:** El ciclo vuelve al punto 1 para tomar la siguiente macrotarea.
 
-    Vaciar completamente la cola de microtareas (promesas, queueMicrotask, MutationObserver). Si durante esto se añaden nuevas microtareas, se ejecutan también en este mismo paso.
+---
 
-    Rendereizar (si es necesario): el navegador puede decidir repintar la UI. No ocurre en cada vuelta, sino cuando el agente de renderizado lo considera (normalmente cada 16ms para 60fps). Se ejecutan callbacks de requestAnimationFrame antes del repintado.
+## Categorización de Tareas
 
-    Repetir: tomar la siguiente macrotarea.
+### Macrotareas
+- Scripts externos (`<script src="...">`).
+- Eventos del DOM (click, scroll, etc.).
+- `setTimeout` / `setInterval`.
+- `setImmediate` (solo Node.js).
+- `MessageChannel`.
 
-### Macrotareas adicionales
+### Microtareas
+- Promesas (`.then`, `.catch`, `.finally`).
+- `queueMicrotask()`.
+- `MutationObserver`.
+- `process.nextTick` (solo Node.js - es la de mayor prioridad).
 
-    requestAnimationFrame(rAF): su callback se ejecuta justo antes del renderizado, pero después de las microtareas. Está sincronizado con el refresco de pantalla.
+---
 
-    requestIdleCallback: se ejecuta cuando el hilo principal está ocioso (entre frames). Prioridad baja.
+## Ejemplo Práctico: El orden de consola
 
-    MessageChannel y setImmediate (solo Node) también son macrotareas.
-
-### Ejemplo con rAF y microtareas
 ```js
-setTimeout(() => console.log('timeout'), 0);
-Promise.resolve().then(() => console.log('promise'));
-requestAnimationFrame(() => console.log('rAF'));
-// Orden típico: promise, rAF, timeout
+console.log('1. Inicio');
+
+setTimeout(() => console.log('2. Timeout'), 0);
+
+Promise.resolve().then(() => console.log('3. Promesa'));
+
+requestAnimationFrame(() => console.log('4. rAF'));
+
+console.log('5. Fin');
 ```
 
-Explicación: microtareas se vacían antes del render. rAF se ejecuta antes del render. Luego viene la macrotarea setTimeout.
-¿Por qué setTimeout(fn, 0) no ejecuta inmediatamente?
+**Orden de salida típico:**
+1. `1. Inicio` (Síncrono)
+2. `5. Fin` (Síncrono)
+3. `3. Promesa` (Microtarea - se ejecuta antes del siguiente tick)
+4. `4. rAF` (Antes del renderizado)
+5. `2. Timeout` (Siguiente macrotarea)
 
-Porque 0 es el tiempo mínimo, pero la callback se encola como macrotarea. El browser debe terminar la tarea actual, vaciar microtareas y posiblemente renderizar antes de despachar el timeout.
-Starvation de macrotareas
-
-Si una microtarea añade continuamente nuevas microtareas (bucle infinito de promesas), las macrotareas (y el renderizado) nunca se ejecutarán, congelando la UI. Evítalo.
-Node.js vs Browsers
-
-En Node.js, el event loop tiene varias fases: timers (setTimeout/setInterval), pending callbacks, idle, poll, check (setImmediate), close. Las microtareas se ejecutan entre fases y también después de cada fase. process.nextTick en Node es una microtarea incluso más prioritaria que las promesas.
-Implicaciones de rendimiento
-
-    Para tareas intensivas, dividir el trabajo en macrotareas pequeñas (setTimeout) permite que el navegador responda al usuario entre ellas.
-
-    requestAnimationFrame es mejor para animaciones y cambios visuales que deban sincronizarse con el refresco.
-
-    Las microtareas son el lugar ideal para ejecutar lógica que deba completarse antes del próximo renderizado (ej. actualizar el estado).
-
-### Depuración
-
-Entender el orden ayuda a depurar problemas asíncronos, como por qué un setTimeout(fn, 0) se ejecuta después de una promesa.
 ---
+
+## Consideraciones de Rendimiento
+
+### El peligro del "Starvation"
+> [!CAUTION]
+> Si una microtarea añade continuamente nuevas microtareas (por ejemplo, una promesa que se resuelve y encadena otra infinitamente), el Event Loop **nunca** llegará a la fase de renderizado ni a la siguiente macrotarea. Esto congelará la interfaz de usuario por completo.
+
+### Bloqueo del hilo principal
+> [!IMPORTANT]
+> JavaScript es monohilo. Una macrotarea que tarde demasiado en ejecutarse (ej: un cálculo matemático pesado) retrasará todas las microtareas y el renderizado, provocando una experiencia de usuario deficiente (*jank*).
+
+### Recomendaciones
+- **Tareas pesadas:** Divídelas en fragmentos pequeños usando `setTimeout` o delégalas a un **Web Worker**.
+- **Animaciones:** Usa siempre `requestAnimationFrame` en lugar de `setTimeout` para asegurar la sincronización con el refresco de pantalla.
+- **Lógica de Estado:** Las microtareas son ideales para coordinar cambios de estado que deben ser consistentes antes de que el usuario vea el próximo frame.

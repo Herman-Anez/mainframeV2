@@ -1,90 +1,97 @@
 
 
+# Web Workers
 
-## Archivo: `06-web-workers.md`
+Los **Web Workers** permiten ejecutar código JavaScript en un hilo separado del hilo principal (UI Thread). Esto es fundamental para realizar tareas pesadas sin congelar la interfaz de usuario.
 
+---
 
-Los Web Workers permiten ejecutar código js en un hilo separado del hilo principal (UI), evitando bloqueos. Se comunican con el hilo principal mediante mensajes.
-Tipos de workers
+## Tipos de Workers
 
-    Dedicated Worker: dedicado al script que lo crea. La comunicación es 1:1.
+- **Dedicated Workers:** Instanciados por un script principal y dedicados exclusivamente a él. La comunicación es 1:1.
+- **Shared Workers:** Pueden ser accedidos por múltiples scripts (pestañas, iframes) del mismo origen.
+- **Service Workers:** Actúan como proxies de red entre el navegador y el servidor. Permiten funcionalidades offline, notificaciones push y almacenamiento en caché.
 
-    Shared Worker: puede ser compartido por varias pestañas/orígenes del mismo origen. Comunicación a través de puertos.
+---
 
-    Service Worker: funciona como proxy de red, permite offline, notificaciones push. Sigue un ciclo de vida especial y actúa a nivel de dominio.
+## Implementación de un Dedicated Worker
 
-Aquí nos centramos en el Dedicated Worker.
-Crear un worker
+### 1. Hilo Principal (`main.js`)
 ```js
-// main.js
 const worker = new Worker('worker.js');
-worker.postMessage({ type: 'start', data: [1,2,3] });
+
+// Enviar datos al worker
+worker.postMessage({ type: 'CALCULAR', data: [10, 20, 30] });
+
+// Escuchar respuesta del worker
+worker.onmessage = (event) => {
+  console.log('Resultado recibido:', event.data);
+};
+
+// Manejo de errores
+worker.onerror = (error) => {
+  console.error('Error en el Worker:', error.message);
+};
 ```
 
-### worker.onmessage = (e) => {
-  console.log('Resultado:', e.data);
+### 2. El Worker (`worker.js`)
+```js
+// El contexto global es 'self', no 'window'
+self.onmessage = (event) => {
+  const { type, data } = event.data;
+
+  if (type === 'CALCULAR') {
+    const resultado = data.reduce((acc, val) => acc + val, 0);
+    // Enviar de vuelta al hilo principal
+    self.postMessage(resultado);
+  }
 };
+```
 
-### worker.onerror = (e) => {
-  console.error('Error en worker:', e.message);
-};
+---
 
-### // worker.js
-self.onmessage = (e) => {
-  const result = e.data.data.reduce((a,b) => a+b, 0);
-  self.postMessage(result);
-};
+## Comunicación y Transferencia de Datos
 
-### Intercambio de mensajes
+Por defecto, los datos enviados mediante `postMessage` se copian usando el algoritmo de **Structured Clone**.
 
-    postMessage permite pasar datos que son copiados (structured clone algorithm).
+> [!TIP]
+> Para datos muy grandes (como imágenes o grandes arrays binarios), puedes usar **Transferable Objects** (ej: `ArrayBuffer`). Esto transfiere la propiedad de la memoria al worker en lugar de copiarla, lo que es instantáneo y ahorra recursos.
+> `worker.postMessage(buffer, [buffer]);`
 
-    Se pueden transferir ciertos objetos (ArrayBuffer, MessagePort, ImageBitmap) mediante transferencia de propiedad (movimiento, no copia), liberando el original en el emisor. Esto se logra pasando un segundo argumento: worker.postMessage(buffer, [buffer]).
+---
 
-### APIs disponibles en Workers
+## Limitaciones y Entorno del Worker
 
-Los workers tienen acceso limitado:
+Los Web Workers se ejecutan en un entorno aislado.
 
-    No pueden manipular el DOM, ni acceder a window, document, parent.
+### ❌ No tienen acceso a:
+- El DOM (no puedes manipular elementos directamente).
+- El objeto `window` o `document`.
+- La mayoría de las APIs visuales.
 
-    Disponen de self, importScripts() (para cargar otros scripts), fetch, XMLHttpRequest, WebSocket, IndexedDB.
+### ✅ Sí tienen acceso a:
+- `self` (su propio contexto global).
+- `navigator` y `location` (solo lectura).
+- `fetch` y `XMLHttpRequest`.
+- `setTimeout` / `setInterval`.
+- **IndexedDB**.
+- Cargar otros scripts mediante `importScripts()`.
 
-    Pueden usar navigator, location (solo lectura), setTimeout/setInterval.
+---
 
-    Pueden crear otros workers (subworkers).
+## Ciclo de Vida y Terminación
 
-### Terminación
+- **Desde el hilo principal:** `worker.terminate()` finaliza el worker inmediatamente.
+- **Desde el worker:** `self.close()` permite que el worker se cierre a sí mismo una vez terminada su tarea.
 
-    worker.terminate() desde el hilo principal finaliza el worker inmediatamente.
+---
 
-    self.close() desde dentro del worker lo cierra.
+## Casos de Uso Comunes
 
-### Casos de uso
+> [!IMPORTANT]
+> No uses Web Workers para tareas pequeñas, ya que la sobrecarga de crear el hilo y serializar los mensajes puede ser mayor que el ahorro de tiempo.
 
-    Operaciones de CPU intensiva: procesamiento de imágenes, cálculos matemáticos, criptografía.
-
-    Parseo y manipulación de grandes datos (CSV, JSON).
-
-    Simulaciones y motores de juego.
-
-    Prefetching y procesamiento de datos en segundo plano.
-
-### Errores y depuración
-
-    Los errores no capturados en el worker no afectan al hilo principal; se reportan mediante onerror.
-
-    Las herramientas de desarrollo del navegador pueden inspeccionar workers y ver sus consolas.
-
-### Consideraciones
-
-    La creación de muchos workers puede consumir mucha memoria; cada worker tiene su propio heap.
-
-    La comunicación mediante serialización puede ser costosa para grandes volúmenes; usar transferencia de buffers para datos binarios.
-
-    Para tareas pequeñas, el coste de crear un worker puede superar el beneficio; evaluar con medidas de rendimiento.
-
-### Shared Workers y Service Workers
-
-    Shared Workers: mismo script accedido por múltiples conexiones (pestañas). Cada conexión usa un MessagePort.
-
-    Service Workers: actúan como proxy de red, interceptan peticiones fetch, manejan caché, notificaciones push y sincronización en fondo. Tienen ciclo de vida (instalación, activación) y requieren HTTPS.
+1. **Procesamiento de imágenes/video:** Aplicar filtros o compresión.
+2. **Criptografía:** Generación de claves o hashing pesado.
+3. **Grandes cálculos:** Análisis de Big Data o simulaciones físicas.
+4. **Parsing de datos:** Procesar archivos CSV o JSON de gran tamaño en segundo plano.

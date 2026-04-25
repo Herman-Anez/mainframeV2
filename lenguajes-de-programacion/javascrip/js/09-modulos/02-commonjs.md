@@ -1,71 +1,77 @@
-## Archivo: `02-commonjs.md`
+# CommonJS (CJS)
 
+**CommonJS** es el sistema de módulos utilizado históricamente por Node.js y otros entornos como Electron o Webpack (para compatibilidad). Está diseñado para una carga síncrona, ideal para entornos de servidor.
 
-CommonJS (CJS) es el sistema de módulos utilizado históricamente por Node.js (y otros entornos como Electron, Webpack, etc.). Es síncrono y está pensado para cargas en el servidor.
-Exportar con module.exports y exports
+---
 
-En cada archivo CJS, las variables module, exports, require y __filename, __dirname están inyectadas.
+## Exportar módulos
 
-    module.exports es el objeto (o valor) que realmente se exporta.
+En cada archivo CommonJS, se inyectan variables globales como `module`, `exports`, `require`, `__filename` y `__dirname`.
 
-    exports es una referencia a module.exports; si se reasigna exports = {}, se rompe la referencia y no se exporta nada. Para exportar varias cosas, se asignan propiedades: exports.foo = ... o se usa directamente module.exports.
+- **`module.exports`**: Es el objeto o valor que realmente se exporta al mundo exterior.
+- **`exports`**: Es una referencia inicial a `module.exports`. 
 
 ```js
 // matematicas.cjs
 function suma(a, b) { return a + b; }
 const PI = 3.1416;
+
 module.exports = { suma, PI };
 ```
 
-También se puede exportar una sola función:
+También se puede exportar una única entidad directamente:
 ```js
 // calculadora.cjs
 class Calculadora {}
 module.exports = Calculadora;
 ```
 
-### Importar con require()
+> [!WARNING]
+> Si reasignas `exports` directamente (ej: `exports = {}`), rompes la referencia a `module.exports` y no se exportará nada. Para exportar múltiples propiedades, usa `exports.propiedad = ...` o `module.exports = { ... }`.
+
+---
+
+## Importar con `require()`
+
 ```js
 const mate = require('./matematicas.cjs');
-console.log(mate.suma(2,3));
-
-    require es una función síncrona que devuelve el valor de module.exports del módulo requerido.
+console.log(mate.suma(2, 3));
 ```
 
-    El módulo se evalúa y cachea: una misma referencia devuelta en subsecuentes require.
+- **Sincronía:** `require` es una función síncrona que bloquea la ejecución hasta que el módulo es cargado y evaluado.
+- **Caché:** Los módulos se evalúan solo una vez. Los `require` subsecuentes devuelven la referencia cacheada.
+- **Resolución:** Node.js resuelve automáticamente extensiones `.js`, `.json` y `.node`. También busca archivos `index.js` dentro de directorios.
 
-    Las extensiones .js, .json y .node se resuelven automáticamente.
-
-    Se pueden requerir directorios con un archivo index.js dentro.
-
-### Carga cíclica
-
-CommonJS maneja dependencias circulares devolviendo el objeto module.exports en el estado que tenga hasta ese momento (parcialmente cargado). Esto puede causar comportamientos inesperados; es mejor evitar ciclos.
-Diferencias con ES Modules
-Característica	CJS	ESM
-Carga	Síncrona	Asíncrona (estática) / Dinámica con import()
-Sintaxis	require / module.exports	import / export
-Resolución en Node	Extensiones automáticas	Debe especificar extensión (si no se usa paquete)
-Modo estricto	No por defecto	Sí, automático
-Tree shaking	Difícil	Soportado nativamente
-this en top-level	apunta a exports	undefined
-Temporalidad	En tiempo de ejecución	Estática (salvo dinámica)
-Interoperabilidad
-
-Node.js permite importar módulos CJS desde ESM usando:
-```js
-import mod from 'modulo-cjs'; // toma el default export de CJS
-import { nombrado } from 'modulo-cjs'; // falla si no se ha exportado nombrado explícitamente
-```
-
-Para importar ESM desde CJS se puede usar import() dinámica (asíncrono). No se puede usar require para módulos ESM.
-¿Cuándo usar cada uno?
-
-    Nuevos proyectos en Node: preferir ESM ("type": "module" en package.json).
-
-    Proyectos legacy: CJS. Muchos paquetes npm aún distribuyen CJS.
-
-    Bibliotecas: conviene publicar dual CJS/ESM para máxima compatibilidad.
-
-### 10-apis-web
 ---
+
+## Diferencias con ES Modules
+
+| Característica | CommonJS (CJS) | ES Modules (ESM) |
+| :--- | :--- | :--- |
+| **Carga** | Síncrona | Asíncrona (Estática / Dinámica) |
+| **Sintaxis** | `require` / `module.exports` | `import` / `export` |
+| **Resolución** | Extensiones automáticas | Especificación obligatoria de extensión |
+| **Modo Estricto** | Opcional | Automático y obligatorio |
+| **Tree shaking** | Muy difícil de optimizar | Soportado nativamente |
+| **`this` (top-level)** | Apunta a `exports` | `undefined` |
+
+---
+
+## Interoperabilidad
+
+Node.js permite la convivencia de ambos sistemas, con algunas reglas:
+
+1. **Importar CJS desde ESM:**
+   ```js
+   import mod from './modulo.cjs'; // Toma el module.exports como default
+   ```
+2. **Importar ESM desde CJS:**
+   Solo se puede hacer mediante el `import()` dinámico (asíncrono). `require` **no puede** cargar módulos ESM.
+
+---
+
+## Buenas prácticas
+
+- **Modernización:** Prefiere ESM para nuevos proyectos (`"type": "module"` en `package.json`).
+- **Librerías:** Considera publicar en formato dual (CJS y ESM) para máxima compatibilidad.
+- **Ciclos:** Evita las dependencias circulares; aunque CJS las maneja devolviendo objetos parcialmente cargados, suelen causar errores lógicos difíciles de depurar.

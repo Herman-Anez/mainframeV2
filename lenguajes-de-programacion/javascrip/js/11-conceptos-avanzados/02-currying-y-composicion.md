@@ -1,9 +1,13 @@
+# Currying y Composición
 
-## Archivo: `02-currying-y-composicion.md`
+En la programación funcional, el **Currying** y la **Composición** son técnicas fundamentales para crear código modular, reutilizable y fácil de testear.
 
-Currying
+---
 
-Técnica de transformación de funciones que toman múltiples argumentos en una secuencia de funciones que toman un argumento cada una.
+## Currying
+
+Es la técnica de transformar una función que acepta múltiples argumentos en una secuencia de funciones que aceptan un único argumento cada una.
+
 ```js
 // Sin currying
 function suma(a, b, c) { return a + b + c; }
@@ -16,13 +20,13 @@ function sumaCurried(a) {
     };
   };
 }
-sumaCurried(1)(2)(3); // 6
+
+console.log(sumaCurried(1)(2)(3)); // 6
 ```
 
-Permite crear funciones parcialmente aplicadas: const sumaUno = sumaCurried(1); sumaUno(2)(3).
-Currying genérico
+### Currying genérico
+Podemos automatizar este proceso con una función auxiliar:
 
-Se puede implementar un helper:
 ```js
 function curry(fn) {
   return function curried(...args) {
@@ -32,57 +36,68 @@ function curry(fn) {
     return (...next) => curried(...args, ...next);
   };
 }
+
 const curriedSuma = curry(suma);
-curriedSuma(1)(2)(3); // 6
-curriedSuma(1, 2)(3); // 6
+console.log(curriedSuma(1)(2)(3)); // 6
+console.log(curriedSuma(1, 2)(3)); // 6
 ```
 
-### Aplicación práctica
+> [!TIP]
+> El currying es extremadamente útil para crear **funciones parcialmente aplicadas**. Por ejemplo:
+> `const multiplicar = curry((a, b) => a * b);`
+> `const doble = multiplicar(2); // Función que siempre multiplica por 2`
 
-    Crear funciones especializadas reutilizando lógica: const multiplicar = curry((a,b) => a*b); const doble = multiplicar(2);
+---
 
-    Configuración de manejadores de eventos, bibliotecas funcionales (Ramda, lodash/fp).
+## Composición de funciones
 
-### Composición de funciones
+Consiste en combinar funciones simples para construir funciones complejas. La salida de una función se convierte directamente en la entrada de la siguiente.
 
-Consiste en combinar funciones simples para formar funciones más complejas. La salida de una función se convierte en la entrada de la siguiente.
 ```js
 const trim = s => s.trim();
 const mayusculas = s => s.toUpperCase();
 const exclamar = s => s + '!';
 
-const emocionar = (s) => exclamar(mayusculas(trim(s)));
+// Composición manual (difícil de leer si hay muchas funciones)
+const emocionarManual = (s) => exclamar(mayusculas(trim(s)));
 ```
 
-### Función compose y pipe
+### Funciones `compose` y `pipe`
 
-    compose ejecuta de derecha a izquierda (al estilo matemático).
+Para manejar la composición de forma elegante, solemos usar utilidades:
 
-    pipe ejecuta de izquierda a derecha.
+- **`compose`**: Ejecuta las funciones de **derecha a izquierda** (matemático).
+- **`pipe`**: Ejecuta las funciones de **izquierda a derecha** (flujo de datos).
 
 ```js
 const compose = (...fns) => (x) => fns.reduceRight((acc, fn) => fn(acc), x);
 const pipe = (...fns) => (x) => fns.reduce((acc, fn) => fn(acc), x);
 
 const emocionar = compose(exclamar, mayusculas, trim);
-emocionar('  hola  '); // 'HOLA!'
+console.log(emocionar('  hola  ')); // "HOLA!"
 ```
 
-### Beneficios en programación funcional
+---
 
-    Mejora la legibilidad y la reutilización.
+## Estilo "Punto Libre" (*Point-free style*)
 
-    Facilita el testing (cada función pequeña es pura y aislada).
+Al componer funciones, podemos omitir los argumentos intermedios, centrándonos solo en la transformación de los datos.
 
-    Promueve código declarativo.
-
-### Punto libre (point-free style)
-
-Al componer funciones, se omiten los argumentos intermedios. Ejemplo: const procesar = pipe(trim, mayusculas); en lugar de (s) => mayusculas(trim(s)).
-Limitaciones
-
-    Depuración más difícil (se pierde claridad en el stack trace).
-
-    En js, la falta de tipos puede provocar errores silenciosos.
+- **Con argumentos:** `const procesar = (s) => pipe(trim, mayusculas)(s);`
+- **Punto libre:** `const procesar = pipe(trim, mayusculas);`
 
 ---
+
+## Beneficios y Limitaciones
+
+### ✅ Beneficios
+- **Reutilización:** Permite crear pequeñas piezas de lógica pura y combinarlas.
+- **Legibilidad:** El código se lee como una serie de pasos de transformación.
+- **Mantenibilidad:** Cada función pequeña es fácil de testear de forma aislada.
+
+### ⚠️ Limitaciones
+- **Depuración:** Puede ser más difícil seguir el flujo en el *stack trace* si ocurre un error dentro de una composición profunda.
+- **Curva de aprendizaje:** Requiere un cambio de mentalidad hacia el paradigma funcional.
+
+> [!NOTE]
+> Muchas librerías modernas como **Ramda** o **Lodash/fp** traen estas utilidades integradas y optimizadas para su uso en producción.
