@@ -1,7 +1,7 @@
 import re
 
 def main():
-    with open('index.md', 'r', encoding='utf-8') as f:
+    with open('bash-index.md', 'r', encoding='utf-8') as f:
         lines = [line.rstrip() for line in f]
 
     out_lines = []
