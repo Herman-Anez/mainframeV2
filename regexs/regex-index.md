@@ -1,15 +1,33 @@
+# 🧪 Expresiones Regulares (RegEx)
+> **Diccionario y utilidades de patrones de búsqueda**
 
-Detecta bloques de codigo vacios en markdowns
+Colección de expresiones regulares útiles para el mantenimiento de este repositorio y tareas de desarrollo general.
+
+---
+
+## 🛠️ Patrones para Markdown
+
+### 1. Bloques de código vacíos
+Detecta bloques de código sin contenido.
+```regex
 ^```(\S*)\s*\n\s*```$
-
-USO
-```someText
 ```
 
-Detecta # solitarios en markdowns
+### 2. Encabezados solitarios (#)
+Detecta líneas que solo contienen el símbolo `#`.
+```regex
 ^\s*#\s*$
+```
 
+---
 
-(?<=^\s*)#.*  //toda la linea
-(?<=^\s*)#  // solo el #
-(?<=^\s*)#(?!\!) // excluye los que tengan un !
+## 🔍 Selecciones Específicas
+
+| Patrón | Descripción |
+| :--- | :--- |
+| `(?<=^\s*)#.*` | Selecciona toda la línea que comienza con `#`. |
+| `(?<=^\s*)#` | Selecciona solo el símbolo `#` al inicio. |
+| `(?<=^\s*)#(?!\!)` | Selecciona `#` al inicio pero excluye los que van seguidos de `!` (útil para ignorar callouts de GitHub). |
+
+---
+[⬅️ Volver al Dashboard](../README.md)

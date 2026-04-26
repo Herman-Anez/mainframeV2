@@ -295,7 +295,7 @@ Comentarios
 Cualquier línea que comience con # (excepto el shebang) es un comentario.
 bash
 
-# Esto es un comentario
+###### Esto es un comentario
 echo "Hola"   # comentario después de un comando (el # debe estar seguido de espacio o sin ambigüedad)
 
 No existen comentarios multilínea nativos. Se suelen usar here-docs no leídos:
@@ -410,22 +410,22 @@ scripts/hola-mundo.sh
 bash
 
 #!/usr/bin/env bash
-# --------------------------------------------------------------------
-# hola-mundo.sh
-# Script mínimo que demuestra shebang, variables, entrada y salida.
-# --------------------------------------------------------------------
+###### --------------------------------------------------------------------
+###### hola-mundo.sh
+###### Script mínimo que demuestra shebang, variables, entrada y salida.
+###### --------------------------------------------------------------------
 
-# Anunciamos el modo estricto (detiene el script ante errores y variables no definidas)
+###### Anunciamos el modo estricto (detiene el script ante errores y variables no definidas)
 set -euo pipefail
 
-# 1. Uso de variable simple
+###### 1. Uso de variable simple
 saludo="Hola, mundo"
 echo "$saludo"
 
-# 2. Capturar argumentos de línea de comandos
+###### 2. Capturar argumentos de línea de comandos
 if [ "$#" -gt 0 ]; then
     echo "Recibiste $# argumento(s):"
-    # Iteramos sobre todos los argumentos respetando espacios
+    ###### Iteramos sobre todos los argumentos respetando espacios
     for arg in "$@"; do
         echo "  -> $arg"
     done
@@ -433,12 +433,12 @@ else
     echo "No pasaste argumentos. Intenta: $0 Juan María"
 fi
 
-# 3. Leer entrada del usuario
+###### 3. Leer entrada del usuario
 read -r -p "¿Cómo te llamas? " nombre
 echo "Encantado, ${nombre:-invitado}."
-# ${nombre:-invitado} imprime "invitado" si el usuario no escribió nada.
+###### ${nombre:-invitado} imprime "invitado" si el usuario no escribió nada.
 
-# 4. Mostrar algunas variables especiales
+###### 4. Mostrar algunas variables especiales
 echo "PID de este script: $$"
 echo "Directorio actual: $PWD"
 echo "Último código de salida: $? (debería ser 0)"
@@ -451,66 +451,66 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --------------------------------------------------------------------
-# ejemplo-variables.sh
-# Ilustra diferentes tipos de variables, expansiones y ámbito.
-# --------------------------------------------------------------------
+###### --------------------------------------------------------------------
+###### ejemplo-variables.sh
+###### Ilustra diferentes tipos de variables, expansiones y ámbito.
+###### --------------------------------------------------------------------
 
-# --- Variables globales y de entorno ---
+###### --- Variables globales y de entorno ---
 export MENSAJE_GLOBAL="Hola desde el entorno"
 no_exportado="Solo en este script"
 
 echo "MENSAJE_GLOBAL = $MENSAJE_GLOBAL"
 echo "no_exportado  = $no_exportado"
 
-# --- Variables numéricas y de solo lectura ---
+###### --- Variables numéricas y de solo lectura ---
 declare -i entero=10
 entero+=5                      # Ahora vale 15 (gracias a -i)
 echo "Entero tras suma: $entero"
 
 declare -r CONSTANTE=3.1416
 echo "Constante PI aproximado: $CONSTANTE"
-# Descomentar la siguiente línea causaría error:
-# CONSTANTE=4
+###### Descomentar la siguiente línea causaría error:
+###### CONSTANTE=4
 
-# --- Arrays ---
-# Array indexado
+###### --- Arrays ---
+###### Array indexado
 frutas=(manzana naranja pera)
 frutas+=("uva")                # Añade un elemento
 echo "Primera fruta: ${frutas[0]}"
 echo "Todas las frutas: ${frutas[@]}"
 echo "Número de frutas: ${#frutas[@]}"
 
-# Array asociativo (requiere declare -A)
+###### Array asociativo (requiere declare -A)
 declare -A capitales
 capitales=([Francia]="París" [Japón]="Tokio" [Brasil]="Brasilia")
 capitales["Alemania"]="Berlín"
 echo "Capital de Japón: ${capitales[Japón]}"
 echo "Todas las capitales: ${capitales[@]}"
 
-# --- Expansiones de parámetros ---
+###### --- Expansiones de parámetros ---
 nombre="Juan Carlos"
-# Longitud
+###### Longitud
 echo "Longitud de nombre: ${#nombre}"
-# Subcadena: del carácter 0, longitud 4
+###### Subcadena: del carácter 0, longitud 4
 echo "Primer nombre: ${nombre:0:4}"
-# Reemplazo
+###### Reemplazo
 echo "Con guiones: ${nombre// /_}"
-# Default
+###### Default
 echo "Apellido (si no existe): ${apellido:-Desconocido}"
 
-# --- Ámbito con funciones ---
+###### --- Ámbito con funciones ---
 mi_funcion() {
     local local_var="soy local"
     echo "Dentro de la función: local_var = $local_var"
-    # Esta variable global se modifica fuera
+    ###### Esta variable global se modifica fuera
     global_modificada="modificada dentro de función"
 }
 mi_funcion
 echo "Fuera de la función: global_modificada = $global_modificada"
-# Esto estaría vacío si intentáramos imprimir local_var (es local)
+###### Esto estaría vacío si intentáramos imprimir local_var (es local)
 
-# --- Exit code y captura de salida de comandos ---
+###### --- Exit code y captura de salida de comandos ---
 comando_inexistente 2>/dev/null || echo "Código de salida tras fallo: $?"
 
 output=$(date "+%Y-%m-%d")
@@ -553,11 +553,11 @@ Sintaxis básica
 bash
 
 if comando1; then
-    # se ejecuta si comando1 retorna 0
+    ###### se ejecuta si comando1 retorna 0
 elif comando2; then
-    # se ejecuta si comando1 falla y comando2 retorna 0
+    ###### se ejecuta si comando1 falla y comando2 retorna 0
 else
-    # si todos los anteriores fallaron
+    ###### si todos los anteriores fallaron
 fi
 
 then debe estar en una nueva línea o precedido por ;. El elif (opcional) puede repetirse y también va acompañado de then. El cierre es siempre fi (al revés).
@@ -566,27 +566,27 @@ Cómo funciona en la práctica
 El comando puede ser cualquiera: una tubería, una llamada a grep, test, [[ ]], (( )), etc.
 bash
 
-# Verificar si un archivo existe
+###### Verificar si un archivo existe
 if ls archivo.txt >/dev/null 2>&1; then
     echo "Existe"
 fi
 
-# Usando test/[
+###### Usando test/[
 if [ "$nombre" = "admin" ]; then
     echo "Acceso concedido"
 fi
 
-# Usando [[ ]]
+###### Usando [[ ]]
 if [[ $numero -gt 10 ]]; then
     echo "Mayor que 10"
 fi
 
-# Evaluación aritmética (( ))
+###### Evaluación aritmética (( ))
 if (( x > 10 )); then
     echo "x mayor que 10"
 fi
 
-# Comprobar el éxito de varios comandos
+###### Comprobar el éxito de varios comandos
 if comando1 && comando2; then
     echo "Ambos exitosos"
 fi
@@ -662,10 +662,10 @@ Limitaciones de [:
 Ejemplo:
 bash
 
-# Peligroso: si $archivo está vacío, se convierte en [ = ".txt" ] y da error
+###### Peligroso: si $archivo está vacío, se convierte en [ = ".txt" ] y da error
 [ $archivo = ".txt" ]
 
-# Seguro
+###### Seguro
 [ "$archivo" = ".txt" ]
 
 [[ ]]: la mejora nativa de Bash
@@ -693,17 +693,17 @@ Operadores adicionales en [[ ]]:
 Ejemplos con [[ ]]:
 bash
 
-# Regex
+###### Regex
 if [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "IP válida"
 fi
 
-# Globbing
+###### Globbing
 if [[ "$archivo" == *.log ]]; then
     echo "Es un archivo de log"
 fi
 
-# Verificar si variable definida
+###### Verificar si variable definida
 if [[ -v usuario ]]; then
     echo "Variable usuario existe"
 fi
@@ -927,20 +927,20 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------
-# condiciones.sh - Demostración de estructuras condicionales
-# ---------------------------------------------------------------
+###### ---------------------------------------------------------------
+###### condiciones.sh - Demostración de estructuras condicionales
+###### ---------------------------------------------------------------
 
-# --- Recibir argumento ---
+###### --- Recibir argumento ---
 archivo="${1:-}"
 
-# 1. Verificar si se proporcionó el argumento
+###### 1. Verificar si se proporcionó el argumento
 if [[ -z "$archivo" ]]; then
     echo "Uso: $0 <archivo>"
     exit 1
 fi
 
-# 2. Pruebas de archivo con if/elif/else
+###### 2. Pruebas de archivo con if/elif/else
 if [[ ! -e "$archivo" ]]; then
     echo "El archivo '$archivo' no existe."
     exit 2
@@ -948,26 +948,26 @@ elif [[ -d "$archivo" ]]; then
     echo "'$archivo' es un directorio."
 elif [[ -f "$archivo" ]]; then
     echo "'$archivo' es un archivo regular."
-    # Pruebas adicionales
+    ###### Pruebas adicionales
     [[ -r "$archivo" ]] && echo "  -> Tiene permiso de lectura." || echo "  -> No se puede leer."
     [[ -s "$archivo" ]] && echo "  -> No está vacío." || echo "  -> Está vacío."
 else
     echo "'$archivo' es otro tipo de archivo."
 fi
 
-# 3. Comparaciones numéricas y de cadena
+###### 3. Comparaciones numéricas y de cadena
 contador=15
 umbral=10
 if (( contador > umbral )); then
     echo "El contador ($contador) supera el umbral ($umbral)."
 fi
 
-# Usando [[ ]] para cadenas con patrón
+###### Usando [[ ]] para cadenas con patrón
 if [[ "$archivo" == *.log ]]; then
     echo "Advertencia: Estás trabajando con un archivo de log."
 fi
 
-# 4. Uso de case para clasificar extensión
+###### 4. Uso de case para clasificar extensión
 extension="${archivo##*.}"
 case "$extension" in
     txt|md)
@@ -990,36 +990,36 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------
-# adivina-numero.sh - Juego de adivinanza con bucles y condiciones
-# ---------------------------------------------------------------
+###### ---------------------------------------------------------------
+###### adivina-numero.sh - Juego de adivinanza con bucles y condiciones
+###### ---------------------------------------------------------------
 
-# Generar número aleatorio entre 1 y 100
+###### Generar número aleatorio entre 1 y 100
 numero_secreto=$(( RANDOM % 100 + 1 ))
 intentos=0
 max_intentos=7
 
 echo "Adivina el número entre 1 y 100. Tienes $max_intentos intentos."
 
-# Bucle principal while
+###### Bucle principal while
 while (( intentos < max_intentos )); do
-    # Incrementar contador de intentos
+    ###### Incrementar contador de intentos
     (( intentos++ ))
     
-    # Leer entrada del usuario de manera robusta
+    ###### Leer entrada del usuario de manera robusta
     read -r -p "Intento $intentos/$max_intentos: " entrada
 
-    # Validar que sea un número entero positivo (usando [[ ]] y regex)
+    ###### Validar que sea un número entero positivo (usando [[ ]] y regex)
     if [[ ! "$entrada" =~ ^[0-9]+$ ]]; then
         echo "Por favor, ingresa un número válido."
         (( intentos-- ))  # no cuenta como intento
         continue
     fi
 
-    # Convertir a entero (aunque ya es cadena numérica)
+    ###### Convertir a entero (aunque ya es cadena numérica)
     suposicion=$entrada
 
-    # Evaluar con condicionales
+    ###### Evaluar con condicionales
     if (( suposicion == numero_secreto )); then
         echo "¡Correcto! Adivinaste en $intentos intentos."
         exit 0
@@ -1030,7 +1030,7 @@ while (( intentos < max_intentos )); do
     fi
 done
 
-# Si sale del bucle, se acabaron los intentos
+###### Si sale del bucle, se acabaron los intentos
 echo "Lo siento, has agotado tus intentos. El número era: $numero_secreto"
 exit 1
 
@@ -1040,12 +1040,12 @@ Definiendo funciones: la base de la modularidad en Bash
 En Bash existen dos sintaxis equivalentes para definir funciones. Ambas hacen exactamente lo mismo:
 bash
 
-# Sintaxis clásica (POSIX)
+###### Sintaxis clásica (POSIX)
 nombre_de_funcion() {
     comandos
 }
 
-# Sintaxis con palabra reservada
+###### Sintaxis con palabra reservada
 function nombre_de_funcion {
     comandos
 }
@@ -1122,7 +1122,7 @@ bash
 procesar_archivo() {
     local archivo="${1:?Error: falta el nombre del archivo}"
     [[ -f "$archivo" ]] || { echo "No existe $archivo"; return 1; }
-    # ...
+    ###### ...
 }
 
 Pasar argumentos desde arrays o variables
@@ -1233,9 +1233,9 @@ Puedes agrupar funciones en archivos separados y cargarlos en tu script con sour
 Sintaxis
 bash
 
-# Desde un script o línea de comandos
+###### Desde un script o línea de comandos
 source ./ruta/archivo_funciones.sh
-# o bien
+###### o bien
 . ./ruta/archivo_funciones.sh
 
 La diferencia entre source y la ejecución directa (bash archivo.sh) es que source no inicia un proceso hijo; las definiciones de funciones, variables y cambios de entorno ocurren en el shell actual.
@@ -1253,7 +1253,7 @@ Protección contra ejecución doble
 Una función común es incluir una biblioteca que sólo debe ser sourceada, no ejecutada directamente. Para detectar si el script está siendo ejecutado (no sourceado), comparamos $0 con BASH_SOURCE[0]:
 bash
 
-# Al final de utils.sh
+###### Al final de utils.sh
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "Este archivo debe ser sourceado, no ejecutado."
     echo "Uso: source $(basename "$0")"
@@ -1272,7 +1272,7 @@ if [[ -n "${_UTILS_SH_LOADED:-}" ]]; then
 fi
 _UTILS_SH_LOADED=1
 
-# ... definiciones de funciones ...
+###### ... definiciones de funciones ...
 
     Bibliotecas con funciones y constantes: exporta variables solo si es necesario, y usa readonly para constantes.
 
@@ -1351,33 +1351,33 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Función: sumar
+###### Función: sumar
 sumar() {
     echo "$(( $1 + $2 ))"
 }
 
-# Función: restar
+###### Función: restar
 restar() {
     echo "$(( $1 - $2 ))"
 }
 
-# Función: multiplicar
+###### Función: multiplicar
 multiplicar() {
     echo "$(( $1 * $2 ))"
 }
 
-# Función: dividir (con validación)
+###### Función: dividir (con validación)
 dividir() {
     local a=$1 b=$2
     if (( b == 0 )); then
         echo "Error: división por cero" >&2
         return 1
     fi
-    # Bash no hace división flotante; usamos bc para decimales
+    ###### Bash no hace división flotante; usamos bc para decimales
     echo "scale=4; $a / $b" | bc
 }
 
-# --- Menú interactivo ---
+###### --- Menú interactivo ---
 PS3="Elige operación (1-5): "
 opciones=("Sumar" "Restar" "Multiplicar" "Dividir" "Salir")
 
@@ -1387,11 +1387,11 @@ select opcion in "${opciones[@]}"; do
         break
     fi
 
-    # Pedir operandos
+    ###### Pedir operandos
     read -r -p "Primer número: " num1
     read -r -p "Segundo número: " num2
 
-    # Validar que sean números (enteros o decimales simples)
+    ###### Validar que sean números (enteros o decimales simples)
     if [[ ! "$num1" =~ ^-?[0-9]+(\.[0-9]+)?$ ]] || [[ ! "$num2" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
         echo "Ambos operandos deben ser números" >&2
         continue
@@ -1409,7 +1409,7 @@ select opcion in "${opciones[@]}"; do
             ;;
         "Dividir")
             if ! resultado=$(dividir "$num1" "$num2"); then
-                # La función devolvió error (>2 ya mostró mensaje)
+                ###### La función devolvió error (>2 ya mostró mensaje)
                 continue
             fi
             ;;
@@ -1428,35 +1428,35 @@ Librería de funciones útiles para cualquier script. Incluye funciones para log
 bash
 
 #!/usr/bin/env bash
-# utils.sh - Funciones de utilidad reutilizables
-# Debe ser cargado con: source utils.sh
+###### utils.sh - Funciones de utilidad reutilizables
+###### Debe ser cargado con: source utils.sh
 
-# Evitar carga múltiple
+###### Evitar carga múltiple
 if [[ -n "${_UTILS_SH_LOADED:-}" ]]; then
     return 0
 fi
 readonly _UTILS_SH_LOADED=1
 
-# ------------------------------------------------------------
-# Configuración
-# ------------------------------------------------------------
+###### ------------------------------------------------------------
+###### Configuración
+###### ------------------------------------------------------------
 
-# Colores para mensajes (opcional)
+###### Colores para mensajes (opcional)
 readonly COLOR_RESET='\e[0m'
 readonly COLOR_RED='\e[31m'
 readonly COLOR_GREEN='\e[32m'
 readonly COLOR_YELLOW='\e[33m'
 
-# Activar colores solo si la salida es una terminal
+###### Activar colores solo si la salida es una terminal
 if [[ -t 1 ]]; then
     _USE_COLOR=1
 else
     _USE_COLOR=0
 fi
 
-# ------------------------------------------------------------
-# Funciones de logging
-# ------------------------------------------------------------
+###### ------------------------------------------------------------
+###### Funciones de logging
+###### ------------------------------------------------------------
 
 info() {
     if (( _USE_COLOR )); then
@@ -1482,18 +1482,18 @@ error() {
     fi
 }
 
-# ------------------------------------------------------------
-# Manejor de errores críticos (finaliza el script)
-# ------------------------------------------------------------
+###### ------------------------------------------------------------
+###### Manejor de errores críticos (finaliza el script)
+###### ------------------------------------------------------------
 
 die() {
     error "$*"
     exit 1
 }
 
-# ------------------------------------------------------------
-# Verificar si se ejecuta como root
-# ------------------------------------------------------------
+###### ------------------------------------------------------------
+###### Verificar si se ejecuta como root
+###### ------------------------------------------------------------
 
 require_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -1501,9 +1501,9 @@ require_root() {
     fi
 }
 
-# ------------------------------------------------------------
-# Verificar comandos necesarios
-# ------------------------------------------------------------
+###### ------------------------------------------------------------
+###### Verificar comandos necesarios
+###### ------------------------------------------------------------
 
 require_cmd() {
     local cmd
@@ -1514,9 +1514,9 @@ require_cmd() {
     done
 }
 
-# ------------------------------------------------------------
-# Función de ayuda (genérica)
-# ------------------------------------------------------------
+###### ------------------------------------------------------------
+###### Función de ayuda (genérica)
+###### ------------------------------------------------------------
 
 show_help() {
     cat <<EOF
@@ -1529,9 +1529,9 @@ Opciones:
 EOF
 }
 
-# ------------------------------------------------------------
-# Protección: si se ejecuta directamente, mostrar advertencia
-# ------------------------------------------------------------
+###### ------------------------------------------------------------
+###### Protección: si se ejecuta directamente, mostrar advertencia
+###### ------------------------------------------------------------
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "Este archivo es una biblioteca de funciones. Debe ser cargado con:"
@@ -1594,7 +1594,7 @@ Duplicar y mover descriptores
 Con exec puedes manipular descriptores personalizados (3-9) para tareas avanzadas como rotar salidas o mantener múltiples flujos simultáneos.
 bash
 
-# Abrir archivo como descriptor 3 para escritura
+###### Abrir archivo como descriptor 3 para escritura
 exec 3> log.txt
 echo "Mensaje 1" >&3       # Escribe en log.txt vía descriptor 3
 exec 3>&-                  # Cerrar descriptor
@@ -1704,7 +1704,7 @@ bash
 
 exec 200>archivo.lock
 flock -e 200  # bloqueo exclusivo
-# ... operaciones ...
+###### ... operaciones ...
 flock -u 200  # desbloquear
 
 Leer línea por línea (sin problemas de subshell)
@@ -1926,7 +1926,7 @@ bash
 
 shopt -s nullglob
 for archivo in *.log; do
-    # Si no hay .log, el bucle no se ejecuta ni una sola vez
+    ###### Si no hay .log, el bucle no se ejecuta ni una sola vez
     echo "Procesando $archivo"
 done
 
@@ -1985,58 +1985,58 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------
-# backup-logs.sh – Comprime logs y registra toda la actividad
-# ---------------------------------------------------------------
+###### ---------------------------------------------------------------
+###### backup-logs.sh – Comprime logs y registra toda la actividad
+###### ---------------------------------------------------------------
 
-# Configuración
+###### Configuración
 LOG_DIR="${1:-/var/log}"
 BACKUP_DIR="${2:-./backups}"
 MAX_LOG_AGE=7   # días
 
-# Archivo de log del propio script
+###### Archivo de log del propio script
 SCRIPT_LOG="./backup.log"
 
-# Función para escribir en log y mostrar por pantalla
+###### Función para escribir en log y mostrar por pantalla
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $*" | tee -a "$SCRIPT_LOG"
 }
 
-# --- Inicio ---
+###### --- Inicio ---
 log "Iniciando backup de $LOG_DIR hacia $BACKUP_DIR"
 
-# Crear directorio de destino si no existe
+###### Crear directorio de destino si no existe
 mkdir -p "$BACKUP_DIR"
 
-# Buscar archivos .log con más de MAX_LOG_AGE días y empaquetarlos
-# Usamos find con -mtime y redirigimos errores a stderr (por defecto ya)
-# La salida de find la procesamos con while read para manejar nombres con espacios
+###### Buscar archivos .log con más de MAX_LOG_AGE días y empaquetarlos
+###### Usamos find con -mtime y redirigimos errores a stderr (por defecto ya)
+###### La salida de find la procesamos con while read para manejar nombres con espacios
 
-# Enfoque seguro: read con -print0 y null delimitador
+###### Enfoque seguro: read con -print0 y null delimitador
 find "$LOG_DIR" -type f -name "*.log" -mtime +$MAX_LOG_AGE -print0 2>> "$SCRIPT_LOG" | 
     while IFS= read -r -d '' archivo; do
-        # Comprimir cada archivo en el directorio de backup, preservando estructura
+        ###### Comprimir cada archivo en el directorio de backup, preservando estructura
         rel_path="${archivo#$LOG_DIR/}"
         dest="$BACKUP_DIR/${rel_path}.gz"
 
-        # Crear subdirectorios necesarios
+        ###### Crear subdirectorios necesarios
         mkdir -p "$(dirname "$dest")"
         
         if gzip -c "$archivo" > "$dest" 2>> "$SCRIPT_LOG"; then
             log "Comprimido: $archivo -> $dest"
-            # Opcional: eliminar original si la compresión fue exitosa
-            # rm "$archivo"
+            ###### Opcional: eliminar original si la compresión fue exitosa
+            ###### rm "$archivo"
         else
             log "ERROR al comprimir: $archivo" >&2
         fi
     done
 
-# Comprobar el código de salida del pipeline (si usamos pipefail, detecta fallos)
+###### Comprobar el código de salida del pipeline (si usamos pipefail, detecta fallos)
 if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
     log "find reportó errores. Revisar $SCRIPT_LOG"
 fi
 
-# Crear un tarball general con todos los backups (con fecha)
+###### Crear un tarball general con todos los backups (con fecha)
 fecha=$(date +%Y%m%d)
 tarball="$BACKUP_DIR/backup-logs-$fecha.tar.gz"
 log "Creando tarball general: $tarball"
@@ -2057,9 +2057,9 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------
-# renombrar-archivos.sh – Cambia nombres de archivos en masa
-# ---------------------------------------------------------------
+###### ---------------------------------------------------------------
+###### renombrar-archivos.sh – Cambia nombres de archivos en masa
+###### ---------------------------------------------------------------
 
 mostrar_ayuda() {
     cat << EOF
@@ -2079,7 +2079,7 @@ Ejemplo:
 EOF
 }
 
-# --- Parseo de opciones ---
+###### --- Parseo de opciones ---
 prefijo=""
 sufijo=""
 nueva_ext=""
@@ -2107,12 +2107,12 @@ if [[ ! -d "$directorio" ]]; then
     exit 1
 fi
 
-# Activar nullglob para que los bucles no ejecuten si no hay archivos
+###### Activar nullglob para que los bucles no ejecuten si no hay archivos
 shopt -s nullglob
 
-# Procesar todos los archivos (no recursivo por defecto)
+###### Procesar todos los archivos (no recursivo por defecto)
 for archivo in "$directorio"/*; do
-    # Saltamos si no es un archivo regular
+    ###### Saltamos si no es un archivo regular
     [[ -f "$archivo" ]] || continue
 
     dir=$(dirname "$archivo")
@@ -2120,9 +2120,9 @@ for archivo in "$directorio"/*; do
     nombre="${nombre_base%.*}"       # nombre sin extensión
     extension="${nombre_base##*.}"   # extensión (todo tras el último punto)
 
-    # Si no hay extensión (nombre_base no tiene punto), 'nombre' y 'nombre_base' coinciden
+    ###### Si no hay extensión (nombre_base no tiene punto), 'nombre' y 'nombre_base' coinciden
     if [[ "$nombre_base" = "$extension" ]]; then
-        # Caso sin extensión
+        ###### Caso sin extensión
         extension=""
         nombre="$nombre_base"
     else
@@ -2131,31 +2131,31 @@ for archivo in "$directorio"/*; do
 
     nuevo_nombre="$nombre"
 
-    # Aplicar minúsculas/mayúsculas
+    ###### Aplicar minúsculas/mayúsculas
     if (( lower )); then
         nuevo_nombre="${nuevo_nombre,,}"
     elif (( upper )); then
         nuevo_nombre="${nuevo_nombre^^}"
     fi
 
-    # Añadir prefijo y sufijo
+    ###### Añadir prefijo y sufijo
     nuevo_nombre="${prefijo}${nuevo_nombre}${sufijo}"
 
-    # Cambiar extensión si se especifica
+    ###### Cambiar extensión si se especifica
     if [[ -n "$nueva_ext" ]]; then
-        # Asegurar que la nueva extensión comience con punto
+        ###### Asegurar que la nueva extensión comience con punto
         [[ "$nueva_ext" == .* ]] || nueva_ext=".$nueva_ext"
         extension="$nueva_ext"
     fi
 
     nuevo_archivo="$dir/$nuevo_nombre$extension"
 
-    # Si el nombre no cambió, seguir
+    ###### Si el nombre no cambió, seguir
     if [[ "$archivo" == "$nuevo_archivo" ]]; then
         continue
     fi
 
-    # Evitar sobrescribir archivos existentes
+    ###### Evitar sobrescribir archivos existentes
     if [[ -e "$nuevo_archivo" ]]; then
         echo "Error: ya existe '$nuevo_archivo', no se renombrará '$archivo'" >&2
         continue
@@ -2202,7 +2202,7 @@ Desde la salida de un comando (usando mapfile o readarray):
 bash
 
 mapfile -t lineas < archivo.txt   # cada línea es un elemento
-# o readarray -t lineas < archivo.txt (sinónimo)
+###### o readarray -t lineas < archivo.txt (sinónimo)
 
 Acceso a elementos
 Expresión	Significado
@@ -2286,7 +2286,7 @@ declare -A capitales
 capitales["Francia"]="París"
 capitales=([Japón]="Tokio" [Brasil]="Brasilia")
 
-# Añadir más
+###### Añadir más
 capitales+=(["Alemania"]="Berlín")
 
 No se pueden crear asociativos sin declare -A.
@@ -2350,20 +2350,20 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------
-# gestion-contactos.sh – Agenda de contactos con array asociativo
-# ---------------------------------------------------------------
+###### ---------------------------------------------------------------
+###### gestion-contactos.sh – Agenda de contactos con array asociativo
+###### ---------------------------------------------------------------
 
 declare -A contactos    # nombre -> teléfono
 
-# Cargar algunos de ejemplo
+###### Cargar algunos de ejemplo
 contactos=(
     ["Ana García"]="555-1234"
     ["Luis Pérez"]="555-5678"
     ["Marta Ruiz"]="555-9012"
 )
 
-# Guardar agenda en archivo (opcional)
+###### Guardar agenda en archivo (opcional)
 ARCHIVO_AGENDA="./agenda.txt"
 
 cargar_agenda() {
@@ -2437,7 +2437,7 @@ eliminar() {
     fi
 }
 
-# Menú principal
+###### Menú principal
 PS3="Elige opción (1-6): "
 opciones=("Listar" "Buscar" "Añadir" "Modificar" "Eliminar" "Salir")
 
@@ -2707,9 +2707,9 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------
-# paralelo.sh – Descarga URLs concurrentemente con un máximo de hilos
-# ---------------------------------------------------------------
+###### ---------------------------------------------------------------
+###### paralelo.sh – Descarga URLs concurrentemente con un máximo de hilos
+###### ---------------------------------------------------------------
 
 urls=(
     "https://www.example.com"
@@ -2720,12 +2720,12 @@ urls=(
 MAX_HILOS=2
 declare -a resultados        # almacenamos mensajes
 
-# Función que descarga y guarda en archivo temporal
+###### Función que descarga y guarda en archivo temporal
 descargar() {
     local url="$1"
     local tmpfile
     tmpfile=$(mktemp)
-    # Intentar descargar con curl; timeout de 5 seg
+    ###### Intentar descargar con curl; timeout de 5 seg
     if curl -s -o "$tmpfile" --connect-timeout 3 --max-time 5 "$url"; then
         size=$(stat -c %s "$tmpfile" 2>/dev/null || echo 0)
         echo "EXITO:$url:$size:$tmpfile"
@@ -2734,12 +2734,12 @@ descargar() {
     fi
 }
 
-# Lanzar descargas en paralelo controlado
+###### Lanzar descargas en paralelo controlado
 contador=0
 for url in "${urls[@]}"; do
     descargar "$url" &
     ((contador++))
-    # Alcanzado el máximo, esperar a que uno termine
+    ###### Alcanzado el máximo, esperar a que uno termine
     if (( contador >= MAX_HILOS )); then
         wait -n
         ((contador--))
@@ -2747,16 +2747,16 @@ for url in "${urls[@]}"; do
 done
 wait   # esperar los últimos
 
-# Recoger resultados (los procesos escribieron en stdout)
-# Pero capturamos la salida de descargar desde aquí? No directamente.
-# En lugar de eso, hagamos que descargar escriba en un archivo de resultados.
-# Modifiquemos: cada trabajo escribe en un fifo o mejor en un archivo con su PID.
-# Vamos a rehacer con almacenamiento en array asociativo usando archivos.
+###### Recoger resultados (los procesos escribieron en stdout)
+###### Pero capturamos la salida de descargar desde aquí? No directamente.
+###### En lugar de eso, hagamos que descargar escriba en un archivo de resultados.
+###### Modifiquemos: cada trabajo escribe en un fifo o mejor en un archivo con su PID.
+###### Vamos a rehacer con almacenamiento en array asociativo usando archivos.
 
-# Para simplificar, aquí mostraremos cómo usar wait y archivos temporales:
+###### Para simplificar, aquí mostraremos cómo usar wait y archivos temporales:
 declare -A resultados_asoc  # url -> "EXITO:size" o "FALLO"
 
-# Limpiar función anterior; redefinimos descargar para que escriba en un directorio compartido
+###### Limpiar función anterior; redefinimos descargar para que escriba en un directorio compartido
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT
 
@@ -2770,14 +2770,14 @@ descargar_v2() {
 }
 
 for url in "${urls[@]}"; do
-    # Archivo de salida único por descarga
+    ###### Archivo de salida único por descarga
     outfile="$tmpdir/$(echo "$url" | md5sum | cut -d' ' -f1).dat"
     descargar_v2 "$url" "$outfile" &
     echo "$url -> $outfile" >> "$tmpdir/mapeo"   # guardamos url -> archivo
 done
 wait
 
-# Leer resultados
+###### Leer resultados
 echo "==== Resultados ===="
 while read -r linea; do
     url=$(echo "$linea" | awk -F' -> ' '{print $1}')
@@ -2798,27 +2798,27 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------
-# demonio-simple.sh – Script residente que ejecuta tareas periódicas
-# ---------------------------------------------------------------
+###### ---------------------------------------------------------------
+###### demonio-simple.sh – Script residente que ejecuta tareas periódicas
+###### ---------------------------------------------------------------
 
 PIDFILE="./demonio.pid"
 LOGFILE="./demonio.log"
 INTERVALO=5    # segundos entre ejecuciones de la tarea
 
-# Función de limpieza al salir
+###### Función de limpieza al salir
 cleanup() {
     echo "$(date) - Recibida señal, finalizando demonio..." >> "$LOGFILE"
     rm -f "$PIDFILE"
     exit 0
 }
 
-# Atrapar señales
+###### Atrapar señales
 trap cleanup SIGINT SIGTERM EXIT
 trap 'echo "$(date) - SIGHUP recibido, ignorando..." >> "$LOGFILE"' SIGHUP
 trap 'echo "$(date) - SIGUSR1: estado $(date)" >> "$LOGFILE"' SIGUSR1
 
-# Asegurar que solo una instancia corre
+###### Asegurar que solo una instancia corre
 if [[ -f "$PIDFILE" ]]; then
     oldpid=$(cat "$PIDFILE")
     if kill -0 "$oldpid" 2>/dev/null; then
@@ -2830,18 +2830,18 @@ if [[ -f "$PIDFILE" ]]; then
     fi
 fi
 
-# Guardar el PID actual
+###### Guardar el PID actual
 echo "$$" > "$PIDFILE"
 echo "Demonio iniciado con PID $$." | tee -a "$LOGFILE"
 echo "Envía SIGUSR1 (kill -SIGUSR1 $$) para estado, SIGINT para terminar." | tee -a "$LOGFILE"
 
-# Bucle principal
+###### Bucle principal
 while true; do
-    # --- Tarea del demonio ---
+    ###### --- Tarea del demonio ---
     echo "$(date) - Realizando tarea programada..." >> "$LOGFILE"
-    # Ejemplo: comprobar espacio en disco
+    ###### Ejemplo: comprobar espacio en disco
     df -h / | tail -1 >> "$LOGFILE"
-    # -------------------------
+    ###### -------------------------
 
     sleep "$INTERVALO"
 done
@@ -2851,7 +2851,7 @@ bash
 
 chmod +x demonio-simple.sh
 ./demonio-simple.sh &        # lanzar en bg o en otra terminal
-# En otra terminal:
+###### En otra terminal:
 kill -SIGUSR1 $(cat demonio.pid)   # ver estado
 kill $(cat demonio.pid)            # terminar (SIGTERM)
 
@@ -3029,12 +3029,12 @@ Opción	Significado
 Ejemplos en scripts:
 bash
 
-# Verificar si una palabra está en un diccionario
+###### Verificar si una palabra está en un diccionario
 if grep -iq "^$palabra$" /usr/share/dict/words; then
     echo "Palabra válida"
 fi
 
-# Extraer todas las direcciones IP de un registro
+###### Extraer todas las direcciones IP de un registro
 grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' log.txt | sort -u
 
 sed
@@ -3058,19 +3058,19 @@ Sustitución: s/patrón/remplazo/opciones
 Ejemplos:
 bash
 
-# Reemplazar la primera coma por tabulador
+###### Reemplazar la primera coma por tabulador
 sed 's/,/\t/' archivo.csv
 
-# Reemplazar todas las 'a' por 'A'
+###### Reemplazar todas las 'a' por 'A'
 sed 's/a/A/g'
 
-# Borrar líneas que empiezan con #
+###### Borrar líneas que empiezan con #
 sed '/^#/d'
 
-# Imprimir solo entre líneas que contienen START y END
+###### Imprimir solo entre líneas que contienen START y END
 sed -n '/START/,/END/p'
 
-# Usar grupos capturados
+###### Usar grupos capturados
 echo "Nombre: Juan" | sed 's/^Nombre: \([a-zA-Z]*\)/\1/'
 
 awk
@@ -3098,16 +3098,16 @@ Variables internas:
 Ejemplos:
 bash
 
-# Sumar una columna (2da columna)
+###### Sumar una columna (2da columna)
 awk '{sum += $2} END {print sum}' datos.txt
 
-# Filtrar líneas cuyo primer campo > 10 e imprimir con otro formato
+###### Filtrar líneas cuyo primer campo > 10 e imprimir con otro formato
 awk '$1 > 10 { printf "%-10s %5d\n", $3, $1 }' archivo.txt
 
-# Imprimir solo la primera y última columna
+###### Imprimir solo la primera y última columna
 awk '{print $1, $NF}'
 
-# Calcular promedio de la 3ra columna
+###### Calcular promedio de la 3ra columna
 awk '{ total += $3; count++ } END { if(count>0) print total/count }' numeros.tsv
 
 awk va más allá: puede hacer contadores, arrays asociativos, e incluso escribir programas completos. En scripts de Bash se usa para tareas de formato rápido o para procesar datos tabulares.
@@ -3131,17 +3131,17 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------------------------------------------------------
-# validador-email.sh - Verifica si uno o más correos son válidos
-# ---------------------------------------------------------------
+###### ---------------------------------------------------------------
+###### validador-email.sh - Verifica si uno o más correos son válidos
+###### ---------------------------------------------------------------
 
-# Patrón de email pragmático (no RFC completo, pero suficiente)
-# Caracteres permitidos: letras, dígitos, . _ % + -
-# Dominio: letras, dígitos, guiones y puntos
-# TLD: mínimo 2 letras
+###### Patrón de email pragmático (no RFC completo, pero suficiente)
+###### Caracteres permitidos: letras, dígitos, . _ % + -
+###### Dominio: letras, dígitos, guiones y puntos
+###### TLD: mínimo 2 letras
 readonly EMAIL_REGEX='^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
 
-# Función que imprime en color si es válido o no
+###### Función que imprime en color si es válido o no
 print_result() {
     local email="$1"
     if is_valid "$email"; then
@@ -3151,23 +3151,23 @@ print_result() {
     fi
 }
 
-# Comprueba un email con la regex
+###### Comprueba un email con la regex
 is_valid() {
     [[ "$1" =~ $EMAIL_REGEX ]]
 }
 
-# Procesar un archivo línea por línea (una dirección por línea)
+###### Procesar un archivo línea por línea (una dirección por línea)
 check_file() {
     local file="$1"
     [[ -f "$file" ]] || { echo "Error: archivo '$file' no existe." >&2; exit 1; }
     while IFS= read -r email; do
-        # Ignorar líneas vacías o comentarios
+        ###### Ignorar líneas vacías o comentarios
         [[ -z "$email" || "$email" == \#* ]] && continue
         print_result "$email"
     done < "$file"
 }
 
-# Mostrar ayuda
+###### Mostrar ayuda
 help() {
     cat <<EOF
 Uso: $0 [opciones] [correo1 correo2 ...]
@@ -3185,7 +3185,7 @@ Ejemplos:
 EOF
 }
 
-# Parseo de opciones simples
+###### Parseo de opciones simples
 archivo=""
 while getopts "hf:" opt; do
     case $opt in
@@ -3196,7 +3196,7 @@ while getopts "hf:" opt; do
 done
 shift $((OPTIND-1))
 
-# Ejecutar según origen
+###### Ejecutar según origen
 if [[ -n "$archivo" ]]; then
     check_file "$archivo"
 elif [[ $# -gt 0 ]]; then
@@ -3204,7 +3204,7 @@ elif [[ $# -gt 0 ]]; then
         print_result "$addr"
     done
 else
-    # Leer de stdin
+    ###### Leer de stdin
     while IFS= read -r line; do
         [[ -z "$line" || "$line" == \#* ]] && continue
         print_result "$line"
@@ -3240,7 +3240,7 @@ Activar set -x provoca que antes de cada orden (después de las expansiones), se
 bash
 
 #!/bin/bash -x
-# o
+###### o
 set -x
 echo "Hola mundo"
 set +x    # desactivar
@@ -3386,15 +3386,15 @@ Nota: Puedes desactivar avisos con comentarios especiales: # shellcheck disable=
 Ejemplo de corrección con ShellCheck
 bash
 
-# original (con problemas)
+###### original (con problemas)
 cat $archivo | while read line; do echo $line; done
 
-# ShellCheck sugiere:
-# SC2002: Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead.
-# SC2086: Double quote to prevent globbing and word splitting.
-# SC2162: read without -r will mangle backslashes.
+###### ShellCheck sugiere:
+###### SC2002: Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead.
+###### SC2086: Double quote to prevent globbing and word splitting.
+###### SC2162: read without -r will mangle backslashes.
 
-# corregido
+###### corregido
 while IFS= read -r line; do
     echo "$line"
 done < "$archivo"
@@ -3499,7 +3499,7 @@ bash
 set -euo pipefail
 
 main() {
-    # lógica
+    ###### lógica
 }
 
 main "$@"
@@ -3518,9 +3518,9 @@ Crear subsecciones con comentarios
 Usa separadores visuales:
 bash
 
-# -------------------------------------------------------------------
-# Configuración
-# -------------------------------------------------------------------
+###### -------------------------------------------------------------------
+###### Configuración
+###### -------------------------------------------------------------------
 
 05-scripts-robustos.md
 El checklist para un script a prueba de balas
@@ -3530,10 +3530,10 @@ Un script robusto debe contemplar gestión de errores, limpieza, argumentos y un
 bash
 
 #!/usr/bin/env bash
-# script.sh - Descripción corta
-# Uso: script.sh [opciones] arg1
+###### script.sh - Descripción corta
+###### Uso: script.sh [opciones] arg1
 set -euo pipefail
-# Opcional: activar más banderas
+###### Opcional: activar más banderas
 shopt -s nullglob    # globs que no coinciden se expanden a nada
 shopt -s extglob      # si se necesitan patrones extendidos
 
@@ -3541,7 +3541,7 @@ shopt -s extglob      # si se necesitan patrones extendidos
 bash
 
 main() {
-    # lógica
+    ###### lógica
 }
 main "$@"
 
@@ -3643,28 +3643,28 @@ scripts/plantilla-robusta.sh
 bash
 
 #!/usr/bin/env bash
-# -------------------------------------------------------------------
-# plantilla-robusta.sh – Plantilla para scripts Bash robustos
-# Incorpora: parseo de opciones, logging, trampas, validación y limpieza.
-# -------------------------------------------------------------------
+###### -------------------------------------------------------------------
+###### plantilla-robusta.sh – Plantilla para scripts Bash robustos
+###### Incorpora: parseo de opciones, logging, trampas, validación y limpieza.
+###### -------------------------------------------------------------------
 set -euo pipefail
 IFS=$'\n\t'
 
-# --- Configuración ---
+###### --- Configuración ---
 readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# --- Variables globales (seteadas por opciones) ---
+###### --- Variables globales (seteadas por opciones) ---
 VERBOSE=0
 OUTPUT_FILE=""
 INPUT_FILE=""
 
-# --- Logging ---
+###### --- Logging ---
 log_info()  { echo "[INFO]  $(date '+%F %T') $*"; }
 log_warn()  { echo "[WARN]  $(date '+%F %T') $*" >&2; }
 log_error() { echo "[ERROR] $(date '+%F %T') $*" >&2; }
 
-# --- Uso ---
+###### --- Uso ---
 usage() {
     cat <<EOF
 Uso: $SCRIPT_NAME [opciones] <archivo>
@@ -3678,10 +3678,10 @@ Descripción del script (reemplazar).
 EOF
 }
 
-# --- Función de limpieza ---
+###### --- Función de limpieza ---
 cleanup() {
     local exit_code=$?
-    # Eliminar archivos temporales si existen
+    ###### Eliminar archivos temporales si existen
     if [[ -n "${tmp_file:-}" && -f "$tmp_file" ]]; then
         rm -f "$tmp_file"
     fi
@@ -3691,10 +3691,10 @@ cleanup() {
     exit $exit_code
 }
 trap cleanup EXIT INT TERM
-# Opcional: si quieres depuración de errores, añade:
-# trap 'log_error "Comando fallido: $BASH_COMMAND"' ERR
+###### Opcional: si quieres depuración de errores, añade:
+###### trap 'log_error "Comando fallido: $BASH_COMMAND"' ERR
 
-# --- Comprobaciones de dependencias ---
+###### --- Comprobaciones de dependencias ---
 check_deps() {
     local deps=( curl jq )   # ajusta según necesidades
     for dep in "${deps[@]}"; do
@@ -3705,9 +3705,9 @@ check_deps() {
     done
 }
 
-# --- Función principal ---
+###### --- Función principal ---
 main() {
-    # Parsear opciones
+    ###### Parsear opciones
     while getopts "hvo:" opt; do
         case "$opt" in
             h) usage; exit 0 ;;
@@ -3718,7 +3718,7 @@ main() {
     done
     shift $((OPTIND-1))
 
-    # Validar argumento obligatorio
+    ###### Validar argumento obligatorio
     if (( $# == 0 )); then
         log_error "Se requiere un archivo de entrada."
         usage >&2
@@ -3726,33 +3726,33 @@ main() {
     fi
     INPUT_FILE="$1"
 
-    # Verificar dependencias
+    ###### Verificar dependencias
     check_deps
 
-    # Verificar que el archivo de entrada existe
+    ###### Verificar que el archivo de entrada existe
     if [[ ! -f "$INPUT_FILE" ]]; then
         log_error "El archivo '$INPUT_FILE' no existe o no es regular."
         exit 1
     fi
 
-    # Crear archivo temporal si es necesario
+    ###### Crear archivo temporal si es necesario
     tmp_file=$(mktemp) || exit 1
 
-    # --- Lógica del script (ejemplo) ---
+    ###### --- Lógica del script (ejemplo) ---
     log_info "Procesando '$INPUT_FILE'..."
 
-    # Simulación de procesamiento
+    ###### Simulación de procesamiento
     if (( VERBOSE )); then
         log_info "Modo detallado activado."
     fi
 
-    # Leer entrada y escribir salida
+    ###### Leer entrada y escribir salida
     while IFS= read -r line; do
-        # Procesar cada línea...
+        ###### Procesar cada línea...
         echo "$line" >> "$tmp_file"
     done < "$INPUT_FILE"
 
-    # Resultado final
+    ###### Resultado final
     if [[ -n "$OUTPUT_FILE" ]]; then
         cp "$tmp_file" "$OUTPUT_FILE"
         log_info "Salida guardada en '$OUTPUT_FILE'."
@@ -3763,7 +3763,7 @@ main() {
     log_info "Procesamiento completado exitosamente."
 }
 
-# Llamada a main con los argumentos
+###### Llamada a main con los argumentos
 main "$@"
 
 Explicación de las características incluidas:
@@ -3892,7 +3892,7 @@ Sintaxis:
 bash
 
 coproc NOMBRE { comando; }
-# o simplemente
+###### o simplemente
 coproc { comando; }   # el array se llama COPROC por defecto
 
 Después, $NOMBRE_PID contiene el PID del coproceso y los descriptores están en un array:
@@ -4082,7 +4082,7 @@ Ejemplo más completo:
 bash
 
 setup() {
-    # Crear un directorio temporal
+    ###### Crear un directorio temporal
     TESTDIR=$(mktemp -d)
 }
 teardown() {
@@ -4140,18 +4140,18 @@ bash
 set -euo pipefail
 IFS=$'\n\t'
 
-# -------------------------------------------------------------------
-# instalador-ejemplo.sh - Instalador interactivo con diálogos
-# -------------------------------------------------------------------
+###### -------------------------------------------------------------------
+###### instalador-ejemplo.sh - Instalador interactivo con diálogos
+###### -------------------------------------------------------------------
 
 readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
 
-# --- Configuración por defecto ---
+###### --- Configuración por defecto ---
 INSTALL_DIR="$HOME/.miapp"
 AUTO_MODE=0
 VERBOSE=0
 
-# --- Funciones de utilidad y logging ---
+###### --- Funciones de utilidad y logging ---
 info()  { echo "[INFO]  $*"; }
 warn()  { echo "[WARN]  $*" >&2; }
 error() { echo "[ERROR] $*" >&2; }
@@ -4169,7 +4169,7 @@ Opciones:
 EOF
 }
 
-# --- Limpieza ---
+###### --- Limpieza ---
 cleanup() {
     local exit_code=$?
     [[ -n "${tmpfile:-}" && -f "$tmpfile" ]] && rm -f "$tmpfile"
@@ -4180,7 +4180,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# --- Parseo de opciones ---
+###### --- Parseo de opciones ---
 while getopts "d:yvh" opt; do
     case "$opt" in
         d) INSTALL_DIR="$OPTARG" ;;
@@ -4192,7 +4192,7 @@ while getopts "d:yvh" opt; do
 done
 shift $((OPTIND-1))
 
-# --- Seleccionar herramienta de diálogo ---
+###### --- Seleccionar herramienta de diálogo ---
 DIALOG=""
 if command -v dialog >/dev/null; then
     DIALOG="dialog"
@@ -4200,7 +4200,7 @@ elif command -v whiptail >/dev/null; then
     DIALOG="whiptail"
 fi
 
-# --- Funciones de interfaz ---
+###### --- Funciones de interfaz ---
 ask_confirm() {
     local msg="$1"
     if [[ "$AUTO_MODE" -eq 1 ]]; then
@@ -4240,26 +4240,26 @@ simulate_progress() {
     fi
 }
 
-# --- Proceso de instalación ---
+###### --- Proceso de instalación ---
 main() {
     info "Iniciando instalación de MiApp (versión 1.0)"
 
-    # Preguntar directorio de instalación
+    ###### Preguntar directorio de instalación
     INSTALL_DIR=$(ask_directory "Directorio de instalación:" "$INSTALL_DIR")
 
-    # Confirmar
+    ###### Confirmar
     if ! ask_confirm "Instalar en $INSTALL_DIR?"; then
         warn "Instalación cancelada por el usuario."
         exit 1
     fi
 
-    # Simular instalación
+    ###### Simular instalación
     mkdir -p "$INSTALL_DIR"
     simulate_progress
 
-    # Crear archivo de configuración de ejemplo
+    ###### Crear archivo de configuración de ejemplo
     cat > "$INSTALL_DIR/config.ini" <<EOF
-# Configuración de MiApp
+###### Configuración de MiApp
 install_date=$(date)
 version=1.0
 EOF
@@ -4278,9 +4278,9 @@ bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# -------------------------------------------------------------------
-# pipe-comunicacion.sh - Comunicación vía FIFO (servidor factorial)
-# -------------------------------------------------------------------
+###### -------------------------------------------------------------------
+###### pipe-comunicacion.sh - Comunicación vía FIFO (servidor factorial)
+###### -------------------------------------------------------------------
 
 FIFO_SRV="/tmp/fifo_servidor_$$"
 FIFO_CLI="/tmp/fifo_cliente_$$"
@@ -4294,14 +4294,14 @@ trap cleanup EXIT INT TERM
 mkfifo "$FIFO_SRV"
 mkfifo "$FIFO_CLI"
 
-# Función factorial
+###### Función factorial
 factorial() {
     local n=$1 f=1
     for ((i=2; i<=n; i++)); do f=$((f*i)); done
     echo "$f"
 }
 
-# Proceso servidor
+###### Proceso servidor
 servidor() {
     exec 3<> "$FIFO_SRV"   # lectura de peticiones
     exec 4> "$FIFO_CLI"    # escritura de respuestas
@@ -4322,18 +4322,18 @@ servidor() {
                 echo "ERROR" >&4
             fi
         else
-            # EOF en pipe (cliente cerró)
+            ###### EOF en pipe (cliente cerró)
             break
         fi
     done
 }
 
-# Proceso cliente
+###### Proceso cliente
 cliente() {
     exec 3> "$FIFO_SRV"    # escritura de peticiones
     exec 4<> "$FIFO_CLI"   # lectura de respuestas
 
-    # Enviar números
+    ###### Enviar números
     for num in 5 7 3 10; do
         echo "$num" >&3
         read -r respuesta <&4
@@ -4343,13 +4343,13 @@ cliente() {
     exec 3>&-; exec 4>&-
 }
 
-# Ejecutar servidor en segundo plano
+###### Ejecutar servidor en segundo plano
 servidor &
 server_pid=$!
 
 sleep 0.1   # dar tiempo a que el servidor abra los pipes
 
-# Ejecutar cliente
+###### Ejecutar cliente
 cliente
 
 wait "$server_pid"
