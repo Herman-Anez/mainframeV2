@@ -24,5 +24,5 @@ Colección de herramientas para automatización, contenedores y gestión de paqu
 | **[hygene](./npn/hygene/)** | Generación de plantillas y código. |
 
 ---
-[⬅️ Volver al Dashboard](../README.md)
+[back](../index)
 

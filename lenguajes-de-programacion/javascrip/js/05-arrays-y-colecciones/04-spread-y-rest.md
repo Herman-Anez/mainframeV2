@@ -148,3 +148,5 @@ Nota sobre rendimiento
 
 El spread es una operación que itera el iterable completo; con grandes volúmenes puede ser costoso. Para operaciones pesadas considerar alternativas como push.apply o bucles, aunque normalmente no es un problema.
 -----
+---
+[back](../index)

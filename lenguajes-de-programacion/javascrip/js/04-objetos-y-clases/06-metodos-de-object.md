@@ -69,3 +69,5 @@ Object.fromEntries([['nombre','Juan'], ['edad',30]]); // {nombre:'Juan', edad:30
     JSON.stringify y JSON.parse para serialización, aunque no son métodos de Object, son indispensables.
 
 ---
+---
+[back](../index)

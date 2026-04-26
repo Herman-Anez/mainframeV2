@@ -91,3 +91,6 @@ mostrarArgumentos(1, 2, 3);
 > 3.  **Aprovecha el Spread:** Simplifica drásticamente la invocación de funciones que reciben múltiples argumentos a partir de colecciones de datos.
 
 ---
+
+---
+[back](../index)

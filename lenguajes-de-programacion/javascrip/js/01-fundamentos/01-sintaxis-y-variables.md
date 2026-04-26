@@ -63,3 +63,6 @@ function ejemplo() {
 
 ---
 
+
+---
+[back](../index)

@@ -75,3 +75,6 @@ Node.js permite la convivencia de ambos sistemas, con algunas reglas:
 - **Modernización:** Prefiere ESM para nuevos proyectos (`"type": "module"` en `package.json`).
 - **Librerías:** Considera publicar en formato dual (CJS y ESM) para máxima compatibilidad.
 - **Ciclos:** Evita las dependencias circulares; aunque CJS las maneja devolviendo objetos parcialmente cargados, suelen causar errores lógicos difíciles de depurar.
+
+---
+[back](../index)

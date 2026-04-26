@@ -87,3 +87,6 @@ Fetch vs Axios
 
 Fetch es nativo, no necesita dependencias, pero carece de algunas comodidades como interceptores, timeout nativo (se puede con AbortController) o manejo automático de JSON. Axios sigue siendo popular en proyectos grandes.
 ---
+
+---
+[back](../index)

@@ -86,3 +86,5 @@ console.log(emocionar('hola')); // Output: 'HOLA!'
 > *   **Funciones Puras:** Prefiere usar funciones puras (sin efectos secundarios) como *callbacks* para asegurar que el código sea predecible y fácil de testear.
 
 ---
+---
+[back](../index)

@@ -62,3 +62,5 @@ Recorrer la cadena de prototipos es una operación rápida. Sin embargo:
 
 > [!WARNING]
 > Modificar el prototipo de un objeto existente con `Object.setPrototypeOf` es una operación extremadamente lenta que debe evitarse en código de alto rendimiento. Lo recomendable es establecer el prototipo al momento de crear el objeto usando `Object.create()`.
+---
+[back](../index)

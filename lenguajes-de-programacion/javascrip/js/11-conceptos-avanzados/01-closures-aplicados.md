@@ -123,3 +123,6 @@ boton.addEventListener('click', crearManejador());
 
 - **Testing:** El estado encapsulado en un closure puede ser difícil de testear directamente si no se proporcionan métodos de inspección.
 - **Depuración:** El seguimiento del estado en múltiples niveles de closures puede aumentar la complejidad cognitiva del código.
+
+---
+[back](../index)

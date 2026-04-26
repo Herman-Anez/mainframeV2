@@ -80,3 +80,5 @@ const obj = {
 Las *arrow functions* simplifican enormemente los *callbacks* y el código funcional, resolviendo el problema histórico del `this` en contextos asíncronos. Son la elección ideal para funciones cortas, puras y de transformación de datos.
 
 ---
+---
+[back](../index)

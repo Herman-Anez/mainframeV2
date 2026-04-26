@@ -74,3 +74,5 @@ console.log(a === b); // false
 ## Mutabilidad
 
 Los objetos son **mutables**: se pueden añadir, modificar o eliminar propiedades en cualquier momento.
+---
+[back](../index)

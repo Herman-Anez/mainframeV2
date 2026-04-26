@@ -73,3 +73,6 @@ Un enrutador cliente (*Client-side Router*) típico funciona siguiendo este fluj
 
 > [!IMPORTANT]
 > Cuando se usa History API para enrutamiento, el servidor debe estar configurado para devolver el `index.html` base para cualquier ruta desconocida, permitiendo que el JavaScript del cliente tome el control del renderizado.
+
+---
+[back](../index)

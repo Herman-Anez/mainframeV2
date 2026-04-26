@@ -72,3 +72,6 @@ console.log(x); // 'a'
 
 ---
 ### Siguiente tema: [05-arrays-y-colecciones](../05-arrays-y-colecciones/index.md)
+
+---
+[back](../index)

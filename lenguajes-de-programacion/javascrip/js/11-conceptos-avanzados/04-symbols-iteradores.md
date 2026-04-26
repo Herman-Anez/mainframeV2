@@ -100,3 +100,6 @@ const paginador = {
 
 > [!NOTE]
 > Un objeto es **Iterable** si implementa `Symbol.iterator`. Un objeto es **Array-like** si tiene una propiedad `length` e índices numéricos, pero no necesariamente es iterable (ej: el objeto `arguments` antiguo).
+
+---
+[back](../index)

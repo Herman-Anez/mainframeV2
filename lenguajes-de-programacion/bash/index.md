@@ -4479,3 +4479,6 @@ echo "Comunicación finalizada."
     Ambos cierran descriptores y se limpian los FIFOs.
 
 Este esquema puede extenderse a múltiples clientes, pero hay que gestionar el acceso concurrente.
+
+---
+[back](../index)

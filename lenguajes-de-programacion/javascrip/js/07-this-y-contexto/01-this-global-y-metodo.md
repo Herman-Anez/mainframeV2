@@ -131,3 +131,5 @@ const obj = {
 
 > [!IMPORTANT]
 > La solución histórica era `var self = this;` o `var that = this;`. Hoy en día, las **arrow functions** resuelven esto de manera nativa (ver siguiente sección).
+---
+[back](../index)

@@ -81,3 +81,5 @@ nums.sort((a, b) => a - b);
 
 > [!WARNING]
 > Todos los métodos mencionados en este archivo modifican directamente el objeto original. Si tu arquitectura requiere inmutabilidad (muy común en frameworks como React), asegúrate de crear una copia del array antes de aplicar estos métodos utilizando técnicas como el operador spread (`[...]`) o el método `slice()`.
+---
+[back](../index)

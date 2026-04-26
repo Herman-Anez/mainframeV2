@@ -92,3 +92,6 @@ Una vez que ya tenemos una referencia a un elemento, podemos realizar búsquedas
 - **Rendimiento:** Usa `getElementById` cuando solo necesites seleccionar un elemento por su ID único.
 - **Funcionalidad:** Convierte las `NodeList` a array si necesitas usar métodos funcionales: `[...lista]` o `Array.from(lista)`.
 - **Optimización:** Guarda referencias a elementos seleccionados frecuentemente en variables para evitar reconsultar el DOM innecesariamente.
+
+---
+[back](../index)

@@ -115,3 +115,6 @@ elemento.dispatchEvent(loginEvent);
 - **Prevención:** Prefiere `e.preventDefault()` sobre `return false`.
 - **Limpieza:** Remueve los listeners cuando ya no sean necesarios para evitar fugas de memoria (*memory leaks*).
 - **Rendimiento:** Usa `{ passive: true }` en eventos de `scroll` y `resize` para una experiencia más fluida.
+
+---
+[back](../index)

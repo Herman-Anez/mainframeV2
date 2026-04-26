@@ -101,3 +101,6 @@ Al componer funciones, podemos omitir los argumentos intermedios, centrándonos 
 
 > [!NOTE]
 > Muchas librerías modernas como **Ramda** o **Lodash/fp** traen estas utilidades integradas y optimizadas para su uso en producción.
+
+---
+[back](../index)

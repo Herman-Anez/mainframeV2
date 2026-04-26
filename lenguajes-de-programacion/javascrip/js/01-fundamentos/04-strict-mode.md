@@ -73,3 +73,5 @@ delete x; // SyntaxError: Delete of an unqualified identifier in strict mode.
 > La recomendación es usarlo **siempre**. Aunque herramientas modernas como ESLint o TypeScript ya incorporan estas reglas, y los módulos ES lo activan por defecto, mantener la costumbre de usarlo en scripts clásicos garantiza un código más robusto y profesional.
 
 ---
+---
+[back](../index)

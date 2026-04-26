@@ -20,4 +20,4 @@ Guías sobre sistemas operativos, con especial énfasis en distribuciones Linux 
 - Gestión de redes en Linux.
 
 ---
-[⬅️ Volver al Dashboard](../README.md)
+[back](../index)

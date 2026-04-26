@@ -109,3 +109,6 @@ for await (const datos of obtenerPaginas(listaDeUrls)) {
 
 > [!IMPORTANT]
 > Los generadores asíncronos son ideales para manejar flujos de datos infinitos o muy grandes (streams) que llegan de forma asíncrona, como lecturas de archivos grandes o resultados paginados de una API.
+
+---
+[back](../index)

@@ -80,3 +80,5 @@ Los arrays son objetos, por lo que dos arrays con el mismo contenido representan
 
 > [!IMPORTANT]
 > La comparación `[] === []` siempre será `false`. Para comparar el contenido, se debe iterar manualmente o usar técnicas como `JSON.stringify()` (aunque esta última tiene limitaciones con ciertos tipos de datos).
+---
+[back](../index)

@@ -71,3 +71,6 @@ async function cargarEnParalelo() {
     No aprovechar la concurrencia y usar await secuencial para tareas independientes.
 
 ---
+
+---
+[back](../index)

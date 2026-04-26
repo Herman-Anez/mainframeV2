@@ -66,3 +66,6 @@ Microtareas
 
 Los callbacks de .then/.catch/.finally se ejecutan como microtareas (prioritarias) después de que el código síncrono termine pero antes de macrotareas (setTimeout, eventos). Esto es relevante para el event loop.
 ---
+
+---
+[back](../index)

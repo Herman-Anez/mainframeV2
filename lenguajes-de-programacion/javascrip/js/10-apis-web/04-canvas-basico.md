@@ -123,3 +123,6 @@ animar();
 - **Librerías:** Para proyectos complejos de juegos o escenas interactivas, considera usar librerías como **Fabric.js**, **PixiJS** o **Konva**.
 ### 11-conceptos-avanzados
 ---
+
+---
+[back](../index)

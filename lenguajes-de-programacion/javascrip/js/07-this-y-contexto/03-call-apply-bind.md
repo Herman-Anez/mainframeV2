@@ -106,3 +106,5 @@ flecha.call({a: 1}); // this sigue siendo el del ámbito léxico
 
 > [!TIP]
 > Dominar `this` y sus métodos de control es esencial para escribir código robusto y evitar bugs de contexto difíciles de rastrear.
+---
+[back](../index)

@@ -85,3 +85,6 @@ element.addEventListener('click', (e) => {
 - **Sin argumentos propios:** No tienen `arguments`, `super` ni `new.target` propios; los heredan del contexto contenedor.
 - **Ideales para callbacks:** Son extremadamente útiles para preservar el contexto de `this` en callbacks, promesas y programación funcional.
 - **No aptas para métodos:** No son adecuadas para métodos de objetos (salvo que el método no use `this`).
+
+---
+[back](../index)

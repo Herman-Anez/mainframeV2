@@ -81,3 +81,6 @@ function factorialCola(n, acumulador = 1) {
 *   Procesamiento de datos auto-similares (Fractales, Matemáticas).
 
 ---
+
+---
+[back](../index)

@@ -95,3 +95,6 @@ Los Web Workers se ejecutan en un entorno aislado.
 2. **Criptografía:** Generación de claves o hashing pesado.
 3. **Grandes cálculos:** Análisis de Big Data o simulaciones físicas.
 4. **Parsing de datos:** Procesar archivos CSV o JSON de gran tamaño en segundo plano.
+
+---
+[back](../index)

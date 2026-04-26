@@ -56,3 +56,6 @@ Aplicaciones
     Timeout en peticiones (AbortController es preferible a veces).
 
 ---
+
+---
+[back](../index)

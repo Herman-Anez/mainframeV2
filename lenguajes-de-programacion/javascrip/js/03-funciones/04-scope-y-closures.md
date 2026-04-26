@@ -74,3 +74,5 @@ for (let i = 0; i < 3; i++) {
 > **Rendimiento:** Debido a que mantienen referencias al ámbito exterior, los *closures* pueden impedir que el *Garbage Collector* libere memoria. Úsalos con sabiduría, pero no los evites; son una herramienta esencial del lenguaje.
 
 ---
+---
+[back](../index)

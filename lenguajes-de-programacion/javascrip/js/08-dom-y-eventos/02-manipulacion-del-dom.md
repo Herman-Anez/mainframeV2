@@ -107,3 +107,5 @@ ul.appendChild(frag);
 
 > [!IMPORTANT]
 > Mantén la integridad de tu aplicación evitando el uso de `innerHTML` con contenido no confiable. Si es estrictamente necesario, utiliza librerías de sanitización como **DOMPurify**.
+---
+[back](../index)

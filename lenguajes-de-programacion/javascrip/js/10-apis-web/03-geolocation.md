@@ -88,3 +88,6 @@ El callback de error recibe un objeto `GeolocationPositionError` con los siguien
 1. Visualización de mapas y navegación en tiempo real.
 2. Localización de tiendas o servicios cercanos (*POIs*).
 3. Etiquetado geográfico de contenido o registros de actividad física.
+
+---
+[back](../index)

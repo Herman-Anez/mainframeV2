@@ -138,3 +138,6 @@ Para habilitar módulos en el navegador, se debe especificar el tipo en la etiqu
 - **Tree-shaking:** Los empaquetadores (Webpack, Vite, Rollup) eliminan código no usado más fácilmente con exportaciones nombradas.
 - **Cohesión:** Mantén los módulos pequeños, enfocados en una única responsabilidad.
 - **Pureza:** Evita efectos secundarios en módulos lógicos; facilita el testing y la optimización.
+
+---
+[back](../index)

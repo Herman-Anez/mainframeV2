@@ -91,3 +91,5 @@ Al igual que en los objetos literales, las clases permiten el uso de `get` y `se
 ## Resumen
 
 Las clases no reemplazan el modelo de prototipos; son una capa de "azúcar sintáctico" que facilita la programación orientada a objetos (POO) en JavaScript, haciendo el código más legible y mantenible.
+---
+[back](../index)

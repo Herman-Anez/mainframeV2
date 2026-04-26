@@ -73,3 +73,6 @@ Call Stack -> (vacía) -> Event Loop:
 
 Comprender el event loop es crucial para depurar problemas de orden de ejecución y rendimiento en aplicaciones asíncronas.
 
+
+---
+[back](../index)

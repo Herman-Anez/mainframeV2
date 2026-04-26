@@ -88,3 +88,6 @@ window.addEventListener('storage', (e) => {
 
 > [!TIP]
 > Web Storage es ideal para mantener el estado de la interfaz y datos no críticos que mejoran la experiencia del usuario sin sobrecargar el tráfico de red.
+
+---
+[back](../index)

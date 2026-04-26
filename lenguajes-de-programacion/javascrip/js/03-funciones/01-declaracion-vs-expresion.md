@@ -96,3 +96,6 @@ const factorial = function fact(n) {
 > *   Prefiere **expresiones** asignadas a `const` para evitar redeclaraciones accidentales y forzar un flujo de código más predecible (definir antes de usar).
 
 ---
+
+---
+[back](../index)

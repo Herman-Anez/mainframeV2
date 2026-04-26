@@ -56,3 +56,6 @@ Aunque potentes, las funciones constructoras presentan algunos inconvenientes:
 *   **Manejo manual de `prototype`**: Definir métodos requiere manipular el prototipo por separado, lo que puede ser confuso.
 *   **Ambigüedad**: No es visualmente obvio que una función deba usarse con `new`. Si se omite, puede causar efectos colaterales inesperados en el ámbito global.
 *   **Sustitución**: La sintaxis de **clases** resuelve estos problemas con un diseño más limpio y restricciones nativas.
+
+---
+[back](../index)

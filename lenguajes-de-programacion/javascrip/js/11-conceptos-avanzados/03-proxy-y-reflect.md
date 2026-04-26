@@ -80,3 +80,6 @@ const manejador = {
 
 - **Polifills:** Los Proxies **no pueden** ser polifillados para navegadores antiguos de forma completa, ya que requieren soporte profundo a nivel de motor de JavaScript.
 - **Transparencia:** Algunos objetos internos (como `Map`, `Set` o fechas) pueden fallar al ser envueltos en un Proxy si no se gestionan correctamente los enlaces internos (*internal slots*).
+
+---
+[back](../index)

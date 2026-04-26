@@ -70,3 +70,6 @@ console.log('5. Fin');
 - **Tareas pesadas:** Divídelas en fragmentos pequeños usando `setTimeout` o delégalas a un **Web Worker**.
 - **Animaciones:** Usa siempre `requestAnimationFrame` en lugar de `setTimeout` para asegurar la sincronización con el refresco de pantalla.
 - **Lógica de Estado:** Las microtareas son ideales para coordinar cambios de estado que deben ser consistentes antes de que el usuario vea el próximo frame.
+
+---
+[back](../index)

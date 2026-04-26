@@ -88,3 +88,6 @@ document.addEventListener('copy', (e) => {
 
 - **Manejo de Errores:** Utiliza bloques `try/catch` ya que el acceso puede ser denegado por el usuario o bloqueado por el navegador.
 - **Alternativas:** No asumas que el portapapeles siempre estará disponible; ofrece mecanismos alternativos de visualización de datos si el acceso falla.
+
+---
+[back](../index)

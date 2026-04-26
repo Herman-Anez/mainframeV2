@@ -82,3 +82,6 @@ Existen varias formas de comprobar si una propiedad existe en un objeto:
 *   **`prop in obj`**: Verifica la propiedad tanto en el objeto como en su cadena de prototipos.
 *   **`obj.hasOwnProperty(prop)`**: Verifica solo las propiedades **propias** del objeto.
 *   **`obj[prop] !== undefined`**: Puede fallar si la propiedad existe pero su valor es explícitamente `undefined`.
+
+---
+[back](../index)

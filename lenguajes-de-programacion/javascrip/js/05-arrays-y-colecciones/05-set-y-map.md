@@ -84,3 +84,6 @@ Versión del Map optimizada para la gestión de memoria:
 *   **Claves únicamente objetos:** Solo se pueden usar objetos como claves.
 *   **Referencias débiles:** No previene la recolección de basura de sus claves si estas no son accesibles desde otro lugar.
 *   **No iterable:** Ideal para almacenar datos privados o cachés de resultados asociados a objetos cuyo ciclo de vida es incierto.
+
+---
+[back](../index)
