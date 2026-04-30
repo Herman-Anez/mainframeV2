@@ -436,7 +436,7 @@ Este processor envuelve el bean en un proxy JDK justo después de la inicializac
 
     Depuración de problemas de beans: si una dependencia se resuelve mal, sabrás en qué fase mirar.
 
-## Conceptos JoinPoint Pointcut Advice
+02_AOP/Conceptos_JoinPoint_Pointcut_Advice.md
 ¿Qué es AOP? El problema que resuelve
 
 En una aplicación OOP, hay preocupaciones que atraviesan múltiples capas: registro de auditoría, manejo de transacciones, seguridad, control de caché, medición de rendimiento. Si no se tratan con cuidado, el mismo código se repite por todas partes (código cross-cutting). AOP permite encapsular ese comportamiento en módulos llamados aspectos y aplicarlo de forma declarativa, sin modificar la lógica de negocio.
@@ -606,7 +606,7 @@ public class AuditoriaAspect {
 Ordenación de aspectos
 
 Cuando varios aspectos aplican al mismo join point, se puede controlar el orden con @Order (número más bajo = mayor prioridad) o implementando Ordered. En el caso de @Before, el de menor orden se ejecuta primero; en @After y @Around, el último en ejecutarse es el de menor orden (como capas de cebolla).
-## Aspectos personalizados
+02_AOP/Aspectos_personalizados.md
 
 Aquí mostramos cómo crear aspectos desde cero, incluyendo técnicas avanzadas para resolver problemas concretos.
 Estructura básica de un aspecto personalizado
@@ -748,7 +748,7 @@ Buenas prácticas en aspectos personalizados
 
     Considera la trazabilidad: un advice no debe causar pérdida de información de excepciones ni alterar la semántica del método a menos que así lo hayas diseñado.
 
-## Proxies JDK vs CGLIB
+02_AOP/Proxies_JDK_vs_CGLIB.md
 Spring AOP es proxy-based AOP
 
 Spring AOP no modifica bytecode como AspectJ (weaving en compilación o carga). En su lugar, en tiempo de ejecución, el contenedor crea un objeto proxy que envuelve al bean objetivo. Las llamadas externas al bean pasan por el proxy, que aplica los interceptores (aspectos). Toda la magia de @Transactional, @Cacheable, @Secured, etc., ocurre a través de estos proxies.
@@ -932,7 +932,7 @@ if (bean instanceof SpringProxy) {
 
 SpringProxy es una interfaz marcadora implementada por todos los proxies de Spring AOP.
 
-## DispatcherServlet y Flujo
+03_Spring_MVC/DispatcherServlet_y_Flujo.md
 El corazón de Spring MVC: DispatcherServlet
 
 DispatcherServlet es el Front Controller del patrón MVC. Recibe todas las peticiones HTTP, las distribuye a los controladores adecuados y gestiona todo el ciclo de vida de la respuesta. Sus responsabilidades principales:
@@ -1027,7 +1027,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 }
 
-## Controladores REST
+03_Spring_MVC/Controladores_REST.md
 De @Controller a @RestController
 
 Un controlador REST es un controlador que devuelve datos (generalmente JSON o XML) en lugar de un nombre de vista. La anotación @RestController es un atajo que combina @Controller y @ResponseBody. Con @ResponseBody, el valor de retorno del método se serializa directamente al cuerpo de la respuesta HTTP mediante HttpMessageConverter.
@@ -1148,7 +1148,7 @@ Spring HATEOAS permite construir respuestas REST con hipervínculos. Aunque es a
 Programación reactiva en REST
 
 Con spring-boot-starter-webflux y @RestController (o en WebFlux), los métodos pueden retornar Mono<T> o Flux<T>. Spring maneja la suscripción. Cambia el paradigma a no bloqueante.
-## Manejo de Excepciones
+03_Spring_MVC/Manejo_de_Excepciones.md
 Gestión centralizada de excepciones en @ControllerAdvice
 
 En lugar de esparcir try/catch en cada controlador, Spring permite definir clases globales con @ControllerAdvice (o @RestControllerAdvice, que es @ControllerAdvice + @ResponseBody). Los métodos anotados con @ExceptionHandler capturan excepciones específicas.
@@ -1222,7 +1222,7 @@ Las excepciones que ocurren en los filtros (fuera del alcance del DispatcherServ
 Response con detalles en errores de validación
 
 Volviendo al ejemplo de MethodArgumentNotValidException: el BindingResult contiene todos los errores de campo (rechazos de @NotNull, @Size, etc.), que podemos serializar en una lista de errores estructurados. Es una práctica recomendada devolver una respuesta legible por el cliente frontend.
-## Validacion y BindingResult
+03_Spring_MVC/Validacion_y_BindingResult.md
 Bean Validation (JSR-380) y su integración con Spring MVC
 
 Spring MVC se integra con Hibernate Validator (implementación de referencia) automáticamente cuando está en el classpath. Las anotaciones de validación (@NotNull, @Size, @Email, @Pattern, etc.) se colocan en los campos del DTO o entidad que se recibe.
@@ -1300,7 +1300,7 @@ Se debe tener un bean messageSource configurado (Spring Boot lo hace automática
 Grupos de validación
 
 Bean Validation permite definir interfaces de grupos para aplicar distintas reglas en diferentes casos de uso (creación vs actualización). Se especifica el grupo con @Validated(OnCreate.class) en el controlador. Es una funcionalidad avanzada pero a tener en cuenta.
-## Vistas y Templates
+03_Spring_MVC/Vistas_y_Templates.md
 El concepto de ViewResolver y View
 
 Cuando un método controlador retorna un String sin @ResponseBody, ese string es el nombre lógico de la vista. El DispatcherServlet consulta a los ViewResolvers registrados para convertir ese nombre en un objeto View real (JSP, HTML con Thymeleaf, Freemarker, etc.).
@@ -1365,7 +1365,7 @@ Resolución de vistas y negociación de contenido en REST
 
 Si un método devuelve un objeto y no tiene @ResponseBody, pero la petición tiene encabezados que indican que acepta JSON, el HttpMessageConverter puede tomar el control. En la práctica, si el controlador tiene @RestController todo es @ResponseBody. En un @Controller puro, para que el valor retornado se interprete como JSON debe estar anotado con @ResponseBody en el método.
 
-## Autoconfiguracion y Starters
+04_Spring_Boot/Autoconfiguracion_y_Starters.md
 El problema que resolvió Spring Boot
 
 Spring tradicional daba una flexibilidad enorme, pero configurar una aplicación sencilla requería decenas de líneas de XML o Java Config para beans de infraestructura: DataSource, EntityManagerFactory, TransactionManager, ViewResolver, MessageConverter, etc. Spring Boot introdujo dos conceptos rompedores:
@@ -1447,7 +1447,7 @@ Cómo crear un starter personalizado
 Orden de las autoconfiguraciones
 
 Las configuraciones pueden anotarse con @AutoConfigureOrder, @AutoConfigureBefore o @AutoConfigureAfter para controlar la secuencia. Esto es vital porque, por ejemplo, la configuración de Hibernate debe aplicarse después de la del DataSource.
-## Estructura Proyecto Spring Boot
+04_Spring_Boot/Estructura_Proyecto_Spring_Boot.md
 Estructura recomendada de directorios
 
 Spring Boot no fuerza una estructura, pero hay una ampliamente aceptada que sigue el estándar Maven/Gradle:
@@ -1528,7 +1528,7 @@ Por defecto, Spring Boot sirve recursos estáticos desde classpath:/static/, cla
 El servidor embebido
 
 Spring Boot incluye Tomcat por defecto en spring-boot-starter-web. Pero puedes cambiarlo a Jetty o Undertow excluyendo Tomcat y añadiendo el starter correspondiente. La configuración del servidor se realiza mediante propiedades server.* (puerto, SSL, compression, etc.). El servidor se inicia desde ServletWebServerApplicationContext.
-## Actuator y Metricas
+04_Spring_Boot/Actuator_y_Metricas.md
 ¿Qué es Actuator?
 
 Spring Boot Actuator expone una serie de endpoints HTTP y JMX que permiten monitorizar y gestionar una aplicación en producción: estado de salud, métricas, variables de entorno, configuración, trazas, mapeos de peticiones, etc. Para habilitarlo se añade el starter spring-boot-starter-actuator.
@@ -1632,7 +1632,7 @@ public class BuildInfoContributor implements InfoContributor {
 Seguridad en Actuator
 
 Combinado con Spring Security, se pueden restringir los endpoints. Lo típico es que /actuator/health esté sin autenticación (para probes de k8s) y el resto requiera un rol ACTUATOR.
-## Testing
+04_Spring_Boot/Testing.md
 Enfoque de testing en Spring Boot
 
 Spring Boot facilita tanto pruebas unitarias (aisladas, sin contexto) como pruebas de integración (con contexto de Spring y/o bases de datos reales). Su starter spring-boot-starter-test trae: JUnit Jupiter, Mockito, AssertJ, Hamcrest, Spring Test, y más.
@@ -1726,7 +1726,7 @@ Por defecto, @SpringBootTest no es transaccional (a diferencia de @DataJpaTest).
 Pruebas con configuración externa
 
 Puedes usar @ActiveProfiles("test") y un archivo application-test.properties para definir propiedades específicas. También @TestPropertySource para añadir propiedades en línea.
-## Perfiles y Propiedades
+04_Spring_Boot/Perfiles_y_Propiedades.md
 Externalización de la configuración
 
 Spring Boot permite casi todas las propiedades de la aplicación (URL de base de datos, puerto, claves API, etc.) fuera del código, en archivos de propiedades, variables de entorno, argumentos de línea de comandos, o servidores de configuración. Esto sigue las reglas de The Twelve-Factor App.
@@ -1860,7 +1860,7 @@ public class PedidosProperties {
     ...
 }
 
-## JDBC Template
+05_Acceso_Datos/JDBC_Template.md
 El dolor que resuelve: JDBC crudo
 
 JDBC es potente pero requiere código repetitivo: abrir conexiones, preparar sentencias, recorrer ResultSet, cerrar recursos en finally anidados y manejar la omnipresente SQLException. Spring elimina esa fricción con JdbcTemplate, que sigue el patrón Template Method: el recurso se abre y cierra automáticamente, y tu código se centra en la lógica SQL y el mapeo.
@@ -2002,7 +2002,7 @@ Cuándo usar JdbcTemplate frente a JPA
     Para migraciones o tareas batch.
 
 Spring ofrece también Spring Data JDBC, que combina el estilo de repositorios de Spring Data con JdbcTemplate pero sin JPA ni mapeo complejo.
-## JPA y Hibernate Integracion
+05_Acceso_Datos/JPA_y_Hibernate_Integracion.md
 JPA: estándar, Hibernate: implementación
 
 JPA (Jakarta Persistence API) es la especificación estándar para ORM en Java. Hibernate es la implementación más popular. Spring Boot elige Hibernate automáticamente si está en el classpath (starter spring-boot-starter-data-jpa).
@@ -2113,7 +2113,7 @@ Errores frecuentes
 
     Transaccionalidad: olvidar @Transactional en el servicio que orquesta múltiples operaciones.
 
-## Spring Data JPA
+05_Acceso_Datos/Spring_Data_JPA.md
 El paradigma: repositorios sin implementación
 
 Spring Data JPA genera automáticamente la implementación de las interfaces de repositorio en tiempo de ejecución. Solo defines la interfaz y, mediante query derivation o consultas anotadas, obtienes el código necesario.
@@ -2238,7 +2238,7 @@ Paginación, ordenación y streaming
 
     Stream<T>: un stream de resultados que debe cerrarse dentro de una transacción (@Transactional). Bueno para procesar grandes volúmenes con Java 8 streams.
 
-## Transacciones y Transactional
+05_Acceso_Datos/Transacciones_y_Transactional.md
 Modelo de transacciones de Spring
 
 Spring abstrae las transacciones con PlatformTransactionManager. Independientemente de que uses JDBC, JPA o JMS, el manejo declarativo es el mismo. La anotación @Transactional envuelve el método en un proxy AOP que crea/únete a una transacción según la configuración.
@@ -2299,7 +2299,7 @@ Spring soporta transacciones largas usando @Transactional y sesiones extendidas,
 Testing de transacciones
 
 En pruebas con @DataJpaTest o @SpringBootTest, se puede usar @Transactional para que las operaciones de un test se reviertan automáticamente al final. Sin embargo, cuando se usa TestRestTemplate en @SpringBootTest(webEnvironment = RANDOM_PORT), la petición HTTP corre en un hilo separado, por lo que no comparte la transacción del test. En ese caso, se debe limpiar manualmente o usar @Transactional(propagation = NOT_SUPPORTED) y luego borrar datos.
-## Consultas Nativas y Procedure
+05_Acceso_Datos/Consultas_Nativas_y_Procedure.md
 Cuándo usar consultas nativas
 
 Aunque JPQL cubre la mayoría de casos, a veces es necesario SQL nativo para:
@@ -2425,7 +2425,7 @@ Consideraciones de seguridad y portabilidad
 
     Las consultas nativas no son validadas en tiempo de arranque (salvo que se habilite spring.jpa.properties.hibernate.query.fail_on_pagination_over_collection_fetch), así que los errores sintácticos aparecen en tiempo de ejecución.
 
-## Spring Security Arquitectura
+06_Seguridad/Spring_Security_Arquitectura.md
 La cadena de filtros: el núcleo de Spring Security
 
 Spring Security se basa en una cadena de filtros del contenedor de servlets, anticipándose al DispatcherServlet. Un único punto de entrada, DelegatingFilterProxy, se registra en el web.xml (o automáticamente por Spring Boot) y delega todas las peticiones a un bean llamado springSecurityFilterChain, que es una FilterChainProxy. Esta FilterChainProxy contiene una lista de cadenas de seguridad (SecurityFilterChain) que pueden aplicar diferentes configuraciones según la URL (por ejemplo, una para APIs REST y otra para páginas web).
@@ -2486,7 +2486,7 @@ Tratamiento de excepciones
 Contexto para aplicaciones REST y stateless
 
 En REST no hay sesiones HTTP. La configuración se vuelve SessionCreationPolicy.STATELESS. Se reemplaza la autenticación basada en sesiones por tokens (JWT). Un filtro personalizado (por ejemplo, JwtAuthenticationFilter) extrae el token de la cabecera Authorization, lo valida y establece el SecurityContext para esa petición. Al ser sin sesión, el contexto no se persiste, y el filtro debe ejecutarse en cada petición.
-## Configuracion DSL
+06_Seguridad/Configuracion_DSL.md
 De WebSecurityConfigurerAdapter a SecurityFilterChain
 
 Desde Spring Security 5.7, la forma moderna de configurar la seguridad es declarando beans de tipo SecurityFilterChain y usando la DSL fluida de HttpSecurity. Adiós a la herencia.
@@ -2612,7 +2612,7 @@ public AuthenticationManager authenticationManager(AuthenticationConfiguration c
     return config.getAuthenticationManager();
 }
 
-## JWT y OAuth2
+06_Seguridad/JWT_y_OAuth2.md
 OAuth2: roles y flujos
 
 OAuth2 es el estándar de facto para delegación de acceso. Sus protagonistas:
@@ -2753,7 +2753,7 @@ spring.security.oauth2.client.registration.google.client-id=...
 spring.security.oauth2.client.registration.google.client-secret=...
 
 Spring Security expone automáticamente /oauth2/authorization/google y gestiona la redirección, el canje del código y la creación del OAuth2AuthenticationToken. Se puede personalizar el OAuth2UserService para mapear a tu propio modelo de usuario.
-## Metodo Security
+06_Seguridad/Metodo_Security.md
 Habilitar la seguridad a nivel de método
 
 La seguridad a nivel de método proporciona una capa de defensa adicional, controlando la invocación de métodos de servicio en lugar de solo URLs. Se habilita añadiendo @EnableMethodSecurity (o @EnableGlobalMethodSecurity en versiones anteriores) en una clase de configuración.
@@ -2838,7 +2838,7 @@ Consideraciones de proxy
 
 La seguridad a nivel de método se basa en AOP (proxies). Por tanto, aplican las mismas reglas: la anotación debe estar en un método público y la llamada debe provenir de fuera del bean (no por auto-invocación). Para casos de auto-invocación, se puede extraer a otro bean o usar @EnableAspectJAutoProxy(exposeProxy = true) y llamar a través de AopContext.currentProxy().
 
-## Eventos de Aplicacion
+07_Temas_Avanzados/Eventos_de_Aplicacion.md
 El sistema de eventos de Spring
 
 Spring proporciona un mecanismo de publicación/suscripción de eventos dentro del ApplicationContext. Permite que un componente publique un evento y que otros componentes reaccionen sin acoplamiento directo, una implementación más del principio de Inversión de Control.
@@ -2952,7 +2952,7 @@ public class StartupListener {
     }
 }
 
-## Cache
+07_Temas_Avanzados/Cache.md
 Abstracción de caché de Spring
 
 Desde Spring 3.1, la capa de caché permite añadir comportamiento de almacenamiento temporal a métodos con anotaciones declarativas, sin acoplarse a una implementación concreta (EhCache, Caffeine, Redis, Hazelcast, etc.). Solo necesitas configurar un CacheManager y anotar los métodos.
@@ -3067,7 +3067,7 @@ Con sync = true en @Cacheable, Spring delega en el Cache subyacente el bloqueo. 
 Cache con Spring WebFlux (reactivo)
 
 En WebFlux no se puede usar el CacheManager bloqueante estándar. Reactor añade CacheMono y CacheFlux para operaciones reactivas, pero no hay integración directa con @Cacheable. El uso de caché en contexto reactivo suele ser manual o con Mono.cache().
-## Programacion Reactiva WebFlux
+07_Temas_Avanzados/Programacion_Reactiva_WebFlux.md
 Fundamentos reactivos con Project Reactor
 
 Spring WebFlux es el módulo de Spring para construir aplicaciones web no bloqueantes usando el estándar Reactive Streams. Internamente se apoya en Project Reactor, que proporciona dos tipos principales:
@@ -3189,7 +3189,7 @@ Errores comunes
 
     No suscribirse explícitamente; siempre devolver el Mono/Flux al framework.
 
-## Batch y Tareas Programadas
+07_Temas_Avanzados/Batch_y_Tareas_Programadas.md
 Spring Batch: procesamiento de grandes volúmenes
 
 Spring Batch es un framework para el desarrollo de procesos batch robustos, con reinicio, trazabilidad, control de transacciones escalonado y estadísticas. Una tarea batch se define como un Job compuesto de uno o más Step.
@@ -3377,7 +3377,7 @@ Consideraciones en tareas programadas
 
     Spring Boot expone el endpoint /actuator/scheduledtasks (Actuator) para ver las tareas programadas y sus expresiones cron.
 
-## Service Discovery Eureka
+## 08_Spring_Cloud/Service_Discovery_Eureka.md
 
 ### El problema del descubrimiento de servicios
 
@@ -3493,7 +3493,7 @@ Eureka vs. otras soluciones
     Kubernetes Service Discovery: en Kubernetes, se puede prescindir de Eureka y usar DiscoveryClient para Kubernetes.
 
 Spring Cloud Commons abstrae el descubrimiento; cambiar de Eureka a Consul o Kubernetes solo requiere cambiar dependencias sin tocar el código de negocio.
-## Config Server
+08_Spring_Cloud/Config_Server.md
 La necesidad de configuración externa centralizada
 
 Los microservicios tienen propiedades (URLs de bases de datos, secretos, parámetros de negocio) que varían por entorno y deben gestionarse sin recompilar. Spring Cloud Config Server centraliza esta configuración en un backend versionado (Git, SVN, Vault) y la sirve a los servicios.
@@ -3579,7 +3579,7 @@ Config Server en producción
 
     Aplicaciones nativas de Spring Cloud: spring-cloud-config-server + spring-cloud-starter-netflix-eureka-client.
 
-## API Gateway
+08_Spring_Cloud/API_Gateway.md
 El patrón API Gateway
 
 En microservicios, un API Gateway es el punto de entrada único que encamina las peticiones a los servicios internos, aplica políticas de seguridad, límites, transformación de protocolo y agregación. Aísla al cliente de la complejidad interna.
@@ -3735,7 +3735,7 @@ Comparativa con otras soluciones
 
     Kong, Traefik, Nginx: soluciones externas; Spring Cloud Gateway es perfecto para ecosistema Spring Boot.
 
-## Circuit Breaker
+08_Spring_Cloud/Circuit_Breaker.md
 El patrón Circuit Breaker
 
 En sistemas distribuidos, las llamadas a servicios remotos pueden fallar o volverse lentas. El Circuit Breaker detecta fallos acumulativos y "abre" el circuito, rechazando rápidamente las peticiones durante un tiempo, evitando saturar al servicio deteriorado y dando posibilidad de recuperación.
@@ -3883,7 +3883,7 @@ Consideraciones importantes
 
     El patrón no sustituye a la lógica de reintentos; se combina. Circuit Breaker evita llamadas cuando se sabe que el sistema está caído; Retry maneja fallas transitorias.
 
-## Internacionalizacion i18n
+09_Miscelaneos/Internacionalizacion_i18n.md
 El desafío de las aplicaciones multidioma
 
 Una aplicación global debe presentar mensajes, etiquetas, formatos de fecha/número y validaciones en el idioma y la región del usuario. Spring proporciona un soporte sólido para i18n (internacionalización) y l10n (localización) mediante la abstracción MessageSource y la resolución de Locale.
@@ -4009,7 +4009,7 @@ Buenas prácticas
 
     Para aplicaciones con muchos idiomas, considera servicios externos de traducción o un CMS.
 
-## Websockets y STOMP
+09_Miscelaneos/Websockets_y_STOMP.md
 WebSockets: comunicación full-duplex
 
 El protocolo WebSocket permite un canal de comunicación persistente y bidireccional entre el cliente (navegador) y el servidor, superando las limitaciones de HTTP (petición-respuesta). Es ideal para notificaciones en tiempo real, chats, dashboards en vivo.
@@ -4154,7 +4154,7 @@ Consideraciones de escalabilidad y estado
 
     Las sesiones WebSocket no comparten el HttpSession automáticamente; se puede configurar un HandshakeInterceptor para transferir el usuario autenticado.
 
-## Integracion JMS y Kafka
+09_Miscelaneos/Integracion_JMS_y_Kafka.md
 Mensajería asíncrona en Spring
 
 Spring ofrece abstracciones para los dos estándares de mensajería más extendidos: JMS (Java Message Service) para brokers tradicionales como ActiveMQ o Artemis, y Apache Kafka para streaming de eventos de alto rendimiento.
