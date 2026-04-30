@@ -1,97 +1,83 @@
 # Selección del DOM
 
-El **DOM (Document Object Model)** es la representación en árbol de los documentos HTML/XML. Para interactuar con él, primero debemos seleccionar los nodos correspondientes.
+El **DOM (Document Object Model)** es la representación estructural de un documento HTML en forma de árbol. Para interactuar con la página mediante JavaScript, el primer paso es obtener referencias a los nodos (elementos) que deseamos manipular.
 
 ---
 
-## Métodos clásicos del objeto `document`
+## Métodos Tradicionales
 
-### `getElementById(id)`
+Estos métodos son parte de las especificaciones más antiguas del DOM, pero siguen siendo extremadamente rápidos y útiles.
 
-Devuelve un único elemento (o `null`) cuyo atributo `id` coincida exactamente. Es sensible a mayúsculas y es el método de selección más rápido.
+| Método | Descripción | Devuelve |
+| :--- | :--- | :--- |
+| `getElementById(id)` | Busca un elemento por su atributo `id`. | Un elemento o `null`. |
+| `getElementsByClassName(class)` | Busca elementos por su clase CSS. | `HTMLCollection` (viva). |
+| `getElementsByTagName(tag)` | Busca elementos por su etiqueta (ej. `div`).| `HTMLCollection` (viva). |
+| `getElementsByName(name)` | Busca por el atributo `name`. | `NodeList` (viva). |
 
-```js
-const el = document.getElementById('main');
-```
-
-### `getElementsByClassName(className)`
-
-Devuelve una **HTMLCollection "viva"** de elementos con la clase especificada. Se actualiza automáticamente si el DOM cambia.
-
-```js
-const items = document.getElementsByClassName('item');
-```
-
-### `getElementsByTagName(tagName)`
-
-Devuelve una **HTMLCollection "viva"** de elementos con el nombre de etiqueta proporcionado.
-
-```js
-const divs = document.getElementsByTagName('div');
-```
-
-### `getElementsByName(name)`
-
-Devuelve una **NodeList "viva"** de elementos con el atributo `name` dado (comúnmente usado en formularios).
-
-```js
-const radios = document.getElementsByName('genero');
+```javascript
+const titulo = document.getElementById('main-title');
+const items = document.getElementsByClassName('list-item');
 ```
 
 ---
 
-## Métodos modernos: `querySelector` y `querySelectorAll`
+## Métodos Modernos (Selectores CSS)
 
-Estos métodos utilizan selectores CSS, lo que los hace mucho más flexibles y potentes.
+Introducidos para unificar la selección bajo la potente sintaxis de los selectores de CSS. Son los métodos más versátiles.
 
-- **`querySelector(selector)`**: Devuelve el **primer** elemento que coincida con el selector o `null` si no hay coincidencias.
-- **`querySelectorAll(selector)`**: Devuelve una **NodeList estática** (no viva) de todos los elementos que coinciden.
+*   **`querySelector(selector)`**: Devuelve el **primer** elemento que coincida con el selector. Si no hay coincidencias, devuelve `null`.
+*   **`querySelectorAll(selector)`**: Devuelve todos los elementos que coincidan con el selector.
 
-```js
-const primerItem = document.querySelector('.item');
-const todosItems = document.querySelectorAll('.item');
-const input = document.querySelector('#form input[type="text"]');
+```javascript
+// Selección compleja
+const linkActivo = document.querySelector('nav ul li.active > a');
+
+// Selección múltiple
+const todosLosBotones = document.querySelectorAll('.btn-primary');
 ```
 
-> [!NOTE]
-> Las **NodeList estáticas** no se actualizan si el DOM cambia después de la consulta. Se pueden iterar directamente con `.forEach()` (en navegadores modernos), pero no son arrays completos; para usar métodos como `.map()` o `.filter()`, deben convertirse con `Array.from()` o el operador spread `[...]`.
+---
+
+## HTMLCollection vs NodeList
+
+Es fundamental entender la diferencia entre los tipos de colecciones que devuelven los métodos de selección.
+
+### HTMLCollection (Viva)
+Es una colección dinámica. Si el DOM cambia (se añaden o eliminan elementos que coinciden con la búsqueda), la colección se actualiza automáticamente.
+> [!WARNING]
+> Las `HTMLCollection` no tienen el método `.forEach()`. Debes convertirlas a Array o usar un bucle `for...of`.
+
+### NodeList (Estática)
+Es un "snapshot" o captura del estado del DOM en el momento de la consulta. Si el DOM cambia después, la lista no se verá afectada.
+> [!TIP]
+> Las `NodeList` devueltas por `querySelectorAll` sí implementan el método `.forEach()` de forma nativa en navegadores modernos.
 
 ---
 
-## Diferencias entre colecciones vivas y estáticas
+## Navegación y Selección Relativa
 
-- **HTMLCollection (viva):** Refleja cambios dinámicos en el DOM inmediatamente. No dispone del método `.forEach()` nativo (aunque se puede iterar con un bucle `for` clásico).
-- **NodeList estática:** Es un "snapshot" del momento de la consulta, lo que la hace más predecible. `querySelectorAll` devuelve una lista estática, mientras que propiedades como `childNodes` devuelven una NodeList viva.
+Una vez seleccionado un elemento, podemos movernos por el árbol del DOM sin necesidad de realizar nuevas búsquedas globales.
 
----
+### Propiedades de Navegación
+*   **Padre:** `parentElement` (más seguro que `parentNode`).
+*   **Hijos:** `children` (solo elementos HTML) o `childNodes` (incluye nodos de texto y comentarios).
+*   **Hermanos:** `nextElementSibling` / `previousElementSibling`.
 
-## Selección relativa a un elemento
-
-Una vez que ya tenemos una referencia a un elemento, podemos realizar búsquedas dentro de su subárbol o navegar por sus nodos adyacentes:
-
-- **Búsqueda interna:** `element.querySelector()` / `element.querySelectorAll()` / `element.getElementsBy...`
-- **Propiedades de navegación:**
-    - `parentNode` / `parentElement`
-    - `children` / `childNodes`
-    - `firstChild` / `lastChild`
-    - `nextSibling` / `previousSibling`
-    - `closest(selector)`: Recorre hacia arriba (ancestros) buscando la primera coincidencia con el selector. Es extremadamente útil para la **delegación de eventos**.
+### El método `.closest()`
+Recorre el DOM hacia arriba (ancestros) hasta encontrar el primer elemento que coincida con el selector CSS proporcionado.
+```javascript
+const card = boton.closest('.card-container'); // Útil para delegación de eventos
+```
 
 ---
 
-## Selección de elementos especiales
+## Buenas Prácticas
 
-- **Directos:** `document.body`, `document.head`, `document.documentElement` (`<html>`).
-- **Colecciones:** `document.forms`, `document.images`, `document.links`, etc.
-
----
-
-## Buenas prácticas
-
-- **Flexibilidad:** Prefiere `querySelector` para búsquedas complejas o basadas en selectores CSS.
-- **Rendimiento:** Usa `getElementById` cuando solo necesites seleccionar un elemento por su ID único.
-- **Funcionalidad:** Convierte las `NodeList` a array si necesitas usar métodos funcionales: `[...lista]` o `Array.from(lista)`.
-- **Optimización:** Guarda referencias a elementos seleccionados frecuentemente en variables para evitar reconsultar el DOM innecesariamente.
+1.  **Cachear Selecciones:** Guardar el resultado de una selección en una variable si se va a usar varias veces. Consultar el DOM es una operación costosa.
+2.  **ID vs Clase:** Usa `getElementById` para elementos únicos (rendimiento máximo) y `querySelector` para selecciones complejas o dinámicas.
+3.  **Conversión a Array:** Usa el operador spread `[...]` o `Array.from()` cuando necesites usar métodos como `.map()`, `.filter()` o `.reduce()` sobre una colección de elementos.
+4.  **Selección Específica:** Limita el ámbito de búsqueda. En lugar de `document.querySelectorAll`, usa `miElementoPadre.querySelectorAll` si sabes dónde están los elementos.
 
 ---
-[back](../index)
+[Volver al Índice](../js-index.md)

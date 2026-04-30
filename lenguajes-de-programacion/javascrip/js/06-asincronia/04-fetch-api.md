@@ -1,92 +1,103 @@
-## Archivo: `04-fetch-api.md`
+# Fetch API en JavaScript
 
+`fetch` es la interfaz moderna de JavaScript para realizar peticiones HTTP de forma asíncrona. Está integrada en el navegador y disponible de forma nativa en Node.js (versión 18+), reemplazando al antiguo `XMLHttpRequest`.
 
-fetch es la API moderna para realizar peticiones HTTP en el navegador (y disponible globalmente en Node 18+). Retorna una Promesa que resuelve un objeto Response.
-Sintaxis básica
-```js
-fetch(url, options)
+---
+
+## Sintaxis y Uso Básico
+
+La función `fetch()` recibe una URL y un objeto opcional de configuración, devolviendo una **Promesa** que resuelve en un objeto `Response`.
+
+```javascript
+fetch('https://api.ejemplo.com/datos')
   .then(response => {
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.json();
+    // Es vital verificar si la respuesta es exitosa (status 200-299)
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
+    return response.json(); // Retorna otra promesa con los datos parseados
   })
-  .then(data => console.log(data))
-  .catch(error => console.error('Error de red o parseo', error));
-
+  .then(data => console.log('Datos recibidos:', data))
+  .catch(error => console.error('Error en la petición:', error));
 ```
-    url: string o URL.
 
-    options: objeto de configuración opcional (method, headers, body, mode, etc.).
+---
 
-    Por defecto realiza GET.
+## El Objeto `Response`
 
-### El objeto Response
+Representa la respuesta a la petición. Contiene metadatos y métodos para consumir el cuerpo del mensaje.
 
-Propiedades principales:
+### Propiedades Clave
+*   **`response.ok`**: Booleano que indica si el código de estado está entre 200 y 299.
+*   **`response.status`**: Código de estado HTTP (ej. 200, 404, 500).
+*   **`response.headers`**: Objeto que contiene las cabeceras de la respuesta.
+*   **`response.url`**: La URL final de la respuesta (útil tras redirecciones).
 
-    response.ok: booleano, true si status entre 200-299.
+### Métodos para Consumir el Cuerpo (Body)
+> [!IMPORTANT]
+> El cuerpo de la respuesta es un flujo (stream) que solo puede ser consumido **una vez**.
 
-    response.status: código HTTP (200, 404...).
+| Método | Resultado esperado |
+| :--- | :--- |
+| `response.json()` | Parsea el contenido como JSON y devuelve un objeto/array. |
+| `response.text()` | Devuelve el contenido como una cadena de texto plano. |
+| `response.blob()` | Devuelve un objeto Blob (útil para imágenes o archivos). |
+| `response.formData()` | Parsea el contenido como datos de formulario. |
+| `response.arrayBuffer()`| Devuelve el contenido como un buffer binario puro. |
 
-    response.headers: objeto Headers.
+---
 
-    response.url: URL final después de redirecciones.
-    Métodos para leer el cuerpo (solo uno puede ser llamado, el cuerpo se consume):
+## Configuración de la Petición
 
-    response.json(): parsea JSON.
+Para realizar peticiones distintas a `GET` (como `POST`, `PUT`, `DELETE`), pasamos un objeto de opciones como segundo argumento.
 
-    response.text(): texto plano.
-
-    response.blob(): datos binarios (imágenes, archivos).
-
-    response.arrayBuffer(): buffer de bytes.
-
-    response.formData(): para datos de formulario.
-
-### Configuración de peticiones
-```js
-fetch('/api/item', {
+```javascript
+fetch('/api/productos', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer token'
+    'Authorization': 'Bearer tu_token_aqui'
   },
-  body: JSON.stringify({ nombre: 'Producto' })
-})
+  body: JSON.stringify({ nombre: 'Nuevo Producto', precio: 25.50 })
+});
 ```
 
-Otras opciones: mode ('cors', 'no-cors', 'same-origin'), credentials ('include', 'same-origin', 'omit'), cache, redirect.
-Manejo de errores
+---
 
-fetch solo rechaza la promesa por errores de red (no se pudo conectar). Un status HTTP 404 o 500 NO es un error de red, la promesa se resuelve normalmente. Por eso es necesario verificar response.ok.
-Cancelación con AbortController
+## Manejo de Errores
 
-Se puede cancelar una petición fetch usando AbortController.
-```js
+> [!WARNING]
+> **Error común:** `fetch` **no se rechaza** en errores HTTP como 404 o 500. La promesa solo se rechaza si ocurre un fallo de red (ej. falta de conexión o DNS fallido). Por ello, siempre debes validar `response.ok` o `response.status` manualmente.
+
+---
+
+## Cancelación con `AbortController`
+
+Puedes cancelar una petición en curso (por ejemplo, si el usuario cambia de página o para implementar un *timeout*).
+
+```javascript
 const controller = new AbortController();
+const signal = controller.signal;
+
+// Cancelar después de 5 segundos
 setTimeout(() => controller.abort(), 5000);
-fetch(url, { signal: controller.signal })
-  .then(...)
+
+fetch(url, { signal })
+  .then(res => res.json())
   .catch(err => {
-    if (err.name === 'AbortError') console.log('Cancelada');
+    if (err.name === 'AbortError') {
+      console.log('Petición cancelada por el usuario o tiempo agotado');
+    }
   });
 ```
 
-### Subida de archivos
-
-body puede ser un FormData para subir archivos:
-```js
-const formData = new FormData();
-formData.append('archivo', fileInput.files[0]);
-fetch('/upload', { method: 'POST', body: formData });
-```
-
-### Streaming
-
-El cuerpo de la respuesta puede ser leído como stream usando response.body.getReader(), útil para grandes descargas.
-Fetch vs Axios
-
-Fetch es nativo, no necesita dependencias, pero carece de algunas comodidades como interceptores, timeout nativo (se puede con AbortController) o manejo automático de JSON. Axios sigue siendo popular en proyectos grandes.
 ---
 
+## Consideraciones Finales
+
+*   **Subida de archivos:** Usa un objeto `FormData` en el `body`. Fetch ajustará automáticamente el `Content-Type` correcto incluyendo el *boundary*.
+*   **CORS:** Por defecto, las peticiones están sujetas a políticas de CORS. Puedes ajustar esto con la opción `mode`.
+*   **Fetch vs Axios:** `fetch` es nativo y ligero, pero carece de interceptores, manejo automático de timeouts (nativo) o transformación automática de JSON que sí ofrece Axios.
+
 ---
-[back](../index)
+[Volver al Índice](../js-index.md)

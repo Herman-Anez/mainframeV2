@@ -1,120 +1,106 @@
 # Eventos y Delegación
 
-Los eventos permiten que nuestras aplicaciones reaccionen a las interacciones del usuario o a cambios en el estado del navegador.
+Los eventos son el puente entre la interacción del usuario y la lógica de nuestra aplicación. Permiten reaccionar a clics, pulsaciones de teclas, desplazamientos y cambios de estado en el navegador.
 
 ---
 
-## Registrar manejadores de eventos
+## Registro de Manejadores
 
-### Propiedades *on-event* (`onclick`, `onchange`)
+### `addEventListener` (Recomendado)
+Es el estándar moderno. Permite asociar múltiples funciones al mismo evento en un solo elemento sin sobrescribirlas.
 
-```js
-elemento.onclick = function(evento) { 
-  // lógica aquí 
-};
-```
+```javascript
+const boton = document.querySelector('#btn-accion');
 
-- **Limitación:** Solo permiten un manejador por evento (el último sobrescribe al anterior).
-- **Recomendación:** No se recomienda su uso en aplicaciones modernas.
-
-### `addEventListener` y `removeEventListener`
-
-Es la forma estándar y recomendada de gestionar eventos.
-
-```js
-function manejarClick(e) {
-  console.log('Elemento clickeado:', e.target);
+function manejarClick(event) {
+  console.log('Botón pulsado');
 }
 
-// Registro
-elemento.addEventListener('click', manejarClick);
+boton.addEventListener('click', manejarClick);
 
-// Eliminación (requiere la referencia a la función original)
-elemento.removeEventListener('click', manejarClick);
+// Para removerlo, se requiere la referencia a la misma función
+boton.removeEventListener('click', manejarClick);
 ```
 
-- **Ventajas:** Permite múltiples escuchadores para el mismo evento.
-- **Opciones avanzadas:** Acepta un tercer argumento opcional (`options` o un booleano `useCapture`).
-    - `once: true`: El listener se elimina automáticamente tras ejecutarse una vez.
-    - `passive: true`: Indica que el listener no llamará a `preventDefault()`, mejorando el rendimiento en eventos de alta frecuencia como `scroll`.
+> [!TIP]
+> Puedes usar el objeto de opciones para configurar el comportamiento:
+> *   `once: true`: El evento se dispara una sola vez y se elimina.
+> *   `passive: true`: Mejora el rendimiento al indicar que no se usará `preventDefault()`.
 
 ---
 
-## El objeto de evento (`e`)
+## El Objeto de Evento (`event`)
 
-Cada manejador recibe automáticamente un objeto con información detallada:
+Al dispararse un evento, el navegador pasa automáticamente un objeto con información detallada al manejador.
 
-- **`e.target`**: El elemento exacto que originó el evento (el más profundo en el árbol).
-- **`e.currentTarget`**: El elemento al que se ha asociado el listener (muy útil en delegación).
-- **`e.type`**: El nombre del evento (ej: `'click'`).
-- **`e.preventDefault()`**: Cancela el comportamiento por defecto del navegador (ej: evitar que un link navegue o un form se envíe).
-- **`e.stopPropagation()`**: Detiene la propagación del evento hacia los ancestros (burbujeo).
-- **`e.stopImmediatePropagation()`**: Detiene la propagación y evita que se ejecuten otros listeners del mismo tipo en el elemento actual.
+*   **`event.target`**: El elemento exacto que originó el evento.
+*   **`event.currentTarget`**: El elemento al que se le asignó el listener.
+*   **`event.preventDefault()`**: Cancela la acción por defecto (ej. evitar que un formulario se envíe).
+*   **`event.stopPropagation()`**: Detiene el "burbujeo" del evento hacia los elementos padre.
 
 ---
 
-## Fases de propagación
+## Propagación: Burbujeo y Captura
 
-Cuando ocurre un evento, este recorre tres fases:
+Cuando ocurre un evento en un elemento anidado, este viaja por el DOM en tres fases:
 
-1. **Fase de captura:** Desde `window` hacia el elemento objetivo (*target*).
-2. **Fase de target:** El evento llega al elemento donde ocurrió la acción.
-3. **Fase de burbujeo (Bubbling):** El evento sube desde el elemento objetivo de vuelta hacia `window`.
+1.  **Fase de Captura (Capture):** El evento baja desde `window` hasta el elemento objetivo.
+2.  **Fase de Objetivo (Target):** El evento se activa en el elemento real donde ocurrió la acción.
+3.  **Fase de Burbujeo (Bubbling):** El evento sube desde el elemento objetivo hacia los ancestros hasta llegar a `window`.
 
 > [!NOTE]
-> Por defecto, los listeners se registran en la **fase de burbujeo**. Para usar la fase de captura, se debe pasar `true` o `{ capture: true }` como tercer argumento.
+> Por defecto, `addEventListener` escucha en la fase de **burbujeo**. Para escuchar en captura, debes pasar `true` o `{ capture: true }` como tercer argumento.
 
 ---
 
-## Delegación de eventos
+## Delegación de Eventos
 
-Es una técnica optimizada que consiste en colocar un único listener en un ancestro común en lugar de muchos listeners en elementos hijos individuales. Se utiliza `e.target` para identificar qué hijo disparó el evento.
+Esta técnica consiste en aprovechar el **burbujeo** para colocar un único listener en un elemento padre en lugar de múltiples listeners en sus hijos.
 
-```js
-lista.addEventListener('click', (e) => {
-  if (e.target.matches('li button')) {
-    const item = e.target.closest('li');
-    console.log('Botón clickeado en el elemento:', item);
+```javascript
+const lista = document.querySelector('#mi-lista');
+
+lista.addEventListener('click', (event) => {
+  // Comprobamos si el clic fue en un botón de borrar
+  if (event.target.classList.contains('btn-borrar')) {
+    const item = event.target.closest('li');
+    item.remove();
   }
 });
 ```
 
-- **Esencial para:** Elementos creados dinámicamente.
-- **Ventajas:** Menor uso de memoria (menos listeners) y código más limpio.
+### Ventajas de la Delegación
+*   **Ahorro de Memoria:** Menos manejadores de eventos creados.
+*   **Flexibilidad:** Funciona automáticamente con elementos añadidos al DOM en el futuro.
+*   **Mantenibilidad:** El código está centralizado en un solo lugar.
 
 ---
 
-## Eventos comunes
+## Eventos Personalizados
 
-- **Ratón:** `click`, `dblclick`, `mousedown`, `mouseup`, `mousemove`, `mouseover`, `mouseout`, `mouseenter`, `mouseleave`.
-- **Teclado:** `keydown`, `keyup` (usar `e.key` o `e.code`).
-- **Formulario:** `submit`, `change`, `input`, `focus`, `blur`, `focusin`, `focusout`.
-- **Documento/Ventana:** `DOMContentLoaded` (DOM listo), `load` (todo cargado), `resize`, `scroll`, `beforeunload`.
-- **Táctil:** `touchstart`, `touchmove`, `touchend`.
+Podemos crear eventos propios para comunicar componentes o partes de nuestra aplicación de forma desacoplada.
 
----
-
-## Eventos personalizados
-
-Podemos crear y disparar nuestros propios eventos mediante `CustomEvent`.
-
-```js
-const loginEvent = new CustomEvent('user-login', { 
-  detail: { id: 1, name: 'Admin' } 
+```javascript
+const loginEvent = new CustomEvent('app:login', {
+  detail: { usuarioId: 123, rol: 'admin' }
 });
 
-elemento.addEventListener('user-login', e => console.log(e.detail));
-elemento.dispatchEvent(loginEvent);
+document.dispatchEvent(loginEvent);
+
+// Escuchando el evento
+document.addEventListener('app:login', (e) => {
+  console.log('Sesión iniciada por:', e.detail.usuarioId);
+});
 ```
 
 ---
 
-## Buenas prácticas
+## Buenas Prácticas
 
-- **Delegación:** Úsala siempre que gestiones múltiples elementos similares o dinámicos.
-- **Prevención:** Prefiere `e.preventDefault()` sobre `return false`.
-- **Limpieza:** Remueve los listeners cuando ya no sean necesarios para evitar fugas de memoria (*memory leaks*).
-- **Rendimiento:** Usa `{ passive: true }` en eventos de `scroll` y `resize` para una experiencia más fluida.
+1.  **Usa Delegación:** Siempre que gestiones listas dinámicas o muchos elementos similares.
+2.  **Limpia Listeners:** Elimina los manejadores de eventos cuando destruyas elementos dinámicos o cambies de vista (especialmente en SPAs) para evitar fugas de memoria.
+3.  **No abuses de `stopPropagation`:** Detener la propagación puede romper otras funcionalidades globales que dependan de detectar clics en el documento.
+4.  **Eventos Pasivos:** Úsalos en eventos de alta frecuencia como `scroll` o `touchmove` para asegurar una experiencia de usuario fluida.
 
 ---
-[back](../index)
+[Volver al Índice](../js-index.md)

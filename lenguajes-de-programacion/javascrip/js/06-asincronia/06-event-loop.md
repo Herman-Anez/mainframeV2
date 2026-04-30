@@ -1,78 +1,78 @@
+# El Event Loop en JavaScript
 
-## Archivo: `06-event-loop.md`
-
-
-El Event Loop es el mecanismo que permite a js ejecutar código asíncrono de manera no bloqueante a pesar de tener un solo hilo de ejecución principal.
-Componentes
-
-    Call Stack (Pila de ejecución): donde se apilan las funciones llamadas síncronamente. Cada función se retira al finalizar.
-
-    Web APIs / Background Tasks: en el navegador, funciones como setTimeout, fetch, eventos del DOM son manejadas por el entorno fuera del motor JS. Cuando terminan, insertan callbacks en las colas.
-
-    Colas de tareas (Task Queues):
-
-        Macrotareas (Task Queue): setTimeout, setInterval, eventos de UI, I/O, setImmediate (Node). Solo se procesa una macrotarea a la vez por ciclo del event loop.
-
-        Microtareas (Microtask Queue): promesas (.then, .catch, .finally), queueMicrotask, MutationObserver. Se procesan por completo al final de cada macrotarea y antes de la siguiente.
-
-    Event Loop: ciclo continuo que verifica la pila. Si está vacía, toma tareas de las colas:
-
-        Primero vacía completamente la cola de microtareas (incluso las que se generen durante ese procesamiento).
-
-        Luego toma la siguiente macrotarea (una sola) y la ejecuta.
-
-        Repite.
-
-### Orden de ejecución típico
-```js
-console.log('1');
-setTimeout(() => console.log('2'), 0);
-Promise.resolve().then(() => console.log('3'));
-console.log('4');
-// Resultado: 1, 4, 3, 2
-```
-
-Explicación:
-
-    '1' y '4' son código síncrono, van directo a consola.
-
-    setTimeout encola una macrotarea (futura).
-
-    Promise.then encola una microtarea.
-
-    Al terminar lo síncrono, la pila queda vacía. Se procesan microtareas: '3'.
-
-    Luego se toma la macrotarea: '2'.
-
-### Renderizado
-
-En navegadores, el renderizado de la página suele ocurrir entre macrotareas, después de procesar las microtareas pendientes. Por eso cambios en microtareas pueden afectar el renderizado antes de que el usuario vea algo inconsistente.
-Consecuencias prácticas
-
-    Las microtareas pueden ejecutarse infinitamente si dentro de una microtarea se añade otra microtarea (bloqueo de la UI).
-
-    setTimeout(fn, 0) no ejecuta inmediatamente, cede el control al event loop; se usa para posponer al final de la pila actual.
-
-    async/await convierten el código que sigue al await en una microtarea.
-
-    Para tareas intensivas, dividir el trabajo y ceder el control con setTimeout para mantener la UI responsiva.
-
-### Node.js vs Navegadores
-
-El concepto es similar, pero Node tiene más tipos de colas (timer, poll, check, close) y setImmediate que se comporta distinto de setTimeout(fn,0) según el momento.
-Visualización gráfica
-
-Se puede imaginar:
-```text
-Call Stack -> (vacía) -> Event Loop:
-  - Vaciar Microtask Queue
-  - Tomar 1 Macrotask
-  - Renderizar (si es necesario)
-  - Repetir
-```
-
-Comprender el event loop es crucial para depurar problemas de orden de ejecución y rendimiento en aplicaciones asíncronas.
-
+El **Event Loop** (Bucle de Eventos) es el mecanismo fundamental que permite a JavaScript realizar operaciones asíncronas de manera no bloqueante, a pesar de ser un lenguaje de un solo hilo (single-threaded).
 
 ---
-[back](../index)
+
+## Componentes del Sistema
+
+Para entender el Event Loop, debemos visualizar cómo interactúa el motor de JavaScript con el entorno (Navegador o Node.js):
+
+1.  **Call Stack (Pila de Ejecución):** Donde se apilan las funciones llamadas de forma síncrona. Sigue el principio LIFO (*Last In, First Out*). Una función se retira de la pila solo cuando termina su ejecución.
+2.  **Web APIs / Background Tasks:** Funciones proporcionadas por el entorno (como `setTimeout`, `fetch`, o eventos del DOM) que se ejecutan fuera del motor de JavaScript para no bloquearlo.
+3.  **Task Queues (Colas de Tareas):** Donde se guardan los callbacks de las tareas finalizadas esperando ser ejecutados por el motor de JS.
+
+---
+
+## Colas de Tareas: Macro y Micro
+
+Existen dos tipos de colas con distintas prioridades:
+
+### Microtareas (Microtask Queue)
+*   **Contenido:** Promesas (`.then`, `.catch`, `.finally`), `queueMicrotask`, y `MutationObserver`.
+*   **Prioridad:** Máxima. Se procesan **todas** las microtareas pendientes antes de que el Event Loop pase a la siguiente fase.
+
+### Macrotareas (Task Queue)
+*   **Contenido:** `setTimeout`, `setInterval`, eventos de usuario (click, scroll), operaciones de I/O, y `setImmediate` (en Node.js).
+*   **Prioridad:** Menor. El Event Loop procesa **solo una** macrotarea por ciclo.
+
+---
+
+## Funcionamiento del Ciclo
+
+El Event Loop sigue un algoritmo constante:
+
+1.  Verifica si la **Call Stack** está vacía.
+2.  Si está vacía, procesa **toda la cola de microtareas** hasta que no quede ninguna (incluso las que se añadan durante este proceso).
+3.  Si es necesario, el navegador realiza el **renderizado** de la interfaz.
+4.  Toma la **primera macrotarea** de la cola y la mueve a la Call Stack para ejecutarla.
+5.  Repite el proceso.
+
+---
+
+## Ejemplo de Orden de Ejecución
+
+```javascript
+console.log('1: Síncrono');
+
+setTimeout(() => console.log('2: Macrotarea'), 0);
+
+Promise.resolve().then(() => console.log('3: Microtarea'));
+
+console.log('4: Síncrono');
+
+// RESULTADO: 1, 4, 3, 2
+```
+
+> [!NOTE]
+> **Explicación:** '1' y '4' se ejecutan inmediatamente. Al terminar lo síncrono, la pila está vacía. El motor revisa las microtareas y ejecuta '3' (promesa). Finalmente, toma la macrotarea '2' (timeout).
+
+---
+
+## Consecuencias Prácticas
+
+> [!WARNING]
+> **Bloqueo de la UI:** Si creas una cadena infinita de microtareas (por ejemplo, una promesa que se llama a sí misma recursivamente), la cola de microtareas nunca se vaciará y el navegador nunca llegará al paso de renderizado o macrotareas, congelando la aplicación.
+
+### Optimizaciones
+*   **`setTimeout(fn, 0)`**: Se utiliza para "posponer" una tarea al final de la cola actual, permitiendo que el navegador respire y procese otros eventos antes de ejecutar la función.
+*   **Tareas intensivas:** Para cálculos pesados, es recomendable dividirlos en trozos pequeños y usar `setTimeout` para ceder el control al Event Loop entre fragmentos, manteniendo la interfaz responsiva.
+
+---
+
+## Diferencias: Navegador vs Node.js
+
+Aunque el concepto base es el mismo, Node.js utiliza la librería **libuv** y tiene fases más complejas (timers, poll, check, close). Sin embargo, la distinción entre microtareas (como `process.nextTick`) y macrotareas sigue siendo el principio rector para entender el orden de ejecución.
+
+---
+[Volver al Índice](../js-index.md)

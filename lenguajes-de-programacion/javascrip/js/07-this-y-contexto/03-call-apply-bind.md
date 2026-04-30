@@ -1,110 +1,98 @@
 # `call`, `apply` y `bind`
 
-Estos tres métodos permiten controlar explícitamente el valor de `this` y proveen una forma de "prestar" funciones entre objetos.
-
-Todos pertenecen a `Function.prototype` y están disponibles en cualquier función (excepto arrows, que ignoran estos métodos porque no tienen `this` propio).
+Estos tres métodos, pertenecientes a `Function.prototype`, permiten controlar explícitamente el valor de `this` en una función y proveen mecanismos para "prestar" funciones entre diferentes objetos.
 
 ---
 
-## `call(thisArg, arg1, arg2, ...)`
+## .call(): Invocación con Lista de Argumentos
 
-Invoca la función inmediatamente, estableciendo `this` al primer argumento, y pasando los argumentos restantes de forma individual.
+El método `.call()` invoca una función inmediatamente, estableciendo `this` al objeto proporcionado como primer argumento y pasando los argumentos restantes de forma individual.
 
-```js
-function saludar(signo) {
-  console.log(`Hola ${this.nombre}${signo}`);
+```javascript
+function presentar(saludo, signo) {
+  console.log(`${saludo}, soy ${this.nombre}${signo}`);
 }
 
-const persona = { nombre: 'Lucía' };
-saludar.call(persona, '!'); // Hola Lucía!
+const usuario = { nombre: 'Lucía' };
+
+presentar.call(usuario, 'Hola', '!'); // "Hola, soy Lucía!"
 ```
 
-- **`thisArg`:** Puede ser `null` o `undefined` (en ese caso se reemplaza por el objeto global en modo no estricto, o se mantiene como tal en modo estricto).
-- **Uso común:** Muy usado para herencia constructora: `Padre.call(this, ...args)`.
+*   **Uso común:** Herencia de constructores en patrones antiguos de JavaScript: `Padre.call(this, ...args)`.
 
 ---
 
-## `apply(thisArg, [argsArray])`
+## .apply(): Invocación con Array de Argumentos
 
-Similar a `call`, pero los argumentos se pasan como un **array** (o un objeto iterable).
+`.apply()` funciona de forma idéntica a `.call()`, con la diferencia de que los argumentos de la función se pasan como un **único array** (o un objeto similar a un array).
 
-```js
-function sumar(a, b, c) {
-  return a + b + c;
-}
+```javascript
+const numeros = [5, 10, 15, 20];
 
-const numeros = [1, 2, 3];
-sumar.apply(null, numeros); // 6
-```
-
-- **Cuándo usarlo:** Útil cuando tienes los argumentos en un array y quieres pasarlos dinámicamente.
-- **Alternativa moderna:** Hoy en día, el operador **spread** (`...`) cubre muchos casos: `fn(...args)`.
-
----
-
-## `bind(thisArg, arg1, arg2, ...)`
-
-No ejecuta la función de inmediato. Devuelve una **nueva función** con el `this` fijado permanentemente al valor dado, y los argumentos opcionales preestablecidos (*partial application*).
-
-```js
-function multiplicar(factor, n) {
-  return factor * n;
-}
-
-const duplicar = multiplicar.bind(null, 2);
-console.log(duplicar(5)); // 10
-```
-
-> [!IMPORTANT]
-> Una vez hecho `bind`, el `this` no puede ser sobrescrito ni siquiera con `call`/`apply` (aunque `new` ignora el `this` vinculado y usa el nuevo objeto).
-
-### Paso de métodos como callbacks
-
-Es fundamental para pasar métodos de objeto como callbacks sin perder el contexto.
-
-```js
-const boton = {
-  texto: 'Click me',
-  manejarClick: function() {
-    console.log(this.texto);
-  }
-};
-
-document.querySelector('button').addEventListener('click', boton.manejarClick.bind(boton));
-// Sin bind, this sería el button, no boton.
-```
-
----
-
-## Tabla comparativa
-
-| Método | ¿Ejecuta? | Argumentos | Devuelve |
-| :--- | :--- | :--- | :--- |
-| **`call`** | Sí | Lista individual | Resultado de la función |
-| **`apply`** | Sí | Array | Resultado de la función |
-| **`bind`** | No | Lista individual | Una nueva función |
-
----
-
-## Casos comunes
-
-1. **Préstamo de métodos:** Usar `Array.prototype.slice.call` sobre objetos *array-like* (`arguments`, `NodeList`) para convertirlos en array. (Hoy reemplazado por `Array.from`).
-2. **Establecer `this` en callbacks:** Especialmente en eventos cuando necesitas referenciar otro objeto.
-3. **Partial application:** `const fn = funcion.bind(null, predefinido)`.
-4. **Encadenamiento con temporizadores:** `setTimeout(objeto.metodo.bind(objeto), 100)`.
-
----
-
-## Consideraciones con Arrow Functions
-
-Como se mencionó, las arrow functions **no pueden ser vinculadas**; `call`, `apply` y `bind` no producen error pero no alteran su `this`. Solo los argumentos adicionales se pasan (si los acepta).
-
-```js
-const flecha = () => console.log(this);
-flecha.call({a: 1}); // this sigue siendo el del ámbito léxico
+// Encontrar el máximo prestando el método Math.max
+const maximo = Math.max.apply(null, numeros); 
+console.log(maximo); // 20
 ```
 
 > [!TIP]
-> Dominar `this` y sus métodos de control es esencial para escribir código robusto y evitar bugs de contexto difíciles de rastrear.
+> En el JavaScript moderno (ES6+), el **operador spread** (`...`) suele ser preferible al uso de `.apply()` para pasar arrays como argumentos: `Math.max(...numeros)`.
+
 ---
-[back](../index)
+
+## .bind(): Creación de una Función Vinculada
+
+A diferencia de los anteriores, `.bind()` **no ejecuta la función de inmediato**. En su lugar, devuelve una **nueva función** que tiene el `this` fijado permanentemente al valor proporcionado.
+
+### Aplicación Parcial (Partial Application)
+También permite preestablecer algunos argumentos de la función original.
+
+```javascript
+function multiplicar(a, b) {
+  return a * b;
+}
+
+const duplicar = multiplicar.bind(null, 2);
+console.log(duplicar(10)); // 20
+```
+
+### Preservación de Contexto en Callbacks
+Es la herramienta clásica para evitar que un método pierda su contexto al ser pasado como callback.
+
+```javascript
+const app = {
+  mensaje: 'Cargando...',
+  mostrar() {
+    console.log(this.mensaje);
+  }
+};
+
+// Error: this se perdería. Solución: bind
+setTimeout(app.mostrar.bind(app), 1000);
+```
+
+> [!IMPORTANT]
+> Una vez que una función ha sido vinculada mediante `.bind()`, su contexto de `this` es **inmutable**. No puede ser sobrescrito por llamadas posteriores a `.call()` o `.apply()`.
+
+---
+
+## Tabla Comparativa
+
+| Método | ¿Ejecuta la función? | Paso de Argumentos | Valor de Retorno |
+| :--- | :--- | :--- | :--- |
+| **`.call()`** | Sí | Lista (uno a uno) | El resultado de la función |
+| **`.apply()`** | Sí | Array / Iterable | El resultado de la función |
+| **`.bind()`** | No | Lista (uno a uno) | Una nueva función vinculada |
+
+---
+
+## Interacción con Arrow Functions
+
+Las funciones de flecha **ignoran** el cambio de contexto de estos tres métodos porque no poseen un `this` propio. Si intentas usar `call`, `apply` o `bind` sobre una Arrow Function, el valor de `this` seguirá siendo el de su ámbito léxico original.
+
+```javascript
+const flecha = () => console.log(this);
+flecha.call({ id: 1 }); // 'this' seguirá siendo el contexto exterior (ej. window)
+```
+
+---
+[Volver al Índice](../js-index.md)

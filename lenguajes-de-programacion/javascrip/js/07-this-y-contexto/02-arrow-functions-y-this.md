@@ -1,90 +1,116 @@
 # Arrow Functions y `this`
 
-Las **arrow functions** (funciones flecha) se diferencian radicalmente de las funciones normales en el manejo de `this`: **no tienen su propio `this`**. En lugar de eso, capturan el valor de `this` del ámbito léxico que las envuelve en el momento de su definición.
-
-## No vinculan `this` propio
-
-Dentro de una arrow function, `this` se resuelve exactamente igual que cualquier otra variable del ámbito exterior. Si la arrow se define en un ámbito donde `this` es un objeto, ese objeto será `this` dentro de la arrow, sin importar cómo se invoque.
-
-```js
-const obj = {
-  nombre: 'Ana',
-  saludar: function() {
-    // this es obj
-    const arrow = () => {
-      console.log(this.nombre);
-    };
-    arrow();
-  }
-};
-
-obj.saludar(); // Ana
-```
-
-### El riesgo de usarlas como métodos
-
-Si definimos la arrow directamente como método del objeto, **NO** funcionará como esperamos, porque la arrow captura `this` del ámbito de definición (que podría ser global/undefined), no el objeto.
-
-```js
-const obj = {
-  nombre: 'Error',
-  saludar: () => {
-    console.log(this.nombre); // undefined o error
-  }
-};
-
-obj.saludar(); // No imprime 'Error'
-```
-
-> [!WARNING]
-> No uses arrow functions como métodos de objetos si necesitas acceder a `this` del propio objeto.
+Las **Arrow Functions** (funciones flecha), introducidas en ES6, se diferencian radicalmente de las funciones tradicionales en su manejo de `this`: **no tienen un `this` propio**. En su lugar, utilizan el valor de `this` del ámbito léxico (el lugar donde fueron definidas).
 
 ---
 
-## Ventajas en callbacks
+## El Concepto de `this` Léxico
 
-Donde las arrows brillan es en callbacks y funciones anidadas, evitando la necesidad de `.bind()` o `var self = this`.
+Dentro de una función de flecha, `this` se resuelve como cualquier otra variable: buscando en el ámbito superior hasta encontrar un valor. Una vez definido el contexto en el momento de la creación, este **no puede cambiar**, incluso si usamos `call`, `apply` o `bind`.
 
-```js
-function Temporizador() {
-  this.segundos = 0;
-  setInterval(() => {
-    this.segundos++; // this se refiere a la instancia de Temporizador
-  }, 1000);
+```javascript
+const usuario = {
+  nombre: 'Ana',
+  presentar: function() {
+    // Aquí this es 'usuario'
+    const saludoFlecha = () => {
+      console.log(`Hola, soy ${this.nombre}`);
+    };
+    saludoFlecha();
+  }
+};
+
+usuario.presentar(); // "Hola, soy Ana"
+```
+
+---
+
+## Comportamiento en Métodos de Objetos
+
+> [!WARNING]
+> **No uses Arrow Functions como métodos de objetos** si necesitas acceder a otras propiedades del mismo objeto mediante `this`.
+
+Como las funciones de flecha capturan el `this` del entorno donde se definen (a menudo el ámbito global), fallarán al intentar actuar como métodos:
+
+```javascript
+const perfil = {
+  puntos: 100,
+  sumar: () => {
+    // ERROR: this no es 'perfil', es el objeto global o undefined
+    this.puntos++; 
+  }
+};
+
+perfil.sumar();
+console.log(perfil.puntos); // Seguirá siendo 100
+```
+
+---
+
+## Uso en Callbacks (Beneficios)
+
+Donde las Arrow Functions realmente brillan es en los callbacks, ya que preservan de forma natural el contexto de la clase o función contenedora sin necesidad de hacks antiguos.
+
+```javascript
+class Temporizador {
+  constructor() {
+    this.segundos = 0;
+  }
+
+  iniciar() {
+    setInterval(() => {
+      // 'this' hereda correctamente el contexto de la instancia
+      this.segundos++;
+      console.log(this.segundos);
+    }, 1000);
+  }
 }
 ```
 
 > [!NOTE]
-> Con una función normal, `this.segundos` estaría creando una propiedad en el objeto global o lanzando un error en modo estricto.
+> Con una función tradicional, `this` dentro de `setInterval` apuntaría al objeto global, obligándonos a usar `.bind(this)` o guardar la referencia en otra variable.
 
 ---
 
-## Arrow functions y `addEventListener`
+## Comportamiento en Event Listeners
 
-Si usas una arrow en `addEventListener`, `this` **NO** apuntará al elemento que disparó el evento, sino al `this` del ámbito exterior. Si necesitas el elemento, utiliza `event.currentTarget` o `event.target`.
+Si utilizas una función de flecha en un `addEventListener`, pierdes la referencia automática al elemento que disparó el evento (que suele estar en `this`).
 
-```js
-element.addEventListener('click', (e) => {
-  console.log(this); // no es el elemento
-  console.log(e.currentTarget); // el elemento
+```javascript
+const btn = document.querySelector('#miBoton');
+
+// Con función normal: this es el botón
+btn.addEventListener('click', function() {
+  this.classList.toggle('activo');
+});
+
+// Con Arrow Function: this es el contexto exterior (ej. window)
+btn.addEventListener('click', (e) => {
+  // Solución: Usar e.currentTarget o e.target
+  e.currentTarget.classList.toggle('activo');
 });
 ```
 
 ---
 
-## Arrow functions y constructores
+## Limitaciones Técnicas
 
 > [!CAUTION]
-> Las arrows no pueden ser usadas con `new`. Carecen de propiedad `prototype` y lanzarán un `TypeError` si se intenta.
+> Debido a su naturaleza simplificada, las Arrow Functions tienen restricciones importantes:
+> 1.  **No son constructoras:** No puedes usar `new` con ellas. Lanzarán un `TypeError`.
+> 2.  **Sin `prototype`:** No tienen propiedad de prototipo.
+> 3.  **Sin `arguments`:** No poseen el objeto `arguments` (puedes usar el parámetro Rest `...args` en su lugar).
 
 ---
 
-## Puntos a recordar
+## Resumen y Mejores Prácticas
 
-- **`this` es léxico:** Se define dónde se escribe la función, no cómo se llama.
-- **Sin argumentos propios:** No tienen `arguments`, `super` ni `new.target` propios; los heredan del contexto contenedor.
-- **Ideales para callbacks:** Son extremadamente útiles para preservar el contexto de `this` en callbacks, promesas y programación funcional.
-- **No aptas para métodos:** No son adecuadas para métodos de objetos (salvo que el método no use `this`).
+| Característica | Función Tradicional | Arrow Function |
+| :--- | :--- | :--- |
+| **`this`** | Dinámico (cómo se llama) | Léxico (dónde se define) |
+| **Constructor** | Sí (con `new`) | No |
+| **Uso Ideal** | Métodos de objetos, prototipos | Callbacks, Promesas, Funcional |
+| **Prototipo** | Tiene `prototype` | No tiene |
 
 ---
-[back](../index)
+[Volver al Índice](../js-index.md)
