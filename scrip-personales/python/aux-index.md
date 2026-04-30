@@ -1,4164 +1,4294 @@
-01 – SINTAXIS BÁSICA
-1.1. El esqueleto de todo programa Java
+00 - ¿Qué es Spring? La filosofía y el ecosistema
 
-Tradicionalmente, un programa Java se compone de al menos una clase y un método main con la firma exacta:
+Spring no es simplemente un conjunto de utilidades. Es un marco de trabajo completo que redefine cómo se construye software empresarial en Java. Para entenderlo a fondo hay que responder a tres preguntas: ¿por qué surgió?, ¿qué problema resuelve realmente? y ¿cómo está diseñado?
+El problema original: J2EE pesado
+
+A principios de los 2000, desarrollar aplicaciones empresariales con J2EE (antecesor de Jakarta EE) implicaba un infierno de configuración XML, obligatoriedad de heredar de clases del servidor de aplicaciones (EjBs), interfaces remotas, despliegues larguísimos y código fuertemente acoplado. Spring nació en 2003 de la mano de Rod Johnson como una reacción contra esa complejidad, basándose en las ideas de su libro *Expert One-on-One J2EE Design and Development*.
+Principios fundamentales de Spring
+
+    Contenedor ligero: no necesitas un servidor de aplicaciones pesado; Spring puede ejecutarse en un simple Tomcat o incluso en un entorno standalone. Gestiona el ciclo de vida de los objetos (beans) sin imponer contratos como EJBObject o interfaces específicas.
+
+    No invasivo: las clases de tu dominio o servicio no tienen que extender clases de Spring ni implementar interfaces del framework (salvo alguna interfaz opcional para conveniencia). Solo se usan anotaciones que son puras marcas o importaciones de javax.inject / Jakarta.
+
+    Configuración por convención y anotaciones: en lugar de una montaña de XML, hoy se utiliza principalmente configuración por código Java y anotaciones, complementada con la autoconfiguración de Spring Boot.
+
+    Modularidad: Spring se compone de una veintena de módulos que puedes usar o ignorar. El núcleo (spring-core, spring-beans, spring-context) es obligatorio; el resto se añade según necesidad.
+
+Arquitectura general de Spring
+
+Se organiza en capas:
+
+    Core Container (spring-core, spring-beans, spring-context, spring-expression): el contenedor IoC, el lenguaje SpEL, manejo de beans, etc.
+
+    AOP and Instrumentation (spring-aop, spring-aspects): programación orientada a aspectos.
+
+    Data Access/Integration (spring-jdbc, spring-tx, spring-orm, spring-jms): abstracción sobre JDBC, JPA, transacciones y mensajería.
+
+    Web (spring-web, spring-webmvc, spring-websocket, spring-webflux): soporte para MVC, WebSocket y reactivo.
+
+    Test (spring-test): utilidades para pruebas unitarias y de integración.
+
+Sobre estos bloques se construye el ecosistema Spring Boot (que empaqueta y autoconfigura todo), Spring Data, Spring Security, Spring Cloud, etc.
+¿Qué no es Spring?
+
+    No es un servidor de aplicaciones, aunque puede reemplazar gran parte de su funcionalidad.
+
+    No es solo un framework de inyección de dependencias; DI es solo el pegamento.
+
+    No obliga a usar solo su forma de hacer las cosas; puedes combinar XML y anotaciones, usar solo partes del ecosistema.
+
+En resumen: Spring es una plataforma de productividad para Java empresarial que proporciona infraestructura, abstracciones y una filosofía de diseño limpia.
+01 - IoC y DI: el corazón del desacoplamiento
+La inversión de control (IoC) como principio
+
+En un programa tradicional, tu código controla el flujo: instancia objetos, llama a métodos, decide cuándo finalizar. La inversión de control entrega ese control a un framework. No es un patrón exclusivo de Spring; los servlets, los event listeners o los callbacks ya lo implementan.
+
+En Spring, IoC toma la forma de un contenedor que crea y ensambla tus objetos (beans). Tú escribes clases "inocentes" que declaran sus dependencias, y el contenedor se las suministra en tiempo de ejecución. Esto es el Hollywood Principle: "No nos llames; nosotros te llamaremos".
+Inyección de dependencias (DI) – La implementación concreta
+
+DI es la técnica principal con la que Spring logra IoC. Consiste en que una clase no instancia sus dependencias (no hace new Servicio()), sino que las recibe desde el exterior.
+
+Formas de DI en Spring:
+1. Inyección por constructor (recomendada)
 java
 
-public class MiApp {
+@Service
+public class PedidoService {
+    private final PedidoRepository repository;
+    private final NotificacionService notificacion;
+
+    public PedidoService(PedidoRepository repository, 
+                         NotificacionService notificacion) {
+        this.repository = repository;
+        this.notificacion = notificacion;
+    }
+}
+
+    Ventajas: el objeto siempre está completamente inicializado, permite final (inmutabilidad), las dependencias son explícitas y obligatorias. Facilita el testing (no necesitas campo @Autowired ni MockBean).
+
+    Inconvenientes: si hay muchas dependencias, el constructor puede tener demasiados parámetros (síntoma de que la clase necesita un refactor).
+
+2. Inyección por setter
+java
+
+@Service
+public class PedidoService {
+    private PedidoRepository repository;
+    
+    @Autowired
+    public void setRepository(PedidoRepository repository) {
+        this.repository = repository;
+    }
+}
+
+    Se usa cuando la dependencia es opcional o se necesita reconfigurar después de la construcción. Menos recomendada porque el objeto puede existir en un estado temporal sin la dependencia.
+
+3. Inyección por campo (@Autowired en atributo)
+java
+
+@Autowired
+private PedidoRepository repository;
+
+    Es la más legible pero tiene graves desventajas: oculta las dependencias (no sabes qué necesita la clase sin mirar los campos), dificulta las pruebas unitarias sin Spring (necesitas usar reflexión o @InjectMocks), impide final y rompe la encapsulación.
+
+Cómo resuelve Spring las dependencias
+
+El proceso de autowiring sigue estos pasos cuando encuentra @Autowired:
+
+    Por tipo: busca un bean que coincida con el tipo declarado (si es una interfaz, busca la implementación única).
+
+    Si encuentra exactamente uno, lo inyecta.
+
+    Si encuentra varios candidatos del mismo tipo, busca un calificador:
+
+        @Primary: el bean marcado con @Primary tendrá preferencia.
+
+        @Qualifier("nombre"): especifica el bean por su nombre lógico.
+
+    Si no hay ninguna coincidencia, por defecto lanza una excepción en tiempo de arranque (NoSuchBeanDefinitionException), a menos que required = false en @Autowired(required = false) o que la inyección sea dentro de un Optional<T> o @Nullable.
+
+java
+
+@Autowired
+@Qualifier("emailService")
+private NotificacionService notificacion; // inyecta el bean con nombre "emailService"
+
+También se puede usar @Resource (JSR-250) que inyecta por nombre por defecto, o @Inject (JSR-330) que es funcionalmente equivalente a @Autowired sin required.
+Laziness y dependencias circulares
+
+Spring intenta crear los beans en orden para satisfacer las dependencias. Si hay una dependencia circular irresoluble (A → B → A), el contexto no puede levantarse. Sin embargo, se puede romper con @Lazy en uno de los puntos de inyección, lo que hace que Spring inyecte un proxy en lugar del bean real, que se resolverá solo en el primer acceso.
+java
+
+@Component
+public class A {
+    private final B b;
+    public A(@Lazy B b) { this.b = b; }
+}
+
+También existen mecanismos como ObjectFactory, Provider<T> y ObjectProvider para obtener el bean bajo demanda (dependencia de tipo "lookup"):
+java
+
+@Autowired
+private ObjectProvider<ServicioCostoso> servicioProvider;
+...
+ServicioCostoso s = servicioProvider.getIfAvailable();
+
+IoC no es solo DI
+
+Spring también ofrece Eventos y Listeners como variante de IoC: un componente publica un evento y no sabe quién lo recibe; los consumidores reaccionan sin acoplamiento directo. Igualmente con la programación orientada a aspectos (AOP): el código transversal se ejecuta sin que la clase invocada lo sepa.
+02 - Contenedor y Beans: el motor interno
+BeanFactory vs ApplicationContext
+
+    BeanFactory: es la interfaz raíz, proporciona las capacidades básicas: crear, obtener y mantener beans. Pereza (lazy load por defecto). Sin funcionalidades de internacionalización, eventos, etc. Rara vez se usa directamente.
+
+    ApplicationContext: hereda de BeanFactory y añade:
+
+        Carga automática de bean post-processors y beans de configuración (incluye BeanFactoryPostProcessor).
+
+        Publicación de eventos (ApplicationEventPublisher).
+
+        Acceso a mensajes y recursos (MessageSource, cargar archivos .properties i18n).
+
+        Soporte para múltiples fuentes de configuración (web, xml, anotaciones).
+
+        Registro automático de BeanPostProcessor.
+
+En la práctica siempre usamos ApplicationContext. Spring Boot crea un AnnotationConfigApplicationContext o un AnnotationConfigServletWebServerApplicationContext.
+BeanDefinition y el registro de beans
+
+Cuando Spring arranca, no almacena directamente instancias de beans, sino sus definiciones en una estructura BeanDefinition. Una BeanDefinition contiene:
+
+    Nombre del bean (id).
+
+    Nombre de la clase (className).
+
+    Ámbito (scope: singleton, prototype...).
+
+    Dependencias (nombres de otros beans).
+
+    Modo de inicialización (lazy o eager).
+
+    Métodos de callback (init/destroy).
+
+    Si es abstracto, primario, etc.
+
+Estas definiciones se cargan a través de un BeanDefinitionReader (para XML sería XmlBeanDefinitionReader, para anotaciones AnnotatedBeanDefinitionReader) y se almacenan en un BeanDefinitionRegistry (normalmente el mismo ApplicationContext).
+
+Ejemplo de configuración programática:
+java
+
+AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+ctx.register(AppConfig.class); // registra una clase @Configuration
+ctx.refresh(); // aquí se procesan las definiciones y se instancian los beans
+
+Component Scanning: cómo encuentra Spring tus beans
+
+@ComponentScan indica los paquetes base donde buscar clases anotadas con estereotipos (@Component, @Service, @Repository, @Controller). Spring escanea el classpath y crea una BeanDefinition por cada clase encontrada que cumpla con los filtros.
+
+Puedes afinar con:
+
+    basePackages o basePackageClasses para evitar escanear todo.
+
+    includeFilters y excludeFilters con expresiones como @ComponentScan.Filter(type=FilterType.REGEX, pattern=".*Test") o FilterType.ASSIGNABLE_TYPE.
+
+Estereotipos: @Service, @Repository y @Controller son especializaciones de @Component que añaden semántica. En particular @Repository habilita la traducción de excepciones de persistencia a la jerarquía DataAccessException de Spring.
+Inicialización perezosa vs ansiosa (Eager)
+
+Por defecto, los beans singleton se crean en el arranque (eager), lo que ayuda a detectar fallos de configuración rápidamente. Se puede marcar un bean con @Lazy para que se cree solo cuando sea requerido.
+
+A nivel global: en Spring Boot, spring.main.lazy-initialization=true hace que todos los beans sean perezosos.
+Configuración Java: @Configuration y @Bean
+
+Una clase @Configuration es una forma elegante de definir beans mediante métodos anotados con @Bean. El contenedor llamará a esos métodos y registrará el objeto devuelto. Importante:
+
+    proxyBeanMethods = true (por defecto) : Spring crea un proxy de la clase de configuración mediante CGLIB para interceptar las llamadas a los métodos @Bean. Así, si dentro de un método @Bean se invoca a otro método @Bean, se devuelve la instancia única del contenedor en lugar de crear una nueva, respetando el ámbito singleton.
+
+    proxyBeanMethods = false (modo ligero, "Lite mode") : no se genera proxy; las llamadas entre métodos @Bean invocan directamente el método Java, creando un nuevo objeto cada vez. Es más rápido y útil cuando no hay dependencia entre los beans definidos.
+
+java
+
+@Configuration(proxyBeanMethods = false)
+public class AppConfig {
+    @Bean
+    public DataSource dataSource() {
+        return ...; // único
+    }
+    @Bean 
+    public JdbcTemplate jdbcTemplate() {
+        return new JdbcTemplate(dataSource()); // si proxyBeanMethods=true, dataSource() devuelve el bean singleton
+    }
+}
+
+Internacionalización, Eventos y Recursos
+
+ApplicationContext extiende MessageSource. Si defines un bean messageSource, Spring lo utiliza para resolver mensajes multi-idioma con getMessage(String code, Object[] args, Locale). Ideal para mensajes de validación o UI.
+
+Los eventos de aplicación (ApplicationEvent y @EventListener) permiten comunicación desacoplada entre componentes. El publicador no conoce a los suscriptores.
+
+La interfaz ResourceLoader del contexto permite cargar archivos con prefijos: classpath:, file:, http:, etc.
+03 - Configuración: Java vs. XML (evolución, comparación y mejores prácticas)
+El viaje desde XML puro hasta Java config
+
+Etapa 1 (2004-2008) : XML era la única opción. Archivos <beans> con <bean id=".." class="..">. Ventaja: configuración explícita y centralizada, fácil de cambiar sin recompilar. Desventaja: verbosidad, sin chequeo de tipos en tiempo de compilación, complejo para grandes proyectos.
+
+Etapa 2 (2008-2012) : surgen anotaciones como @Autowired, @Component y @Transactional. Empieza a convivir XML con escaneo de componentes. El XML queda para beans de infraestructura.
+
+Etapa 3 (2013-presente) : @Configuration + @Bean permiten escribir configuración en Java puro, con comprobación de tipos y refactorización segura. Spring Boot prácticamente elimina el XML obligatorio, salvo integraciones heredadas. Hoy es el estándar.
+Comparación detallada con ejemplos equivalentes
+
+Definir un DataSource y un JdbcTemplate
+
+XML:
+xml
+
+<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+      destroy-method="close">
+    <property name="jdbcUrl" value="${db.url}"/>
+    <property name="username" value="${db.user}"/>
+    <property name="password" value="${db.pass}"/>
+</bean>
+
+<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+    <constructor-arg ref="dataSource"/>
+</bean>
+
+Configuración Java:
+java
+
+@Configuration
+@PropertySource("classpath:datasource.properties")
+public class DbConfig {
+    @Value("${db.url}") private String url;
+    @Value("${db.user}") private String user;
+    @Value("${db.pass}") private String pass;
+
+    @Bean(destroyMethod = "close")
+    public DataSource dataSource() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(user);
+        config.setPassword(pass);
+        return new HikariDataSource(config);
+    }
+
+    @Bean
+    public JdbcTemplate jdbcTemplate(DataSource ds) {
+        return new JdbcTemplate(ds);
+    }
+}
+
+Ventajas de Java Config:
+
+    Refactorización y autocompletado del IDE.
+
+    Validación de tipos en compilación.
+
+    Capacidad de lógica condicional (if, profile, @Conditional).
+
+    Mejor integración con el ecosistema moderno.
+
+Condicionalidad y perfiles
+
+En XML, los perfiles se aplican con beans profile="dev" dentro del archivo. En Java config, con @Profile a nivel de clase o método.
+java
+
+@Configuration
+@Profile("prod")
+public class ProductionConfig { ... }
+
+Además, con @Conditional (y derivados como @ConditionalOnClass, @ConditionalOnMissingBean, etc. en Boot), se puede activar una configuración en función de la presencia de clases, beans o propiedades.
+Mezclar XML y Java Config
+
+Todavía hay proyectos que necesitan importar XML existente. Se hace con @ImportResource:
+java
+
+@Configuration
+@ImportResource("classpath:old-config.xml")
+public class HybridConfig { }
+
+Y a la inversa, desde XML se puede incluir una clase de configuración con <bean class="com.example.AppConfig"/>.
+Buenas prácticas actuales
+
+    Usa siempre configuración basada en Java (@Configuration).
+
+    Mantén las clases de configuración pequeñas y cohesivas (p.ej. SecurityConfig, PersistenceConfig, WebConfig).
+
+    Externaliza valores con @ConfigurationProperties en lugar de dispersar @Value: agrupa propiedades por prefijo en un POJO.
+
+04 - Ciclo de vida del Bean: paso a paso con internals
+
+Comprender el ciclo de vida es indispensable para personalizar el comportamiento del contenedor y para entender cómo funcionan las transacciones, aspectos y la seguridad.
+Fases completas del ciclo de vida (arranque de un bean singleton)
+
+Imagina que Spring está arrancando y decide instanciar un bean MiServicio. El proceso detallado es:
+
+    Instanciación del objeto
+
+        Se llama al constructor (o al método estático de fábrica) usando la información de BeanDefinition. El objeto es "crudo", sin dependencias.
+
+    Inyección de propiedades (dependencias)
+
+        Spring inyecta las dependencias vía setters o directamente en campos anotados con @Autowired, @Value, @Inject, etc. Esto lo hacen BeanPostProcessors específicos como AutowiredAnnotationBeanPostProcessor y CommonAnnotationBeanPostProcessor.
+
+    Ejecución de interfaces Aware
+
+        Si el bean implementa ciertas interfaces Aware, se invocan sus métodos en este orden típico:
+
+            BeanNameAware.setBeanName(String name)
+
+            BeanClassLoaderAware.setBeanClassLoader(ClassLoader)
+
+            BeanFactoryAware.setBeanFactory(BeanFactory) (si es un BeanFactory)
+
+            ApplicationContextAware.setApplicationContext(ApplicationContext) (solo en contexto ApplicationContext)
+
+        De esta forma, el bean puede obtener referencias al entorno de Spring sin buscar el contexto por fuera.
+
+    BeanPostProcessor – Antes de inicialización
+
+        Para cada BeanPostProcessor registrado, se ejecuta postProcessBeforeInitialization(bean, beanName). Aquí se puede modificar el bean, envolverlo en un proxy temprano, o hacer cualquier lógica transversal (p.ej., en Spring AOP se marcan los beans candidatos a ser proxy, aunque el proxy real se crea después).
+
+        Ejemplo común: InitDestroyAnnotationBeanPostProcessor busca métodos @PostConstruct pero su ejecución real ocurrirá en el siguiente paso, no aquí; esta fase es más de preparación.
+
+    Inicialización del bean
+    Se ejecutan los métodos de inicialización en el siguiente orden de prioridad:
+    a. Método anotado con @PostConstruct (detectado por el CommonAnnotationBeanPostProcessor que se ejecutó antes).
+    b. afterPropertiesSet() de la interfaz InitializingBean.
+    c. Método init-method personalizado definido en @Bean(initMethod = "nombre") o en XML.
+
+    Durante esta fase el bean puede configurarse a sí mismo, validar dependencias o iniciar recursos.
+
+    BeanPostProcessor – Después de inicialización
+
+        Se ejecuta postProcessAfterInitialization(bean, beanName). Esta es la etapa donde normalmente se generan los proxies (AOP, transacciones, seguridad). Si el bean necesita ser envuelto en un proxy, el AbstractAutoProxyCreator (un BeanPostProcessor) reemplaza la instancia original por un proxy CGLIB o JDK. Por eso si llamas a un método interno dentro del mismo bean, la anotación @Transactional no se aplica: porque la llamada no pasa por el proxy.
+
+    El bean está listo para ser usado
+
+        El bean se almacena en el contenedor singleton (en un ConcurrentHashMap). Cualquier otra dependencia que lo necesite recibirá el bean ya completamente vestido.
+
+    Destrucción del bean (al cerrar el contexto)
+
+        Métodos anotados con @PreDestroy.
+
+        destroy() de DisposableBean interface.
+
+        Método destroy-method personalizado de @Bean o XML.
+
+        Los DestructionAwareBeanPostProcessor pueden ejecutar lógica previa.
+
+Diagrama resumido (texto)
+text
+
+[Constructor o Fábrica] --> [Inyección de Deps] --> [Aware: BenaName, ApplicationContext, etc.]
+--> [BeanPostProcessor::before] --> [@PostConstruct / afterPropertiesSet / init-method]
+--> [BeanPostProcessor::after] (proxies creados aquí) --> [Bean listo]
+--> [Al cerrar: @PreDestroy / destroy()]
+
+Extensiones poderosas: BeanFactoryPostProcessor y BeanDefinitionRegistryPostProcessor
+
+Antes de que ningún bean sea instanciado, el contenedor permite modificar las propias definiciones de los beans. Los BeanFactoryPostProcessor trabajan con el BeanFactory (en realidad ConfigurableListableBeanFactory). Los BeanDefinitionRegistryPostProcessor pueden incluso registrar nuevas definiciones de beans.
+
+El caso más famoso es ConfigurationClassPostProcessor, que procesa todas las clases @Configuration, @ComponentScan y @Import para registrar las definiciones correspondientes.
+
+Ejemplo: modificar una propiedad tras la lectura del Classpath
+java
+
+@Component
+public class CustomBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+        BeanDefinition bd = beanFactory.getBeanDefinition("dataSource");
+        bd.getPropertyValues().add("maxPoolSize", 20);
+    }
+}
+
+Ejemplo práctico de un BeanPostProcessor personalizado
+
+Supón que quieres medir el tiempo de ejecución de todos los métodos de los beans de un paquete.
+java
+
+@Component
+public class TimingBeanPostProcessor implements BeanPostProcessor {
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) {
+        if (bean.getClass().getPackageName().startsWith("com.empresa.servicio")) {
+            return Proxy.newProxyInstance(
+                bean.getClass().getClassLoader(),
+                bean.getClass().getInterfaces(),
+                (proxy, method, args) -> {
+                    long start = System.nanoTime();
+                    Object result = method.invoke(bean, args);
+                    long time = System.nanoTime() - start;
+                    System.out.println(method.getName() + ": " + time + " ns");
+                    return result;
+                });
+        }
+        return bean; // si no, devuelve el bean sin tocar
+    }
+}
+
+Este processor envuelve el bean en un proxy JDK justo después de la inicialización, añadiendo el comportamiento de medición.
+¿Por qué es vital este entendimiento?
+
+    Te permite implementar cross-cutting concerns sin necesidad de AOP declarativa para casos específicos.
+
+    Explica por qué funciona @Transactional: un BeanPostProcessor crea el proxy que maneja la transacción alrededor del método real.
+
+    Depuración de problemas de beans: si una dependencia se resuelve mal, sabrás en qué fase mirar.
+
+02_AOP/Conceptos_JoinPoint_Pointcut_Advice.md
+¿Qué es AOP? El problema que resuelve
+
+En una aplicación OOP, hay preocupaciones que atraviesan múltiples capas: registro de auditoría, manejo de transacciones, seguridad, control de caché, medición de rendimiento. Si no se tratan con cuidado, el mismo código se repite por todas partes (código cross-cutting). AOP permite encapsular ese comportamiento en módulos llamados aspectos y aplicarlo de forma declarativa, sin modificar la lógica de negocio.
+
+Spring AOP se basa en proxies para interceptar ejecuciones de métodos y añadir comportamiento antes, después o alrededor de dichas invocaciones.
+Terminología fundamental
+
+    Join point: Un punto durante la ejecución del programa donde se puede insertar un aspecto. En Spring AOP, un join point siempre es la ejecución de un método (nunca acceso a campos o inicialización de clases, como en AspectJ completo).
+
+    Pointcut (punto de corte): Un predicado o expresión que selecciona uno o varios join points. Define en qué métodos debe aplicarse el consejo. Ej: execution(* com.empresa..servicio.*.*(..)).
+
+    Advice (consejo): El código que se ejecuta en un join point. Define qué hacer y cuándo (antes, después, alrededor, etc.). Es la implementación real de la preocupación transversal.
+
+    Aspect (aspecto): La combinación de un pointcut y un advice. En Spring se modela con una clase anotada con @Aspect que contiene métodos de pointcut y métodos de advice.
+
+    Weaving (tejido): Proceso de aplicar los aspectos a los objetos objetivo para crear objetos proxy. En Spring AOP ocurre en tiempo de ejecución mediante proxies dinámicos.
+
+    Target object: El objeto original que será interceptado por el consejo.
+
+    Proxy: El objeto creado por Spring AOP que envuelve al target e implementa las interceptaciones.
+
+    Introduction: Posibilidad de añadir nuevos métodos o interfaces a un objeto existente. En Spring AOP se logra mediante @DeclareParents.
+
+Tipos de Advice en detalle
+
+Un advice puede aplicarse en distintos momentos del ciclo de ejecución del método:
+Tipo	Anotación	Momento de ejecución
+Before	@Before	Antes de la ejecución del método.
+AfterReturning	@AfterReturning	Después de que el método retorne exitosamente (sin excepción).
+AfterThrowing	@AfterThrowing	Después de que el método lance una excepción.
+After (finally)	@After	Siempre, sin importar si hubo éxito o excepción.
+Around	@Around	Rodea completamente el método, tiene control sobre cuándo y si se ejecuta, y puede modificar argumentos y valor de retorno.
+@Before
+
+El consejo se invoca antes de la ejecución del método objetivo. No puede evitar que el método se ejecute, salvo que lance una excepción.
+java
+
+@Aspect
+@Component
+public class LoggingAspect {
+    @Before("execution(* com.empresa..*Service.*(..))")
+    public void logBefore(JoinPoint joinPoint) {
+        System.out.println("Llamando a: " + joinPoint.getSignature().toShortString());
+    }
+}
+
+Se puede acceder a los parámetros del join point a través del objeto JoinPoint.
+@AfterReturning
+
+Se ejecuta después de un retorno normal. Puede obtener el valor retornado mediante el atributo returning.
+java
+
+@AfterReturning(
+    pointcut = "execution(* com.empresa..*Repository.save(..))",
+    returning = "result"
+)
+public void logAfterReturning(JoinPoint joinPoint, Object result) {
+    System.out.println(joinPoint.getSignature().getName() + " retornó " + result);
+}
+
+El nombre de la variable en el argumento del método debe coincidir con el atributo returning.
+@AfterThrowing
+
+Interviene cuando el método lanza una excepción. Puede capturar la excepción lanzada con throwing.
+java
+
+@AfterThrowing(
+    pointcut = "execution(* com.empresa..*Service.*(..))",
+    throwing = "ex"
+)
+public void logAfterThrowing(JoinPoint joinPoint, Exception ex) {
+    System.err.println("Error en " + joinPoint.getSignature() + ": " + ex.getMessage());
+}
+
+@After (finally)
+
+Se ejecuta en cualquier terminación, como un bloque finally. Ideal para liberar recursos o registrar el fin de la operación.
+java
+
+@After("execution(* com.empresa..*Service.procesar(..))")
+public void logAfter(JoinPoint joinPoint) {
+    System.out.println("Finalizó: " + joinPoint.getSignature());
+}
+
+@Around (el más poderoso y complejo)
+
+Tiene el control total: puede modificar argumentos, decidir si invoca o no proceed(), alterar el valor de retorno, medir el tiempo y manejar excepciones.
+java
+
+@Around("execution(* com.empresa..*Service.calcular*(..))")
+public Object medirTiempo(ProceedingJoinPoint pjp) throws Throwable {
+    long inicio = System.nanoTime();
+    Object resultado = pjp.proceed(); // ejecuta el método original
+    long tiempo = System.nanoTime() - inicio;
+    System.out.println(pjp.getSignature() + " tardó " + tiempo + " ns");
+    return resultado;
+}
+
+Precaución: si no se llama a proceed() se omite la ejecución original, y si no se retorna su resultado, se silencia el valor de retorno real. Además, ProceedingJoinPoint es una subinterfaz de JoinPoint que añade proceed().
+Pointcut: el arte de seleccionar join points
+
+Las expresiones de pointcut se basan en un lenguaje propio. Los designadores más importantes son:
+
+    execution: el más común. Define la firma del método a interceptar.
+
+        Patrón: execution(modificadores? tipo-retorno nombre-clase.nombre-metodo(parametros) throws-excepcion?)
+
+        Ejemplos:
+
+            execution(* com.empresa.servicio.*.*(..)) : cualquier método de cualquier clase en ese paquete.
+
+            execution(public String com.empresa..*.*(Long,..)) : métodos públicos que retornan String, comienzan con un Long y luego cualquier número de parámetros.
+
+            execution(* *..*Service.*(..)) : métodos de cualquier clase cuyo nombre termina en "Service".
+
+    within: limita a métodos dentro de ciertos tipos o paquetes.
+
+        within(com.empresa.servicio.*) : todos los métodos de las clases en ese paquete.
+
+        within(com.empresa..*) : paquete y subpaquetes.
+
+    this y target: this(com.empresa.Interface) hace referencia al objeto proxy; target al objeto objetivo. Útiles cuando se necesita que el objeto sea de un tipo específico.
+
+    args: selecciona según los tipos de parámetros en tiempo de ejecución.
+
+        args(java.io.Serializable) : métodos con un parámetro serializable.
+
+    @annotation: intercepta métodos anotados con una anotación determinada.
+
+        @annotation(com.empresa.Auditable) : excelente para preocupaciones transversales basadas en anotaciones.
+
+    @within: clase anotada con una anotación específica.
+
+    @args: la anotación está en los argumentos en tiempo de ejecución.
+
+    bean (Spring AOP): permite referenciar beans por nombre con comodines: bean(*Service).
+
+Se pueden combinar con &&, || y !:
+java
+
+@Pointcut("execution(public * *(..)) && within(com.empresa..*)")
+public void metodosPublicos() {}
+
+Escribiendo un aspecto completo
+java
+
+@Aspect
+@Component
+public class AuditoriaAspect {
+
+    // Pointcut reusable
+    @Pointcut("execution(* com.empresa..*Service.*(..))")
+    public void capaServicio() {}
+
+    @Pointcut("@annotation(com.empresa.anotaciones.Auditable)")
+    public void metodosAuditables() {}
+
+    @Before("capaServicio() && metodosAuditables()")
+    public void auditar(JoinPoint jp) {
+        // Acceso a parámetros
+        Object[] args = jp.getArgs();
+        String usuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        System.out.println(usuario + " ejecuta " + jp.getSignature() + " con " + Arrays.toString(args));
+    }
+}
+
+Ordenación de aspectos
+
+Cuando varios aspectos aplican al mismo join point, se puede controlar el orden con @Order (número más bajo = mayor prioridad) o implementando Ordered. En el caso de @Before, el de menor orden se ejecuta primero; en @After y @Around, el último en ejecutarse es el de menor orden (como capas de cebolla).
+02_AOP/Aspectos_personalizados.md
+
+Aquí mostramos cómo crear aspectos desde cero, incluyendo técnicas avanzadas para resolver problemas concretos.
+Estructura básica de un aspecto personalizado
+
+Todo aspecto requiere:
+
+    @Aspect en la clase.
+
+    @Component (u otra forma de registro) para que Spring lo detecte.
+
+    Uno o varios métodos anotados con @Pointcut (opcional, pero buena práctica).
+
+    Métodos de advice anotados con @Before, @Around, etc.
+
+Ejemplo: Sistema de caché declarativa con @Around y anotación personalizada
+
+Creemos una anotación @CacheableResult que almacene el resultado de un método en un ConcurrentHashMap durante un tiempo.
+
+Anotación:
+java
+
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CacheableResult {
+    long ttlMillis() default 30000;
+    String key() default "";
+}
+
+Aspecto:
+java
+
+@Aspect
+@Component
+public class CacheAspect {
+    private final ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<>();
+
+    @Around("@annotation(cacheable)")
+    public Object cacheMethod(ProceedingJoinPoint pjp, CacheableResult cacheable) throws Throwable {
+        String key = buildKey(pjp, cacheable);
+        CacheEntry entry = cache.get(key);
+        if (entry != null && (System.currentTimeMillis() - entry.timestamp) < cacheable.ttlMillis()) {
+            return entry.value;
+        }
+        Object result = pjp.proceed();
+        cache.put(key, new CacheEntry(result, System.currentTimeMillis()));
+        return result;
+    }
+
+    private String buildKey(ProceedingJoinPoint pjp, CacheableResult cacheable) {
+        String customKey = cacheable.key();
+        if (!customKey.isEmpty()) return customKey;
+        // Genera clave por clase + método + argumentos
+        return pjp.getTarget().getClass().getSimpleName() + "." 
+               + pjp.getSignature().getName() + ":" 
+               + Arrays.toString(pjp.getArgs());
+    }
+
+    private static class CacheEntry {
+        final Object value;
+        final long timestamp;
+        CacheEntry(Object value, long timestamp) { this.value = value; this.timestamp = timestamp; }
+    }
+}
+
+Uso en un servicio:
+java
+
+@Service
+public class DatosExternosService {
+    @CacheableResult(ttlMillis = 60000, key = "ultimo-precio")
+    public BigDecimal obtenerPrecioActual() {
+        // Operación costosa (API externa)
+        return new BigDecimal("100.5");
+    }
+}
+
+Pasando parámetros del método al advice
+
+Se puede ligar un parámetro del pointcut al advice mediante args y nombre de parámetro. Ejemplo para validar una restricción de acceso:
+java
+
+@Before("execution(* com.empresa..*Service.*(Long,..)) && args(id)")
+public void validarId(Long id) {
+    if (id == null || id <= 0) {
+        throw new IllegalArgumentException("ID inválido: " + id);
+    }
+}
+
+O usando JoinPoint para obtener argumentos dinámicamente.
+Aspectos con lógica condicional (combinando con contexto)
+
+Puedes exponer el proxy actual con AopContext.currentProxy() (requiere @EnableAspectJAutoProxy(exposeProxy = true)) para solucionar el problema de auto-invocación, o combinar chequeos de perfiles:
+java
+
+@Around("execution(* com.empresa..*Controller.*(..))")
+public Object medirSoloEnDev(ProceedingJoinPoint pjp) throws Throwable {
+    if (EnvironmentUtils.esDev()) {
+        long t0 = System.currentTimeMillis();
+        Object result = pjp.proceed();
+        System.out.println("DEV: " + (System.currentTimeMillis() - t0) + "ms");
+        return result;
+    }
+    return pjp.proceed(); // en otros entornos no mide
+}
+
+Registro de eventos de negocio con @AfterReturning y publicación de eventos Spring
+
+Podemos acoplar AOP con el modelo de eventos de Spring para desacoplar aún más.
+java
+
+@Aspect
+@Component
+public class EventPublisherAspect {
+    private final ApplicationEventPublisher publisher;
+
+    public EventPublisherAspect(ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
+    }
+
+    @AfterReturning(
+        pointcut = "@annotation(com.empresa.evento.PublicarEvento)",
+        returning = "result"
+    )
+    public void publicar(JoinPoint jp, Object result) {
+        PublicarEvento anotacion = obtenerAnotacion(jp); // helper con reflexión
+        publisher.publishEvent(new NegocioEvento(anotacion.tipo(), result));
+    }
+}
+
+Buenas prácticas en aspectos personalizados
+
+    Un aspecto, una responsabilidad: no mezcles medición de tiempos con seguridad. Mantenlos pequeños y enfocados.
+
+    Usa @Pointcut para centralizar expresiones: facilita el mantenimiento.
+
+    Prefiere @Around solo cuando realmente necesitas el control total; los otros consejos son más semánticos y seguros.
+
+    Evita lógica pesada o transaccional dentro del advice; no invoques servicios que a su vez puedan ser interceptados (cuidado con dependencias circulares indirectas).
+
+    Considera la trazabilidad: un advice no debe causar pérdida de información de excepciones ni alterar la semántica del método a menos que así lo hayas diseñado.
+
+02_AOP/Proxies_JDK_vs_CGLIB.md
+Spring AOP es proxy-based AOP
+
+Spring AOP no modifica bytecode como AspectJ (weaving en compilación o carga). En su lugar, en tiempo de ejecución, el contenedor crea un objeto proxy que envuelve al bean objetivo. Las llamadas externas al bean pasan por el proxy, que aplica los interceptores (aspectos). Toda la magia de @Transactional, @Cacheable, @Secured, etc., ocurre a través de estos proxies.
+JDK Dynamic Proxy
+
+Si el bean objetivo implementa al menos una interfaz, Spring utilizará por defecto un proxy dinámico de JDK.
+
+Cómo funciona internamente:
+
+    Se llama a java.lang.reflect.Proxy.newProxyInstance(ClassLoader, interfaces, InvocationHandler).
+
+    Se crea una clase proxy en tiempo de ejecución que implementa las mismas interfaces que el target.
+
+    Cualquier invocación de un método de esas interfaces es redirigida al InvocationHandler, que puede ejecutar los advisors, consejos y delegar al target mediante reflexión (Method.invoke(target, args)).
+
+Ejemplo simplificado:
+java
+
+MiServicio target = new MiServicioImpl();
+MiServicio proxy = (MiServicio) Proxy.newProxyInstance(
+    MiServicio.class.getClassLoader(),
+    new Class[]{MiServicio.class},
+    (proxyObj, method, args) -> {
+        System.out.println("Antes del método " + method.getName());
+        Object result = method.invoke(target, args);
+        System.out.println("Después");
+        return result;
+    }
+);
+proxy.hacerAlgo(); // pasa por el handler
+
+Ventajas:
+
+    Más liviano que CGLIB, forma parte del JDK.
+
+    Permite que el proxy solo prometa la interfaz, más desacoplado.
+
+Limitaciones:
+
+    Solo puede interceptar métodos definidos en la interfaz.
+
+    El target debe implementar interfaces; no funciona con clases concretas sin interfaz.
+
+    this.invocacionInterna() dentro del target no es interceptada porque this es el target, no el proxy.
+
+CGLIB Proxy
+
+Si el bean no implementa interfaces, Spring crea un proxy generando una subclase con la librería CGLIB (Code Generation Library).
+
+Mecanismo:
+
+    CGLIB utiliza Enhancer para generar una subclase del bean target en tiempo de ejecución.
+
+    Sobrescribe los métodos públicos no finales para delegar en un MethodInterceptor.
+
+    Cuando se llama a un método, se invoca al interceptor, que ejecuta los consejos y luego llama al método de la superclase (super.metodo()) o directamente al target si está configurado como callback.
+
+Ejemplo conceptual:
+java
+
+Enhancer enhancer = new Enhancer();
+enhancer.setSuperclass(MiServicioConcreto.class);
+enhancer.setCallback((MethodInterceptor) (obj, method, args, proxy) -> {
+    System.out.println("Antes");
+    Object result = proxy.invokeSuper(obj, args); // llama al método real
+    System.out.println("Después");
+    return result;
+});
+MiServicioConcreto proxy = (MiServicioConcreto) enhancer.create();
+proxy.hacerAlgo(); // interceptado
+
+Ventajas:
+
+    No requiere que el bean implemente interfaces.
+
+    Puede interceptar todos los métodos públicos de la clase (si no son final).
+
+Limitaciones:
+
+    No puede interceptar métodos final ni clases final (CGLIB no puede subclasear).
+
+    Los constructores se ejecutan dos veces: una para el target (CGLIB suele crear una instancia del target usando Objenesis que no llama al constructor completo, solo asigna memoria) y otra para la subclase proxy? Realmente CGLIB crea una instancia de la subclase, que inicializa su estado. Para delegar, puede usar un target interno. En Spring, el proxy CGLIB por defecto crea un objeto interceptor sin llamar al constructor real del target (a través de Objenesis) para evitar efectos secundarios, y luego utiliza un callback que delega en el bean real gestionado por el contenedor.
+
+    Aumenta ligeramente el tiempo de creación y el uso de memoria.
+
+    this dentro del target sigue siendo el target, no el proxy, por lo que las llamadas internas no pasan por el proxy.
+
+¿Cuándo usa Spring cada uno?
+
+La decisión se toma en el DefaultAopProxyFactory. La lógica es:
+
+    Si proxyTargetClass es true (configurado con @EnableAspectJAutoProxy(proxyTargetClass = true) o en Boot spring.aop.proxy-target-class=true), fuerza CGLIB incluso si hay interfaces.
+
+    Si proxyTargetClass es false (por defecto), se evalúa:
+
+        Si el bean implementa al menos una interfaz, usa JDK dynamic proxy.
+
+        Si no, usa CGLIB.
+
+    En Spring Boot, por defecto spring.aop.proxy-target-class=true, por lo que se usa CGLIB a menos que se cambie explícitamente. En Spring MVC tradicional, el valor depende de la configuración.
+
+Ojo con el casteo: si tu código espera un objeto de tipo concreto y Spring te entrega un proxy JDK que solo implementa la interfaz, obtendrás ClassCastException. Por eso se prefiere programar contra interfaz o forzar CGLIB.
+Configuración explícita
+java
+
+@Configuration
+@EnableAspectJAutoProxy(proxyTargetClass = true) // fuerza CGLIB
+public class AppConfig { }
+
+El problema de la auto-invocación (self-invocation)
+
+Este es el punto más importante y malinterpretado. Como el proxy envuelve al target, cuando desde fuera se llama a bean.metodoA(), la llamada va al proxy, que aplica los aspectos. Pero si metodoA() internamente llama a this.metodoB(), this es el target, no el proxy, por lo que metodoB() no pasa por los aspectos. Así, anotaciones como @Transactional en metodoB no tienen efecto si se llama desde metodoA dentro del mismo bean.
+
+Demostración:
+java
+
+@Service
+public class TransaccionalService {
+    @Transactional
+    public void metodoBatch() {
+        for (Item i : items) {
+            this.procesarItem(i); // ¡problema! this es el target
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void procesarItem(Item i) {
+        // ... debería ejecutarse en transacción separada, pero no lo hará
+    }
+}
+
+Soluciones:
+
+    Reestructurar: mover procesarItem a otro bean e inyectarlo.
+    java
+
+    @Service
+    public class ProcesadorItemService {
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        public void procesarItem(Item i) { ... }
+    }
+    // en el batch:
+    @Autowired private ProcesadorItemService procesador;
+    public void metodoBatch() {
+        for (Item i : items) procesador.procesarItem(i); // ahora sí es proxy
+    }
+
+    Obtener el proxy mediante AopContext.currentProxy():
+
+        Habilitar exposeProxy = true: @EnableAspectJAutoProxy(exposeProxy = true).
+
+        Luego en el código: ((TransaccionalService) AopContext.currentProxy()).procesarItem(i);
+
+    Inyectarse a sí mismo (con @Autowired o @Resource):
+    java
+
+    @Autowired
+    private TransaccionalService self;
+    public void metodoBatch() {
+        self.procesarItem(i); // self es el proxy
+    }
+
+        Ojo: crea una dependencia circular que Spring maneja, pero puede confundir.
+
+Diferencias internas y de rendimiento
+
+    Arranque: JDK proxy es más rápido de crear porque es una función del JDK. CGLIB genera una nueva clase en memoria, lo que implica más trabajo.
+
+    Invocación: En JDK proxy, cada llamada usa reflexión (Method.invoke). CGLIB puede generar bytecode que evita reflexión después de la primera invocación (usa índices de método), siendo marginalmente más rápido en llamadas repetitivas. En la práctica, la diferencia es ínfima.
+
+    Compatibilidad: Si usas Java moderno (17+) y necesitas características como records o sealed classes, CGLIB puede tener problemas. Spring ya se ha adaptado, pero es un punto a considerar.
+
+Tip de depuración: identificación del proxy
+
+Si en tiempo de ejecución necesitas saber si un bean es un proxy, puedes inspeccionar su clase:
+java
+
+if (bean instanceof SpringProxy) {
+    System.out.println("Es un proxy de Spring");
+}
+
+SpringProxy es una interfaz marcadora implementada por todos los proxies de Spring AOP.
+
+03_Spring_MVC/DispatcherServlet_y_Flujo.md
+El corazón de Spring MVC: DispatcherServlet
+
+DispatcherServlet es el Front Controller del patrón MVC. Recibe todas las peticiones HTTP, las distribuye a los controladores adecuados y gestiona todo el ciclo de vida de la respuesta. Sus responsabilidades principales:
+
+    Recibir la petición.
+
+    Determinar qué controlador y método manejan la solicitud (handler mapping).
+
+    Ejecutar el handler (controlador).
+
+    Resolver la vista lógica o generar la respuesta REST.
+
+    Manejar excepciones.
+
+    Aplicar interceptores.
+
+Spring Boot registra y configura automáticamente un DispatcherServlet cuando detecta el starter spring-boot-starter-web. En un entorno tradicional, se configura en el web.xml o mediante la interfaz WebApplicationInitializer.
+Roles de los beans estratégicos en Spring MVC
+
+El DispatcherServlet utiliza una serie de beans especializados para delegar las tareas. Estos se definen en el contexto de la aplicación web (el WebApplicationContext, hijo del contexto raíz).
+
+    HandlerMapping: Mapea una petición entrante a un handler (típicamente un método de controlador). Varias implementaciones:
+
+        RequestMappingHandlerMapping: maneja las anotaciones @RequestMapping, @GetMapping, etc. Es la principal y está habilitada por defecto en Spring Boot.
+
+        BeanNameUrlHandlerMapping: mapea por nombre de bean si coincide con un patrón de URL (casi en desuso).
+
+        SimpleUrlHandlerMapping: configuraciones explícitas de URLs a beans.
+
+    El proceso de búsqueda es secuencial: se recorre la lista de HandlerMapping en orden hasta que uno devuelve un handler no nulo.
+
+    HandlerAdapter: Ejecuta el handler encontrado. Como los handlers pueden ser de distintos tipos (métodos anotados, controladores que implementan Controller, etc.), el HandlerAdapter sabe cómo invocarlos.
+
+        RequestMappingHandlerAdapter: invoca métodos anotados con @RequestMapping. Se encarga de la conversión de parámetros, manejo de @ResponseBody, binding, validación, etc.
+
+        HttpRequestHandlerAdapter, SimpleControllerHandlerAdapter para otros tipos.
+
+    HandlerExceptionResolver: Maneja excepciones no capturadas que se propagan desde los handlers. Se verá en detalle más adelante.
+
+    ViewResolver: Traduce el nombre lógico de una vista (String devuelto por el controlador) a un objeto View (JSP, Thymeleaf, etc.). En REST no se usa, porque el método está anotado con @ResponseBody.
+
+    LocaleResolver, ThemeResolver, FlashMapManager: Para internacionalización, temas y atributos flash (redirecciones).
+
+Ciclo de vida detallado de una petición
+
+Suponiendo una petición GET /usuarios/5 con header Accept: text/html.
+
+    Filtros previos (Filter chain) : Antes de llegar al DispatcherServlet, la petición pasa por los filtros de la cadena estándar (Spring Security, filtros personalizados, etc.). El DispatcherServlet se registra como un servlet y se invoca su service().
+
+    Búsqueda del handler: DispatcherServlet consulta cada HandlerMapping registrado. RequestMappingHandlerMapping encuentra que el método getUsuario(Long id) en UsuarioController mapea con GET /usuarios/{id}. Retorna un HandlerExecutionChain que contiene el handler (un HandlerMethod que encapsula el controlador y método) y una lista de interceptores aplicables.
+
+    Ejecución de interceptores (preHandle) : Si la cadena tiene interceptores, se ejecuta preHandle de cada uno en orden. Si alguno devuelve false, se corta la petición y se puede enviar una respuesta temprana.
+
+    Determinación del HandlerAdapter: Se busca un HandlerAdapter que soporte el handler. RequestMappingHandlerAdapter es el adecuado.
+
+    Ejecución del HandlerAdapter:
+
+        Resolución de argumentos: mediante HandlerMethodArgumentResolvers, convierte los parámetros de la petición en los argumentos del método. Por ejemplo, @PathVariable("id") Long id, @RequestParam, @RequestBody, etc. Hay decenas de resolvers predefinidos.
+
+        Llamada al método del controlador: se invoca usuarioController.getUsuario(5L).
+
+        Procesamiento del retorno: mediante HandlerMethodReturnValueHandler. Si el método devuelve un String ("usuario/detalle") y la clase NO tiene @ResponseBody, se interpreta como nombre de vista. Si tiene @ResponseBody, se convierte el objeto a JSON mediante HttpMessageConverter.
+
+    Post-ejecución de interceptores (postHandle) : Después de que el handler se ejecutó pero antes de renderizar la vista, se llama a postHandle. Permite modificar el modelo.
+
+    Resolución de vista (si es necesario) : Si el handler devuelve un nombre de vista lógico, el ViewResolver seleccionado (ej. ThymeleafViewResolver) lo resuelve a una plantilla concreta (/templates/usuario/detalle.html). Se crea el objeto View.
+
+    Renderizado de la vista: La vista se fusiona con el modelo (el ModelAndView o los atributos añadidos) y se escribe la respuesta en el HttpServletResponse.
+
+    Finalización (afterCompletion) : Se llama a afterCompletion de los interceptores, incluso si hubo excepción, similar a un finally. Perfecto para limpiar recursos.
+
+Interceptores vs Filtros
+
+    Filtros: son parte del contenedor Servlet, no conocen detalles de Spring MVC. Útiles para logging, compresión, CORS, seguridad pre-triaje.
+
+    Interceptores (HandlerInterceptor): tienen acceso al handler, modelo y vista, y se ejecutan dentro del contexto del DispatcherServlet. Ideal para añadir atributos comunes al modelo, verificar permisos tras el binding, medir tiempos, etc.
+
+Configuración en Spring Boot
+
+Boot autoconfigura DispatcherServlet, RequestMappingHandlerMapping, RequestMappingHandlerAdapter, ViewResolvers (si hay Thymeleaf, el resolver correspondiente), HandlerExceptionResolver, etc. Se puede personalizar implementando WebMvcConfigurer (sin anular @EnableWebMvc):
+java
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new MiInterceptor()).addPathPatterns("/api/**");
+    }
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        converters.add(new MappingJackson2HttpMessageConverter());
+    }
+}
+
+03_Spring_MVC/Controladores_REST.md
+De @Controller a @RestController
+
+Un controlador REST es un controlador que devuelve datos (generalmente JSON o XML) en lugar de un nombre de vista. La anotación @RestController es un atajo que combina @Controller y @ResponseBody. Con @ResponseBody, el valor de retorno del método se serializa directamente al cuerpo de la respuesta HTTP mediante HttpMessageConverter.
+java
+
+@RestController
+@RequestMapping("/api/productos")
+public class ProductoController {
+
+    @GetMapping
+    public List<Producto> listar() { ... }
+
+    @GetMapping("/{id}")
+    public Producto obtener(@PathVariable Long id) { ... }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Producto crear(@RequestBody @Valid Producto producto) { ... }
+}
+
+Anotaciones de mapeo de peticiones
+
+Spring ofrece antaciones compuestas para los métodos HTTP más comunes:
+Anotación	Equivale a
+@GetMapping	@RequestMapping(method = RequestMethod.GET)
+@PostMapping	@RequestMapping(method = RequestMethod.POST)
+@PutMapping	@RequestMapping(method = RequestMethod.PUT)
+@DeleteMapping	@RequestMapping(method = RequestMethod.DELETE)
+@PatchMapping	@RequestMapping(method = RequestMethod.PATCH)
+
+Todas aceptan atributos como value (URL), params, headers, consumes, produces.
+Vinculación de parámetros (Data Binding avanzado)
+
+Spring MVC extrae los datos de la petición y los convierte automáticamente gracias a HandlerMethodArgumentResolver.
+
+    @PathVariable: de la plantilla de la URL. @GetMapping("/{id}") con @PathVariable Long id.
+
+    @RequestParam: de parámetros de consulta o datos de formulario (?nombre=valor).
+    java
+
+    @GetMapping("/buscar")
+    public List<Producto> buscar(@RequestParam("q") String query, 
+                                 @RequestParam(defaultValue = "10") int max) { ... }
+
+    Si el parámetro es opcional, usar required = false o Optional<String>.
+
+    @RequestBody: convierte el cuerpo de la petición (JSON, XML) a un objeto Java usando HttpMessageConverter (normalmente Jackson).
+
+    @RequestHeader: extrae un header específico.
+
+    @CookieValue: extrae el valor de una cookie.
+
+    @ModelAttribute: para binding de parámetros múltiples a un objeto (menos común en REST puro, más en formularios).
+
+    Objetos complejos: Si el método tiene un parámetro de tipo POJO sin anotaciones, Spring lo trata como un @ModelAttribute, haciendo binding de parámetros por nombre de propiedad.
+
+Manejo de respuestas y códigos de estado
+
+La respuesta se puede construir de varias formas:
+
+    Retornar directamente el objeto (con @ResponseBody o en un @RestController). El código HTTP por defecto es 200 OK. Para otros códigos se usa @ResponseStatus a nivel de método o excepción.
+
+    ResponseEntity<T>: da control total sobre headers, status y cuerpo.
+    java
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Producto> obtener(@PathVariable Long id) {
+        Producto p = service.findById(id);
+        return p != null ? ResponseEntity.ok(p) 
+                         : ResponseEntity.notFound().build();
+    }
+
+    ResponseEntity tiene métodos estáticos: ok(), created(URI), noContent(), badRequest(), status(HttpStatus), etc.
+
+    HttpServletResponse: en el propio parámetro del método, se puede escribir directamente (no recomendado para REST moderno).
+
+    HttpEntity<T>: similar a ResponseEntity pero también puede usarse como parámetro de entrada con HttpEntity<Producto> (accede a headers y cuerpo de la petición).
+
+Negociación de contenido (Content Negotiation)
+
+Spring MVC decide automáticamente qué converter usar basándose en:
+
+    El header Accept de la petición.
+
+    La extensión de la URL (si está configurado).
+
+    El parámetro format (si está configurado).
+
+    El atributo produces de las anotaciones de mapeo.
+
+Ejemplo: si produces = "application/xml", Spring usará un converter de XML (si está disponible, p.ej. jackson-dataformat-xml). Si no hay converter adecuado, lanza HttpMediaTypeNotAcceptableException.
+Convertidores de mensajes (HttpMessageConverter)
+
+Interfaz que transforma entre objetos Java y el cuerpo de peticiones/respuestas. Spring Boot registra automáticamente:
+
+    MappingJackson2HttpMessageConverter (JSON) si Jackson está en el classpath.
+
+    StringHttpMessageConverter (text/plain).
+
+    FormHttpMessageConverter (formularios).
+
+    Jaxb2RootElementHttpMessageConverter (XML) si JAXB está disponible, pero normalmente se prefiere el jackson XML converter.
+
+Se pueden añadir o personalizar mediante configureMessageConverters() o extendMessageConverters() en WebMvcConfigurer.
+Configuración de CORS en controladores
+
+A nivel global con WebMvcConfigurer.addCorsMappings, o a nivel de controlador/método con @CrossOrigin.
+java
+
+@RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:4200", maxAge = 3600)
+public class ApiController { ... }
+
+HATEOAS y enlaces
+
+Spring HATEOAS permite construir respuestas REST con hipervínculos. Aunque es avanzado, los controladores pueden devolver EntityModel<T> o CollectionModel<T> para añadir enlaces. Spring Boot con spring-boot-starter-hateoas proporciona autoconfiguración.
+Programación reactiva en REST
+
+Con spring-boot-starter-webflux y @RestController (o en WebFlux), los métodos pueden retornar Mono<T> o Flux<T>. Spring maneja la suscripción. Cambia el paradigma a no bloqueante.
+03_Spring_MVC/Manejo_de_Excepciones.md
+Gestión centralizada de excepciones en @ControllerAdvice
+
+En lugar de esparcir try/catch en cada controlador, Spring permite definir clases globales con @ControllerAdvice (o @RestControllerAdvice, que es @ControllerAdvice + @ResponseBody). Los métodos anotados con @ExceptionHandler capturan excepciones específicas.
+java
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDTO manejarNoEncontrado(RecursoNoEncontradoException ex) {
+        return new ErrorDTO(404, ex.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public List<ErrorValidacionDTO> manejarValidacion(MethodArgumentNotValidException ex) {
+        return ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> new ErrorValidacionDTO(e.getField(), e.getDefaultMessage()))
+                .collect(Collectors.toList());
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorDTO manejarGeneral(Exception ex) {
+        // logging del stacktrace real
+        logger.error("Error no esperado", ex);
+        return new ErrorDTO(500, "Error interno del servidor");
+    }
+}
+
+Jerarquía de manejo de excepciones
+
+Spring busca el manejador más específico:
+
+    @ExceptionHandler dentro del propio controlador (mayor prioridad).
+
+    @ExceptionHandler en clases con @ControllerAdvice aplicables (pueden ser globales, por paquete, o por anotación).
+
+    Implementaciones de HandlerExceptionResolver (resolvers globales).
+
+    Si no se captura, se propaga al contenedor servlet, que responde con una página de error predeterminada (o se puede personalizar con ErrorController).
+
+HandlerExceptionResolver y sus implementaciones
+
+HandlerExceptionResolver es la interfaz de bajo nivel. La resolución ocurre en el DispatcherServlet antes de llegar a los filtros de error. Implementaciones por defecto:
+
+    ExceptionHandlerExceptionResolver: invoca los métodos @ExceptionHandler de @ControllerAdvice y controladores. Es el más potente y se configura automáticamente al detectar anotaciones.
+
+    ResponseStatusExceptionResolver: busca la anotación @ResponseStatus en la excepción y establece el código de estado.
+
+    DefaultHandlerExceptionResolver: convierte excepciones estándar de Spring MVC (NoHandlerFoundException, HttpMediaTypeNotSupportedException, etc.) a códigos HTTP.
+
+    SimpleMappingExceptionResolver: mapea nombres de excepción a vistas de error (configuración XML/Java), para MVC no REST.
+
+Se pueden agregar resolvers personalizados o ajustar el orden con WebMvcConfigurer.configureHandlerExceptionResolvers.
+Lanzar excepciones con ResponseStatusException
+
+Para evitar crear clases de excepción personalizadas, Spring ofrece ResponseStatusException, que se puede lanzar directamente y será capturada por ResponseStatusExceptionResolver:
+java
+
+@GetMapping("/{id}")
+public Producto obtener(@PathVariable Long id) {
+    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
+}
+
+El cuerpo por defecto contendrá el mensaje y el status. Para un formato más rico, es mejor usar un @ControllerAdvice con DTO.
+Errores en filtros y antes del DispatcherServlet
+
+Las excepciones que ocurren en los filtros (fuera del alcance del DispatcherServlet) no son manejadas por los mecanismos anteriores. Para capturarlas y devolver una respuesta JSON consistente, se puede usar un ErrorController implementando ErrorController (Spring Boot provee BasicErrorController). Personalizarlo permite tener respuestas de error uniformes aunque la petición nunca llegue al controlador.
+Response con detalles en errores de validación
+
+Volviendo al ejemplo de MethodArgumentNotValidException: el BindingResult contiene todos los errores de campo (rechazos de @NotNull, @Size, etc.), que podemos serializar en una lista de errores estructurados. Es una práctica recomendada devolver una respuesta legible por el cliente frontend.
+03_Spring_MVC/Validacion_y_BindingResult.md
+Bean Validation (JSR-380) y su integración con Spring MVC
+
+Spring MVC se integra con Hibernate Validator (implementación de referencia) automáticamente cuando está en el classpath. Las anotaciones de validación (@NotNull, @Size, @Email, @Pattern, etc.) se colocan en los campos del DTO o entidad que se recibe.
+java
+
+public class ProductoDTO {
+    @NotBlank(message = "El nombre es obligatorio")
+    private String nombre;
+    
+    @Positive(message = "El precio debe ser positivo")
+    private BigDecimal precio;
+    
+    @Size(min = 3, max = 10, message = "El SKU debe tener entre 3 y 10 caracteres")
+    private String sku;
+}
+
+Activación de la validación en los controladores
+
+Para que Spring valide automáticamente un @RequestBody, se debe añadir @Valid (o @Validated de Spring) al parámetro.
+java
+
+@PostMapping
+public ResponseEntity<Producto> crear(@Valid @RequestBody ProductoDTO dto) { ... }
+
+Si la validación falla, Spring lanza MethodArgumentNotValidException antes de que se ejecute el método del controlador. Por eso es crucial tener un @ControllerAdvice que la maneje.
+Uso de BindingResult para capturar errores manualmente
+
+Cuando no se quiere lanzar una excepción, se puede declarar un parámetro BindingResult justo después del objeto validado. Spring no lanzará la excepción y tú decides cómo actuar.
+java
+
+@PostMapping
+public ResponseEntity<?> crear(@Valid @RequestBody ProductoDTO dto, BindingResult result) {
+    if (result.hasErrors()) {
+        // Construir respuesta de error personalizada
+        return ResponseEntity.badRequest().body(crearErrores(result));
+    }
+    // lógica normal
+}
+
+Esta técnica es útil cuando se necesita lógica condicional adicional antes de reportar errores.
+Validación a nivel de servicio con @Validated
+
+Spring también permite validar parámetros de métodos de servicios con @Validated a nivel de clase y anotaciones de Bean Validation en los parámetros. Esto dispara ConstraintViolationException. Para capturarla globalmente, un @ControllerAdvice puede manejar ConstraintViolationException y construir la respuesta apropiada.
+java
+
+@Service
+@Validated
+public class ProductoService {
+    public void actualizarPrecio(@Positive double nuevoPrecio) { ... }
+}
+
+Validación de path variables y request params
+
+Para validar parámetros simples (no cuerpos), se puede anotar el controlador con @Validated y usar anotaciones de validación directamente en los parámetros.
+java
+
+@RestController
+@RequestMapping("/api")
+@Validated
+public class BusquedaController {
+
+    @GetMapping("/buscar")
+    public List<Producto> buscar(@RequestParam @Size(min = 2) String q) { ... }
+}
+
+Si falla, se lanza ConstraintViolationException (no MethodArgumentNotValidException), que debe capturarse de forma diferenciada en el @ControllerAdvice.
+Mensajes de validación personalizados y i18n
+
+El valor de message puede referenciar una clave del MessageSource para soportar múltiples idiomas:
+java
+
+@NotNull(message = "{producto.nombre.obligatorio}")
+
+Se debe tener un bean messageSource configurado (Spring Boot lo hace automáticamente con messages.properties). En el @ControllerAdvice, al construir los errores, se pueden resolver los mensajes mediante el MessageSource inyectado.
+Grupos de validación
+
+Bean Validation permite definir interfaces de grupos para aplicar distintas reglas en diferentes casos de uso (creación vs actualización). Se especifica el grupo con @Validated(OnCreate.class) en el controlador. Es una funcionalidad avanzada pero a tener en cuenta.
+03_Spring_MVC/Vistas_y_Templates.md
+El concepto de ViewResolver y View
+
+Cuando un método controlador retorna un String sin @ResponseBody, ese string es el nombre lógico de la vista. El DispatcherServlet consulta a los ViewResolvers registrados para convertir ese nombre en un objeto View real (JSP, HTML con Thymeleaf, Freemarker, etc.).
+ViewResolvers más comunes
+
+    InternalResourceViewResolver: para JSP. Prefijo y sufijo configurables (/WEB-INF/views/ y .jsp). Si la vista lógica es "usuarios/lista", busca /WEB-INF/views/usuarios/lista.jsp.
+
+    ThymeleafViewResolver: si Thymeleaf está presente. Resuelve nombres de plantilla como "usuarios/lista" a templates/usuarios/lista.html. Soporta Spring Expression Language (SpEL) dentro del HTML.
+
+    FreeMarkerViewResolver, MustacheViewResolver, etc.
+
+En una aplicación Spring Boot, si usas spring-boot-starter-thymeleaf, no necesitas configurar nada; el ThymeleafViewResolver se registra automáticamente y espera las plantillas en src/main/resources/templates/.
+Paso de datos del controlador a la vista
+
+El controlador añade atributos al modelo. Esto se hace de varias formas:
+
+    Model como parámetro: public String listar(Model model) { model.addAttribute("productos", lista); return "productos/lista"; }
+
+    ModelAndView como retorno.
+
+    @ModelAttribute a nivel de método en el controlador (se añade automáticamente a todos los métodos del controlador). Útil para datos de formularios o menús.
+
+    model.addAttribute sin nombre (se deduce del tipo).
+
+En la vista, con Thymeleaf accedes así: ${productos} o iteraciones th:each="p : ${productos}". Con JSP, mediante Expression Language ${productos}.
+Thymeleaf como motor de plantillas estándar
+
+Thymeleaf es el motor recomendado en Spring Boot por su sintaxis natural y su integración con Spring Security, i18n, etc. Características destacadas:
+
+    Plantillas prototípicas: se pueden abrir en navegador sin servidor porque usan atributos en lugar de etiquetas JSP.
+
+    Expression utilitarias: #strings, #dates, #numbers.
+
+    Formularios: th:object, th:field, th:errors ligados al binding de Spring para mostrar errores de validación.
+
+    Fragmentos y layouts: mediante th:fragment y th:replace se crean layouts reutilizables.
+
+    Soporte de SpEL para seguridad: sec:authorize de Spring Security integrado.
+
+Redirecciones y flash attributes
+
+El patrón POST-redirect-GET es común para evitar el doble envío de formularios.
+
+    El controlador retorna "redirect:/productos". Spring lo interpreta como una redirección y se invoca RedirectView.
+
+    Para pasar datos a la siguiente petición, como mensajes de éxito, se usan flash attributes: RedirectAttributes.addFlashAttribute("mensaje", "Creado exitosamente"). Estos sobreviven a la redirección y se borran tras mostrarse.
+
+java
+
+@PostMapping
+public String crear(@Valid Producto p, BindingResult result, RedirectAttributes ra) {
+    if (result.hasErrors()) return "productos/formulario";
+    service.save(p);
+    ra.addFlashAttribute("success", "Producto creado");
+    return "redirect:/productos";
+}
+
+REST y ¿vistas?
+
+En servicios REST puros no se devuelven vistas. Sin embargo, puede haber endpoints híbridos que devuelvan HTML para documentación (Swagger UI) o que sirvan una SPA. Spring Boot maneja recursos estáticos desde static/, public/, META-INF/resources/. La configuración de vistas no interfiere.
+Resolución de vistas y negociación de contenido en REST
+
+Si un método devuelve un objeto y no tiene @ResponseBody, pero la petición tiene encabezados que indican que acepta JSON, el HttpMessageConverter puede tomar el control. En la práctica, si el controlador tiene @RestController todo es @ResponseBody. En un @Controller puro, para que el valor retornado se interprete como JSON debe estar anotado con @ResponseBody en el método.
+
+04_Spring_Boot/Autoconfiguracion_y_Starters.md
+El problema que resolvió Spring Boot
+
+Spring tradicional daba una flexibilidad enorme, pero configurar una aplicación sencilla requería decenas de líneas de XML o Java Config para beans de infraestructura: DataSource, EntityManagerFactory, TransactionManager, ViewResolver, MessageConverter, etc. Spring Boot introdujo dos conceptos rompedores:
+
+    Starters: dependencias agrupadoras que traen todo el classpath necesario y autoconfiguración preparada.
+
+    Autoconfiguración (@EnableAutoConfiguration): basada en lo que hay en el classpath, la aplicación decide qué beans crear y cómo configurarlos, siguiendo el principio "convención sobre configuración".
+
+La anotación @SpringBootApplication
+
+Es un atajo que combina tres anotaciones:
+java
+
+@SpringBootConfiguration  // = @Configuration en contexto Boot
+@EnableAutoConfiguration  // La magia de la autoconfiguración
+@ComponentScan(            // Escanea el paquete actual y subpaquetes
+    excludeFilters = { @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class) }
+)
+public @interface SpringBootApplication {
+
+Así que en una sola línea activas la configuración Java, el escaneo de componentes y la autoconfiguración.
+Funcionamiento interno de la autoconfiguración
+
+    @EnableAutoConfiguration importa AutoConfigurationImportSelector.
+
+    Este selector carga todas las clases listadas en el archivo META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports (en Spring Boot 3+) o en spring.factories (versiones anteriores) del classpath.
+
+    Cada una de esas clases es una configuración (anotada con @AutoConfiguration o @Configuration) con anotaciones condicionales.
+
+    Anotaciones condicionales (@ConditionalOnClass, @ConditionalOnMissingBean, @ConditionalOnProperty, etc.) deciden si la configuración se aplica o no.
+
+    Si se aplica, se definen los beans óptimos para la aplicación.
+
+Ejemplo simplificado de lo que hace DataSourceAutoConfiguration:
+
+    @ConditionalOnClass({ DataSource.class, EmbeddedDatabaseType.class }) → solo si hay clases JDBC en el classpath.
+
+    @ConditionalOnMissingBean(DataSource.class) → solo si el usuario no ha definido ya un DataSource.
+
+    Si se cumple, crea un DataSource usando las propiedades spring.datasource.*. Si no hay propiedades de conexión, Boot intenta crear una base de datos embebida (H2, Derby) si encuentra esas dependencias.
+
+Anotaciones condicionales más poderosas
+Anotación	Condición
+@ConditionalOnClass	Si una clase específica está en el classpath.
+@ConditionalOnMissingClass	Si una clase NO está.
+@ConditionalOnBean	Si existe un bean de ese tipo.
+@ConditionalOnMissingBean	Si NO existe un bean.
+@ConditionalOnProperty	Si una propiedad tiene un valor determinado.
+@ConditionalOnResource	Si existe un recurso (archivo).
+@ConditionalOnWebApplication	Si es una aplicación web.
+@ConditionalOnNotWebApplication	No web.
+@ConditionalOnExpression	Expresión SpEL evaluada a true.
+
+Estas anotaciones se pueden combinar en una misma clase de autoconfiguración para afinar la activación.
+Starters: la navaja suiza del classpath
+
+Un starter es un POM (Maven) o módulo (Gradle) que agrupa varias dependencias relacionadas entre sí, evitando que tengas que añadirlas una a una y garantizando compatibilidad de versiones. La convención de nombres es spring-boot-starter-*. Ejemplos esenciales:
+Starter	Proporciona
+spring-boot-starter-web	Spring MVC, Tomcat embebido, Jackson, validación.
+spring-boot-starter-data-jpa	Hibernate, Spring Data JPA, Spring ORM, pool HikariCP.
+spring-boot-starter-security	Spring Security, autenticación básica por defecto.
+spring-boot-starter-test	JUnit Jupiter, Mockito, AssertJ, Hamcrest, Spring Test.
+spring-boot-starter-actuator	Endpoints de monitoreo (health, metrics).
+spring-boot-starter-thymeleaf	Thymeleaf, Spring Web.
+spring-boot-starter-oauth2-client	OAuth2 client support.
+spring-boot-starter-webflux	Programación reactiva con Netty.
+
+Cada starter trae también la autoconfiguración correspondiente (en spring-boot-autoconfigure).
+Cómo crear un starter personalizado
+
+    Crea un módulo Maven con dos submódulos: auto-configuracion y starter.
+
+    En auto-configuration: clase @AutoConfiguration con @ConditionalOn... y @Bean. Debe registrar la configuración en META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports.
+
+    En starter: POM vacío (solo dependencias) que trae el módulo de autoconfiguración y las librerías necesarias.
+
+    Opcional: spring-boot-configuration-processor para generar metadatos de propiedades y ayudar al IDE con el autocompletado.
+
+Orden de las autoconfiguraciones
+
+Las configuraciones pueden anotarse con @AutoConfigureOrder, @AutoConfigureBefore o @AutoConfigureAfter para controlar la secuencia. Esto es vital porque, por ejemplo, la configuración de Hibernate debe aplicarse después de la del DataSource.
+04_Spring_Boot/Estructura_Proyecto_Spring_Boot.md
+Estructura recomendada de directorios
+
+Spring Boot no fuerza una estructura, pero hay una ampliamente aceptada que sigue el estándar Maven/Gradle:
+text
+
+mi-proyecto/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── empresa/
+│   │   │           └── miapp/
+│   │   │               ├── MiAppApplication.java   (clase principal)
+│   │   │               ├── controlador/
+│   │   │               ├── servicio/
+│   │   │               ├── repositorio/
+│   │   │               ├── modelo/
+│   │   │               ├── dto/
+│   │   │               ├── configuracion/
+│   │   │               └── excepcion/
+│   │   └── resources/
+│   │       ├── static/                 (contenido estático: css, js, imágenes)
+│   │       ├── templates/              (plantillas Thymeleaf, Freemarker)
+│   │       ├── application.properties  (o application.yml)
+│   │       └── data.sql / schema.sql   (opcional, para inicializar BD)
+│   └── test/
+│       ├── java/
+│       │   └── com/empresa/miapp/
+│       │       ├── integracion/
+│       │       ├── unidad/
+│       │       └── MiAppApplicationTests.java
+│       └── resources/
+│           └── application-test.properties
+├── pom.xml (o build.gradle)
+└── README.md
+
+    static/: servido directamente por Spring Boot (recursos estáticos). Ruta raíz /.
+
+    templates/: plantillas del motor de vistas (Thymeleaf, etc.). No accesibles directamente.
+
+    application.properties o .yml: configuración por defecto. Se puede dividir por perfiles.
+
+    data.sql y schema.sql: si existen, Spring Boot los ejecuta al iniciar la base de datos embebida, a menos que se desactive.
+
+La clase principal y SpringApplication
+java
+
+@SpringBootApplication
+public class MiAppApplication {
     public static void main(String[] args) {
-        System.out.println("Hola Java");
+        SpringApplication.run(MiAppApplication.class, args);
     }
 }
 
-    public class MiApp → la clase debe llamarse igual que el archivo (MiApp.java). La visibilidad public permite que la JVM la encuentre.
-
-    public static void main(String[] args) → punto de entrada. static permite invocarlo sin crear una instancia.
-
-    System.out.println() → salida estándar.
-
-Java 21 (Preview): Simplified Main Method
-Para scripts, prototipos y ejemplos didácticos, Java 21 en modo preview permite una sintaxis mucho más ligera, incluso sin clase explícita ni static:
+SpringApplication.run() arranca el contexto de Spring, el servidor embebido (si es web) y todo lo demás. Se puede personalizar mediante SpringApplication builder:
 java
 
-void main() {
-    println("Hola directamente desde una unnamed class");
-}
+new SpringApplicationBuilder(MiAppApplication.class)
+    .bannerMode(Banner.Mode.OFF)
+    .profiles("dev")
+    .run(args);
 
-También se permite:
+Empaquetado y ejecución
+
+Spring Boot ofrece el plugin spring-boot-maven-plugin que genera un fat jar (JAR autocontenido con todas las dependencias, el servidor embebido y un cargador de clases especial). Se ejecuta con:
+bash
+
+mvn clean package
+java -jar target/mi-app.jar
+
+El plugin también permite ejecutar directamente con mvn spring-boot:run para desarrollo ágil.
+Convenciones en el package scanning
+
+El @ComponentScan implícito en @SpringBootApplication escanea el paquete donde reside la clase principal y todos sus subpaquetes. Por eso se recomienda ubicar la aplicación en el paquete raíz (com.empresa.miapp). Si necesitas escanear otros paquetes, puedes usar scanBasePackages en la anotación.
+Recursos estáticos y caché
+
+Por defecto, Spring Boot sirve recursos estáticos desde classpath:/static/, classpath:/public/, classpath:/resources/, classpath:/META-INF/resources/. Puedes personalizar con spring.web.resources.static-locations. El mapeo de URL raíz es /. Para control de caché: spring.web.resources.cache.cachecontrol.max-age.
+El servidor embebido
+
+Spring Boot incluye Tomcat por defecto en spring-boot-starter-web. Pero puedes cambiarlo a Jetty o Undertow excluyendo Tomcat y añadiendo el starter correspondiente. La configuración del servidor se realiza mediante propiedades server.* (puerto, SSL, compression, etc.). El servidor se inicia desde ServletWebServerApplicationContext.
+04_Spring_Boot/Actuator_y_Metricas.md
+¿Qué es Actuator?
+
+Spring Boot Actuator expone una serie de endpoints HTTP y JMX que permiten monitorizar y gestionar una aplicación en producción: estado de salud, métricas, variables de entorno, configuración, trazas, mapeos de peticiones, etc. Para habilitarlo se añade el starter spring-boot-starter-actuator.
+Endpoints más relevantes
+Endpoint	Descripción
+health	Estado de la aplicación y sus dependencias (DB, disco, etc.).
+info	Información arbitraria (versión, descripción).
+metrics	Métricas como uso de memoria, peticiones HTTP, tiempo de respuesta.
+env	Propiedades del Environment.
+loggers	Configuración de niveles de logs en tiempo real.
+heapdump	Vuelca la memoria del heap (requiere JVM HotSpot).
+threaddump	Vuelca los hilos.
+mappings	Todos los endpoints de Spring MVC.
+beans	Lista todos los beans del contexto.
+conditions	Evaluación de autoconfiguraciones (positivos y negativos).
+
+Por defecto, solo health está expuesto vía HTTP; los demás se pueden habilitar configurando management.endpoints.web.exposure.include=* (o una lista específica) para desarrollo, pero en producción se debe ser restrictivo y combinar con seguridad.
+Configuración de actuadores
+properties
+
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=when-authorized
+management.endpoint.health.probes.enabled=true   # Para Kubernetes probes
+management.server.port=8081                       # Puerto separado para gestión
+
+Los endpoints pueden ser accedidos mediante /actuator/health, etc. (prefijo configurable).
+Health indicators
+
+El endpoint health agrega el estado de múltiples HealthIndicator. Spring Boot proporciona indicadores automáticos para: DataSource, Redis, MongoDB, DiskSpace, RabbitMQ, etc. Cada uno reporta UP, DOWN, o UNKNOWN. Puedes crear indicadores personalizados:
 java
 
-void main(String[] args) { ... }
-
-Si se desea acceder a los argumentos. Esta característica requiere compilar con --enable-preview --source 21. Elimina la necesidad de escribir public class y System.out, ya que println se hereda de java.io.IO y la JVM genera una clase anónima por nosotros.
-1.2. Paquetes e imports
-
-    Paquete: package com.empresa.proyecto; como primera línea no comentada.
-
-    Importaciones: import java.util.List;, import static java.lang.Math.*;.
-
-    El paquete java.lang se importa automáticamente.
-
-1.3. Comentarios
-
-    Línea: // comentario
-
-    Bloque: /* ... */
-
-    Javadoc: /** ... */ (para generar documentación).
-
-1.4. Identificadores y convenciones
-
-    Deben comenzar con letra, _ o $. No pueden ser palabras reservadas.
-
-    Convenciones (altamente recomendadas):
-
-        Clases/Interfaces: PascalCase.
-
-        Métodos/variables: camelCase.
-
-        Constantes (static final): MAYÚSCULAS_CON_GUIONES.
-
-        Paquetes: en minúsculas, notación inversa de dominio.
-
-1.5. Bloques de código y ámbito
-
-Cada par de llaves {} define un bloque. Las variables declaradas dentro de un bloque viven únicamente en ese ámbito, incluyendo parámetros de métodos y variables de control de bucles.
-02 – TIPOS DE DATOS Y VARIABLES
-2.1. Tipos primitivos
-
-Java posee 8 tipos primitivos. No son objetos y viven en la pila.
-Tipo	Tamaño	Rango	Ejemplo literal
-byte	8 bits	-128 a 127	byte b = 100;
-short	16 bits	-32 768 a 32 767	short s = 20_000;
-int	32 bits	-2³¹ a 2³¹-1 (~ ±2 mil millones)	int i = 5_000_000;
-long	64 bits	-2⁶³ a 2⁶³-1	long l = 123L;
-float	32 bits	precisión simple IEEE 754	float f = 3.14f;
-double	64 bits	precisión doble IEEE 754	double d = 3.14;
-char	16 bits	0 a 65 535 (caracteres Unicode)	char c = 'A';
-boolean	1 bit*	true o false	boolean flag = true;
-
-En la práctica, el tamaño depende de la JVM, pero solo almacena los valores true y false.
-
-Desde Java 7 se pueden usar guiones bajos en literales numéricos: 1_000_000. También se soportan literales binarios (0b1010) y hexadecimales (0x1A).
-2.2. Tipos de referencia
-
-Todo lo que no es primitivo es una referencia a un objeto en el heap. Incluye:
-
-    Clases (String, Integer, ArrayList, etc.)
-
-    Interfaces (List, Runnable, etc.)
-
-    Enumeraciones (enum)
-
-    Arrays (tanto de primitivos como de objetos)
-
-    Clases especiales como record
-
-El valor por defecto de una referencia es null.
-2.3. La clase String y Text Blocks
-
-String es inmutable. Se puede crear con comillas dobles: "Hola". Desde Java 15 (estable en 17, vigente en 21) se dispone de Text Blocks:
-java
-
-String json = """
-    {
-        "nombre": "Juan",
-        "edad": 25
+@Component
+public class ServicioExternoHealth implements HealthIndicator {
+    @Override
+    public Health health() {
+        // lógica para comprobar un servicio externo
+        boolean disponible = check();
+        if (disponible) {
+            return Health.up().withDetail("latencia", 120).build();
+        }
+        return Health.down().withDetail("error", "timeout").build();
     }
-    """;
-
-Los bloques de texto conservan los saltos de línea y permiten indentación controlada mediante el método stripIndent() (llamado implícitamente si la línea de cierre no tiene indentación adicional). Se pueden interpolar valores con String Templates (preview en Java 21):
-java
-
-String nombre = "Ana";
-String mensaje = STR."¡Hola \{nombre}!";
-
-STR es el procesador de plantillas estándar. Este mecanismo es seguro contra inyecciones.
-2.4. Inferencia de tipos con var (desde Java 10)
-
-Declara variables locales sin especificar explícitamente el tipo, siempre que se inicialicen.
-java
-
-var lista = new ArrayList<String>();    // ArrayList<String>
-var numero = 42;                        // int
-var saludo = "Hola";                    // String
-
-El tipo se infiere en tiempo de compilación. No se puede usar var sin inicializador ni como parámetro de método (salvo en lambdas con tipos implícitos).
-2.5. Variables: ámbito, inicialización y final
-
-    Variables locales: deben inicializarse antes de usarse. Ámbito restringido al bloque.
-
-    Variables de instancia (campos no estáticos): se inicializan automáticamente con el valor por defecto del tipo (0, false, null).
-
-    Variables estáticas (campos static): ídem.
-
-    Constantes: final indica que la variable no puede ser reasignada. Para constantes de clase se usa static final. Las referencias final no impiden modificar el objeto referenciado (excepto si es inmutable como String o record).
-
-    final en parámetros: evita reasignaciones dentro del método.
-
-2.6. Conversión de tipos (casting)
-
-    Implícita (widening): de menor a mayor tamaño, p.ej. int → long → float → double. Siempre seguro.
-
-    Explícita (narrowing): requiere casting y puede perder precisión o bits.
-
-java
-
-double d = 3.14;
-int i = (int) d;  // 3
-
-    Promoción automática en expresiones: todos los byte, short, char se promueven a int al evaluar operadores.
-
-03 – OPERADORES
-3.1. Operadores aritméticos
-
-+, -, *, /, % (módulo). Funcionan sobre tipos numéricos. División entera trunca. Precedencia: *, /, % antes que +, -.
-3.2. Operadores unarios
-
-    + (positivo), - (negación)
-
-    ++ (incremento), -- (decremento), prefijo y sufijo.
-
-    ! (negación lógica), ~ (complemento bit a bit)
-
-3.3. Operadores relacionales y de igualdad
-
-<, <=, >, >=, ==, !=. Devuelven boolean.
-
-    == en tipos referencia compara identidad de objeto (direcciones), no contenido. Para igualdad de contenido se usa equals().
-
-    Cuidado con autoboxing: Integer a = 200; Integer b = 200; a == b puede ser falso por el cache (el pool de enteros solo cubre -128 a 127).
-
-3.4. Operadores lógicos
-
-    Cortocircuito: && (AND), || (OR) – solo evalúan el segundo operando si es necesario.
-
-    No cortocircuito: &, | (evalúan ambos operandos, también usados a nivel bit).
-
-    ^ (XOR lógico o bit a bit según el contexto).
-
-3.5. Operadores a nivel de bits
-
-&, |, ^, ~, << (desplazamiento izquierda), >> (desplazamiento derecha con signo), >>> (desplazamiento derecha sin signo).
-3.6. Operador de asignación y combinados
-
-=, +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=, >>>=.
-java
-
-int x = 10;
-x += 5;  // x = x + 5
-
-3.7. Operador ternario
-
-condicion ? valorSiVerdadero : valorSiFalso
-java
-
-String estado = (edad >= 18) ? "Adulto" : "Menor";
-
-3.8. Operador instanceof y Pattern Matching
-
-instanceof comprueba si un objeto es instancia de una clase/interface.
-Desde Java 16 (estable), se puede realizar pattern matching para vincular una variable directamente:
-java
-
-if (objeto instanceof String s) {
-    System.out.println(s.toUpperCase());
 }
 
-La variable de patrón s existe únicamente si la comprobación es true. Además, se puede combinar con condiciones adicionales usando &&:
+Métricas con Micrometer
+
+Actuator usa Micrometer como fachada de métricas. Se pueden exportar a múltiples sistemas: Prometheus, Datadog, Graphite, New Relic, etc. Basta añadir el registro adecuado (micrometer-registry-prometheus) y las métricas se publican en el formato correspondiente.
+
+Métricas automáticas incluyen:
+
+    JVM (memoria, GC, threads).
+
+    Sistema (CPU, load average).
+
+    Peticiones HTTP (http.server.requests con tag uri, status).
+
+    Tiempos de ejecución de métodos @Timed.
+
+    Conexiones de base de datos.
+
+Métricas personalizadas
+
+Puedes inyectar MeterRegistry y registrar contadores, timers, gauges.
 java
 
-if (objeto instanceof String s && s.length() > 5) { ... }
+@RestController
+public class PedidoController {
+    private final Counter pedidosCreados;
 
-3.9. Operador de referencia a método ::
-
-Permite referenciar métodos como lambdas: System.out::println, String::length, MiClase::new.
-3.10. Operador -> (flecha)
-
-Usado en lambdas y en switch expressions (que veremos en control de flujo). En lambdas: (a, b) -> a + b.
-3.11. Precedencia de operadores
-
-La tabla de precedencia ordena la evaluación. Lo más relevante:
-
-    Postfijos (++ --)
-
-    Unarios (+ - ! ~ ++ -- prefijos)
-
-    Multiplicativos (* / %)
-
-    Aditivos (+ -)
-
-    Desplazamiento (<< >> >>>)
-
-    Relacionales (< > <= >= instanceof)
-
-    Igualdad (== !=)
-
-    AND bit a bit (&)
-
-    XOR bit a bit (^)
-
-    OR bit a bit (|)
-
-    AND lógico (&&)
-
-    OR lógico (||)
-
-    Ternario (?:)
-
-    Asignación (= += ...)
-
-Ante la duda, usar paréntesis.
-04 – CONTROL DE FLUJO
-4.1. Estructuras de decisión
-if, else if, else
-
-Evaluación condicional clásica:
-java
-
-if (condicion) {
-    // ...
-} else if (otraCondicion) {
-    // ...
-} else {
-    // ...
-}
-
-No hay tipo específico resultante. Las llaves son opcionales para una sola sentencia, pero se recomienda usarlas siempre.
-4.2. switch – Tradicional, expresión y Pattern Matching (Java 21)
-
-Java 21 convierte al switch en una herramienta potentísima. Veamos todas las formas.
-4.2.1. switch clásico (sentencia)
-java
-
-switch (variable) {
-    case 1:
-        System.out.println("Uno");
-        break;
-    case 2:
-        System.out.println("Dos");
-        break;
-    default:
-        System.out.println("Otro");
-}
-
-Sin break, hay fall-through (continúa el siguiente caso). Puede causar errores.
-4.2.2. switch como expresión (Java 14+)
-
-Devuelve un valor y usa la flecha -> para evitar break:
-java
-
-int num = 2;
-String texto = switch (num) {
-    case 1 -> "Uno";
-    case 2 -> "Dos";
-    default -> "Otro";   // necesario si no se cubren todos los casos
-};
-
-Si un caso necesita un bloque de código, se usa yield para devolver el valor:
-java
-
-String resultado = switch (num) {
-    case 1 -> "Uno";
-    case 2 -> {
-        System.out.println("Procesando...");
-        yield "Dos";
+    public PedidoController(MeterRegistry registry) {
+        pedidosCreados = registry.counter("pedidos.creados.total");
     }
-    default -> "Otro";
-};
 
-La expresión es obligatoriamente exhaustiva (cubre todos los posibles valores del tipo). Para enum sin default se requieren todos los literales; con default no.
-4.2.3. Pattern Matching for switch (Java 21 final)
-
-Ahora el switch acepta patrones de tipo, de registro, de array y manejo explícito de null. La potencia se multiplica.
-java
-
-Object obj = ...;
-switch (obj) {
-    case null -> System.out.println("Es nulo");
-    case String s -> System.out.println("Cadena: " + s.toUpperCase());
-    case Integer i -> System.out.println("Entero cuadrado: " + i * i);
-    case int[] arr -> System.out.println("Array de enteros de longitud " + arr.length);
-    default -> System.out.println("Tipo desconocido");
+    @PostMapping("/pedidos")
+    public Pedido crear() {
+        Pedido p = /* ... */;
+        pedidosCreados.increment();
+        return p;
+    }
 }
 
-    El switch con patrones es exhaustivo para tipos sellados. Si la variable es una interfaz sellada como Figura, y cubrimos todos los permits, no se necesita default. Ejemplo con records y clases selladas:
+También se puede utilizar @Timed en métodos (requiere @EnableAspectJAutoProxy y un TimedAspect bean) para medir tiempos y contar invocaciones.
+Info endpoint
+
+Se puede crear un InfoContributor para añadir información personalizada, o simplemente definir propiedades:
+properties
+
+info.app.name=MiApp
+info.app.version=1.0.0
 
 java
 
-sealed interface Figura permits Circulo, Rectangulo, Triangulo {}
-record Circulo(double radio) implements Figura {}
-record Rectangulo(double ancho, double alto) implements Figura {}
-record Triangulo(double base, double altura) implements Figura {}
-
-static double area(Figura f) {
-    return switch (f) {
-        case Circulo(var r) -> Math.PI * r * r;
-        case Rectangulo(var a, var h) -> a * h;
-        case Triangulo(var b, var alt) -> b * alt / 2;
-    };  // no requiere default porque la jerarquía es sellada
+@Component
+public class BuildInfoContributor implements InfoContributor {
+    @Override
+    public void contribute(Info.Builder builder) {
+        builder.withDetail("buildTime", Instant.now());
+    }
 }
 
-Observa el uso de record patterns: descomponen el registro dentro del case.
+Seguridad en Actuator
 
-Además, los patrones pueden incluir cláusulas when (guardas) para añadir condiciones adicionales:
+Combinado con Spring Security, se pueden restringir los endpoints. Lo típico es que /actuator/health esté sin autenticación (para probes de k8s) y el resto requiera un rol ACTUATOR.
+04_Spring_Boot/Testing.md
+Enfoque de testing en Spring Boot
+
+Spring Boot facilita tanto pruebas unitarias (aisladas, sin contexto) como pruebas de integración (con contexto de Spring y/o bases de datos reales). Su starter spring-boot-starter-test trae: JUnit Jupiter, Mockito, AssertJ, Hamcrest, Spring Test, y más.
+Pruebas unitarias con Mockito
+
+No se levanta el contexto Spring; se mockean dependencias.
 java
 
-switch (obj) {
-    case String s when s.length() > 5 -> System.out.println("Cadena larga: " + s);
-    case String s -> System.out.println("Cadena corta: " + s);
+@ExtendWith(MockitoExtension.class)
+class ProductoServiceTest {
+    @Mock
+    ProductoRepository repo;
+    @InjectMocks
+    ProductoService service;
+
+    @Test
+    void buscarPorId_debeRetornarProducto() {
+        Producto esperado = new Producto(1L, "Teclado");
+        when(repo.findById(1L)).thenReturn(Optional.of(esperado));
+
+        Producto resultado = service.buscarPorId(1L);
+        assertThat(resultado.getNombre()).isEqualTo("Teclado");
+    }
+}
+
+Pruebas de integración con @SpringBootTest
+
+@SpringBootTest levanta el contexto completo (o parcial). Por defecto, busca la clase @SpringBootApplication hacia arriba en el paquete. Útil para pruebas end-to-end de capas completas. Se puede arrancar un servidor real en un puerto aleatorio con webEnvironment = DEFINED_PORT / RANDOM_PORT.
+java
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class MiApiIntegrationTest {
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    void obtenerProductos() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/api/productos", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+}
+
+Slices de contexto (testing ligero de capas)
+
+Para no levantar todo el contexto y acelerar las pruebas, Boot ofrece anotaciones de "slice":
+Anotación	Carga solo	Típico use case
+@WebMvcTest	Capa web (controladores), sin servicios ni repos. Mock de dependencias con @MockBean.	Probar controladores REST.
+@DataJpaTest	Entidades, repositorios, DataSource embebido. Transaccional y rollback por defecto.	Probar repositorios y queries.
+@JsonTest	Solo Jackson (serialización).	Probar DTOs JSON.
+@RestClientTest	RestTemplate y componentes de llamada REST.	Probar clientes REST.
+@JdbcTest	Solo JDBC (sin JPA).	Probar consultas directas.
+
+Ejemplo @WebMvcTest:
+java
+
+@WebMvcTest(ProductoController.class)
+class ProductoControllerTest {
+    @Autowired
+    private MockMvc mvc;
+    @MockBean
+    private ProductoService service;
+
+    @Test
+    void listarDebeRetornarOk() throws Exception {
+        when(service.listar()).thenReturn(List.of(new Producto()));
+        mvc.perform(get("/api/productos"))
+           .andExpect(status().isOk())
+           .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+}
+
+Nota: @WebMvcTest desactiva la autoconfiguración completa de datos y seguridad, aunque puedes incluir filtros concretos.
+Mocking y sobrescritura de beans en tests
+
+    @MockBean: reemplaza un bean en el contexto por un mock de Mockito. Útil para simular dependencias externas.
+
+    @SpyBean: envuelve el bean real con un spy, permitiendo verificar llamadas.
+
+    @TestConfiguration + @Bean: define beans adicionales o sustituye beans para ese test específico (dentro de la clase de test o en una inner class).
+
+    @SpringBootTest(classes = ...) o @Import para cargar solo configuraciones específicas.
+
+Base de datos en pruebas
+
+@DataJpaTest configura automáticamente una base de datos embebida en memoria (H2). Las transacciones se revierten al final de cada test. Puedes usar el parámetro @AutoConfigureTestDatabase(replace = Replace.NONE) para conectar a una base de datos real (p.ej. PostgreSQL en un contenedor).
+
+Para pruebas de integración con una base de datos real, el enfoque moderno es Testcontainers: levanta una instancia Docker de PostgreSQL, MySQL, etc., y la inyecta mediante configuraciones dinámicas (@DynamicPropertySource) o usando el módulo Spring Boot de Testcontainers.
+Pruebas con @SpringBootTest y control transaccional
+
+Por defecto, @SpringBootTest no es transaccional (a diferencia de @DataJpaTest). Para pruebas que usan HTTP (TestRestTemplate), ejecutan en hilos separados, por lo que la transacción no se comparte. En esos casos hay que limpiar manualmente o usar @Transactional (solo si las peticiones no cruzan hilos).
+Pruebas con configuración externa
+
+Puedes usar @ActiveProfiles("test") y un archivo application-test.properties para definir propiedades específicas. También @TestPropertySource para añadir propiedades en línea.
+04_Spring_Boot/Perfiles_y_Propiedades.md
+Externalización de la configuración
+
+Spring Boot permite casi todas las propiedades de la aplicación (URL de base de datos, puerto, claves API, etc.) fuera del código, en archivos de propiedades, variables de entorno, argumentos de línea de comandos, o servidores de configuración. Esto sigue las reglas de The Twelve-Factor App.
+Fuentes de propiedades y orden de prioridad
+
+Spring Boot lee las propiedades desde 17 fuentes diferentes (ordenadas de mayor a menor prioridad):
+
+    Argumentos de línea de comandos (--server.port=9090)
+
+    Propiedades de Java System (System.getProperties())
+
+    Variables de entorno (export SERVER_PORT=9090)
+
+    Archivos application.properties / .yml
+
+        application-{profile}.properties dentro del classpath (o spring.config.additional-location).
+
+    @PropertySource en clases @Configuration
+    ... etc. La lista exacta está en la documentación.
+
+La sobreescritura sigue ese orden: un argumento de línea de comandos vence a una variable de entorno, que vence a un archivo de perfil.
+Archivos application.properties y application.yml
+
+Spring Boot soporta ambos formatos. YAML es más legible para estructuras jerárquicas, pero ambos son equivalentes.
+
+properties:
+properties
+
+server.port=8080
+spring.datasource.url=jdbc:mysql://localhost/midb
+
+yml:
+yaml
+
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:mysql://localhost/midb
+
+Perfiles (profiles)
+
+Los perfiles permiten tener múltiples conjuntos de configuración para distintos entornos (dev, test, prod). Se activan con spring.profiles.active=dev (en variable de entorno, línea de comandos, o en el application.properties principal). Los archivos específicos de perfil se nombran application-{profile}.properties o .yml. Si un perfil está activo, sus propiedades se superponen a las del archivo base.
+
+Ejemplo:
+application.properties define puerto 8080.
+application-prod.properties define puerto 80 y datasource de producción.
+Al activar prod, el puerto se sobrescribe a 80.
+
+Los documentos multi-perfil en YAML permiten agrupar configuraciones:
+yaml
+
+# application.yml
+server:
+  port: 8080
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+server:
+  port: 9090
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+server:
+  port: 80
+
+@Value y @ConfigurationProperties
+
+    @Value("${clave}"): inyecta un valor simple, con posibilidad de valor por defecto (${clave:defecto}). Útil para una o pocas propiedades. Pero no ofrece chequeo de tipos ni auto-completado en IDE.
+
+    @ConfigurationProperties: mapea un prefijo de propiedades a un bean Java, con binding relajado (camelCase, kebab-case, snake_case). Más seguro y escalable.
+
+java
+
+@ConfigurationProperties(prefix = "app.pedidos")
+@Component
+public class PedidosProperties {
+    private int maxItems = 10;    // valor por defecto
+    private Duration timeout;
+    private List<String> estadosValidos;
+    // getters y setters
+}
+
+properties
+
+app.pedidos.max-items=20
+app.pedidos.timeout=5s
+app.pedidos.estados-validos=CREADO,ENVIADO
+
+Para activar el autocompletado en el IDE, añade la dependencia spring-boot-configuration-processor (optional). Además, se pueden anidar clases POJO para mapear estructuras complejas.
+Relajación del binding
+
+@ConfigurationProperties soporta nombres de propiedades en distintos formatos:
+
+    app.pedidos.max-items
+
+    app.pedidos.maxItems
+
+    app.pedidos.max_items
+
+    APP_PEDIDOS_MAXITEMS (variable de entorno)
+
+Todos se mapean a la misma propiedad maxItems.
+Placeholders y SpEL en propiedades
+
+Se pueden referenciar otras propiedades o usar expresiones SpEL limitadas en los valores:
+properties
+
+app.url-base=http://localhost:${server.port}
+app.descripcion=La aplicación ${info.app.name} escuchando en ${app.url-base}
+
+Configuración externa en producción: variables de entorno y Config Server
+
+En entornos como Kubernetes o plataformas de nube, las propiedades se inyectan mediante variables de entorno (p.ej. SPRING_DATASOURCE_URL). Spring Boot convierte automáticamente variables mayúsculas con guiones bajos al formato de propiedad.
+
+Para aplicaciones distribuidas, Spring Cloud Config Server centraliza la configuración y permite actualizarla en caliente (con @RefreshScope). El listado de fuentes se amplía para incluir la configuración remota con prioridad adecuada.
+Validación de propiedades
+
+Se puede utilizar Bean Validation en el POJO de @ConfigurationProperties para validar en el arranque. Si se añade @Validated a la clase y @NotNull, @Min, etc. en los campos, si la validación falla la aplicación no arranca, lo cual es deseable para evitar errores tardíos.
+java
+
+@Validated
+@ConfigurationProperties(prefix = "app.pedidos")
+public class PedidosProperties {
+    @Min(1)
+    private int maxItems;
     ...
 }
 
-El orden importa: el caso más específico debe ir primero.
-4.2.4. Manejo de null
+05_Acceso_Datos/JDBC_Template.md
+El dolor que resuelve: JDBC crudo
 
-En el switch clásico, pasar null lanza NullPointerException. Con pattern matching, si ponemos case null -> ... explícitamente, se maneja sin excepción. Si no se incluye ese caso y la variable puede ser nula, se lanzará NullPointerException. Es una mejora gigantesca en robustez.
-4.3. Bucles
-while
+JDBC es potente pero requiere código repetitivo: abrir conexiones, preparar sentencias, recorrer ResultSet, cerrar recursos en finally anidados y manejar la omnipresente SQLException. Spring elimina esa fricción con JdbcTemplate, que sigue el patrón Template Method: el recurso se abre y cierra automáticamente, y tu código se centra en la lógica SQL y el mapeo.
+Configuración del DataSource
+
+Todo comienza con un DataSource. Spring Boot lo autoconfigura a partir de las propiedades spring.datasource.*. Si no hay propiedades, intenta una base de datos embebida (H2) si encuentra el driver. En configuración manual:
 java
 
-while (condicion) {
-    // cuerpo
+@Bean
+public DataSource dataSource() {
+    HikariConfig config = new HikariConfig();
+    config.setJdbcUrl("jdbc:mysql://localhost/midb");
+    config.setUsername("user");
+    config.setPassword("pass");
+    return new HikariDataSource(config);
 }
 
-do-while
-java
-
-do {
-    // cuerpo
-} while (condicion);
-
-Ejecuta el bloque al menos una vez.
-for clásico
-java
-
-for (int i = 0; i < 10; i++) {
-    // ...
+@Bean
+public JdbcTemplate jdbcTemplate(DataSource ds) {
+    return new JdbcTemplate(ds);
 }
 
-Declaración/actualización de variable, condición e incremento. Se puede omitir cualquiera de las tres partes, pero los ; son obligatorios.
-for mejorado (enhanced for-each)
+Spring Boot incluye HikariCP como pool por defecto, el más rápido.
+Operaciones básicas con JdbcTemplate
 
-Recorre arrays y cualquier objeto Iterable:
+Una vez inyectado JdbcTemplate, los métodos principales son:
+
+    queryForObject(String sql, Class<T> tipo, Object... args) : para un solo valor (ej. Integer count). Lanza EmptyResultDataAccessException si no hay resultados.
+
+    queryForList(String sql, Class<T> tipo, Object... args) : lista de valores únicos.
+
+    query(String sql, RowMapper<T> rowMapper, Object... args) : lista de objetos mapeados.
+
+    queryForMap(String sql, Object... args) : un solo registro como Map<String,Object>.
+
+    update(String sql, Object... args) : INSERT, UPDATE, DELETE. Devuelve el número de filas afectadas.
+
+    batchUpdate(String sql, List<Object[]> batchArgs) : múltiples actualizaciones en lote.
+
+    execute(String sql) : para DDL o ejecución genérica.
+
+RowMapper: el puente entre ResultSet y objetos
+
+Interfaz funcional clave:
 java
 
-for (String elemento : lista) {
-    System.out.println(elemento);
+public class ProductoRowMapper implements RowMapper<Producto> {
+    @Override
+    public Producto mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Producto p = new Producto();
+        p.setId(rs.getLong("id"));
+        p.setNombre(rs.getString("nombre"));
+        p.setPrecio(rs.getBigDecimal("precio"));
+        return p;
+    }
 }
 
-No necesita índice. Desde Java 5. Internamente usa un iterador.
-4.4. Sentencias de salto
-
-    break → sale del bucle o del switch más interno.
-
-    continue → salta a la siguiente iteración del bucle.
-
-    return → sale del método y devuelve un valor si corresponde.
-
-    yield (solo en switch expression) → devuelve un valor desde un bloque de caso.
-
-4.5. Manejo de excepciones (control de flujo anómalo)
-
-Las excepciones alteran el flujo normal. Java proporciona un manejo estructurado:
-try-catch-finally
+Se puede usar lambda: (rs, rowNum) -> new Producto(...). Spring proporciona BeanPropertyRowMapper<Producto>(Producto.class) que mapea por nombres de columna (si coinciden), pero tiene limitaciones (no soporta conversiones complejas, ligeramente más lento).
+Ejemplo de consulta con parámetros
 java
 
-try {
-    // código que puede lanzar excepción
-} catch (IOException e) {
-    // manejo
-} catch (SQLException | RuntimeException e) {  // multi-catch desde Java 7
-    // maneja dos tipos
-} finally {
-    // se ejecuta siempre, haya o no excepción
+public Optional<Producto> findById(Long id) {
+    try {
+        Producto p = jdbcTemplate.queryForObject(
+            "SELECT id, nombre, precio FROM productos WHERE id = ?",
+            new ProductoRowMapper(), id);
+        return Optional.of(p);
+    } catch (EmptyResultDataAccessException e) {
+        return Optional.empty();
+    }
 }
 
-El orden de los catch debe ser de más específica a más general.
-try-with-resources (Java 7+)
+NamedParameterJdbcTemplate
 
-Cierra automáticamente recursos que implementan AutoCloseable:
+En lugar de ?, puedes usar parámetros con nombre (:id). Requiere un NamedParameterJdbcTemplate, que internamente delega en el JdbcTemplate estándar.
 java
 
-try (var reader = new FileReader("archivo.txt")) {
-    // usar reader
-} // se cierra automáticamente al salir del bloque
+String sql = "SELECT * FROM productos WHERE nombre = :nombre AND precio < :precio";
+Map<String, Object> params = Map.of("nombre", "Teclado", "precio", new BigDecimal(100));
+List<Producto> productos = namedJdbcTemplate.query(sql, params, new ProductoRowMapper());
 
-Excepciones comprobadas vs no comprobadas
+Muy práctico cuando hay muchos parámetros y mejora la legibilidad.
+ResultSetExtractor y RowCallbackHandler
 
-    Comprobadas (herederas de Exception pero no de RuntimeException): obligan a manejarlas o declararlas con throws.
+    ResultSetExtractor: para procesar el ResultSet completo dentro de una sola callback (ej. construir estructura jerárquica a partir de múltiples filas). Se usa con query(sql, ResultSetExtractor).
 
-    No comprobadas (RuntimeException y sus hijas): no obligan a captura.
+    RowCallbackHandler: para procesar fila a fila sin devolver nada (no acumula resultados). Ideal para volcados o streamings.
 
-    Error y sus subclases: problemas graves de la JVM, normalmente no se capturan.
+Gestión de excepciones
 
-4.6. Control de flujo con Streams (adicional)
+JDBC lanza SQLException y sus derivados. JdbcTemplate traduce automáticamente estas excepciones a la jerarquía de DataAccessException de Spring, que son unchecked y más informativas: DataIntegrityViolationException, DuplicateKeyException, BadSqlGrammarException, etc. Esta traducción se realiza mediante un SQLExceptionTranslator configurable.
+Operaciones por lotes (batch)
 
-Aunque no es una estructura de control sintáctica, el API Stream (Java 8) ha cambiado la forma de iterar, filtrar y procesar colecciones:
+Para insertar miles de registros eficientemente:
 java
 
-lista.stream()
-     .filter(s -> s.length() > 3)
-     .forEach(System.out::println);
+List<Object[]> batch = productos.stream()
+    .map(p -> new Object[]{p.getNombre(), p.getPrecio()})
+    .collect(toList());
+jdbcTemplate.batchUpdate("INSERT INTO productos (nombre, precio) VALUES (?,?)", batch);
 
-Los streams usan operaciones intermedias (que devuelven stream) y terminales (que producen un resultado o efecto). Es un paradigma funcional que convive con los bucles clásicos.
-
-Con esto completamos los cuatro pilares de la base sintáctica de Java 21.
-Las nuevas posibilidades del switch con patrones, la inferencia con var, los registros y las clases selladas que vimos de pasada, y las mejoras en instanceof forman un conjunto sólido y moderno. Te recomiendo practicar cada apartado con pequeños programas para asimilar estos fundamentos antes de pasar a la Orientación a Objetos y las novedades avanzadas de concurrencia y rendimiento.
-
-02.01 – CLASES Y OBJETOS
-1. Definición de clase
-
-Una clase es la plantilla que describe los atributos (campos) y comportamientos (métodos) que tendrán sus instancias. Se define con la palabra clave class:
+batchUpdate permite también indicar el tamaño de lote y manejar devoluciones de claves generadas mediante PreparedStatement con KeyHolder.
+Recuperación de claves generadas
 java
 
-public class Persona {
-    // campos (variables de instancia)
+KeyHolder keyHolder = new GeneratedKeyHolder();
+jdbcTemplate.update(connection -> {
+    PreparedStatement ps = connection.prepareStatement(
+        "INSERT INTO productos (nombre, precio) VALUES (?,?)", 
+        Statement.RETURN_GENERATED_KEYS);
+    ps.setString(1, p.getNombre());
+    ps.setBigDecimal(2, p.getPrecio());
+    return ps;
+}, keyHolder);
+Long nuevoId = keyHolder.getKey().longValue();
+
+Llamada a stored procedures y funciones
+
+Se puede usar JdbcTemplate.call(...) con CallableStatementCreator y CallableStatementCallback, pero hay alternativas más modernas como SimpleJdbcCall:
+java
+
+SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+    .withProcedureName("actualizar_stock")
+    .declareParameters(
+        new SqlParameter("p_id", Types.INTEGER),
+        new SqlParameter("p_cantidad", Types.INTEGER));
+Map<String, Object> inParams = Map.of("p_id", id, "p_cantidad", cantidad);
+jdbcCall.execute(inParams);
+
+Sin embargo, Spring Data JPA o JDBC simplifican aún más esto.
+Cuándo usar JdbcTemplate frente a JPA
+
+    Si necesitas control absoluto sobre el SQL y rendimiento máximo.
+
+    En aplicaciones pequeñas o consultas muy específicas donde un ORM es excesivo.
+
+    Cuando el modelo de datos no encaja bien con entidades JPA.
+
+    Para migraciones o tareas batch.
+
+Spring ofrece también Spring Data JDBC, que combina el estilo de repositorios de Spring Data con JdbcTemplate pero sin JPA ni mapeo complejo.
+05_Acceso_Datos/JPA_y_Hibernate_Integracion.md
+JPA: estándar, Hibernate: implementación
+
+JPA (Jakarta Persistence API) es la especificación estándar para ORM en Java. Hibernate es la implementación más popular. Spring Boot elige Hibernate automáticamente si está en el classpath (starter spring-boot-starter-data-jpa).
+Configuración sin Spring Boot
+
+En Spring puro, configurar JPA implica:
+java
+
+@Bean
+public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource ds) {
+    LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+    emf.setDataSource(ds);
+    emf.setPackagesToScan("com.empresa.modelo");
+    emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+    emf.setJpaProperties(hibernateProperties());
+    return emf;
+}
+
+@Bean
+public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
+    return new JpaTransactionManager(emf);
+}
+
+Spring Boot autoconfigura todo esto con un simple spring.jpa.* en las propiedades.
+El EntityManager y su ciclo de vida
+
+El EntityManager es el objeto central de JPA que gestiona las entidades. Spring, a través de la anotación @PersistenceContext, inyecta un EntityManager con ámbito de transacción. En realidad inyecta un proxy que comparte el EntityManager real (que es de ámbito de transacción y no es thread-safe).
+java
+
+@Repository
+public class ProductoDao {
+    @PersistenceContext
+    private EntityManager em;
+
+    public Producto findById(Long id) {
+        return em.find(Producto.class, id);
+    }
+}
+
+Entidades: anotaciones esenciales
+java
+
+@Entity
+@Table(name = "productos")
+public class Producto {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 200)
     private String nombre;
-    private int edad;
 
-    // constructor
-    public Persona(String nombre, int edad) {
-        this.nombre = nombre;
-        this.edad = edad;
-    }
+    @Enumerated(EnumType.STRING)
+    private Categoria categoria;
 
-    // métodos
-    public void saludar() {
-        System.out.println("Hola, soy " + nombre);
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fabricante_id")
+    private Fabricante fabricante;
+    // getters/setters
 }
 
-2. Modificadores de clase
+Estrategias de generación de ID: AUTO, IDENTITY, SEQUENCE, TABLE. Lo más común es IDENTITY (autoincrement) o SEQUENCE en bases de datos que lo soportan (PostgreSQL, Oracle).
+Mapeo de relaciones
 
-    public: visible desde cualquier otro paquete.
+    @OneToOne, @OneToMany, @ManyToOne, @ManyToMany.
 
-    Sin modificador (package-private): visible solo dentro del mismo paquete.
+    Importante: FetchType.LAZY para evitar cargas innecesarias (el valor por defecto en @ManyToOne es EAGER, así que hay que cambiarlo).
 
-    final: no se puede heredar.
+    Cuidado con @OneToMany sin mappedBy: por defecto crea tabla intermedia. Generalmente se define mappedBy en el lado no propietario.
 
-    abstract: no se puede instanciar, puede contener métodos abstractos.
+    LazyInitializationException: ocurre cuando se accede a una relación lazy fuera de la transacción. Para evitarlo: usar JOIN FETCH en consultas, mantener transacción abierta (con @Transactional sobre el método) o usar DTOs.
 
-    sealed (Java 17/21): permite listar explícitamente las subclases con permits (más adelante en Herencia).
+Hibernate como motor: propiedades clave
+properties
 
-3. Miembros de una clase
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=validate  # none, update, create, create-drop
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.default_schema=public
 
-    Campos (fields): variables de instancia o de clase (static).
+ddl-auto en producción debe ser validate o none. update puede generar cambios destructivos. Mejor usar Flyway o Liquibase.
+Contexto de persistencia y caché de primer nivel
 
-    Métodos: funciones que operan sobre los campos. Pueden ser de instancia o estáticos.
+Dentro de una transacción, el EntityManager mantiene un contexto de persistencia (caché de primer nivel) que garantiza que una misma entidad por ID devuelva la misma instancia. Las modificaciones se detectan al hacer flush (antes del commit) mediante el mecanismo de dirty checking, comparando el estado actual con una instantánea del momento de carga. No es necesario llamar a update() explícito; si la entidad está managed y la transacción se completa, Hibernate sincroniza los cambios.
+Operaciones con EntityManager
 
-    Constructores: métodos especiales para inicializar objetos. Pueden sobrecargarse y llamarse entre sí con this(...) o a la superclase con super(...).
+    persist(entity): guarda una nueva entidad.
 
-    Bloques de inicialización: código que se ejecuta antes del constructor.
+    merge(entity): actualiza una entidad detached (o crea si no existe).
 
-        Inicializador de instancia: { ... } dentro de la clase.
+    remove(entity): elimina una entidad managed.
 
-        Inicializador estático: static { ... }.
+    find(Class, id): busca por clave primaria.
 
-    Clases internas: una clase definida dentro de otra (miembro, local, anónima).
+    createQuery(jpql): consultas JPQL.
 
-4. Creación de objetos
+    createNativeQuery(sql): consultas nativas.
 
-Un objeto se instancia con new seguido del constructor adecuado:
+    flush(): sincroniza con la base de datos sin hacer commit.
+
+Spring Data JPA encapsula todo esto, pero conocer el EntityManager es vital para casos complejos o cuando se requieren consultas dinámicas.
+Errores frecuentes
+
+    N+1 queries: al recorrer una colección de entidades que tienen una relación lazy y no se ha hecho fetch, se ejecuta una consulta adicional por cada entidad. Solución: JOIN FETCH en JPQL o @EntityGraph.
+
+    Entidades detachadas: si intentas persistir una entidad que ya tiene ID pero no está managed, puede lanzar PersistentObjectException.
+
+    Transaccionalidad: olvidar @Transactional en el servicio que orquesta múltiples operaciones.
+
+05_Acceso_Datos/Spring_Data_JPA.md
+El paradigma: repositorios sin implementación
+
+Spring Data JPA genera automáticamente la implementación de las interfaces de repositorio en tiempo de ejecución. Solo defines la interfaz y, mediante query derivation o consultas anotadas, obtienes el código necesario.
 java
 
-Persona p = new Persona("Ana", 25);
-
-La referencia p se almacena en la pila, el objeto con sus campos en el heap.
-5. La palabra clave this
-
-this se refiere a la instancia actual. Se usa para:
-
-    Desambiguar entre parámetros y campos: this.nombre = nombre;
-
-    Llamar a otro constructor de la misma clase: this(nombre, 0);
-
-    Pasar la instancia actual como argumento: metodo(this);
-
-No puede usarse en contextos estáticos.
-6. Miembros estáticos (static)
-
-Pertenecen a la clase, no a las instancias. Se accede con NombreClase.metodo() o NombreClase.campo. Métodos estáticos no tienen acceso a this ni a campos de instancia directamente. Se utilizan para utilidades, constantes (static final), factories, etc.
-7. Sobrecarga de métodos y constructores
-
-Varios métodos con el mismo nombre pero distinta firma (tipo y orden de parámetros). El tipo de retorno no basta para distinguir.
-8. Inferencia de tipo local (var)
-
-Desde Java 10, se puede declarar una variable local sin especificar su tipo:
-java
-
-var p = new Persona("Luis", 30); // p es de tipo Persona
-var lista = new ArrayList<String>();  // ArrayList<String>
-
-No se puede usar en campos de clase ni en parámetros de método.
-9. El registro record (Java 16+ estable)
-
-Un tipo especial de clase inmutable y transparente para transportar datos. Define automáticamente:
-
-    Campos private final por cada componente.
-
-    Constructor canónico (asigna cada componente al campo del mismo nombre).
-
-    Métodos de acceso (getter) con el nombre del componente, sin get.
-
-    equals(), hashCode(), toString() basados en todos los componentes.
-
-java
-
-public record Persona(String nombre, int edad) {}
-
-Se pueden añadir métodos, validaciones en el constructor compacto (public Persona { ... }), e implementar interfaces (no puede heredar de otra clase porque implícitamente hereda java.lang.Record). Son finales (no se puede extender un registro) y no pueden ser abstractos. Perfectos para DTOs, mensajes y claves compuestas.
-10. Enumeraciones (enum)
-
-Son tipos especiales que definen un conjunto fijo de constantes. Son clases que heredan implícitamente de java.lang.Enum. Pueden tener campos, métodos y constructores privados.
-java
-
-public enum DiaSemana {
-    LUNES("L"), MARTES("M"), ...;
-    private String codigo;
-    DiaSemana(String cod) { this.codigo = cod; }
+public interface ProductoRepository extends JpaRepository<Producto, Long> {
+    List<Producto> findByNombreIgnoreCase(String nombre);
+    Optional<Producto> findByNombreAndFabricante(String nombre, Fabricante f);
 }
 
-Desde Java 21 su uso se potencia con el pattern matching exhaustivo en switch.
-11. Clases anónimas y lambdas
+En tiempo de arranque, Spring crea un proxy que implementa ProductoRepository y todos los métodos de JpaRepository (CRUD básico, paginación, ordenación, batch).
+Query Methods (consulta derivada del nombre)
 
-    Clase anónima: implementación local de una interfaz o extensión de una clase.
+El mecanismo clave: el nombre del método se analiza y se traduce a una consulta JPQL/Criteria.
+
+Palabras clave más comunes:
+Palabra	Ejemplo	JPQL equivalente
+find...By, read...By, get...By	findByNombre	where x.nombre = ?1
+...Containing / ...Contains	findByNombreContaining(String)	where x.nombre like %?1%
+...StartingWith	findByNombreStartingWith	like ?1%
+...Between	findByPrecioBetween	where x.precio between ?1 and ?2
+...In	findByCategoriaIn	where x.categoria in ?1
+...OrderBy	findByNombreOrderByPrecioDesc	order by x.precio desc
+...And, ...Or	findByNombreAndPrecio	where x.nombre = ?1 and x.precio = ?2
+...True / ...False	findByActivoTrue	where x.activo = true
+...First / ...Top	findFirst5ByNombre	limita resultados
+
+Se puede usar Pageable y Sort como parámetro adicional. Retornar Page, List, Stream, opcional con Optional.
+java
+
+Page<Producto> findByPrecioGreaterThan(BigDecimal precio, Pageable pageable);
+
+@Query personalizada con JPQL
+
+Cuando los nombres se vuelven muy largos o necesitas joins complejos:
+java
+
+@Query("SELECT p FROM Producto p JOIN FETCH p.fabricante WHERE p.nombre LIKE %:nombre%")
+List<Producto> buscarPorNombreConFabricante(@Param("nombre") String nombre);
+
+También se pueden hacer updates/delete:
+java
+
+@Modifying
+@Transactional
+@Query("UPDATE Producto p SET p.precio = p.precio * :factor WHERE p.categoria = :cat")
+int actualizarPrecioPorCategoria(@Param("factor") BigDecimal factor, @Param("cat") Categoria cat);
+
+@Modifying indica que no es SELECT y necesita @Transactional.
+@EntityGraph para controlar carga EAGER/LAZY
+
+Para evitar el problema N+1 sin escribir JPQL, se pueden definir @EntityGraph y referenciarlo en el método:
+java
+
+@Entity
+@NamedEntityGraph(name = "Producto.fabricante", 
+    attributeNodes = @NamedAttributeNode("fabricante"))
+public class Producto { ... }
+
+// En repositorio:
+@EntityGraph("Producto.fabricante")
+List<Producto> findAll();
+
+También se puede definir de forma ad-hoc con @EntityGraph(attributePaths = {"fabricante"}).
+Auditoría y campos automáticos
+
+Spring Data JPA proporciona anotaciones para auditoría:
+
+    @CreatedDate, @LastModifiedDate (en java.time.Instant o LocalDateTime).
+
+    @CreatedBy, @LastModifiedBy (con Spring Security integrado).
+
+    Se habilita con @EnableJpaAuditing en alguna configuración.
 
 java
 
-Runnable r = new Runnable() {
-    @Override public void run() { System.out.println("Ejecutando"); }
-};
-
-    Expresiones lambda (Java 8+): forma concisa para interfaces funcionales.
-
-java
-
-Runnable r = () -> System.out.println("Ejecutando");
-
-Ambas crean objetos que se comportan según lo especificado, y son parte esencial del polimorfismo funcional.
-02.02 – ENCAPSULACIÓN
-1. Principio de encapsulación
-
-Consiste en ocultar el estado interno de un objeto y solo permitir su manipulación a través de una interfaz pública de métodos. Reduce el acoplamiento y facilita el mantenimiento.
-2. Modificadores de acceso en Java
-
-Java provee cuatro niveles de acceso, de más restrictivo a más abierto:
-Modificador	Clase	Paquete	Subclase	Mundo
-private	✔			
-(sin modificador)	✔	✔		
-protected	✔	✔	✔	
-public	✔	✔	✔	✔
-
-    private solo dentro de la misma clase. Ideal para campos.
-
-    Package‑private accesible desde clases del mismo paquete. Útil para clases y métodos internos al módulo/paquete.
-
-    protected añade acceso desde subclases, incluso si están en distinto paquete. Común en métodos pensados para herencia.
-
-    public para la API pública. Usar con moderación.
-
-3. Uso de getters y setters
-
-Para exponer campos de manera controlada se definen métodos:
-java
-
-public class Cuenta {
-    private double saldo;
-    public double getSaldo() { return saldo; }
-    public void depositar(double monto) {
-        if (monto > 0) saldo += monto;
-    }
+@EntityListeners(AuditingEntityListener.class)
+@Entity
+public class Producto {
+    @CreatedDate
+    private Instant fechaCreacion;
+    @LastModifiedDate
+    private Instant fechaModificacion;
 }
 
-Los records generan automáticamente métodos getter con el nombre del componente, pero no setters porque son inmutables.
-4. Objetos inmutables
+Proyecciones y DTOs
 
-Un objeto inmutable no puede cambiar su estado una vez construido. Claves:
-
-    Todos los campos final.
-
-    La clase final o no proporciona métodos que modifiquen el estado.
-
-    No exponer referencias mutables; devolver copias defensivas.
-
-Ejemplo típico: String, BigInteger, y los record. La inmutabilidad facilita la programación concurrente.
-5. Encapsulación reforzada con módulos (JPMS)
-
-Desde Java 9, el sistema de módulos permite encapsular paquetes completos incluso del mismo módulo si no se exportan explícitamente en module-info.java:
+En lugar de devolver la entidad completa, se pueden definir interfaces de proyección:
 java
 
-module mi.modulo {
-    exports com.mi.paquete.api;
-    // com.mi.paquete.internal no es accesible desde fuera
+public interface ProductoResumen {
+    String getNombre();
+    BigDecimal getPrecio();
 }
 
-Esto añade una capa de encapsulación por encima de los modificadores de acceso tradicionales.
-6. Encapsulación en records
+// En repositorio:
+List<ProductoResumen> findByCategoria(Categoria cat);
 
-Los registros son inmutables, pero la encapsulación se mantiene: no se pueden modificar los campos, aunque los getter exponen los valores. Se pueden definir métodos adicionales y el constructor canónico puede validar o normalizar los datos mediante el constructor compacto:
+Spring solo selecciona las columnas necesarias. También hay proyecciones de cierre abierto (expresiones SpEL) o basadas en DTOs con constructor.
+Especificaciones (Specification) y Query by Example
+
+Para consultas dinámicas, JpaSpecificationExecutor permite construir criterios con Specification:
 java
 
-public record Persona(String nombre, int edad) {
-    public Persona {   // compacto, sin parámetros
-        if (edad < 0) throw new IllegalArgumentException(...);
-    }
-}
-
-Los campos siguen siendo private final y solo se accede a través de los getter automáticos.
-02.03 – HERENCIA
-1. Concepto de herencia
-
-La herencia permite que una clase (subclase) reutilice los campos y métodos de otra (superclase). Se declara con la palabra clave extends:
-java
-
-public class Empleado extends Persona {
-    private String empresa;
-    public Empleado(String nombre, int edad, String empresa) {
-        super(nombre, edad);
-        this.empresa = empresa;
-    }
-}
-
-En Java no existe herencia múltiple de clases; una clase solo puede tener una superclase directa. La herencia múltiple se simula mediante interfaces.
-2. La clase Object
-
-Todas las clases heredan implícitamente de java.lang.Object si no extienden otra clase. Object proporciona métodos como toString(), equals(), hashCode(), clone() y finalize() (obsoleto). Es la raíz de la jerarquía.
-3. Uso de super
-
-    super() llama al constructor de la superclase. Debe ser la primera instrucción.
-
-    super.metodo() invoca un método de la superclase, útil cuando se sobrescribe.
-
-4. Sobrescritura de métodos y anotación @Override
-
-Una subclase puede redefinir un método de la superclase con la misma firma y tipo de retorno compatible (covarianza). Se recomienda usar @Override para que el compilador verifique que realmente se está sobrescribiendo.
-java
-
-@Override
-public String toString() {
-    return nombre + " (" + edad + ")";
-}
-
-5. Modificador final en métodos y clases
-
-    Método final: no puede ser sobrescrito por una subclase.
-
-    Clase final: no puede ser extendida (p.ej. String, Integer, los record).
-
-    Argumento final: la variable local no puede ser reasignada dentro del método.
-
-6. Clases selladas (sealed / permits) – Java 17, estable en 21
-
-Restringen explícitamente qué clases o interfaces pueden extender o implementar un tipo dado. Dan lugar a jerarquías controladas, ideales para la exhaustividad en el pattern matching.
-java
-
-public sealed class Figura permits Circulo, Rectangulo, Triangulo {
-    // ...
-}
-
-Las subclases permitidas deben estar en el mismo módulo o paquete, y a su vez pueden ser:
-
-    final: no se puede extender más.
-
-    sealed: siguen restringiendo.
-
-    non-sealed: permiten extensión libre (de nuevo abierta).
-
-Ejemplo completo:
-java
-
-sealed class Figura permits Circulo, Rectangulo, Triangulo {}
-final class Circulo extends Figura { ... }
-non-sealed class Rectangulo extends Figura { ... }
-sealed class Triangulo extends Figura permits TrianguloEquilatero {}
-final class TrianguloEquilatero extends Triangulo {}
-
-Los sealed combinados con records y el nuevo switch producen un polimorfismo por descomposición muy potente y seguro.
-7. Jerarquías con registros sellados (patrón algebraico)
-
-Es frecuente usar interfaces selladas implementadas por registros:
-java
-
-sealed interface Expr permits Num, Suma, Resta {}
-record Num(int valor) implements Expr {}
-record Suma(Expr izq, Expr der) implements Expr {}
-record Resta(Expr izq, Expr der) implements Expr {}
-
-Esta codificación, típica de lenguajes funcionales, es ahora directa en Java y explota al máximo el pattern matching.
-02.04 – POLIMORFISMO
-1. Definición de polimorfismo
-
-Capacidad de una variable de un tipo base de referirse a objetos de distintas subclases y que la ejecución del método sobrescrito sea la correspondiente al objeto real (enlace dinámico o dynamic binding).
-java
-
-Figura f = new Circulo(5.0);
-double area = f.area(); // área del círculo, aunque el tipo de referencia sea Figura
-
-2. Sobrescritura vs. Sobrecarga
-
-    Sobrescritura (override): mismo método, misma firma, distinta implementación en subclase. Se resuelve en tiempo de ejecución.
-
-    Sobrecarga (overload): mismo nombre de método pero diferentes parámetros. Se resuelve en compilación.
-
-3. Covarianza en el tipo de retorno
-
-En una sobrescritura se puede devolver un subtipo del tipo de retorno original:
-java
-
-@Override
-public Circulo copia() { ... } // si en Figura el método devuelve Figura
-
-4. El operador instanceof con pattern matching (Java 16+)
-
-Permite comprobar el tipo y vincular una variable en una sola operación:
-java
-
-if (f instanceof Circulo c) {
-    System.out.println("Radio: " + c.radio());
-}
-
-Elimina la necesidad de un casting posterior y reduce errores. Es una forma de polimorfismo condicional.
-5. Polimorfismo con switch y patrones (Java 21)
-
-El switch ahora acepta patrones de tipo, de registro y de array, y es exhaustivo con tipos sellados, convirtiéndolo en una potente herramienta de despacho múltiple.
-java
-
-public double area(Figura f) {
-    return switch (f) {
-        case Circulo(var r) -> Math.PI * r * r;
-        case Rectangulo(var ancho, var alto) -> ancho * alto;
-        case Triangulo(var base, var altura) -> base * altura / 2;
-    };
-}
-
-Aquí, el polimorfismo se expresa mediante descomposición en lugar de métodos virtuales, aunque ambos coexisten.
-6. Polimorfismo paramétrico (genéricos)
-
-Los genéricos permiten escribir código que funciona con distintos tipos:
-java
-
-List<String> nombres = new ArrayList<>();
-
-El compilador garantiza la seguridad de tipos en tiempo de compilación. Es otra forma de polimorfismo (universal).
-7. Métodos virtuales en Java
-
-Todos los métodos de instancia no static ni private son virtuales por defecto, es decir, se resuelven dinámicamente. Únicamente los métodos static y private no participan en el enlace dinámico.
-02.05 – INTERFACES Y ABSTRACCIÓN
-1. Clases abstractas
-
-Una clase declarada abstract no puede instanciarse directamente. Puede contener métodos abstractos (sin implementación, obligando a las subclases concretas a implementarlos) y métodos concretos. Ejemplo:
-java
-
-public abstract class Animal {
-    public abstract String sonido();
-    public void dormir() {
-        System.out.println("Zzz");
-    }
-}
-
-2. Interfaces
-
-Una interfaz es un contrato que define un conjunto de métodos (sin implementación por defecto, aunque ahora pueden tener métodos por defecto y estáticos). Una clase puede implementar múltiples interfaces:
-java
-
-public class Perro implements Mascota, Carnivoro { ... }
-
-Desde Java 8, las interfaces pueden incluir:
-
-    Métodos default: con implementación por defecto, que pueden ser sobrescritos.
-
-    Métodos static: métodos de utilidad propios de la interfaz.
-
-    Desde Java 9: métodos private para compartir código entre métodos default/static.
-
-3. Evolución de las interfaces (resumen)
-
-    Java 8: métodos default y static.
-
-    Java 9: métodos private.
-
-    Java 17/21: interfaces selladas (sealed interface) y el uso de patrones en switch sobre ellas.
-
-4. Interfaces funcionales
-
-Son interfaces con un único método abstracto (SAM). Se anotan con @FunctionalInterface. Por ejemplo, Runnable, Comparator, Predicate. Pueden ser implementadas mediante lambdas o referencias a métodos.
-5. Interfaces selladas (sealed interface)
-
-Al igual que las clases, una interfaz puede restringir quién la implementa:
-java
-
-sealed interface Operacion permits Suma, Resta, Multiplicacion {}
-record Suma(int a, int b) implements Operacion {}
-
-Esto garantiza que, al analizar un objeto de tipo Operacion, el compilador conozca todas las posibles implementaciones y pueda exigir exhaustividad en el switch.
-6. Abstracción con clases abstractas vs. interfaces
-Característica	Clase Abstracta	Interfaz
-Herencia múltiple	Solo una (extends)	Múltiple (implements)
-Constructor	Sí	No
-Campos	De instancia y estáticos	Solo constantes (static final)
-Métodos	Abstractos y concretos	Abstractos, default, static, private
-Visibilidad	Cualquier modificador	Métodos son públicos por defecto
-Sellado (sealed)	Sí	Sí
-
-Normalmente se prefiere interfaz para definir contratos puros, y clase abstracta cuando se desea compartir estado (campos) o constructores.
-7. Herencia de tipo y herencia de implementación
-
-    Las interfaces proporcionan herencia de tipo sin forzar una implementación concreta.
-
-    Las clases abstractas permiten reutilizar código (herencia de implementación), pero en Java moderno se tiende a preferir composición sobre herencia profunda.
-
-8. Nuevo paradigma con pattern matching
-
-La combinación de interfaces selladas, registros y el switch con patrones está cambiando la forma de modelar el polimorfismo. Anteriormente se escribía un método abstracto en la interfaz y se implementaba en cada clase; ahora se puede usar un método estático con un switch exhaustivo sobre el tipo sellado. Ambas aproximaciones son válidas y se complementan.
-
-Ejemplo clásico (método polimórfico):
-java
-
-interface Figura {
-    double area();
-}
-// cada implementación define area()
-
-Ejemplo funcional (externo):
-java
-
-double area(Figura f) {
-    return switch (f) {
-        case Circulo c -> Math.PI * c.radio() * c.radio();
-        case Rectangulo r -> r.ancho() * r.alto();
-    };
-}
-
-La primera encapsula cada comportamiento en su clase; la segunda centraliza operaciones y puede aprovecharse mejor con registros y patrones.
-
-03.01 – COLECCIONES
-1. El Java Collections Framework (JCF)
-
-El JCF es una arquitectura unificada para representar y manipular grupos de objetos. Proporciona:
-
-    Interfaces (tipos abstractos de datos)
-
-    Implementaciones concretas
-
-    Algoritmos (ordenación, búsqueda, etc.)
-
-La raíz de la jerarquía es la interfaz Collection<E>, de la que derivan List<E>, Set<E> y Queue<E>. Map<K,V> no extiende Collection pero es parte del framework.
-2. Interfaces principales y sus contratos
-Interfaz	Característica principal	Implementaciones típicas
-Collection	Grupo de elementos	(no se implementa directamente)
-List	Ordenada por índice, permite duplicados	ArrayList, LinkedList, Vector(legacy)
-Set	No duplicados, sin orden definido por posición	HashSet (sin orden), LinkedHashSet (orden inserción), TreeSet (orden natural/comparator)
-Queue	Diseñada para contener elementos antes de procesarlos	ArrayDeque, PriorityQueue, LinkedList
-Deque	Cola de doble extremo (hereda de Queue)	ArrayDeque, LinkedList
-Map	Asociación clave-valor, sin claves duplicadas	HashMap (sin orden), LinkedHashMap (orden inserción/acceso), TreeMap (orden natural/comparator)
-3. Implementaciones clave
-
-    ArrayList: array redimensionable, acceso rápido por índice O(1), inserción/eliminación lenta al inicio o en medio O(n). Ideal para lectura intensiva y recorrido.
-
-    LinkedList: lista doblemente enlazada, inserciones/eliminaciones O(1) en extremos y con iterador, acceso por índice O(n). Útil cuando se necesita añadir/quitar frecuentemente en cualquier posición.
-
-    HashSet: implementación de Set basada en HashMap. No garantiza orden. O(1) para add, remove, contains.
-
-    LinkedHashSet: mantiene el orden de inserción, ligera penalización de rendimiento.
-
-    TreeSet: SortedSet basado en árbol rojo-negro. Ordena los elementos según su orden natural (Comparable) o un Comparator. O(log n).
-
-    ArrayDeque: implementación de Deque más eficiente que Stack y LinkedList para uso como cola o pila. No permite elementos null.
-
-    PriorityQueue: cola que ordena los elementos según su orden natural o comparator. El elemento más prioritario es el de menor valor según ese orden.
-
-    HashMap: tabla hash. O(1) promedio. Permite claves null y valores null. Poco adecuado para ordenación.
-
-    LinkedHashMap: HashMap que mantiene lista doblemente enlazada conservando el orden de inserción o de acceso.
-
-    TreeMap: SortedMap basado en árbol rojo‑negro. Ordena las claves.
-
-4. Sequenced Collections (novedad estable en Java 21)
-
-Java 21 introduce tres nuevas interfaces que definen un orden de encuentro explícito con operaciones sobre el primer y último elemento, y acceso a una vista invertida:
-
-    SequencedCollection<E> (hereda de Collection)
-
-    SequencedSet<E> (hereda de Set y SequencedCollection)
-
-    SequencedMap<K,V> (hereda de Map)
-
-Estas interfaces son implementadas retroactivamente por las colecciones existentes que ya tenían un orden definido (por inserción, natural, etc.).
-
-Métodos principales:
-java
-
-// SequencedCollection
-void addFirst(E e)
-void addLast(E e)
-E getFirst()
-E getLast()
-E removeFirst()
-E removeLast()
-SequencedCollection<E> reversed()   // vista invertida
-
-// SequencedSet extiende con los mismos métodos, plus reversed() devuelve SequencedSet<E>
-// SequencedMap
-V putFirst(K k, V v)
-V putLast(K k, V v)
-Entry<K,V> firstEntry()
-Entry<K,V> lastEntry()
-Entry<K,V> pollFirstEntry()
-Entry<K,V> pollLastEntry()
-SequencedMap<K,V> reversed()
-SequencedSet<K> sequencedKeySet()
-SequencedCollection<V> sequencedValues()
-SequencedSet<Entry<K,V>> sequencedEntrySet()
-
-¿Quién implementa qué?
-
-    List (ArrayList, LinkedList) → SequencedCollection
-
-    SortedSet (TreeSet) y LinkedHashSet → SequencedSet
-
-    Deque (ArrayDeque, LinkedList) → SequencedCollection
-
-    SortedMap (TreeMap) y LinkedHashMap → SequencedMap
-
-Ejemplos prácticos:
-java
-
-SequencedCollection<String> lista = new ArrayList<>();
-lista.add("A"); lista.add("B"); lista.add("C");
-System.out.println(lista.getFirst());  // A
-System.out.println(lista.getLast());   // C
-lista.addFirst("Inicio");
-lista.addLast("Fin");
-System.out.println(lista);             // [Inicio, A, B, C, Fin]
-
-SequencedCollection<String> invertida = lista.reversed();
-System.out.println(invertida.getFirst()); // Fin
-invertida.addFirst("Nuevo"); // afecta a la vista, pero modifica la colección original al final
-System.out.println(lista.getLast()); // Nuevo
-
-Con SequencedMap:
-java
-
-SequencedMap<Integer, String> map = new LinkedHashMap<>();
-map.put(1, "Uno"); map.put(2, "Dos"); map.put(3, "Tres");
-System.out.println(map.firstEntry());  // 1=Uno
-map.pollLastEntry();                   // elimina y devuelve 3=Tres
-for (var entry : map.reversed().entrySet()) {
-    System.out.println(entry.getKey());
-}
-
-Estas adiciones simplifican enormemente el código que antes requería iteradores o casteos a implementaciones concretas.
-5. Iteración y recorrido
-
-    Bucle for‑each: for (String s : collection)
-
-    Iterador explícito: Iterator<E>, permite eliminar durante el recorrido con remove().
-
-    forEach(Consumer) (Java 8): lista.forEach(System.out::println)
-
-    Spliterator para paralelismo y streams.
-
-    Streams (Java 8+): lista.stream().filter(...).collect(toList()) (explicado en programación funcional).
-
-6. Ordenación
-
-    Comparable<T>: la clase implementa compareTo(T o). Define el orden natural.
-
-    Comparator<T>: interfaz externa con compare(T o1, T o2). Multitud de métodos default (reversed(), thenComparing(), comparingInt(), etc.)
-
-    Métodos útiles en Collections: sort(), reverseOrder().
-
-    SortedSet/SortedMap requieren Comparator o elementos Comparable.
-
-7. Colecciones inmutables (Java 9+)
-
-    Fábricas: List.of(...), Set.of(...), Map.of(key,value,...), Map.ofEntries(...). Devuelven colecciones inmutables (no se pueden modificar, ni siquiera con iterador.remove). Lanzan UnsupportedOperationException si se intenta modificar.
-
-    Copias inmutables: List.copyOf(collection), Set.copyOf(), Map.copyOf() (Java 10+). Si la colección de origen ya es inmutable, la devuelve sin copiar.
-
-    Colecciones no modificables tradicionales: Collections.unmodifiableList(...) envuelven una colección mutable pero impiden modificaciones a través de la vista. La colección subyacente puede cambiar si se modifica directamente.
-
-8. Colecciones concurrentes
-
-    ConcurrentHashMap: mapa thread‑safe de alto rendimiento.
-
-    CopyOnWriteArrayList/CopyOnWriteArraySet: útiles cuando las lecturas dominan sobre las escrituras.
-
-    BlockingQueue (ArrayBlockingQueue, LinkedBlockingQueue) para productores/consumidores.
-
-    ConcurrentSkipListMap/Set: implementaciones concurrentes de SortedMap/SortedSet.
-
-9. Clases legacy y obsoletas
-
-    Vector → sustituir por ArrayList (y sincronizar externamente si es necesario).
-
-    Stack → Deque (con ArrayDeque), métodos push/pop.
-
-    Hashtable → HashMap o ConcurrentHashMap.
-
-    Enumeration → Iterator.
-
-10. Ejemplo integrador con secuencias (Java 21)
-java
-
-public void procesarPedidos(SequencedCollection<Pedido> pedidos) {
-    Pedido urgente = pedidos.getFirst();  // antes: pedidos.get(0)
-    // despachar urgente...
-    var reverso = pedidos.reversed();     // vista invertida
-    reverso.forEach(p -> p.archivar());
-}
-
-03.02 – GENÉRICOS
-1. Motivación y beneficios
-
-Los genéricos permiten que una clase, interfaz o método opere sobre un tipo que se especifica como parámetro. Aportan:
-
-    Seguridad de tipos en tiempo de compilación.
-
-    Eliminación de casteos manuales.
-
-    Detección temprana de errores (en lugar de ClassCastException en ejecución).
-
-    Código más reutilizable y legible.
-
-2. Clases e interfaces genéricas
-
-Se define un parámetro de tipo entre < > tras el nombre:
-java
-
-public class Caja<T> {
-    private T contenido;
-    public Caja(T contenido) { this.contenido = contenido; }
-    public T obtener() { return contenido; }
-}
-Caja<String> cajaDeTexto = new Caja<>("Hola");
-String texto = cajaDeTexto.obtener(); // sin casteo
-
-Pueden tener varios parámetros: Map<K,V>, Pair<T,U>.
-3. Métodos genéricos
-
-Un método puede declarar sus propios parámetros de tipo, independientemente de si la clase lo es:
-java
-
-public static <T> T primero(List<T> lista) {
-    return lista.get(0);
-}
-String s = Util.<String>primero(listaDeStrings); // invocación explícita
-String s = Util.primero(listaDeStrings);         // inferencia automática
-
-4. Parámetros de tipo acotados (bounded)
-
-Restringen el tipo que puede usarse:
-java
-
-public class Calculadora<T extends Number> {
-    public double sumar(T a, T b) { return a.doubleValue() + b.doubleValue(); }
-}
-
-T debe ser Number o una subclase. Se pueden poner múltiples cotas: <T extends Comparable<T> & Serializable> (primero clase si la hay, luego interfaces).
-5. Wildcards (comodines)
-
-Sirven para hacer las genéricos más flexibles en parámetros y variables:
-
-    ? unbounded: representa cualquier tipo. Ej: List<?> (lista de cualquier cosa). No se pueden añadir elementos (salvo null).
-
-    ? extends T (upper‑bounded, covarianza): acepta T o cualquier subtipo. Se puede leer elementos como tipo T, pero no se puede añadir (excepto null) porque el tipo exacto es desconocido.
-
-    ? super T (lower‑bounded, contravarianza): acepta T o cualquier supertipo. Se puede añadir elementos de tipo T (o sus subtipos), pero al leer solo se obtiene Object.
-
-Regla nemotécnica PECS:
-Producer Extends, Consumer Super.
-Si la estructura provee valores, usar extends; si consume valores, usar super.
-
-Ejemplo:
-java
-
-public void copiar(List<? extends Number> origen, List<? super Number> destino) {
-    for (Number n : origen) { destino.add(n); }
-}
-
-6. El operador diamante <>
-
-Desde Java 7 se puede omitir el tipo en el constructor si el compilador lo puede inferir:
-java
-
-List<String> lista = new ArrayList<>();   // diamante
-var mapa = new HashMap<Integer, String>(); // var + diamante -> HashMap<Integer, String>
-
-7. var con genéricos
-
-var list = new ArrayList<String>(); infiere ArrayList<String>.
-var list = new ArrayList<>(); infiere ArrayList<Object> porque el diamante vacío se interpreta como Object.
-Es recomendable usar el tipo completo al declarar var con colecciones genéricas.
-8. Type Erasure (borrado de tipos)
-
-Los genéricos en Java se implementan mediante borrado: el compilador elimina la información de tipo paramétrico y añade casteos allí donde sea necesario. En tiempo de ejecución, un List<String> es simplemente un List.
-
-Consecuencias:
-
-    No se puede usar instanceof con tipos parametrizados (excepto comodín sin acotar: if (obj instanceof List<?>)).
-
-    No se puede crear un array de un tipo genérico (new T[10] no es válido; sí new List<?>[10]).
-
-    No se puede instanciar un objeto del tipo paramétrico (new T() no compila).
-
-    Las sobrecargas de método que solo difieren en el parámetro de tipo genérico no están permitidas (pues tras el borrado son idénticas).
-
-9. Tipos reificables
-
-Son aquellos cuya información de tipo se conserva en tiempo de ejecución: tipos primitivos, clases no genéricas, arrays de tipo reificable, y wildcards ilimitados (List<?>). Los tipos genéricos concretos no son reificables.
-10. Bridge methods
-
-Cuando una clase genérica extiende otra o implementa una interfaz genérica, el compilador puede generar métodos puente para mantener el polimorfismo después del borrado. Son transparentes al desarrollador.
-11. Restricciones y buenas prácticas
-
-    No se pueden usar tipos primitivos como parámetros genéricos; usar las clases envoltorio (int → Integer).
-
-    Evitar raw types (usar List sin <>) porque omiten las comprobaciones de tipo.
-
-    Preferir Collection<? extends Something> en lugar de Collection<Something> cuando solo se lee.
-
-    Los genéricos no deben usarse si no se necesita polimorfismo de tipos; la complejidad extra debe justificarse.
-
-12. Ejemplo avanzado
-java
-
-public class Util {
-    public static <T extends Comparable<? super T>> T max(List<? extends T> list) {
-        return list.stream().max(Comparator.naturalOrder()).orElseThrow();
-    }
-}
-
-Este método acepta una lista de cualquier subtipo de T, y T es comparable consigo mismo o con un supertipo.
-03.03 – OPTIONAL
-1. El problema del null
-
-null puede causar NullPointerException, es opaco en la API (no sabes si un método devuelve null) y obliga a comprobaciones manuales. java.util.Optional<T> es un contenedor inmutable que puede contener o no un valor no nulo, forzando al cliente a lidiar explícitamente con la ausencia.
-2. Creación de Optionals
-
-    Optional.of(value): lanza NullPointerException si value es null.
-
-    Optional.ofNullable(value): devuelve Optional.empty() si value es null.
-
-    Optional.empty(): siempre vacío.
+public interface ProductoRepository extends JpaRepository<Producto, Long>, 
+        JpaSpecificationExecutor<Producto> {}
 
 java
 
-Optional<String> nombre = Optional.of("Ana");   // nunca pasar null
-Optional<String> posibleNombre = Optional.ofNullable(obtenerNombre());
-
-3. Recuperación y consulta
-
-    get(): devuelve el valor si está presente, o lanza NoSuchElementException. No recomendado sin comprobación previa.
-
-    isPresent(): booleano que indica si hay valor.
-
-    ifPresent(Consumer): ejecuta una acción si el valor está presente.
-
-java
-
-nombre.ifPresent(n -> System.out.println("Hola " + n));
-
-    ifPresentOrElse(Consumer, Runnable) (Java 9): ejecuta el Consumer si presente, o el Runnable en caso contrario.
-
-java
-
-nombre.ifPresentOrElse(
-    n -> System.out.println("Encontrado: " + n),
-    () -> System.out.println("Nombre no disponible")
+Specification<Producto> spec = (root, query, cb) -> cb.and(
+    cb.like(root.get("nombre"), "%" + nombre + "%"),
+    cb.greaterThan(root.get("precio"), 10)
 );
+List<Producto> productos = repo.findAll(spec);
 
-4. Valores por defecto
+Query by Example permite consultar a partir de una instancia de la entidad con campos no nulos. Simple pero limitado a igualdades exactas.
+Paginación, ordenación y streaming
 
-    orElse(T other): devuelve el valor si presente, si no, devuelve other. Cuidado: other se evalúa siempre aunque el Optional tenga valor.
+    Page<T>: contiene el contenido, número de página, total páginas, etc.
 
-    orElseGet(Supplier<? extends T>): como orElse pero el suplidor solo se invoca si el Optional está vacío. Útil cuando el valor por defecto es costoso de calcular.
+    Slice<T>: solo sabe si hay siguiente (más eficiente sin count).
 
-    orElseThrow() (Java 10+): lanza NoSuchElementException si está vacío, equivalente a get() pero más descriptivo. Existe la versión con proveedor de excepción: orElseThrow(Supplier<? extends X>) desde Java 8.
+    Stream<T>: un stream de resultados que debe cerrarse dentro de una transacción (@Transactional). Bueno para procesar grandes volúmenes con Java 8 streams.
 
+05_Acceso_Datos/Transacciones_y_Transactional.md
+Modelo de transacciones de Spring
+
+Spring abstrae las transacciones con PlatformTransactionManager. Independientemente de que uses JDBC, JPA o JMS, el manejo declarativo es el mismo. La anotación @Transactional envuelve el método en un proxy AOP que crea/únete a una transacción según la configuración.
+@Transactional en profundidad
 java
 
-String nombre = Optional.ofNullable(obtenerDesdeCache())
-                         .orElseGet(() -> cargarDesdeBD());
+@Transactional(
+    propagation = Propagation.REQUIRED,
+    isolation = Isolation.READ_COMMITTED,
+    timeout = 30,
+    readOnly = false,
+    rollbackFor = { RuntimeException.class },
+    noRollbackFor = { MiExcepcionControlada.class }
+)
+public void procesarPedido() { ... }
 
-5. Transformaciones funcionales
+Propagación: define cómo se comporta el método si ya existe una transacción.
+Valor	Comportamiento
+REQUIRED (defecto)	Usa la transacción existente o crea una nueva.
+REQUIRES_NEW	Siempre crea una nueva transacción, suspendiendo la actual.
+MANDATORY	Debe existir una transacción; si no, lanza excepción.
+SUPPORTS	Ejecuta en transacción si existe, si no, no.
+NOT_SUPPORTED	Siempre ejecuta sin transacción, suspendiendo la existente.
+NEVER	No debe existir transacción; si hay, lanza excepción.
+NESTED	Ejecuta en un savepoint anidado (solo con JDBC).
 
-    map(Function<? super T, ? extends U>): si hay valor, aplica la función y envuelve el resultado en un Optional.
+Isolation: nivel de aislamiento SQL (READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE). Normalmente READ_COMMITTED es suficiente.
 
-    flatMap(Function<? super T, Optional<U>>): similar a map pero evita anidar Optional. Idóneo cuando la función ya devuelve Optional.
+readOnly: optimiza el rendimiento indicando que solo hay lecturas (el EntityManager no necesita hacer dirty checking).
 
-    filter(Predicate<? super T>): si el valor está presente y cumple el predicado, devuelve el Optional; si no, Optional.empty().
+rollbackFor / noRollbackFor: por defecto, solo se hace rollback con RuntimeException y Error. Si una excepción checked debe causar rollback, se especifica.
+El proxy transaccional: cómo funciona internamente
 
+    Spring crea un proxy alrededor del bean.
+
+    Cuando se invoca un método anotado con @Transactional desde fuera del bean, el proxy intercepta la llamada.
+
+    Antes de ejecutar el método, consulta al TransactionManager para comenzar o unirse a una transacción.
+
+    Ejecuta el método real.
+
+    Si el método lanza una excepción que cumple con rollbackFor, el TransactionManager hace rollback.
+
+    Si todo sale bien, hace commit.
+
+    Si la excepción es de las que no causan rollback, hace commit después de la excepción (poco común).
+
+El problema de la auto-invocación: si desde dentro del mismo bean se llama a this.metodoTransaccional(), no pasa por el proxy y la anotación se ignora. Soluciones: autowirearse uno mismo, usar AopContext.currentProxy(), o refactorizar a otro bean.
+@Transactional en repositorios y servicios
+
+La práctica recomendada es poner @Transactional a nivel de servicio o caso de uso. Los repositorios de Spring Data JPA ya heredan @Transactional(readOnly = true) en SimpleJpaRepository para métodos de consulta, y los métodos de modificación (save, delete) tienen @Transactional por defecto, pero usualmente se requiere una transacción que cubra todo el flujo de negocio.
+Transacciones y bases de datos distribuidas / JTA
+
+Con un solo DataSource, se usa DataSourceTransactionManager o JpaTransactionManager. Para múltiples recursos (dos bases de datos, JMS, etc.) se necesita un gestor de transacciones distribuidas (JTA), como Atomikos o Bitronix, o delegar en el servidor de aplicaciones. Spring Boot simplifica la configuración con spring-boot-starter-jta-atomikos.
+Manejo de transacciones largas y con patrones conversacionales
+
+Spring soporta transacciones largas usando @Transactional y sesiones extendidas, pero la tendencia es usar arquitecturas que eviten mantener la transacción abierta a través de múltiples peticiones HTTP. En su lugar, se usa @Transactional en cada petición y se trabaja con entidades detachadas, volviendo a fusionarlas (merge) si es necesario.
+Testing de transacciones
+
+En pruebas con @DataJpaTest o @SpringBootTest, se puede usar @Transactional para que las operaciones de un test se reviertan automáticamente al final. Sin embargo, cuando se usa TestRestTemplate en @SpringBootTest(webEnvironment = RANDOM_PORT), la petición HTTP corre en un hilo separado, por lo que no comparte la transacción del test. En ese caso, se debe limpiar manualmente o usar @Transactional(propagation = NOT_SUPPORTED) y luego borrar datos.
+05_Acceso_Datos/Consultas_Nativas_y_Procedure.md
+Cuándo usar consultas nativas
+
+Aunque JPQL cubre la mayoría de casos, a veces es necesario SQL nativo para:
+
+    Utilizar características específicas del motor (funciones de ventana, operadores espaciales, FOR UPDATE, hints de optimizador).
+
+    Invocar procedimientos almacenados complejos.
+
+    Realizar operaciones masivas de actualización con condiciones especiales.
+
+    Consultas con joins complejos donde JPQL no rinde o se vuelve ilegible.
+
+Spring Data JPA y JPA proveen mecanismos para ejecutar SQL nativo manteniendo el mapeo de resultados.
+@Query con nativeQuery = true
 java
 
-Optional<Usuario> usuario = usuarioRepository.findById(id);
-String ciudad = usuario.map(Usuario::getDireccion)
-                       .map(Direccion::getCiudad)
-                       .orElse("Desconocida");
+public interface ProductoRepository extends JpaRepository<Producto, Long> {
+    @Query(value = "SELECT * FROM productos WHERE nombre ILIKE CONCAT('%', :nombre, '%')", 
+           nativeQuery = true)
+    List<Producto> buscarPorNombreSimilar(@Param("nombre") String nombre);
+}
 
-Optional<Cuenta> cuenta = usuario.flatMap(Usuario::getCuenta)
-                                 .filter(Cuenta::estaActiva);
+El resultado se mapea a la entidad Producto (o una proyección) si las columnas coinciden. También se puede retornar Object[] o List<Object[]> para casos sin mapeo.
+Proyecciones con consulta nativa
 
-6. Integración con Streams (Java 9+)
-
-stream() devuelve un Stream<T> con 0 o 1 elementos. Permite encajar Optionals en operaciones de stream.
+Con una interfaz de proyección:
 java
 
-List<Optional<String>> listaDeOptionals = List.of(Optional.of("A"), Optional.empty());
-List<String> valores = listaDeOptionals.stream()
-                                       .flatMap(Optional::stream)
-                                       .toList();
+public interface ProductoCantidad {
+    String getCategoria();
+    Long getCantidad();
+}
 
-7. Buenas prácticas y antipatrones
+@Query(value = "SELECT categoria, COUNT(*) as cantidad FROM productos GROUP BY categoria", nativeQuery = true)
+List<ProductoCantidad> contarPorCategoria();
 
-    Nunca declarar un campo Optional<T> en una clase (no es serializable, incrementa la complejidad). Las entidades no deben tener Optional como campo.
+Si el SQL devuelve columnas con nombres diferentes, se puede usar alias (SELECT cat as categoria).
+Mapeo a DTO con @SqlResultSetMapping
 
-    No usar Optional como parámetro de métodos; en su lugar, hacer sobrecargas o pasar el valor y luego envolver internamente si es necesario.
-
-    No llamar a get() sin comprobación; siempre usar orElse* o ifPresent*.
-
-    Usar Optional como tipo de retorno para métodos que pueden no tener un resultado lógico (búsquedas, etc.).
-
-    Evitar Optional en contextos de alto rendimiento si no es necesario; crear objetos Optional tiene un coste mínimo pero no nulo.
-
-8. Relación con records y patrones
-
-Los records pueden tener métodos que devuelvan Optional en lugar de campos null:
+Cuando se necesita un DTO (clase concreta) en lugar de interfaz, se puede usar @SqlResultSetMapping:
 java
 
-public record Persona(String nombre, String direccionSecundaria) {
-    public Optional<String> direccionSecundaria() {
-        return Optional.ofNullable(direccionSecundaria);
+@SqlResultSetMapping(
+    name = "productoResumenMapping",
+    classes = @ConstructorResult(
+        targetClass = ProductoResumenDTO.class,
+        columns = {
+            @ColumnResult(name = "nombre", type = String.class),
+            @ColumnResult(name = "precio_medio", type = Double.class)
+        }
+    )
+)
+@Entity
+public class Producto { ... }
+
+// Luego en el repositorio:
+@Query(value = "SELECT nombre, AVG(precio) as precio_medio FROM productos GROUP BY nombre", nativeQuery = true)
+@SqlResultSetMapping(name = "productoResumenMapping")  // redundante si ya se mapea en la entidad
+List<ProductoResumenDTO> resumenPrecios();
+
+En la práctica, se prefiere @NamedNativeQuery declarado en la entidad y luego invocarlo con EntityManager.createNamedQuery.
+Ejecución dinámica de SQL nativo con EntityManager
+
+Cuando la consulta se construye en tiempo de ejecución (cuidado con SQL injection), se puede usar EntityManager.createNativeQuery directamente en el repositorio o un DAO.
+java
+
+@Repository
+public class ProductoCustomRepository {
+    @PersistenceContext
+    private EntityManager em;
+
+    @SuppressWarnings("unchecked")
+    public List<Producto> buscarConFiltros(Map<String, Object> filtros) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM productos WHERE 1=1");
+        Map<String, Object> params = new HashMap<>();
+        if (filtros.containsKey("nombre")) {
+            sql.append(" AND nombre LIKE :nombre");
+            params.put("nombre", "%" + filtros.get("nombre") + "%");
+        }
+        Query query = em.createNativeQuery(sql.toString(), Producto.class);
+        params.forEach(query::setParameter);
+        return query.getResultList();
     }
 }
 
-Sin embargo, el campo direccionSecundaria sigue siendo un String potencialmente nulo. La API presentada oculta ese detalle.
-9. Novedades en Java 21 para Optional
+Llamada a procedimientos almacenados con @Procedure
 
-No se han añadido nuevos métodos en Java 21. Sin embargo, la combinación de Optional con el nuevo switch y pattern matching puede usarse indirectamente:
+Spring Data JPA permite invocar procedimientos almacenados mediante la anotación @Procedure en métodos del repositorio.
 java
 
-Object resultado = obtenerAlgo(); // puede ser String, null, etc.
-Optional<String> optStr = switch (resultado) {
-    case String s -> Optional.of(s);
-    case null -> Optional.empty();
-    default -> Optional.empty();
-};
+@Procedure("nombre_procedimiento")
+void ejecutarProcedimiento(@Param("param1") String param1);
 
-Se prefiere mantener la lógica de nulos dentro de Optional y usar sus métodos.
+Si el procedimiento retorna un conjunto de resultados, se puede declarar el tipo de retorno List<T>. También se puede usar @Query con nativeQuery = true y CALL para procedimientos que no se adaptan a los parámetros.
 
-04.01 – LAMBDAS
-1. ¿Qué es una expresión lambda?
-
-Una lambda es un bloque de código compacto que implementa el único método abstracto de una interfaz funcional. Permite tratar funciones como objetos y pasar comportamiento como parámetro.
-
-Sintaxis general:
-(parámetros) -> { cuerpo }
-
-Variantes:
-
-    Sin parámetros: () -> System.out.println("Hola")
-
-    Un solo parámetro (paréntesis opcionales): x -> x * 2
-
-    Varios parámetros: (a, b) -> a + b
-
-    Cuerpo de varias líneas: (x, y) -> { int z = x + y; return z; }
-
-Los tipos de los parámetros se pueden declarar explícitamente:
+Alternativa vía EntityManager:
 java
 
-(int a, int b) -> a + b
+StoredProcedureQuery sp = em.createStoredProcedureQuery("calcular_ventas");
+sp.registerStoredProcedureParameter("anio", Integer.class, ParameterMode.IN);
+sp.setParameter("anio", 2025);
+sp.execute();
+List<Object[]> resultados = sp.getResultList();
 
-Normalmente se omiten y la JVM los infiere del contexto.
-2. Interfaces funcionales
+Actualizaciones masivas con SQL nativo
 
-Una interfaz funcional es aquella que tiene exactamente un método abstracto (SAM – Single Abstract Method). Puede contener métodos default y static adicionales. Se recomienda anotarlas con @FunctionalInterface para que el compilador verifique la condición.
+@Modifying también funciona con nativeQuery = true:
 java
 
-@FunctionalInterface
-public interface Operacion {
-    int aplicar(int a, int b);
-}
+@Modifying
+@Transactional
+@Query(value = "UPDATE productos SET precio = precio * 1.1 WHERE categoria = :cat", nativeQuery = true)
+int aplicarInflacion(@Param("cat") String categoria);
 
-Principales interfaces funcionales en java.util.function
-Interfaz	Método abstracto	Descripción
-Predicate<T>	boolean test(T t)	Evaluación booleana
-Consumer<T>	void accept(T t)	Consume un valor sin retorno
-Function<T,R>	R apply(T t)	Transforma un valor en otro
-Supplier<T>	T get()	Provee un valor
-UnaryOperator<T>	T apply(T t)	Function<T,T> especializado
-BinaryOperator<T>	T apply(T t, T u)	BiFunction<T,T,T> especializado
-BiPredicate<L,R>	boolean test(L l, R r)	Predicado de dos argumentos
-BiConsumer<T,U>	void accept(T t, U u)	Consumidor de dos argumentos
-BiFunction<T,U,R>	R apply(T t, U u)	Función de dos argumentos
+Ojo: al ser nativo, no se aplican las reglas de cascada JPA ni se actualizan entidades en memoria, por lo que debe ir seguido de una recarga si la sesión se mantiene.
+Consideraciones de seguridad y portabilidad
 
-Ejemplos de uso con lambdas:
+    Las consultas nativas atan la aplicación a un dialecto de base de datos concreto.
+
+    Mayor riesgo de SQL injection si se concatenan parámetros. Siempre usar parámetros enlazados (setParameter).
+
+    No pasan por la caché de segundo nivel de Hibernate.
+
+    Las consultas nativas no son validadas en tiempo de arranque (salvo que se habilite spring.jpa.properties.hibernate.query.fail_on_pagination_over_collection_fetch), así que los errores sintácticos aparecen en tiempo de ejecución.
+
+06_Seguridad/Spring_Security_Arquitectura.md
+La cadena de filtros: el núcleo de Spring Security
+
+Spring Security se basa en una cadena de filtros del contenedor de servlets, anticipándose al DispatcherServlet. Un único punto de entrada, DelegatingFilterProxy, se registra en el web.xml (o automáticamente por Spring Boot) y delega todas las peticiones a un bean llamado springSecurityFilterChain, que es una FilterChainProxy. Esta FilterChainProxy contiene una lista de cadenas de seguridad (SecurityFilterChain) que pueden aplicar diferentes configuraciones según la URL (por ejemplo, una para APIs REST y otra para páginas web).
+Componentes principales del flujo de autenticación
+
+    SecurityContextHolder: donde Spring Security almacena los detalles del principal autenticado. Por defecto utiliza una estrategia ThreadLocal para mantener el contexto ligado al hilo de la petición.
+
+    SecurityContext: contiene un objeto Authentication.
+
+    Authentication: representa el token de autenticación. Puede ser el estado previo a la autenticación (con las credenciales) o posterior (con los permisos y el principal).
+
+        principal: normalmente un UserDetails.
+
+        credentials: la contraseña o token.
+
+        authorities: los roles/permisos (GrantedAuthority).
+
+    AuthenticationManager: interfaz central que recibe un Authentication no autenticado y devuelve uno completamente autenticado. Su implementación principal, ProviderManager, itera sobre una lista de AuthenticationProviders.
+
+    AuthenticationProvider: cada uno sabe autenticar un tipo específico de token (ej. DaoAuthenticationProvider para usuario/contraseña contra base de datos, JwtAuthenticationProvider para tokens JWT, LdapAuthenticationProvider, etc.).
+
+    UserDetailsService: colaborador de DaoAuthenticationProvider. Carga un UserDetails (usuario, contraseña, roles) desde cualquier fuente (base de datos, memoria, LDAP). Spring Security solo pide loadUserByUsername(String).
+
+Flujo típico de autenticación por usuario/contraseña
+
+    El filtro UsernamePasswordAuthenticationFilter (por defecto en /login) intercepta una petición POST con username y password.
+
+    Crea un UsernamePasswordAuthenticationToken no autenticado.
+
+    Llama al AuthenticationManager (ProviderManager).
+
+    ProviderManager busca un AuthenticationProvider que soporte ese token. Encuentra DaoAuthenticationProvider.
+
+    DaoAuthenticationProvider llama a UserDetailsService.loadUserByUsername() para obtener el UserDetails.
+
+    El PasswordEncoder verifica la contraseña enviada contra la almacenada.
+
+    Si concuerda, se crea un nuevo UsernamePasswordAuthenticationToken con el principal, los GrantedAuthority y authenticated = true.
+
+    Se establece en el SecurityContext y se devuelve.
+
+    En peticiones subsiguientes, el SecurityContextPersistenceFilter (o en sesiones, el SecurityContextRepository) restaura el contexto a partir de la sesión HTTP.
+
+Autorización: acceso a recursos
+
+La autorización ocurre después de la autenticación, mediante la configuración HttpSecurity y en tiempo de petición:
+
+    FilterSecurityInterceptor (o AuthorizationFilter en versiones recientes): es el último filtro de la cadena y lanza AccessDeniedException si el usuario no tiene los permisos requeridos.
+
+    La decisión se basa en los GrantedAuthority del Authentication y en las reglas expresadas en la configuración (.hasRole("ADMIN"), .authenticated(), etc.).
+
+Tratamiento de excepciones
+
+    AuthenticationEntryPoint: se invoca cuando un usuario no autenticado intenta acceder a un recurso protegido. En una API REST devuelve HTTP 401, en una aplicación web redirige a la página de login.
+
+    AccessDeniedHandler: se ejecuta cuando un usuario autenticado no tiene permisos suficientes (HTTP 403).
+
+Contexto para aplicaciones REST y stateless
+
+En REST no hay sesiones HTTP. La configuración se vuelve SessionCreationPolicy.STATELESS. Se reemplaza la autenticación basada en sesiones por tokens (JWT). Un filtro personalizado (por ejemplo, JwtAuthenticationFilter) extrae el token de la cabecera Authorization, lo valida y establece el SecurityContext para esa petición. Al ser sin sesión, el contexto no se persiste, y el filtro debe ejecutarse en cada petición.
+06_Seguridad/Configuracion_DSL.md
+De WebSecurityConfigurerAdapter a SecurityFilterChain
+
+Desde Spring Security 5.7, la forma moderna de configurar la seguridad es declarando beans de tipo SecurityFilterChain y usando la DSL fluida de HttpSecurity. Adiós a la herencia.
 java
 
-Predicate<String> isEmpty = s -> s.isEmpty();
-Consumer<String> printer = s -> System.out.println(s);
-Function<String, Integer> length = s -> s.length();
-Supplier<Double> random = () -> Math.random();
-BinaryOperator<Integer> sum = (a, b) -> a + b;
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
 
-También existen especializaciones para tipos primitivos: IntPredicate, LongConsumer, DoubleFunction<R>, etc., que evitan el autoboxing.
-3. Inferencia de tipos y “target typing”
-
-El compilador decide qué interfaz funcional representa la lambda basándose en el contexto:
-
-    Asignación a una variable del tipo de la interfaz.
-
-    Paso como argumento a un método que espera dicha interfaz.
-
-    Uso como valor de retorno donde se espera la interfaz.
-
-    Cast explícito: (Predicate<String>) (s -> s.isEmpty()).
-
-Es target typing: la lambda no tiene tipo por sí misma, lo adquiere del destino.
-4. Captura de variables (closures)
-
-Una lambda puede usar variables del ámbito envolvente. Las variables locales capturadas deben ser efectivamente finales (no modificadas después de inicializadas).
-java
-
-String prefijo = "Sr. ";
-Consumer<String> saludo = nombre -> System.out.println(prefijo + nombre);
-// prefijo = "Sra. "; // error de compilación si se modifica
-
-Las variables de instancia y estáticas no tienen esa restricción, porque se capturan por referencia al objeto (this).
-5. La referencia this dentro de una lambda
-
-Dentro de una lambda, this se refiere a la instancia de la clase que la contiene, no a la lambda en sí (que no tiene identidad propia). Es la misma semántica que una clase anónima.
-java
-
-public class Ejemplo {
-    private String nombre = "Ejemplo";
-    public void probar() {
-        Consumer<String> c = s -> System.out.println(this.nombre + " " + s);
-        c.accept("prueba"); // imprime "Ejemplo prueba"
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutSuccessUrl("/")
+            )
+            .oauth2Login(Customizer.withDefaults());
+        return http.build();
     }
 }
 
-6. Comparativa con clases anónimas
-Característica	Lambda	Clase anónima
-Ámbito de this	La clase contenedora	La propia clase anónima
-Implementación interna	No genera un archivo .class aparte (usa invokedynamic y LambdaMetafactory)	Genera una clase separada al compilar
-Obligatoriedad SAM	Solo interfaces funcionales	Interfaces y clases (incluso con varios métodos)
-Uso de campos	No puede declarar campos propios	Puede declarar campos
+authorizeHttpRequests y la nueva sintaxis
 
-Por rendimiento y limpieza, se prefieren lambdas cuando solo se necesita un SAM.
-7. Usos prácticos
+A partir de Spring Security 6, se recomienda authorizeHttpRequests sobre authorizeRequests, usando AuthorizationManager internamente. La DSL es muy legible:
 
-    Sustituir implementaciones verbosas de Comparator, Runnable, ActionListener, etc.
+    requestMatchers("/url").permitAll(): acceso libre.
 
-    Operaciones sobre colecciones con forEach, removeIf, replaceAll, sort.
+    .hasRole("ADMIN"): requiere rol (prefijo ROLE_ automático).
 
-    Crear hilos ligeros: new Thread(() -> { ... }).start();
+    .hasAuthority("SCOPE_read"): para authority exacta.
 
-    Construir flujos con la API Stream.
+    .hasAnyRole("ADMIN", "USER"): múltiples roles.
 
-    Patrones de diseño como estrategia, command, observer mucho más concisos.
+    .authenticated(): solo requiere autenticado.
 
+    Se pueden encadenar marcadores específicos como dispatcherTypeMatchers, etc.
+
+Ejemplo de restricción por método HTTP y patrón:
 java
 
-// Ordenar con lambda
-lista.sort((a, b) -> a.compareToIgnoreCase(b));
-// Ejecutar tarea
-Runnable tarea = () -> System.out.println("Ejecutando");
+.requestMatchers(HttpMethod.POST, "/api/productos/**").hasRole("EDITOR")
+.requestMatchers("/api/usuarios/**").hasRole("ADMIN")
 
-8. Excepciones en lambdas
+Configuración de login y logout
 
-Si el método abstracto de la interfaz funcional no declara excepciones comprobadas, la lambda no puede lanzarlas directamente. Soluciones:
+    FormLogin: personaliza la página de login y las URLs de procesamiento. En REST puro, se suele deshabilitar con http.formLogin(AbstractHttpConfigurer::disable).
 
-    Capturarlas dentro de la lambda.
+    HttpBasic: autenticación HTTP Basic. Útil para APIs internas o pruebas.
 
-    Usar una interfaz funcional propia que declare la excepción.
+    OAuth2Login: configura el login delegado con Google, GitHub, etc., usando spring-boot-starter-oauth2-client.
 
-    Envolver en una excepción no comprobada.
+    Logout: define la URL de logout, invalidación de sesión, eliminación de cookies.
 
+CORS y CSRF
+
+    CORS: Spring Security aplica una capa adicional a la configuración global de CORS de Spring MVC. Se puede personalizar con http.cors(cors -> cors.configurationSource(...)).
+
+    CSRF: protección por defecto para formularios. En REST stateless con JWT, normalmente se deshabilita: http.csrf(AbstractHttpConfigurer::disable). Pero antes de deshabilitarlo, considera la vulnerabilidad: si no usas cookies para autenticación, CSRF no aplica.
+
+Configuración de múltiples SecurityFilterChain
+
+Cuando coexisten una API REST y una aplicación web MVC, se pueden definir dos SecurityFilterChain beans con diferentes prioridades (@Order). Por ejemplo, una cadena para /api/** sin estado y otra para el resto con login de formulario.
 java
 
-// No compila: Runnable no lanza IOException
-Runnable r = () -> { Files.lines(Path.of("noexiste")); };
-// Opción: try-catch
-Runnable r = () -> { try { Files.lines(...); } catch (IOException e) { ... } };
+@Bean
+@Order(1)
+public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+    http
+        .securityMatcher("/api/**")
+        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .csrf(AbstractHttpConfigurer::disable);
+    return http.build();
+}
 
-9. Buenas prácticas
+@Bean
+@Order(2)
+public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+    http
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/css/**", "/js/**").permitAll()
+            .anyRequest().authenticated()
+        )
+        .formLogin(Customizer.withDefaults());
+    return http.build();
+}
 
-    Pequeñas y autocontenidas: si crece más de 3-4 líneas, considerar un método con nombre.
-
-    Evitar efectos laterales en lambdas usadas en streams (salvo forEach/peek para depuración).
-
-    No abusar de la inferencia; a veces la legibilidad mejora explicitando el tipo en el parámetro.
-
-    Preferir method reference cuando la lambda consista en la llamada directa a un método existente.
-
-04.02 – STREAMS
-1. Concepto y estructura
-
-Un Stream es una secuencia de elementos que soporta operaciones secuenciales y paralelas de forma agregada. No es una estructura de datos; es una vista sobre una fuente (colección, array, I/O, etc.) que se procesa de forma perezosa.
-
-Un pipeline de stream consta de:
-
-    Origen: de donde se obtienen los datos.
-
-    Operaciones intermedias: cero o más, devuelven un nuevo Stream (encadenamiento). Son lazy.
-
-    Operación terminal: produce un resultado o efecto secundario, y consume el stream (no se puede reutilizar).
-
-2. Creación de streams
-
-    Desde una colección: coleccion.stream() (secuencial) o coleccion.parallelStream().
-
-    Desde arrays: Arrays.stream(array) o Stream.of(array).
-
-    Desde valores sueltos: Stream.of("a", "b", "c").
-
-    Generación infinita: Stream.iterate(valorInicial, unaryOperator), Stream.generate(supplier).
-
-    Desde archivos: Files.lines(path) (devuelve Stream<String>).
-
-    Desde números aleatorios: new Random().ints().
-
-    Desde flujos de Optional (Java 9): optional.stream().
-
-    Stream vacío: Stream.empty().
-
-    Concatenar: Stream.concat(s1, s2).
-
+Personalización del UserDetailsService y PasswordEncoder
 java
 
-Stream<Integer> infinito = Stream.iterate(0, n -> n + 1); // peligro si no se limita
-List<String> nombres = List.of("Ana", "Luis");
-Stream<String> streamNombres = nombres.stream();
+@Bean
+public UserDetailsService userDetailsService(UserRepository userRepo) {
+    return username -> userRepo.findByUsername(username)
+        .map(user -> User.withUsername(user.getUsername())
+                .password(user.getPassword())
+                .roles(user.getRoles().toArray(String[]::new))
+                .build())
+        .orElseThrow(() -> new UsernameNotFoundException(username));
+}
 
-3. Operaciones intermedias
-Operación	Descripción
-filter(Predicate)	Retiene elementos que cumplan el predicado.
-map(Function)	Transforma cada elemento en otro.
-flatMap(Function)	Aplana cada elemento a un stream de varios y luego los concatena.
-distinct()	Elimina duplicados según equals().
-sorted()/sorted(Comparator)	Ordena los elementos (si son Comparable o con comparador).
-peek(Consumer)	Ejecuta una acción por cada elemento (para depurar).
-limit(long)	Trunca el stream a los primeros n elementos.
-skip(long)	Omite los primeros n elementos.
-takeWhile(Predicate) (Java 9+)	Toma elementos mientras se cumple el predicado, luego corta.
-dropWhile(Predicate) (Java 9+)	Descarta mientras se cumple, luego deja pasar el resto.
-mapMulti(BiConsumer) (Java 16+)	Similar a flatMap, pero evita crear streams intermedios para cada elemento.
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+}
 
-Ejemplo:
+Spring Boot detecta un PasswordEncoder y lo inyecta automáticamente.
+Configuración de AuthenticationManager para casos complejos
+
+Si necesitas exponer el AuthenticationManager (por ejemplo, para autenticar programáticamente en un controlador), puedes definirlo como bean. Con Spring Boot, AuthenticationConfiguration lo expone:
 java
 
-lista.stream()
-     .filter(s -> s.length() > 3)
-     .map(String::toUpperCase)
-     .sorted()
-     .distinct()
-     .limit(10)
-     .forEach(System.out::println);
+@Bean
+public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    return config.getAuthenticationManager();
+}
 
-Importante: las operaciones intermedias no se ejecutan hasta que se invoca una operación terminal.
-4. Operaciones terminales
+06_Seguridad/JWT_y_OAuth2.md
+OAuth2: roles y flujos
 
-Se dividen en:
-De transformación y búsqueda
+OAuth2 es el estándar de facto para delegación de acceso. Sus protagonistas:
 
-    collect(Collector): acumula los elementos en una colección, mapa, cadena, etc.
+    Resource Owner (el usuario).
 
-    toList() (Java 16): devuelve una lista inmutable con los elementos.
+    Client (la aplicación que quiere acceder).
 
-    toArray(): array de Object o con IntFunction.
+    Authorization Server (emite tokens).
 
-    reduce(identidad, BinaryOperator): reduce el stream a un solo valor.
+    Resource Server (la API protegida).
 
-    count(): número de elementos.
+Flujos más usados:
 
-    min(Comparator), max(Comparator): devuelven Optional.
+    Authorization Code (con PKCE): para aplicaciones web y móviles. El cliente redirige al servidor de autorización, el usuario autentica y consiente, se devuelve un código que el cliente canjea por un token.
 
-De efecto colateral
+    Client Credentials: para comunicación máquina a máquina.
 
-    forEach(Consumer): aplica una acción a cada elemento. No garantiza orden en paralelo.
+    Refresh Token: para renovar access tokens sin molestar al usuario.
 
-    forEachOrdered(Consumer): respeta el orden incluso en paralelo.
+JSON Web Tokens (JWT)
 
-De coincidencia
+Un token JWT (JSON Web Token) es una cadena codificada en Base64 que contiene tres partes:
+header.payload.signature
 
-    anyMatch(Predicate): si algún elemento cumple → boolean.
+    Header: algoritmo de firma (HS256, RS256).
 
-    allMatch(Predicate): si todos cumplen.
+    Payload: claims (sub, iss, exp, roles, scopes, etc.).
 
-    noneMatch(Predicate): si ninguno cumple.
+    Signature: garantiza integridad y autenticidad.
 
-De consulta
+Ventajas: autocontenido, no requiere almacenamiento en el servidor, ideal para servicios distribuidos y stateless.
+Spring Security como Resource Server
 
-    findFirst(): primer elemento, Optional.
+Con Spring Boot y el starter spring-boot-starter-oauth2-resource-server, configurar un resource server JWT es trivial:
+properties
 
-    findAny(): cualquier elemento (en paralelo, puede ser cualquiera), Optional.
+spring.security.oauth2.resourceserver.jwt.issuer-uri=https://auth-server.com/realms/mi-realm
+
+O manualmente:
+java
+
+@Bean
+public SecurityFilterChain resourceServerFilter(HttpSecurity http) throws Exception {
+    http
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/public").permitAll()
+            .anyRequest().authenticated()
+        )
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(
+            jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
+        ));
+    return http.build();
+}
+
+Spring Security valida automáticamente la firma, la expiración, el issuer, etc. usando las propiedades o un JwtDecoder.
+Conversión de JWT a Authentication
+
+Por defecto, el framework mapea los scopes del JWT a GrantedAuthority con prefijo SCOPE_. Si tu token tiene roles personalizados, puedes definir un JwtAuthenticationConverter:
+java
+
+@Bean
+public JwtAuthenticationConverter jwtAuthenticationConverter() {
+    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+    grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+    grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+    return converter;
+}
+
+Authorization Server con Spring Authorization Server
+
+Para emitir tokens JWT, Spring proporciona el proyecto spring-authorization-server. Se configura con un RegisteredClientRepository y una AuthorizationServerSettings:
+java
+
+@Bean
+public RegisteredClientRepository registeredClientRepository() {
+    RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
+        .clientId("mi-cliente")
+        .clientSecret("{noop}secret")
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+        .redirectUri("http://localhost:8080/login/oauth2/code/mi-cliente")
+        .scope("openid").scope("profile")
+        .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+        .build();
+    return new InMemoryRegisteredClientRepository(client);
+}
+
+Pero para muchos escenarios, se usa Keycloak, Okta o Auth0 como servidores de autorización externos.
+Implementación completa de login con JWT en un cliente
+
+No siempre necesitas un authorization server propio. Si implementas autenticación local generando tus propios JWT:
+
+    AuthenticationController: recibe credenciales, valida con AuthenticationManager, genera un JWT (usando librería jjwt o nimbus-jose-jwt) y lo devuelve al cliente.
+
+    JwtAuthenticationFilter (heredado de OncePerRequestFilter): lee el token de la cabecera Authorization: Bearer ..., lo parsea, valida firma/expiración, carga el usuario (opcional) y establece el SecurityContext.
+
+    Configurar el filtro en la cadena antes de los filtros de autorización.
+
+Ejemplo de filtro simplificado:
+java
+
+public class JwtTokenFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain chain) throws ServletException, IOException {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+            // validar token y extraer claims
+            String username = JwtUtils.getUsername(token);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // cargar UserDetails y crear Authentication
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+        }
+        chain.doFilter(request, response);
+    }
+}
+
+Y en la configuración:
+java
+
+http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+OAuth2 Client (login social)
+
+Con spring-boot-starter-oauth2-client y propiedades:
+properties
+
+spring.security.oauth2.client.registration.google.client-id=...
+spring.security.oauth2.client.registration.google.client-secret=...
+
+Spring Security expone automáticamente /oauth2/authorization/google y gestiona la redirección, el canje del código y la creación del OAuth2AuthenticationToken. Se puede personalizar el OAuth2UserService para mapear a tu propio modelo de usuario.
+06_Seguridad/Metodo_Security.md
+Habilitar la seguridad a nivel de método
+
+La seguridad a nivel de método proporciona una capa de defensa adicional, controlando la invocación de métodos de servicio en lugar de solo URLs. Se habilita añadiendo @EnableMethodSecurity (o @EnableGlobalMethodSecurity en versiones anteriores) en una clase de configuración.
+java
+
+@Configuration
+@EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
+public class MethodSecurityConfig { }
+
+    securedEnabled permite @Secured.
+
+    prePostEnabled permite @PreAuthorize / @PostAuthorize.
+
+    jsr250Enabled para @RolesAllowed.
+
+@Secured y @RolesAllowed
+
+@Secured("ROLE_ADMIN") verifica que el usuario tenga el rol indicado. No permite expresiones; solo una lista de roles (usando lógica OR). @RolesAllowed es equivalente pero sigue el estándar JSR-250.
+java
+
+public interface ProductoService {
+    @Secured("ROLE_ADMIN")
+    void eliminarProducto(Long id);
+}
+
+@PreAuthorize y @PostAuthorize: la potencia de las expresiones
+
+Permiten usar el Spring Security Expression Language (SpEL) para lógica compleja.
+
+    @PreAuthorize: antes de ejecutar el método. Evalúa la expresión y deniega el acceso si no se cumple.
+
+    @PostAuthorize: después de ejecutar el método. El método se ejecuta, y luego se evalúa la expresión sobre el objeto retornado (útil para permisos en base al resultado). Si falla, el resultado no se devuelve.
 
 Ejemplos:
 java
 
-List<String> filtrados = stream.collect(Collectors.toList());  // mutable
-List<String> inmutables = stream.toList();                     // Java 16+, inmutable
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('PRODUCTO_ESCRITURA')")
+public Producto crear(Producto p) { ... }
 
-long conteo = stream.filter(s -> s.startsWith("A")).count();
-Optional<Integer> max = stream.map(String::length).max(Integer::compare);
-boolean existe = stream.anyMatch(s -> s.isEmpty());
+@PreAuthorize("#id != null and @productoService.esPropietario(#id, authentication.principal.username)")
+public Producto actualizarPrecio(Long id, BigDecimal precio) { ... }
 
-5. Collectors (coleccionistas)
+@PostAuthorize("returnObject.usuario == authentication.name")
+public Pedido obtenerPedido(Long id) { ... }
 
-La clase Collectors proporciona implementaciones de Collector para operaciones comunes:
-Método	Resultado
-toList()	ArrayList (mutable, no garantiza tipo)
-toSet()	HashSet
-toCollection(Supplier)	Colección especificada (p.ej. TreeSet::new)
-toMap(keyMapper, valueMapper)	HashMap; cuidado con claves duplicadas
-joining()	Concatena Strings
-groupingBy(classifier)	Map<K, List<T>> agrupando por clave
-partitioningBy(predicate)	Map<Boolean, List<T>>
-summarizingInt()	Estadísticas (count, sum, min, average, max)
-reducing()	Reducción generalizada
+@PreAuthorize("hasRole('USER') and #producto.precio < 1000")
+public void aplicarDescuento(Producto producto) { ... }
+
+En las expresiones se puede acceder a:
+
+    Parámetros del método con #nombreParam.
+
+    El objeto retornado en @PostAuthorize con returnObject.
+
+    Beans de Spring con @nombreBean (p.ej. @seguridadService).
+
+    El principal actual con authentication.
+
+@PreFilter y @PostFilter
+
+Filtran colecciones pasadas como argumentos o devueltas. Muy potentes pero con impacto en rendimiento si las colecciones son grandes.
+
+    @PreFilter: filtra elementos de una colección de entrada usando una expresión. El elemento actual se referencia con filterObject.
+
+    @PostFilter: filtra la colección de salida.
+
 java
 
-Map<Integer, List<Persona>> porEdad = personas.stream()
-    .collect(Collectors.groupingBy(Persona::edad));
-String nombres = personas.stream()
-    .map(Persona::nombre)
-    .collect(Collectors.joining(", "));
+@PreFilter("filterObject.propietario == authentication.name")
+public void guardarVarios(List<Documento> docs) { ... }
 
-6. Streams paralelos
+@PostFilter("hasPermission(filterObject, 'READ')")
+public List<Documento> listarDocumentos() { ... }
 
-Llamar a parallel() o usar parallelStream() hace que las operaciones se ejecuten en el ForkJoinPool común. Adecuado cuando la fuente es grande y las operaciones son costosas y sin efectos colaterales.
+Seguridad en servicios y controladores
+
+A menudo se aplica en la capa de servicio, manteniendo los controladores ligeros. Así, si la lógica de negocio se reutiliza desde otros puntos (tareas programadas, mensajería), la seguridad se aplica igual. La anotación debe estar en la interfaz o en la implementación concreta; lo habitual es en la implementación.
+Manejo de excepciones de seguridad a nivel de método
+
+Cuando una expresión de seguridad falla, se lanza AuthorizationDeniedException. Se puede capturar globalmente con un @ControllerAdvice junto con @ExceptionHandler para convertirla en una respuesta HTTP adecuada (403 Forbidden).
+Consideraciones de proxy
+
+La seguridad a nivel de método se basa en AOP (proxies). Por tanto, aplican las mismas reglas: la anotación debe estar en un método público y la llamada debe provenir de fuera del bean (no por auto-invocación). Para casos de auto-invocación, se puede extraer a otro bean o usar @EnableAspectJAutoProxy(exposeProxy = true) y llamar a través de AopContext.currentProxy().
+
+07_Temas_Avanzados/Eventos_de_Aplicacion.md
+El sistema de eventos de Spring
+
+Spring proporciona un mecanismo de publicación/suscripción de eventos dentro del ApplicationContext. Permite que un componente publique un evento y que otros componentes reaccionen sin acoplamiento directo, una implementación más del principio de Inversión de Control.
+
+Piezas clave:
+
+    ApplicationEvent: clase base para definir eventos. Desde Spring 4.2 ya no es obligatorio extenderla; cualquier objeto puede ser un evento.
+
+    ApplicationEventPublisher: interfaz que posee el ApplicationContext (y cualquier bean que la implemente) para publicar eventos.
+
+    Listener / @EventListener: método que recibe el evento y reacciona. Puede anotarse directamente en un bean.
+
+Publicación de eventos
+
+Inyectamos el publicador:
+java
+
+@Component
+public class PedidoService {
+    private final ApplicationEventPublisher publisher;
+    // ...
+
+    public void procesarPedido(Pedido pedido) {
+        // lógica de negocio
+        publisher.publishEvent(new PedidoCreadoEvent(this, pedido));
+    }
+}
+
+PedidoCreadoEvent es una clase simple que hereda de ApplicationEvent o, más moderno, simplemente un POJO (sin extender nada) y se puede publicar así desde Spring 4.2+:
+java
+
+public class PedidoCreadoEvent {
+    private final Pedido pedido;
+    public PedidoCreadoEvent(Pedido pedido) { this.pedido = pedido; }
+    public Pedido getPedido() { return pedido; }
+}
+
+Y la publicación sería publisher.publishEvent(new PedidoCreadoEvent(pedido)).
+Recepción de eventos con @EventListener
+
+Cualquier bean puede contener un método anotado con @EventListener. Spring lo registra automáticamente.
+java
+
+@Component
+public class NotificacionListener {
+
+    @EventListener
+    public void manejarPedidoCreado(PedidoCreadoEvent event) {
+        // enviar email de confirmación
+        notificar(event.getPedido());
+    }
+}
+
+Se pueden escuchar múltiples tipos de eventos con distintos métodos, o un mismo método puede escuchar varios usando la condición classes o genéricos.
+Eventos transaccionales
+
+Con @TransactionalEventListener, la escucha se vincula a las fases de una transacción:
+Fase	Descripción
+AFTER_COMMIT (defecto)	Se ejecuta si la transacción se completa exitosamente.
+AFTER_ROLLBACK	Se ejecuta si la transacción falla.
+AFTER_COMPLETION	Después de commit o rollback.
+BEFORE_COMMIT	Antes de que la transacción se confirme.
+java
+
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+public void manejarPedidoCreadoCommit(PedidoCreadoEvent event) {
+    // solo se ejecuta si la transacción fue exitosa
+}
+
+Importante: @TransactionalEventListener solo funciona si el evento se publicó dentro de una transacción activa y el listener está en el mismo ApplicationContext (o contexto con propagación de transacciones). Es una herramienta poderosa para evitar efectos secundarios si la transacción falla (ej. no enviar email si el pedido no se persistió).
+Eventos asíncronos
+
+Para no bloquear al publicador, se puede ejecutar el listener de forma asíncrona. Basta con añadir @Async al método listener y habilitar el soporte asíncrono con @EnableAsync.
+java
+
+@Component
+@EnableAsync
+public class AsyncNotificacionListener {
+
+    @Async
+    @EventListener
+    public void manejarPedidoCreadoAsync(PedidoCreadoEvent event) {
+        // este código se ejecuta en un pool de hilos separado
+    }
+}
 
 Precauciones:
 
-    Las operaciones no deben depender del orden ni modificar estado mutable externo.
+    La transacción del publicador no se propaga al hilo asíncrono.
 
-    El overhead de paralelización puede empeorar el rendimiento en streams pequeños.
+    Los eventos asíncronos pueden perderse si la aplicación se cae antes de que se procesen; para garantías de entrega se necesita un message broker.
 
-    forEachOrdered puede perder paralelismo al imponer orden.
+    No combinar @Async con @TransactionalEventListener en el mismo listener.
 
-    Usar findAny en lugar de findFirst cuando el orden no importa, para aprovechar la concurrencia.
+Programación reactiva con eventos
 
-7. Streams de tipos primitivos
+También se pueden publicar eventos y escucharlos usando @EventListener en entornos reactivos, pero el sistema de eventos estándar es bloqueante. Para aplicaciones WebFlux, se recomienda usar ApplicationEventMulticaster configurable o la integración con Project Reactor mediante Sinks.Many.
+Orden y herencia
 
-Para evitar el autoboxing existen IntStream, LongStream y DoubleStream. Métodos específicos:
+Se puede controlar el orden de ejecución de varios listeners con @Order. Además, un listener para una superclase también recibe eventos de las subclases, gracias a la resolución de tipos.
+Eventos de contexto (built-in)
 
-    sum(), average(), min(), max(), summaryStatistics().
-
-    Creación con range(), rangeClosed().
-
-    Conversiones: stream.boxed() convierte a Stream de envoltorios; mapToInt, mapToObj, etc.
-
+Spring dispara varios eventos del ciclo de vida del contexto: ContextRefreshedEvent, ContextStartedEvent, ContextStoppedEvent, ContextClosedEvent, RequestHandledEvent. Podemos escucharlos para inicializar recursos o gracia al apagar.
 java
 
-int suma = IntStream.rangeClosed(1, 100).sum();
-double promedio = IntStream.of(3,5,7).average().orElse(0);
-
-8. Manejo de nulos
-
-Java 9 introdujo Stream.ofNullable(valor) que devuelve un stream vacío si el valor es null, o un stream con el elemento en caso contrario.
-java
-
-Stream<String> flujo = Stream.ofNullable(pais).flatMap(p -> obtenerEstadoStream(p));
-
-9. mapMulti (Java 16)
-
-Alternativa a flatMap para cuando la transformación produce cero, uno o unos pocos elementos, y no queremos crear un stream por cada entrada. Recibe un BiConsumer<T, Consumer<R>> y el consumidor acepta cada elemento producido.
-java
-
-stream.mapMulti((String s, Consumer<Integer> sink) -> {
-    if (!s.isEmpty()) {
-        sink.accept(s.length());
-    }
-});
-
-10. Novedades y buenas prácticas en Java 21
-
-    La interfaz SequencedCollection permite obtener una vista invertida con reversed(). Al invocar stream() sobre esa vista, se obtiene un stream en orden inverso:
-
-java
-
-sequencedList.reversed().stream().forEach(...);
-
-    Preferir stream.toList() en lugar de collect(Collectors.toList()) cuando se desea una lista inmutable. Es más conciso y deja clara la inmutabilidad.
-
-    Evitar operaciones terminales que produzcan efectos laterales (como forEach para poblar otra colección) dentro de streams paralelos si no es seguro.
-
-    Utilizar takeWhile/dropWhile para streams ordenados cuando se necesita cortar o saltar con condiciones.
-
-04.03 – REFERENCIAS A MÉTODOS
-1. ¿Qué son?
-
-Una referencia a método es una expresión lambda aún más compacta que indica exactamente qué método debe invocarse. Usa el operador :: y mejora la legibilidad cuando la lambda se limita a llamar a un método existente.
-2. Los cuatro tipos de referencias a métodos
-a) Referencia a un método estático
-
-Formato: Clase::metodoEstatico
-Ejemplo: Integer::parseInt equivale a s -> Integer.parseInt(s)
-java
-
-Function<String, Integer> parser = Integer::parseInt;
-
-b) Referencia a un método de instancia de un objeto particular
-
-Formato: instancia::metodo
-Ejemplo: System.out::println equivale a x -> System.out.println(x)
-java
-
-Consumer<String> impresora = System.out::println;
-
-c) Referencia a un método de instancia de cualquier objeto de un tipo dado
-
-Formato: Clase::metodoDeInstancia
-El primer parámetro de la lambda se convierte en el receptor (objeto que invoca el método), y los siguientes (si los hay) se pasan como argumentos.
-Ejemplo: String::toLowerCase equivale a (String s) -> s.toLowerCase()
-java
-
-Function<String, String> minusculas = String::toLowerCase;
-UnaryOperator<String> minusculasOp = String::toLowerCase;
-
-Puede usarse con dos parámetros: String::concat equivale a (a, b) -> a.concat(b), es decir, BinaryOperator<String>.
-d) Referencia a un constructor
-
-Formato: Clase::new
-Equivale a una lambda que crea una nueva instancia. La interfaz funcional determina qué constructor se usa (por número de parámetros).
-
-    ArrayList::new (sin argumentos) → Supplier<List<Integer>>, provee una lista vacía.
-
-    Integer::new (con un int) → Function<String, Integer> no vale; pero IntFunction<int[]> int[]::new crea un array.
-
-java
-
-Supplier<List<String>> proveedor = ArrayList::new;
-Function<Integer, int[]> creadorArray = int[]::new;
-
-3. Cómo se resuelve el método adecuado
-
-La resolución sigue las mismas reglas de sobrecarga: la interfaz funcional determina el número y tipo de parámetros, y el compilador busca un método/constructor que coincida.
-
-Ejemplo de sobrecarga exitosa:
-java
-
-public class Ejemplo {
-    public static void metodo(int x) { ... }
-    public static void metodo(String s) { ... }
-}
-// En un contexto Predicate, ninguna es válida; en un Consumer<Integer> se resuelve al que acepta int.
-
-4. Uso frecuente con streams
-
-    stream.map(String::trim)
-
-    stream.filter(Objects::nonNull)
-
-    stream.forEach(System.out::println)
-
-    stream.collect(Collectors.toCollection(ArrayList::new))
-
-    stream.map(Persona::new) (constructor que toma los elementos como parámetro)
-
-5. Referencia a métodos privados o de instancia
-
-Se puede usar this::metodoPrivado para referenciar un método privado de la clase envolvente, y super::metodo para un método de la superclase.
-java
-
-public class Procesador {
-    private String limpiar(String s) { return s.trim(); }
-    public void procesar(List<String> lista) {
-        lista.stream().map(this::limpiar).forEach(System.out::println);
+@Component
+public class StartupListener {
+    @EventListener(ContextRefreshedEvent.class)
+    public void onRefresh() {
+        // Cache warmup, etc.
     }
 }
 
-6. Captura de excepciones
+07_Temas_Avanzados/Cache.md
+Abstracción de caché de Spring
 
-Si el método referenciado lanza excepciones comprobadas, la referencia a método hereda esa restricción y la interfaz funcional destino debe declararlas, o bien hay que adaptarla (envolviendo en un bloque try-catch o usando un hack con lanzamiento de excepciones no comprobadas). Es más difícil que con lambdas directamente; en la práctica se recurre a una lambda explícita cuando se necesita manejo de excepciones.
-7. Comparación de legibilidad
-Lambda	Referencia a método equivalente
-x -> Math.abs(x)	Math::abs
-s -> s.toLowerCase()	String::toLowerCase
-(a, b) -> a.compareTo(b)	String::compareTo
-() -> new ArrayList<>()	ArrayList::new
-e -> System.out.println(e)	System.out::println
+Desde Spring 3.1, la capa de caché permite añadir comportamiento de almacenamiento temporal a métodos con anotaciones declarativas, sin acoplarse a una implementación concreta (EhCache, Caffeine, Redis, Hazelcast, etc.). Solo necesitas configurar un CacheManager y anotar los métodos.
+@Cacheable – El pilar del caché
 
-Usar referencias a métodos cuando el código ya está bien nombrado en el método referenciado; si necesitas un paso adicional o transformación previa, la lambda es más expresiva.
-8. Limitaciones
-
-    No se pueden referenciar métodos que requieran pasar el resultado de otra expresión compleja; la lambda sería necesaria (por ejemplo, x -> procesar(x, y) donde y es una variable capturada, no se puede escribir como procesar::? porque no hay forma de fijar el segundo argumento).
-
-    Las referencias a métodos no pueden capturar variables para usarlas como argumentos adicionales, salvo que el receptor sea el primer parámetro (tipo 3) y el resto parámetros del método, lo que limita su flexibilidad.
-
-05 – MANEJO DE EXCEPCIONES
-
-El manejo de excepciones en Java es un mecanismo robusto para controlar situaciones anómalas que pueden ocurrir en tiempo de ejecución. Java 21 mantiene el modelo consolidado desde las primeras versiones, con pequeñas mejoras de calidad de vida introducidas en versiones anteriores que siguen plenamente vigentes.
-1. Jerarquía de excepciones
-
-Todas las excepciones y errores heredan de la clase java.lang.Throwable. De ella derivan dos ramas principales:
-
-    Error y sus subclases: representan problemas graves relacionados con la JVM (p.ej. OutOfMemoryError, StackOverflowError). Normalmente no se capturan ni se tratan, pues indican condiciones de las que una aplicación típica no puede recuperarse.
-
-    Exception y sus subclases: condiciones que la aplicación podría querer capturar.
-
-        Excepciones comprobadas (checked): Todas las hijas de Exception que no son RuntimeException. El compilador obliga a manejarlas (con try-catch) o a declararlas en la firma del método (throws). Ejemplos: IOException, SQLException, ClassNotFoundException.
-
-        Excepciones no comprobadas (unchecked): Las hijas de RuntimeException. No es obligatorio capturarlas ni declararlas. Suelen indicar errores de programación (p.ej. NullPointerException, IllegalArgumentException, IndexOutOfBoundsException).
-
+El resultado de un método se almacena en un caché (por nombre) usando la clave generada. En invocaciones posteriores con la misma clave, se devuelve el valor cacheado sin ejecutar el método.
 java
 
-Throwable
-├── Error
-│   ├── VirtualMachineError (OutOfMemoryError, StackOverflowError)
-│   └── ...
-└── Exception
-    ├── IOException (checked)
-    ├── SQLException (checked)
-    └── RuntimeException (unchecked)
-        ├── NullPointerException
-        ├── IllegalArgumentException
-        ├── IndexOutOfBoundsException
-        └── ...
-
-2. Captura de excepciones: try-catch-finally
-
-La estructura básica para manejar excepciones es el bloque try-catch-finally.
-2.1. try con uno o varios catch
-java
-
-try {
-    // Código que puede lanzar una excepción
-    Files.readAllLines(Path.of("archivo.txt"));
-} catch (IOException e) {
-    // Manejo específico para IOException
-    System.err.println("Error de E/S: " + e.getMessage());
-} catch (Exception e) {
-    // Manejo genérico para cualquier otra excepción
-    System.err.println("Error inesperado: " + e);
-}
-
-Los bloques catch se evalúan en orden. Se debe poner primero el tipo más específico, ya que si un catch de supertipo aparece antes, atrapará también las excepciones de subtipos y los bloques posteriores nunca se ejecutarían (error de compilación si son del mismo nivel).
-2.2. Multi-catch (Java 7+)
-
-Se pueden capturar varios tipos de excepción en un solo bloque cuando el manejo es idéntico:
-java
-
-try {
-    // ...
-} catch (IOException | SQLException e) { // e es implícitamente final
-    System.err.println("Error de datos: " + e.getMessage());
-}
-
-La variable e es de tipo de la unión de los tipos listados, pero es final (no se puede reasignar dentro del bloque).
-2.3. finally
-
-El bloque finally se ejecuta siempre, ocurra o no una excepción, y aunque dentro del try o catch se realice un return. Se usa para liberar recursos que no implementan AutoCloseable.
-java
-
-FileInputStream fis = null;
-try {
-    fis = new FileInputStream("archivo.txt");
-    // leer...
-} catch (IOException e) {
-    // manejar
-} finally {
-    if (fis != null) {
-        try { fis.close(); } catch (IOException ignorada) {}
+@Service
+public class ProductoService {
+    @Cacheable("productos")
+    public Producto findById(Long id) {
+        // consulta costosa a BD
     }
 }
 
-3. Try-with-resources (Java 7+)
+    value / cacheNames: nombre(s) del caché donde almacenar.
 
-Simplifica la gestión de recursos que implementen AutoCloseable (o Closeable). Los recursos declarados en la cabecera del try se cierran automáticamente al finalizar el bloque, en orden inverso al de creación.
+    key: expresión SpEL para personalizar la clave. Por defecto se genera considerando todos los parámetros.
+
+    keyGenerator: bean personalizado para generación de claves.
+
+    condition: expresión SpEL que debe cumplirse para que se almacene en caché (p.ej. #id > 10).
+
+    unless: expresión SpEL que si es verdadera excluye el almacenamiento (útil para no cachear resultados nulos: #result == null).
+
+    sync: si es true, bloquea el acceso concurrente al mismo método para evitar que múltiples hilos computen el mismo valor a la vez (requiere que el CacheManager soporte sincronización, p.ej. Caffeine).
+
 java
 
-try (BufferedReader br = new BufferedReader(new FileReader("archivo.txt"))) {
-    String linea = br.readLine();
-    // ...
-} // br.close() se llama automáticamente
+@Cacheable(value = "productos", key = "#id", unless = "#result == null")
+public Producto findById(Long id) { ... }
 
-Desde Java 9 se pueden usar variables efectivamente finales o ya declaradas:
+@CacheEvict – Eliminación de entradas
+
+Elimina una o todas las entradas de un caché. Se ejecuta después de la invocación del método (o antes con beforeInvocation = true).
 java
 
-BufferedReader br = new BufferedReader(new FileReader("archivo.txt"));
-try (br) {   // br es un recurso pasado al try
-    // ...
+@CacheEvict(value = "productos", key = "#id")
+public void actualizarProducto(Long id, ProductoDTO dto) { ... }
+
+@CacheEvict(value = "productos", allEntries = true)
+public void limpiarCacheProductos() { ... }
+
+@CachePut – Actualización sin omitir la ejecución
+
+Similar a @Cacheable, pero siempre ejecuta el método y actualiza el caché con el resultado. Útil para refrescar entradas sin saltarse la lógica.
+java
+
+@CachePut(value = "productos", key = "#producto.id")
+public Producto guardar(Producto producto) { return repo.save(producto); }
+
+@Caching – Agrupar múltiples operaciones
+
+Permite combinar varias anotaciones de caché en un solo método:
+java
+
+@Caching(
+    cacheable = @Cacheable("productos"),
+    evict = { @CacheEvict("catalogo", allEntries = true) }
+)
+public Producto crear(Producto p) { ... }
+
+Configuración del CacheManager
+
+Spring Boot autoconfigura un CacheManager según las dependencias:
+
+    Caffeine (recomendada para caché local) con spring-boot-starter-cache.
+
+    Redis con spring-boot-starter-data-redis.
+
+    EhCache 3, Hazelcast, etc.
+
+Con Caffeine, basta añadir la dependencia y configurar en application.properties:
+properties
+
+spring.cache.type=caffeine
+spring.cache.caffeine.spec=maximumSize=500,expireAfterAccess=600s
+
+Si necesitas múltiples caches con configuraciones distintas, defines un CacheManager bean:
+java
+
+@Bean
+public CacheManager cacheManager() {
+    CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+    cacheManager.setCaffeine(Caffeine.newBuilder()
+        .expireAfterWrite(30, TimeUnit.MINUTES)
+        .maximumSize(1000));
+    return cacheManager;
 }
 
-Si el bloque try lanza una excepción y el cierre también, la excepción del cierre se suprime y se añade como suprimida a la original, accesible con Throwable.getSuppressed().
-4. Declaración de excepciones: throws
+Para caches con TTL diferentes, se puede crear un SimpleCacheManager con varios CaffeineCache.
+Configuración avanzada: KeyGenerator y CacheResolver
 
-Cuando un método no maneja una excepción comprobada, debe declararla en su firma:
+    KeyGenerator: cuando la lógica de clave por defecto no es suficiente (parámetros complejos sin toString() específico). Se implementa la interfaz y se referencia con @Cacheable(keyGenerator = "miGenerador").
+
+    CacheResolver: determina el(los) caché(s) en tiempo de ejecución, perfecto para sistemas multi-tenant. Puede elegir el caché según el inquilino.
+
+Cacheo a nivel de anotaciones personalizadas
+
+Puedes crear tu propia anotación estereotipada que agrupe las anotaciones de caché:
 java
 
-public String leerArchivo(String ruta) throws IOException {
-    return Files.readString(Path.of(ruta));
-}
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Cacheable(value = "productos", key = "#id")
+public @interface CachearProducto { }
 
-    Sólo las excepciones comprobadas requieren declaración; las no comprobadas (RuntimeException y sus hijas) pueden declararse opcionalmente.
+Sincronización y concurrencia
 
-    Sobrescribir un método: no se pueden añadir más excepciones comprobadas que las declaradas por el método original, aunque sí se pueden reducir o declarar subtipos.
+Con sync = true en @Cacheable, Spring delega en el Cache subyacente el bloqueo. Por ejemplo, Caffeine soporta ConcurrentMap con sincronización a nivel de entrada. Esto evita el efecto "cache stampede" cuando muchos hilos intentan computar la misma clave simultáneamente.
+Cache con Spring WebFlux (reactivo)
 
-5. Creación de excepciones propias
+En WebFlux no se puede usar el CacheManager bloqueante estándar. Reactor añade CacheMono y CacheFlux para operaciones reactivas, pero no hay integración directa con @Cacheable. El uso de caché en contexto reactivo suele ser manual o con Mono.cache().
+07_Temas_Avanzados/Programacion_Reactiva_WebFlux.md
+Fundamentos reactivos con Project Reactor
 
-Se pueden definir excepciones personalizadas extendiendo Exception (checked), RuntimeException (unchecked) o Throwable. Es recomendable proporcionar al menos constructores que acepten mensaje y causa.
+Spring WebFlux es el módulo de Spring para construir aplicaciones web no bloqueantes usando el estándar Reactive Streams. Internamente se apoya en Project Reactor, que proporciona dos tipos principales:
+
+    Mono<T>: emite 0 o 1 elemento (como un Optional asíncrono).
+
+    Flux<T>: emite 0 a N elementos (como un Stream asíncrono).
+
+Estos tipos son perezosos: nada ocurre hasta que alguien se suscribe. La suscripción la realiza el framework cuando el servidor recibe una petición.
+WebFlux frente a Spring MVC
+Spring MVC	Spring WebFlux
+Modelo de hilos: un hilo por petición (bloqueante)	Modelo de hilos: pocos hilos en loop de eventos (no bloqueante)
+Basado en Servlet API (Tomcat, Jetty)	Basado en Netty, Undertow o Servlet 3.1+ (con soporte no bloqueante)
+Fácil de entender, ecosistema maduro	Mayor escalabilidad para cargas I/O intensivas
+Anotaciones @Controller iguales	Puede usar anotaciones o functional endpoints
+Controladores reactivos con anotaciones
+
+La programación es casi idéntica a MVC, pero los métodos retornan Mono<T> o Flux<T>.
 java
 
-public class CuentaException extends Exception {
-    public CuentaException(String mensaje) {
-        super(mensaje);
+@RestController
+@RequestMapping("/api/productos")
+public class ProductoController {
+    private final ProductoRepository repo;
+
+    @GetMapping
+    public Flux<Producto> listar() {
+        return repo.findAll();
     }
-    public CuentaException(String mensaje, Throwable causa) {
-        super(mensaje, causa);
+
+    @GetMapping("/{id}")
+    public Mono<ResponseEntity<Producto>> obtener(@PathVariable Long id) {
+        return repo.findById(id)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<Producto> crear(@RequestBody Producto producto) {
+        return repo.save(producto);
     }
 }
 
-6. Buenas prácticas y pautas
+La validación con @Valid funciona y el framework se suscribe al flujo para enviar la respuesta sin bloquear el hilo.
+Repositorios reactivos
 
-    Captura específica: evitar catch (Exception e) genérico salvo en puntos de entrada (p.ej., un main o un hilo raíz). Capturar lo que realmente se puede manejar.
+Spring Data proporciona R2DBC (Reactive Relational Database Connectivity) para bases de datos SQL y reactive MongoDB, Redis, etc.
 
-    No tragar excepciones: nunca dejar un bloque catch vacío. Al menos registrar el error.
-
-    Envolver excepciones: si se quiere añadir contexto, usar excepción personalizada o new RuntimeException(mensaje, e) para mantener la causa original.
-
-    Usar finally o try-with-resources para liberar recursos, incluso si no hay excepción.
-
-    Documentar con @throws en Javadoc todas las excepciones comprobadas y las no comprobadas relevantes.
-
-    En streams/lambdas: las interfaces funcionales no permiten lanzar excepciones comprobadas directamente. Soluciones:
-
-        Capturar dentro y convertir a unchecked.
-
-        Usar bibliotecas como vavr o crear interfaces funcionales propias que permitan lanzar.
-
-    Optional evita el uso de null y reduce la necesidad de NullPointerException, pero no reemplaza el manejo de excepciones para casos de error irrecuperables.
-
-7. Novedades en mensajes de excepción (Java 14+)
-
-Aunque no es una característica del lenguaje, desde Java 14 se mejoraron los mensajes de NullPointerException con información de qué variable era nula en la línea exacta, activando la opción de JVM -XX:+ShowCodeDetailsInExceptionMessages (habilitada por defecto en muchas distribuciones).
+R2DBC:
 java
 
-a.b.c = 5; // NPE dirá "Cannot read field 'c' because 'a.b' is null"
-
-Esto está disponible y es útil en Java 21.
-
-Con esto, el archivo 01-excepciones.md queda detallado y actualizado para Java 21.
-06.01 – MÓDULOS JPMS (Java Platform Module System)
-
-El Java Platform Module System (JPMS), introducido en Java 9 y plenamente vigente en Java 21, permite organizar el código en módulos que declaran explícitamente sus dependencias y qué paquetes exportan. Proporciona encapsulación fuerte a nivel de módulo y mejora el rendimiento de carga de clases.
-1. ¿Qué es un módulo?
-
-Un módulo es un artefacto (normalmente un archivo JAR) que contiene un descriptor module-info.class en su raíz, generado a partir del archivo fuente module-info.java. Este descriptor define:
-
-    Nombre del módulo (único, usualmente notación inversa de dominio).
-
-    Dependencias (requires) hacia otros módulos.
-
-    Paquetes exportados (exports) que serán accesibles para otros módulos.
-
-    Paquetes abiertos (opens) para acceso reflexivo.
-
-    Servicios que consume (uses) o provee (provides … with).
-
-2. Estructura del archivo module-info.java
-java
-
-// module-info.java
-module com.mipaquete.miapp {
-    // Dependencias
-    requires java.logging;            // requiere el módulo java.logging
-    requires transitive java.sql;     // requiere y reexporta: quien me requiere también podrá usar java.sql
-
-    // Paquetes públicos
-    exports com.mipaquete.miapp.api;  // el paquete api es accesible por otros módulos
-    exports com.mipaquete.miapp.util to modulo.amigo; // exportación restringida a un módulo concreto
-
-    // Reflexión
-    opens com.mipaquete.miapp.model;  // permite reflexión sobre este paquete a todo el mundo
-    opens com.mipaquete.miapp.config to modulo.framework; // reflexión restringida
-
-    // Servicios
-    uses com.mipaquete.miapp.spi.Servicio;   // consume un servicio
-    provides com.mipaquete.miapp.spi.Servicio
-        with com.mipaquete.miapp.internal.Implementacion; // provee una implementación
+public interface ProductoRepository extends ReactiveCrudRepository<Producto, Long> {
+    Flux<Producto> findByNombreContaining(String nombre);
 }
 
-3. Directivas detalladas
-3.1. requires
+La conexión se configura mediante spring.r2dbc.* y requiere un driver R2DBC (por ejemplo, PostgreSQL). Internamente, usa DatabaseClient que se basa en Netty para comunicación no bloqueante.
+Functional Endpoints (RouterFunction & HandlerFunction)
 
-Declara dependencia de otro módulo.
-
-    Sintaxis simple: requires modulo; → el módulo nombrado debe estar presente.
-
-    requires transitive: además de requerir, cualquier módulo que requiera al nuestro verá también como accesibles los paquetes exportados por el módulo transitivo. Fomenta la reexportación de dependencias de una API.
-
-    requires static: dependencia opcional en tiempo de compilación. Si el módulo no está presente en ejecución, se ignorará (útil para anotaciones o dependencias de herramientas que no son necesarias en tiempo de ejecución).
-
-3.2. exports
-
-Hace que los tipos públicos de un paquete sean accesibles desde fuera del módulo. Sin exports, un paquete es privado al módulo aunque sus clases sean public.
-
-    exports paquete; – todos los módulos pueden acceder.
-
-    exports paquete to modulo1, modulo2; – acceso restringido a módulos específicos (exportación cualificada). Útil para exprimir detalles internos entre módulos amigos sin abrirlos al mundo.
-
-3.3. opens
-
-Permite acceso reflexivo a un paquete (incluso a sus miembros privados) en tiempo de ejecución. Necesario para frameworks como Hibernate, Jackson, etc.
-
-    opens paquete; – cualquier módulo puede usar reflexión sobre el paquete.
-
-    opens paquete to modulo; – restringido a un módulo.
-
-Alternativamente, en lugar de opens en módulo-info, se puede usar la opción de línea de comandos --add-opens.
-3.4. Servicios (uses y provides)
-
-    uses: declara que el módulo consume un servicio (interfaz o clase abstracta). La JVM localizará todos los módulos que provean una implementación de esa interfaz y las cargará al usar ServiceLoader.
-
-    provides … with: declara que el módulo provee una implementación concreta para un servicio. La implementación suele ser una clase interna no exportada.
-
-Ejemplo:
+Alternativa a las anotaciones: configuración basada en funciones.
 java
 
-module com.api {
-    exports com.api.servicio;
-}
-module com.provider {
-    requires com.api;
-    provides com.api.servicio.Servicio with com.provider.ImplementacionServicio;
-}
-module com.consumidor {
-    requires com.api;
-    uses com.api.servicio.Servicio;
-}
-
-El consumidor puede obtener todas las implementaciones con:
-java
-
-ServiceLoader<Servicio> loader = ServiceLoader.load(Servicio.class);
-loader.forEach(s -> s.ejecutar());
-
-4. Encapsulación y acceso por defecto
-
-    Paquetes no exportados: completamente encapsulados; sus clases públicas no son accesibles fuera del módulo (ni siquiera mediante reflexión, a menos que se abra explícitamente).
-
-    Paquetes exportados: sus tipos public son accesibles en tiempo de compilación y ejecución. Sin embargo, los miembros protected y private siguen restringidos según los modificadores de acceso clásicos.
-
-    Un módulo no puede acceder a otro módulo si no lo requiere y ese otro no le exporta el paquete.
-
-El sistema de módulos añade una capa de encapsulación por encima de los modificadores public/private, haciendo que las API sean mucho más claras y resistentes al mal uso.
-5. Módulos de la propia plataforma Java
-
-A partir de Java 9, el JDK está modularizado en una serie de módulos estándar como java.base, java.logging, java.sql, java.xml, etc. El módulo java.base contiene las clases fundamentales (java.lang, java.util, java.io, etc.) y siempre está implícitamente requerido por cualquier módulo.
-
-Podemos listar los módulos del JDK con:
-shell
-
-java --list-modules
-
-6. Compilación y empaquetado con módulos
-Estructura de directorios típica
-text
-
-src/
-  modulo1/
-    module-info.java
-    com/paquete/... (fuentes)
-  modulo2/
-    module-info.java
-    com/otro/... (fuentes)
-
-Compilación con múltiples módulos
-shell
-
-javac -d out --module-source-path src $(find src -name "*.java")
-
-Luego se puede empaquetar cada módulo como un JAR:
-shell
-
-jar --create --file modulo1.jar -C out/modulo1 .
-
-Ejecución
-shell
-
-java --module-path mods:libs -m modulo1/com.paquete.Main
-
-Donde mods es la carpeta de los JARs modulares y libs para dependencias.
-7. Migración y compatibilidad
-
-    Modo compatibilidad: el código clásico (sin module-info) se ejecuta en el classpath como antes. Al no tener descriptor, se coloca en el módulo sin nombre (unnamed module), el cual puede acceder a todo lo que esté en el classpath, pero los módulos explícitos no pueden requerirlo (solo puede ser accedido mediante requires especial o mediante la API de reflexión si se abre). Para migrar gradualmente, se puede empezar por añadir module-info.java a los componentes que se deseen encapsular, manteniendo otros en el classpath.
-
-    --add-exports y --add-opens: flags de la JVM para abrir paquetes de módulos (tanto del JDK como propios) durante la migración, permitiendo accesos que el descriptor normal no permitiría. Ejemplo:
-    text
-
-    java --add-opens java.base/java.lang=ALL-UNNAMED ...
-
-    Esta práctica es común en frameworks hasta que adopten completamente módulos.
-
-8. Beneficios de JPMS en Java 21
-
-    Rendimiento: arranque más rápido y menor consumo de memoria al cargar solo los módulos necesarios.
-
-    Escalabilidad: creación de imágenes de ejecución personalizadas con jlink, que genera una JRE mínima con solo los módulos requeridos.
-
-    Encapsulación fuerte: previene el uso de API internas del JDK (como sun.misc.Unsafe) o de las propias aplicaciones, mejorando la mantenibilidad y seguridad.
-
-    Servicios y acoplamiento débil: el mecanismo de servicios permite desacoplar proveedores y consumidores sin dependencias directas, facilitando arquitecturas modulares orientadas a plugins.
-
-9. Ejemplo completo
-
-Módulo api (interfaz)
-java
-
-// src/api/module-info.java
-module api {
-    exports com.api;
+@Configuration
+public class ProductoRouter {
+    @Bean
+    public RouterFunction<ServerResponse> route(ProductoHandler handler) {
+        return RouterFunctions
+            .route(GET("/api/productos"), handler::listar)
+            .andRoute(POST("/api/productos"), handler::crear);
+    }
 }
 
 java
 
-// src/api/com/api/Saludable.java
-package com.api;
-public interface Saludable {
-    String saludo();
+@Component
+public class ProductoHandler {
+    private final ProductoRepository repo;
+
+    public Mono<ServerResponse> listar(ServerRequest req) {
+        Flux<Producto> productos = repo.findAll();
+        return ServerResponse.ok().body(productos, Producto.class);
+    }
+
+    public Mono<ServerResponse> crear(ServerRequest req) {
+        return req.bodyToMono(Producto.class)
+                .flatMap(repo::save)
+                .flatMap(p -> ServerResponse.created(URI.create("/api/productos/" + p.getId())).build());
+    }
 }
 
-Módulo impl (proveedor)
+Este estilo ofrece máxima transparencia y composición funcional.
+WebClient: el cliente HTTP reactivo
+
+Sustituto no bloqueante de RestTemplate. Es reactivo y devuelve Mono/Flux.
 java
 
-// src/impl/module-info.java
-module impl {
-    requires api;
-    provides com.api.Saludable with com.impl.SaludableEnglish;
+WebClient client = WebClient.create("https://api.externa.com");
+Mono<Producto> producto = client.get()
+    .uri("/productos/{id}", id)
+    .retrieve()
+    .onStatus(HttpStatus::is4xxClientError, response -> Mono.error(new RecursoNoEncontrado()))
+    .bodyToMono(Producto.class);
+
+Soporta programación funcional, filtros, intercambio de tokens, y balanceo de carga con Spring Cloud LoadBalancer.
+Modelo de concurrencia y backpressure
+
+WebFlux ejecuta en un pequeño pool de hilos (por defecto, número de núcleos de CPU) gracias al bucle de eventos de Netty. La escritura en bases de datos se hace con drivers reactivos que usan then, flatMap para encadenar operaciones sin bloquear. El concepto de backpressure (control de flujo) permite que el consumidor le indique al productor cuántos datos está listo para procesar, evitando sobrecargas de memoria.
+¿Cuándo usar WebFlux?
+
+    Altas concurrencias con muchas conexiones simultáneas (ej. API Gateway, streaming en tiempo real).
+
+    Operaciones I/O intensivas (llamadas a servicios externos).
+
+    No es más rápido por operación individual; brilla en throughput y escalabilidad bajo carga.
+
+Errores comunes
+
+    Bloquear dentro de una cadena reactiva (ej. llamar a Thread.sleep() o a una API bloqueante). Esto secuestra el hilo del loop y degrada el rendimiento. Usar subscribeOn(Schedulers.boundedElastic()) para adaptar código bloqueante.
+
+    No suscribirse explícitamente; siempre devolver el Mono/Flux al framework.
+
+07_Temas_Avanzados/Batch_y_Tareas_Programadas.md
+Spring Batch: procesamiento de grandes volúmenes
+
+Spring Batch es un framework para el desarrollo de procesos batch robustos, con reinicio, trazabilidad, control de transacciones escalonado y estadísticas. Una tarea batch se define como un Job compuesto de uno o más Step.
+
+Conceptos básicos:
+
+    Job: una unidad de trabajo completa, compuesto de pasos.
+
+    Step: fase independiente (p.ej. leer, procesar, escribir).
+
+    ItemReader: lee elementos uno a uno de una fuente (BD, archivo plano, XML).
+
+    ItemProcessor: transforma un elemento leído.
+
+    ItemWriter: escribe un lote de elementos (BD, archivo).
+
+    Tasklet: alternativa al chunk para acciones simples (ej. mover archivos, enviar correos).
+
+    JobRepository: almacena metadatos del estado del job y pasos (en BD). Permite reanudar tras fallos.
+
+    JobLauncher: interfaz para lanzar jobs.
+
+Configuración de un Job simple (lectura de CSV a BD)
+java
+
+@Configuration
+@EnableBatchProcessing
+public class BatchConfig {
+
+    @Autowired JobBuilderFactory jobs;
+    @Autowired StepBuilderFactory steps;
+
+    @Bean
+    public FlatFileItemReader<Producto> reader() {
+        return new FlatFileItemReaderBuilder<Producto>()
+            .name("productoItemReader")
+            .resource(new ClassPathResource("productos.csv"))
+            .delimited()
+            .names(new String[]{"nombre", "precio"})
+            .fieldSetMapper(fieldSet -> {
+                Producto p = new Producto();
+                p.setNombre(fieldSet.readString("nombre"));
+                p.setPrecio(fieldSet.readBigDecimal("precio"));
+                return p;
+            })
+            .linesToSkip(1)
+            .build();
+    }
+
+    @Bean
+    public JdbcBatchItemWriter<Producto> writer(DataSource dataSource) {
+        return new JdbcBatchItemWriterBuilder<Producto>()
+            .dataSource(dataSource)
+            .sql("INSERT INTO productos (nombre, precio) VALUES (:nombre, :precio)")
+            .beanMapped()
+            .build();
+    }
+
+    @Bean
+    public Step importStep(FlatFileItemReader<Producto> reader, JdbcBatchItemWriter<Producto> writer) {
+        return steps.get("importStep")
+            .<Producto, Producto>chunk(10)  // chunk size
+            .reader(reader)
+            .processor(processor())
+            .writer(writer)
+            .build();
+    }
+
+    @Bean
+    public Job importJob(Step importStep, JobCompletionNotificationListener listener) {
+        return jobs.get("importJob")
+            .incrementer(new RunIdIncrementer())
+            .listener(listener)
+            .start(importStep)
+            .build();
+    }
+
+    @Bean
+    public ItemProcessor<Producto, Producto> processor() {
+        return p -> { 
+            p.setNombre(p.getNombre().toUpperCase());
+            return p;
+        };
+    }
 }
 
+Chunk-oriented processing
+
+El Step de tipo chunk lee elementos uno a uno con el ItemReader, los acumula en un buffer del tamaño del chunk, los pasa al ItemProcessor (opcional) y luego escribe el chunk completo con el ItemWriter. Si falla, puede reintentar el chunk o marcar el step como fallido.
+Tasklets para pasos simples
+
+Cuando no hay necesidad de procesar elementos, se usa un Tasklet:
 java
 
-// src/impl/com/impl/SaludableEnglish.java
-package com.impl;
-import com.api.Saludable;
-public class SaludableEnglish implements Saludable {
-    public String saludo() { return "Hello!"; }
+@Bean
+public Step cleanupStep() {
+    return steps.get("cleanupStep")
+        .tasklet((contribution, chunkContext) -> {
+            // limpiar archivos temporales
+            return RepeatStatus.FINISHED;
+        })
+        .build();
 }
 
-Módulo app (consumidor)
+Job scheduling: lanzamiento bajo demanda
+
+Spring Batch no incluye un planificador, pero se integra fácilmente con Spring @Scheduled o herramientas externas como Quartz. En una aplicación Boot, se puede lanzar con JobLauncher desde un controlador o una tarea programada.
 java
 
-// src/app/module-info.java
-module app {
-    requires api;
-    uses com.api.Saludable;
+@RestController
+public class BatchController {
+    @Autowired JobLauncher jobLauncher;
+    @Autowired Job importJob;
+
+    @PostMapping("/batch/import")
+    public String lanzar() throws Exception {
+        JobExecution exec = jobLauncher.run(importJob, new JobParametersBuilder()
+            .addLong("time", System.currentTimeMillis())
+            .toJobParameters());
+        return "Batch lanzado: " + exec.getStatus();
+    }
 }
 
+Spring Boot y Batch
+
+El starter spring-boot-starter-batch autoconfigura JobLauncher, JobRepository (necesitarás una base de datos) y habilita @EnableBatchProcessing. Boot puede ejecutar jobs al arrancar si se configura spring.batch.job.enabled=true y se definen beans de Job.
+Tareas programadas con @Scheduled
+
+Spring proporciona un planificador ligero para ejecutar métodos periódicamente.
+
+Habilitar con @EnableScheduling en alguna configuración.
 java
 
-// src/app/com/app/App.java
-package com.app;
-import com.api.Saludable;
-import java.util.ServiceLoader;
+@Configuration
+@EnableScheduling
+public class SchedulingConfig { }
 
-public class App {
+Luego en cualquier bean:
+java
+
+@Component
+public class ReporteProgramado {
+    @Scheduled(fixedDelay = 60000) // 60 seg después de que termine la ejecución anterior
+    public void generarReporte() { ... }
+
+    @Scheduled(fixedRate = 60000)  // cada 60 seg, independientemente del tiempo de ejecución
+    public void refrescarDatos() { ... }
+
+    @Scheduled(cron = "0 0 2 * * ?") // a las 2 AM diario
+    public void limpiarLogs() { ... }
+}
+
+Opciones:
+
+    fixedDelay: intervalo en ms entre el final de una ejecución y el inicio de la siguiente.
+
+    fixedRate: intervalo entre inicios de ejecución (puede solaparse si la tarea tarda más que el rate; evitar con @Async o manejo de concurrencia).
+
+    initialDelay: retardo antes de la primera ejecución.
+
+    cron: expresión cron (segundos, minutos, horas, día del mes, mes, día de la semana).
+
+    zone: zona horaria para cron.
+
+    timeUnit (a partir de Spring Boot 3.x): permite cambiar la unidad de tiempo.
+
+Ejecución asíncrona de tareas programadas
+
+Por defecto, las tareas @Scheduled se ejecutan en un único hilo (el TaskScheduler). Si una tarea se bloquea, las demás esperan. Para paralelismo, se puede configurar un TaskScheduler con pool:
+java
+
+@Bean
+public TaskScheduler taskScheduler() {
+    ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+    scheduler.setPoolSize(5);
+    return scheduler;
+}
+
+O marcar la tarea con @Async y habilitar @EnableAsync.
+Consideraciones en tareas programadas
+
+    En entornos clusterizados, las tareas programadas en cada nodo se ejecutarán simultáneamente a menos que se use un ejecutor distribuido (como ShedLock, Quartz con JDBC). Para evitar duplicados, se puede usar @SchedulerLock de ShedLock.
+
+    Excepciones no capturadas detienen la ejecución futura de esa tarea con fixedDelay (si la instancia no está ya en ejecución). Es recomendable envolver la lógica en try/catch si se desea que continúe.
+
+    Spring Boot expone el endpoint /actuator/scheduledtasks (Actuator) para ver las tareas programadas y sus expresiones cron.
+
+## 08_Spring_Cloud/Service_Discovery_Eureka.md
+
+### El problema del descubrimiento de servicios
+
+En una arquitectura de microservicios, los servicios se despliegan en múltiples instancias, con direcciones IP y puertos dinámicos (contenedores, escalado automático). La configuración estática de endpoints se vuelve inviable. **Service Discovery** resuelve esto proporcionando un registro central donde los servicios se registran y consultan la ubicación de sus dependencias.
+
+### Spring Cloud Netflix Eureka
+
+Eureka es un componente del stack Netflix OSS integrado en Spring Cloud. Consta de:
+
+- **Eureka Server**: el registro central.
+- **Eureka Client**: cada microservicio que se registra y descubre otros.
+
+### Implementación del Eureka Server
+
+1. Añade `spring-cloud-starter-netflix-eureka-server`.
+2. Anota la aplicación con `@EnableEurekaServer`.
+
+```java
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication {
     public static void main(String[] args) {
-        ServiceLoader<Saludable> loader = ServiceLoader.load(Saludable.class);
-        loader.findFirst().ifPresent(s -> System.out.println(s.saludo()));
+        SpringApplication.run(EurekaServerApplication.class, args);
     }
 }
 
-Compilación y ejecución:
-bash
+    Configura application.yml:
 
-javac -d out --module-source-path src $(find src -name "*.java")
-java --module-path out -m app/com.app.App
+yaml
 
-Salida: Hello!
+server:
+  port: 8761
+eureka:
+  client:
+    register-with-eureka: false   # no se registra a sí mismo
+    fetch-registry: false
 
+¡El servidor ya está listo! Se accede a un dashboard en http://localhost:8761.
+Eureka Client (microservicio)
 
-07.01 – TEXT BLOCKS
+Añade spring-cloud-starter-netflix-eureka-client a cada microservicio. Con spring.application.name se asigna el nombre lógico del servicio.
+yaml
 
-Los Text Blocks (bloques de texto) facilitan la escritura de cadenas literales que ocupan varias líneas sin necesidad de concatenaciones, escapes engorrosos ni saltos de línea explícitos. Esta característica fue previsualizada en Java 13‑14 y se convirtió en estándar definitivo en Java 15, por lo que en Java 17/21 está completamente estable.
-Sintaxis básica
+spring:
+  application:
+    name: producto-service
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
 
-Se delimitan con tres comillas dobles """ de apertura y cierre:
+Al iniciar, el cliente se registra. Opcional: eureka.instance.prefer-ip-address=true para registrar la IP en lugar del hostname (mejor en contenedores).
+Descubrimiento en el código: RestTemplate + @LoadBalanced
+
+Spring Cloud integra el descubrimiento con balanceo de carga del lado cliente usando Spring Cloud LoadBalancer (sucesor de Ribbon). Exponemos un RestTemplate con @LoadBalanced:
 java
 
-String html = """
-    <html>
-        <body>
-            <p>Hola, mundo</p>
-        </body>
-    </html>
-    """;
+@Bean
+@LoadBalanced
+public RestTemplate restTemplate() {
+    return new RestTemplate();
+}
 
-Manejo de la indentación
-
-El compilador elimina la indentación incidental automáticamente:
-
-    Se toma como referencia el número de espacios en blanco comunes a todas las líneas (incluyendo las líneas vacías se consideran como infinitos espacios para el cálculo).
-
-    Los espacios sobrantes se eliminan mediante String::stripIndent.
-
-    La posición de la triple comilla de cierre controla la indentación adicional: si se coloca en una línea separada con una determinada sangría, esa sangría se suma a la referencia común.
-
-Importante: si no se quiere que todo el bloque esté pegado a la izquierda, se coloca la triple comilla de cierre a la altura deseada.
-
-Ejemplo:
+Ahora, en cualquier petición HTTP, usamos el nombre lógico del servicio:
 java
 
-String poema = """
-          Ella en la torre
-          peinaba sus cabellos
-          """;  // la indentación extra se elimina, el resultado será:
-// "Ella en la torre\npeinaba sus cabellos\n"
+restTemplate.getForObject("http://producto-service/api/productos", List.class);
 
-Si se desea que la línea final tenga un salto de línea al final, se deja la triple comilla de cierre en la línea siguiente; si se pone al final de la última línea, el bloque no añade salto final:
+La librería intercepta la petición, consulta a Eureka por las instancias de producto-service, elige una (round-robin por defecto) y traduce el nombre lógico a http://IP:puerto.
+Alternativa moderna: WebClient reactivo con balanceo
 java
 
-String sinSalto = """ 
-    Hola""";   // " Hola\n"   -> ojo, hay un espacio antes de Hola, se conserva.
-String conSalto = """
-    Hola
-    """;   // "Hola\n"
+@Bean
+@LoadBalanced
+public WebClient.Builder loadBalancedWebClientBuilder() {
+    return WebClient.builder();
+}
+// Uso:
+WebClient client = loadBalancedWebClientBuilder().build();
+Mono<List<Producto>> productos = client.get()
+    .uri("http://producto-service/api/productos")
+    .retrieve()
+    .bodyToFlux(Producto.class).collectList();
 
-Escapes dentro de text blocks
+Salud y autorenovación
 
-Los caracteres especiales siguen necesitando escape: \" para comillas dobles, \\ para barra invertida. Pero no es necesario escapar las comillas dobles individuales, solo secuencias de tres comillas (\""").
+El Eureka client envía latidos (heartbeats) cada 30 segundos por defecto. Si el server no los recibe, la instancia se saca del registro. Se puede afinar con:
+yaml
 
-Además, Java 14 introdujo dos escapes nuevos pensados para text blocks:
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
-    \ (barra invertida al final de línea): suprime el salto de línea (continuación de línea). Útil para escribir líneas muy largas sin interrumpir la cadena visualmente.
+Zonas y alta disponibilidad
 
-    \s (barra invertida seguida de s): espacio explícito. Evita que el algoritmo de indentación elimine espacios en blanco finales. Muy útil para forzar un espacio antes de un salto de línea o para preservar espacios finales.
+Para tolerancia a fallos del servidor Eureka, se despliegan múltiples servidores peer-to-peer que replican el registro. Cada servidor es cliente de los demás.
+yaml
+
+# server1
+eureka:
+  client:
+    service-url:
+      defaultZone: http://server2:8762/eureka,http://server3:8763/eureka
+
+Los clientes pueden apuntar a todos los servidores en la lista, y Spring Cloud selecciona uno disponible.
+Eureka vs. otras soluciones
+
+    Eureka: AP (disponibilidad y tolerancia a particiones) en el teorema CAP, ideal para consistencia eventual y alta disponibilidad del registro.
+
+    Consul: CP, con chequeos de salud más ricos y KV store.
+
+    Kubernetes Service Discovery: en Kubernetes, se puede prescindir de Eureka y usar DiscoveryClient para Kubernetes.
+
+Spring Cloud Commons abstrae el descubrimiento; cambiar de Eureka a Consul o Kubernetes solo requiere cambiar dependencias sin tocar el código de negocio.
+08_Spring_Cloud/Config_Server.md
+La necesidad de configuración externa centralizada
+
+Los microservicios tienen propiedades (URLs de bases de datos, secretos, parámetros de negocio) que varían por entorno y deben gestionarse sin recompilar. Spring Cloud Config Server centraliza esta configuración en un backend versionado (Git, SVN, Vault) y la sirve a los servicios.
+Config Server
+
+Añade spring-cloud-config-server y anota con @EnableConfigServer.
+java
+
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+
+Configuración application.yml:
+yaml
+
+server:
+  port: 8888
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/mi-organizacion/config-repo
+          default-label: main
+          clone-on-start: true
+
+El servidor clona el repositorio Git y sirve las propiedades bajo /{application}/{profile} (ej. /producto-service/dev). El cliente consulta esta URL al arrancar y fusiona las propiedades.
+Config Client
+
+Los microservicios añaden spring-cloud-starter-config y un archivo bootstrap.properties (o application.properties) con la ubicación:
+properties
+
+spring.application.name=producto-service
+spring.config.import=optional:configserver:http://localhost:8888
+
+En el repositorio Git, un archivo producto-service-dev.yml contendrá las propiedades para ese perfil. El servidor las entrega, y el cliente las integra en su Environment antes de la inicialización de beans.
+Refresco de configuración en caliente
+
+Los cambios en Git no se propagan automáticamente a los clientes en ejecución. Spring Cloud ofrece:
+
+    Actuator /refresh: el cliente debe invocar POST /actuator/refresh para recargar propiedades anotadas con @RefreshScope. Solo se actualizan beans marcados con @RefreshScope (normalmente servicios que leen propiedades).
 
 java
 
-String query = """
-    SELECT * \
-    FROM usuarios \
-    WHERE activo = true
-    """;
-// resulta: "SELECT * FROM usuarios WHERE activo = true\n"
+@Service
+@RefreshScope
+public class ConfiguracionServicio {
+    @Value("${mi.propiedad}")
+    private String propiedad;
+}
 
-String poema = """
-    Rosas son rojas\s
-    violetas azules\s
-    """;
-// con \s se conservan los espacios finales antes del salto de línea.
+Al llamar a /refresh, el bean se reinicializa con los nuevos valores sin reiniciar la aplicación.
 
-Métodos útiles
+    Spring Cloud Bus: propaga eventos de refresco a todos los clientes mediante un broker de mensajería (RabbitMQ, Kafka). Con un solo POST /actuator/busrefresh en cualquier cliente, todos los demás reciben la notificación.
 
-    String::stripIndent() – elimina la indentación común (se llama implícitamente en el text block).
+Cifrado y secretos
 
-    String::translateEscapes() – interpreta secuencias de escape como \n, \t dentro de una cadena (ya aplicadas en tiempo de compilación en text blocks).
+El Config Server puede cifrar valores en reposo usando claves simétricas o asimétricas. Los valores en los archivos de configuración pueden estar prefijados con {cipher}:
+yaml
 
-    String::formatted(Object... args) – equivalente a String.format, pero como método de instancia (Java 15+). Muy útil con text blocks:
+spring:
+  datasource:
+    password: '{cipher}AQBt...'
+
+El servidor descifra antes de enviar a los clientes. La clave se configura con encrypt.key (simétrica). Para mayor seguridad, se puede integrar Vault como backend.
+Estrategias de repositorio y composición
+
+    Repositorio compuesto: múltiples fuentes de configuración (Git + Vault + base de datos).
+
+    Patrones de búsqueda: soporta {application}, {profile}, {label}. Permite configuración global con archivos application*.yml.
+
+    Sobrescritura local: las propiedades locales del cliente (application.yml) pueden anular las remotas según la prioridad.
+
+Config Server en producción
+
+    Se integra con Eureka para alta disponibilidad (los clientes usan el nombre lógico config-server en lugar de la URL fija).
+
+    Autenticación HTTP básica con Spring Security.
+
+    Aplicaciones nativas de Spring Cloud: spring-cloud-config-server + spring-cloud-starter-netflix-eureka-client.
+
+08_Spring_Cloud/API_Gateway.md
+El patrón API Gateway
+
+En microservicios, un API Gateway es el punto de entrada único que encamina las peticiones a los servicios internos, aplica políticas de seguridad, límites, transformación de protocolo y agregación. Aísla al cliente de la complejidad interna.
+Spring Cloud Gateway
+
+Es el gateway oficial (reactivo, no bloqueante) construido sobre Spring WebFlux. Alternativa a Netflix Zuul (obsoleto). Se configura con spring-cloud-starter-gateway.
+yaml
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: producto-service
+          uri: lb://producto-service
+          predicates:
+            - Path=/api/productos/**
+          filters:
+            - StripPrefix=1
+        - id: pedido-service
+          uri: lb://pedido-service
+          predicates:
+            - Path=/api/pedidos/**
+          filters:
+            - StripPrefix=1
+
+El prefijo lb:// indica balanceo de carga a través del Service Discovery (Eureka). Los predicates determinan si la ruta aplica; los filters modifican la petición/respuesta.
+Predicados (predicates)
+
+Factores que determinan si una ruta coincide. Spring Cloud Gateway incluye muchos incorporados:
+
+    Path: /api/productos/**
+
+    Host: *.mitienda.com
+
+    Method: GET,POST
+
+    Header: X-Request-Id con expresión regular
+
+    Query param: foo=bar
+
+    Cookie: sessionId=regex
+
+    Before/After/Between: horarios
+
+    Weight: para distribución ponderada (canary releases)
+
+Ejemplo de combinación:
+yaml
+
+predicates:
+  - Path=/api/**
+  - Method=GET
+  - Header=X-Api-Version, v2
+
+Filtros
+
+Los filtros permiten modificar la petición entrante y la respuesta saliente. Existen filtros predefinidos y se pueden crear filtros personalizados.
+
+Filtros comunes de Gateway:
+
+    AddRequestHeader / AddResponseHeader: añade encabezados.
+
+    AddRequestParameter: añade query params.
+
+    PrefixPath / StripPrefix: manipula la ruta.
+
+    RewritePath: reescribe la ruta con regex.
+
+    CircuitBreaker: integra Resilience4j (circuit breaker).
+
+    RequestRateLimiter: limitación de velocidad con Redis.
+
+    Retry: lógica de reintentos.
+
+    DedupeResponseHeader: elimina cabeceras duplicadas.
+
+Ejemplo con circuit breaker:
+yaml
+
+filters:
+  - CircuitBreaker=name=productoCB, fallbackUri=forward:/fallback/productos
+
+Filtros personalizados
+
+Implementando GatewayFilterFactory:
+java
+
+@Component
+public class LoggingGatewayFilterFactory extends AbstractGatewayFilterFactory<LoggingGatewayFilterFactory.Config> {
+    
+    public LoggingGatewayFilterFactory() { super(Config.class); }
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            System.out.println("Request: " + exchange.getRequest().getURI());
+            return chain.filter(exchange).then(Mono.fromRunnable(() ->
+                System.out.println("Response: " + exchange.getResponse().getStatusCode())));
+        };
+    }
+
+    public static class Config { /* propiedades configurables */ }
+}
+
+Luego se usa en las rutas con - Logging.
+Global Filters
+
+Afectan a todas las rutas. Se implementan con GlobalFilter. Por ejemplo, autenticación JWT global, métricas, logging global.
+Configuración programática
+
+En lugar de YAML, se pueden definir rutas con la API de Java:
+java
+
+@Bean
+public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+    return builder.routes()
+        .route("producto-service", r -> r.path("/api/productos/**")
+            .filters(f -> f.stripPrefix(1))
+            .uri("lb://producto-service"))
+        .build();
+}
+
+Integración con Spring Security
+
+El Gateway puede integrar autenticación OAuth2, validando tokens JWT y propagando la identidad a los servicios posteriores. Con spring-boot-starter-oauth2-resource-server y configurando el gateway como resource server, se pueden proteger rutas de manera centralizada.
+Limitación de velocidad (Rate Limiting)
+
+Usa RequestRateLimiter con Redis. Se define un KeyResolver (por IP, por usuario, etc.):
+java
+
+@Bean
+public KeyResolver userKeyResolver() {
+    return exchange -> Mono.just(exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+}
+
+Configuración:
+yaml
+
+filters:
+  - name: RequestRateLimiter
+    args:
+      redis-rate-limiter.replenishRate: 10
+      redis-rate-limiter.burstCapacity: 20
+
+Resiliencia y tolerancia a fallos
+
+El Gateway puede integrar Resilience4J (circuit breaker, retry, timeout) directamente en las rutas para fallos en los servicios backend, como veremos después.
+Comparativa con otras soluciones
+
+    Zuul 1.x: bloqueante, no recomendado para nuevas aplicaciones.
+
+    Spring Cloud Gateway: reactivo, más ligero.
+
+    Kong, Traefik, Nginx: soluciones externas; Spring Cloud Gateway es perfecto para ecosistema Spring Boot.
+
+08_Spring_Cloud/Circuit_Breaker.md
+El patrón Circuit Breaker
+
+En sistemas distribuidos, las llamadas a servicios remotos pueden fallar o volverse lentas. El Circuit Breaker detecta fallos acumulativos y "abre" el circuito, rechazando rápidamente las peticiones durante un tiempo, evitando saturar al servicio deteriorado y dando posibilidad de recuperación.
+
+Estados del circuito:
+
+    CLOSED: operación normal, se contabilizan éxitos/fallos.
+
+    OPEN: se superó el umbral de fallos, se rechazan todas las peticiones inmediatamente.
+
+    HALF-OPEN: tras un tiempo de espera, se permite un número limitado de peticiones de prueba. Si tienen éxito, vuelve a CLOSED; si fallan, vuelve a OPEN.
+
+Spring Cloud Circuit Breaker con Resilience4j
+
+Spring Cloud proporciona una abstracción spring-cloud-circuitbreaker que admite múltiples implementaciones. La recomendada es Resilience4j, ligera y reactiva.
+
+Dependencias: spring-cloud-starter-circuitbreaker-resilience4j.
+Uso declarativo con anotaciones
+
+En un servicio, se anota el método:
+java
+
+@Service
+public class ProductoService {
+
+    @CircuitBreaker(name = "productoCB", fallbackMethod = "fallbackListar")
+    public List<Producto> listar() {
+        // llamada a servicio externo (WebClient, RestTemplate)
+        return restTemplate.getForObject("http://producto-service/api/productos", List.class);
+    }
+
+    public List<Producto> fallbackListar(Throwable t) {
+        return List.of(new Producto("Producto por defecto"));
+    }
+}
+
+Para habilitarlo, necesita una configuración application.yml:
+yaml
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      productoCB:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+
+Parámetros principales:
+
+    sliding-window-size: número de llamadas para evaluar la tasa de fallos.
+
+    failure-rate-threshold: porcentaje de fallos que abre el circuito.
+
+    wait-duration-in-open-state: tiempo de espera antes de pasar a half-open.
+
+    permitted-number-of-calls-in-half-open-state: llamadas de prueba.
+
+Fallback y retry combinados
+
+Resilience4j también soporta @Retry, @TimeLimiter, @Bulkhead, @RateLimiter. Se pueden combinar con @CircuitBreaker:
+java
+
+@CircuitBreaker(name = "productoCB", fallbackMethod = "fallback")
+@Retry(name = "productoRetry", fallbackMethod = "fallback")
+public List<Producto> listar() { ... }
+
+Configuración del retry:
+yaml
+
+resilience4j:
+  retry:
+    instances:
+      productoRetry:
+        max-attempts: 3
+        wait-duration: 500ms
+
+Circuit Breaker en el API Gateway
+
+Spring Cloud Gateway permite aplicar circuit breaker directamente en las rutas:
+yaml
+
+filters:
+  - name: CircuitBreaker
+    args:
+      name: productoCB
+      fallbackUri: forward:/fallback/productos
+
+El fallback puede ser un endpoint interno que devuelva una respuesta controlada.
+Eventos y métricas
+
+Resilience4j emite eventos (transiciones de estado, fallos, éxitos) a través de Micrometer. Con Spring Boot Actuator, las métricas se exponen en /actuator/metrics y se pueden exportar a Prometheus/Grafana.
+
+Para acceder a los eventos programáticamente:
+java
+
+@Autowired
+private CircuitBreakerRegistry registry;
+...
+CircuitBreaker cb = registry.circuitBreaker("productoCB");
+cb.getEventPublisher().onSuccess(event -> log.info("Éxito"));
+
+Bulkhead (compartimentos estancos)
+
+Aísla partes del sistema para evitar que un fallo en una dependencia consuma todos los hilos del pool.
+yaml
+
+resilience4j:
+  bulkhead:
+    instances:
+      productoBulkhead:
+        max-concurrent-calls: 5
+        max-wait-duration: 100ms
 
 java
 
-String saludo = """
-    Hola %s,
-    Bienvenido a %s.
-    """.formatted(nombre, aplicacion);
+@Bulkhead(name = "productoBulkhead", fallbackMethod = "fallback")
+public List<Producto> listar() { ... }
 
-Text blocks y String Templates (Java 21 preview)
+Si se alcanza el límite de llamadas concurrentes, las nuevas esperan hasta max-wait-duration y luego fallan.
+TimeLimiter
 
-Con los String Templates (preview en Java 21) los text blocks se vuelven aún más expresivos:
+Limita el tiempo de ejecución de una operación (útil en métodos asíncronos o no bloqueantes).
 java
 
-String nombre = "Ana";
-String mensaje = STR."""
-    Hola \{nombre},
-    Esto es una interpolación.
-    """;
+@TimeLimiter(name = "productoTimeLimiter")
+public CompletableFuture<List<Producto>> listarAsync() { ... }
 
+Configuración:
+yaml
+
+resilience4j:
+  timelimiter:
+    instances:
+      productoTimeLimiter:
+        timeout-duration: 2s
+
+Consideraciones importantes
+
+    Resilience4j está diseñado para usarse con funciones funcionales o CompletionStage/Mono/Flux. Para código bloqueante, asegúrate de configurar los hilos apropiadamente.
+
+    Los fallbacks deben ser simples y no depender de la misma dependencia que falló.
+
+    Monitorear los circuit breakers con Micrometer + Grafana te permite ajustar umbrales y detectar problemas de latencia.
+
+    El patrón no sustituye a la lógica de reintentos; se combina. Circuit Breaker evita llamadas cuando se sabe que el sistema está caído; Retry maneja fallas transitorias.
+
+09_Miscelaneos/Internacionalizacion_i18n.md
+El desafío de las aplicaciones multidioma
+
+Una aplicación global debe presentar mensajes, etiquetas, formatos de fecha/número y validaciones en el idioma y la región del usuario. Spring proporciona un soporte sólido para i18n (internacionalización) y l10n (localización) mediante la abstracción MessageSource y la resolución de Locale.
+MessageSource: la fábrica de mensajes
+
+MessageSource es una interfaz que permite obtener mensajes por código y Locale. Spring define tres implementaciones principales:
+
+    ResourceBundleMessageSource: carga bundles .properties desde el classpath. Sin caché configurable (lee cada vez por defecto, aunque internamente usa ResourceBundle con caché de la JVM).
+
+    ReloadableResourceBundleMessageSource: similar, pero soporta recarga en caliente sin reiniciar la aplicación. Ideal para desarrollo o cuando los bundles están externos.
+
+    StaticMessageSource: para mensajes programáticos, útil en tests.
+
+Spring Boot autoconfigura un MessageSource buscando archivos messages*.properties en la raíz del classpath. La configuración por defecto:
+properties
+
+spring.messages.basename=messages
+spring.messages.encoding=UTF-8
+spring.messages.cache-duration=3600   # segundos, para producción
+
+Se pueden definir múltiples basenames: messages, errors.
+
+Los archivos se nombran con el sufijo del locale: messages_es.properties, messages_en.properties, messages_fr.properties. Si no encuentra el código en el locale exacto, busca en el idioma base y luego en el archivo sin sufijo.
+Resolución de mensajes en código Java
+
+Inyectamos MessageSource y solicitamos un mensaje con un Locale:
+java
+
+@Autowired
+private MessageSource messageSource;
+
+public String saludo(Locale locale) {
+    return messageSource.getMessage("saludo.bienvenida", null, locale);
+}
+
+Si el mensaje requiere parámetros:
+properties
+
+# messages_es.properties
+pedido.confirmacion=Pedido {0} confirmado con total de {1,number,currency}
+
+java
+
+String mensaje = messageSource.getMessage(
+    "pedido.confirmacion",
+    new Object[]{pedido.getId(), pedido.getTotal()},
+    locale);
+
+Podemos manejar mensajes de error con argumentos y DefaultMessageSourceResolvable.
+Resolución del Locale
+
+Spring necesita determinar el Locale del usuario. El DispatcherServlet utiliza un LocaleResolver:
+
+    AcceptHeaderLocaleResolver (defecto): analiza el header Accept-Language de la petición HTTP. Stateless, ideal para APIs.
+
+    SessionLocaleResolver: almacena el locale en la sesión HTTP. Útil cuando el usuario puede cambiar de idioma manualmente.
+
+    CookieLocaleResolver: persiste el locale en una cookie, sobrevive entre sesiones.
+
+    FixedLocaleResolver: fuerza un locale fijo (por ejemplo, para un backend interno).
+
+Spring Boot, por defecto, usa AcceptHeaderLocaleResolver. Para permitir al usuario cambiar de idioma, se configura un SessionLocaleResolver junto con un LocaleChangeInterceptor:
+java
+
+@Bean
+public LocaleResolver localeResolver() {
+    SessionLocaleResolver resolver = new SessionLocaleResolver();
+    resolver.setDefaultLocale(Locale.forLanguageTag("es"));
+    return resolver;
+}
+
+@Bean
+public LocaleChangeInterceptor localeChangeInterceptor() {
+    LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
+    interceptor.setParamName("lang");
+    return interceptor;
+}
+
+@Override
+public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(localeChangeInterceptor);
+}
+
+Ahora, una petición GET /productos?lang=en cambia el locale para esa sesión.
+i18n en plantillas Thymeleaf
+
+Thymeleaf integra el MessageSource mediante la expresión #{…}:
+html
+
+<h1 th:text="#{titulo.productos}">Productos</h1>
+<p th:text="#{pedido.confirmado(${pedido.id}, ${pedido.total})}">Pedido confirmado</p>
+
+Para fechas y números, Thymeleaf usa #dates.format y #numbers.formatDecimal con el Locale del contexto automáticamente.
+i18n en REST y validación
+
+Las anotaciones de Bean Validation también se pueden internacionalizar. En los archivos de validación (messages_es.properties) definimos:
+properties
+
+producto.nombre.obligatorio=El nombre del producto es obligatorio
+precio.positivo=El precio debe ser positivo
+
+Las anotaciones usan {producto.nombre.obligatorio} como valor de message. Spring MVC, al fallar la validación, resuelve esos mensajes usando el MessageSource y el Locale de la petición.
+
+En un @ControllerAdvice personalizado, también podemos inyectar MessageSource para construir mensajes de error localizados:
+java
+
+@ExceptionHandler(RecursoNoEncontradoException.class)
+public ResponseEntity<ErrorDTO> manejarNoEncontrado(RecursoNoEncontradoException ex, Locale locale) {
+    String mensaje = messageSource.getMessage("error.recurso_no_encontrado", new Object[]{ex.getId()}, locale);
+    return ResponseEntity.status(404).body(new ErrorDTO(mensaje));
+}
+
+Internacionalización de valores en @ConfigurationProperties
+
+No directamente. Las propiedades de configuración no están pensadas para i18n. Usa mensajes en las vistas o respuestas API.
 Buenas prácticas
 
-    Usar text blocks para JSON, XML, SQL, HTML, etc.
+    Centraliza los mensajes en archivos .properties con nombres descriptivos.
 
-    Colocar la triple comilla de cierre en su propia línea para controlar el sangrado.
+    Usa ReloadableResourceBundleMessageSource en desarrollo.
 
-    Utilizar \ para mantener la legibilidad de consultas largas sin saltos de línea no deseados.
+    Evita mensajes largos con lógica de negocio en las plantillas; mantenlos simples.
 
-    Recordar que todos los espacios en blanco son significativos. Cuidado con líneas que parecen vacías pero contienen espacios.
+    Para aplicaciones con muchos idiomas, considera servicios externos de traducción o un CMS.
 
-07.02 – SWITCH EXPRESSIONS
+09_Miscelaneos/Websockets_y_STOMP.md
+WebSockets: comunicación full-duplex
 
-Las Switch Expressions fueron introducidas como preview en Java 12 y se estandarizaron en Java 14. Permiten usar switch como una expresión que devuelve un valor, evitando la típica necesidad de variables temporales y break. Aportan un código más conciso y eliminan la fuente de bugs por olvido de break.
-Forma con flecha ->
+El protocolo WebSocket permite un canal de comunicación persistente y bidireccional entre el cliente (navegador) y el servidor, superando las limitaciones de HTTP (petición-respuesta). Es ideal para notificaciones en tiempo real, chats, dashboards en vivo.
+
+Spring proporciona soporte tanto para WebSockets crudos como para la capa de subprotocolo STOMP (Simple Text Oriented Messaging Protocol), que añade encaminamiento de mensajes mediante destinos (similar a tópicos y colas de mensajería).
+Habilitar WebSocket en Spring
+
+Dependencia: spring-boot-starter-websocket.
+
+Configuración básica con STOMP:
 java
 
-int diaSemana = 3;
-String nombreDia = switch (diaSemana) {
-    case 1 -> "Lunes";
-    case 2 -> "Martes";
-    case 3 -> "Miércoles";
-    default -> "Desconocido";
-};
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-La flecha asocia directamente el caso con el valor devuelto o con una sentencia; no se requiere break y no hay fall‑through accidental (solo se ejecuta ese caso). Cada caso puede contener una única expresión o un bloque de código que debe finalizar con yield para devolver un valor.
-Bloque con yield
-
-Si un caso requiere varias instrucciones antes de devolver el valor, se usa un bloque y la palabra clave yield:
-java
-
-String categoria = switch (diaSemana) {
-    case 1, 7 -> {
-        System.out.println("Fin de semana!");
-        yield "Descanso";
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/topic", "/queue"); // prefijos para destinos del broker
+        registry.setApplicationDestinationPrefixes("/app"); // prefijo para mensajes del cliente al servidor
     }
-    case 6 -> {
-        System.out.println("Viernes");
-        yield "Casi finde";
-    }
-    default -> "Laborable";
-};
 
-yield tiene un ámbito léxico; no se puede usar fuera de un bloque de caso en una expresión switch.
-Múltiples etiquetas por caso
-
-Se pueden agrupar varios casos utilizando comas:
-java
-
-case 1, 2, 3 -> "Inicio de mes";
-
-Exhaustividad
-
-El compilador exige que una expresión switch cubra todos los posibles valores del tipo sobre el que se aplica. Es decir, debe ser exhaustiva. Para enum, hay que cubrir todos los literales o incluir default; para int, con default basta. Si no es exhaustiva, error de compilación.
-
-Diferencias con el switch tradicional (sentencia):
-Tradicional	Expresión (Java 14+)
-Cada case necesita break	Usa -> o yield
-No devuelve valor	Devuelve un valor
-Permite fall‑through	No hay fall‑through con ->
-No tiene requisito de exhaustividad	Requiere exhaustividad
-default opcional	default opcional pero puede ser necesario según el tipo
-Uso como sentencia con flecha
-
-También se puede usar la notación -> en un switch que actúa como sentencia (no devuelve valor):
-java
-
-switch (comando) {
-    case "iniciar" -> System.out.println("Iniciando...");
-    case "parar"   -> System.out.println("Parando...");
-    default        -> System.out.println("Comando desconocido");
-}
-
-En este caso no se requiere exhaustividad, es una sentencia tradicional con sintaxis moderna.
-Combinación con Pattern Matching (Java 21)
-
-En Java 21, el switch se expande con pattern matching, convirtiéndose en una herramienta central para el polimorfismo. Las switch expressions con patrones permiten descomponer records y comprobar tipos de forma elegante, heredando toda la potencia de las expresiones descritas aquí.
-07.03 – PATTERN MATCHING PARA INSTANCEOF
-
-El Pattern Matching para instanceof se estandarizó en Java 16 y elimina la ceremonia de comprobación + casting manual. Permite asignar una variable de patrón directamente dentro de la condición.
-Sintaxis
-java
-
-if (objeto instanceof String s) {
-    // s es de tipo String aquí y se puede usar directamente
-    System.out.println(s.toUpperCase());
-}
-
-La variable s queda vinculada solo si la comprobación es true. Es una variable local al bloque if, aunque también puede utilizarse en la parte derecha de una conjunción:
-java
-
-if (objeto instanceof String s && s.length() > 5) {
-    // s existe en la segunda parte del &&, y en el bloque
-}
-
-En un || no se puede usar s en el segundo operando porque quizá la primera parte sea false y s no estaría vinculada.
-Ámbito y flujo de control
-
-La variable de patrón se puede usar en cualquier punto donde el compilador esté seguro de que la comprobación ha sido exitosa. En estructuras condicionales complejas se aplica el análisis de flujo:
-java
-
-if (!(objeto instanceof String s)) {
-    // s no está disponible
-    return;
-}
-// aquí s es seguro, porque si no hubiera sido String se habría retornado
-System.out.println(s.length());
-
-Pattern matching con tipo y condición adicional (guarda)
-
-No existe una guarda explícita en instanceof, pero el && permite añadir condiciones:
-java
-
-if (objeto instanceof String s && s.length() > 5) {
-    // ...
-}
-
-Aquí se está combinando la comprobación de tipo con una condición sobre la variable de patrón.
-Patrones con instanceof y registros (Java 16+)
-
-Aunque no se incluyó en el instanceof directamente el desglose de registros (eso es parte de los Record Patterns que llegaron más tarde como preview en Java 19 y final en Java 21), sí se puede usar instanceof con tipos genéricos mediante comodines acotados:
-java
-
-if (shape instanceof Box<?> b) {
-    // b es Box<?>
-}
-
-Ventajas
-
-    Código más limpio: una línea en lugar de tres (comprobación, declaración de variable, casting).
-
-    Menor probabilidad de error de casting.
-
-    Integración natural con nuevas estructuras como switch con patrones.
-
-Limitaciones
-
-    No se puede usar instanceof con patrones sobre tipos genéricos concretos (List<String>), debido al borrado de tipos. Sí se permite con List<?> y luego se puede comprobar cada elemento.
-
-    La variable de patrón es final implícitamente (no se puede reasignar).
-
-07.04 – RECORDS
-
-Los Records son clases inmutables transparentes, diseñadas específicamente para transportar datos de manera concisa. Fueron previsualizados en Java 14, segunda preview en 15 y se estandarizaron en Java 16. En Java 21 son una herramienta fundamental.
-Declaración
-java
-
-public record Persona(String nombre, int edad) {}
-
-Con una sola línea se obtiene automáticamente:
-
-    Campos privados y finales para cada componente (nombre, edad).
-
-    Constructor canónico que recibe todos los componentes y los asigna.
-
-    Métodos de acceso con el nombre del componente, sin get (nombre() y edad()).
-
-    equals() y hashCode() basados en todos los componentes.
-
-    toString() que incluye el nombre del registro y los valores de los componentes: "Persona[nombre=Ana, edad=25]".
-
-Constructor compacto (compact canonical constructor)
-
-Permite validar, normalizar o hacer ajustes sin tener que volver a declarar todos los parámetros. La sintaxis omite los parámetros y asigna los campos al final de forma implícita:
-java
-
-public record Persona(String nombre, int edad) {
-    public Persona {  // compact constructor
-        if (edad < 0) throw new IllegalArgumentException("Edad negativa");
-        nombre = nombre.trim(); // "nombre" se refiere al campo, no al parámetro
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS(); // habilita fallback SockJS
     }
 }
 
-No se puede reasignar los campos fuera del constructor compacto; son final. Tampoco se permite un constructor adicional que llame a this(...) si no se respeta la inicialización de todos los campos.
-Restricciones
+    Broker simple (/topic, /queue): es un broker en memoria que reenvía mensajes a los clientes suscritos.
 
-    Son finales implícitamente, no pueden extender otra clase (heredan de java.lang.Record).
+    /app: prefijo para los destinos de los métodos @MessageMapping (mensajes que llegan del cliente).
 
-    No pueden ser abstractas.
+    SockJS: emula WebSocket en navegadores antiguos usando long polling.
 
-    Los campos de instancia adicionales no están permitidos (ni se pueden declarar). Solo los componentes del registro.
+Controlador de mensajes STOMP
 
-    Se pueden declarar campos estáticos, métodos estáticos y métodos de instancia adicionales.
-
-    Pueden implementar interfaces.
-
-    No se pueden declarar métodos set de modificación (ya que los campos son final), pero sí métodos que devuelvan nuevas instancias con valores modificados (estilo inmutable):
-
+Similar a @Controller MVC pero con anotaciones propias:
 java
 
-public Persona conEdad(int nuevaEdad) {
-    return new Persona(this.nombre, nuevaEdad);
-}
+@Controller
+public class ChatController {
 
-Características avanzadas
+    @MessageMapping("/chat.enviar")
+    @SendTo("/topic/mensajes")
+    public Mensaje enviar(Mensaje mensaje) {
+        // se puede persistir aquí
+        return mensaje; // se reenvía a todos los suscritos a /topic/mensajes
+    }
 
-    Se pueden sobrescribir los accesores si se desea ocultar o transformar el valor (aunque se pierde transparencia). Por ejemplo, para devolver una copia defensiva:
-
-java
-
-public List<String> hobbies() {
-    return List.copyOf(hobbies); // supuesto que hobbies es List<String>
-}
-
-    Se pueden añadir constructores adicionales que llamen al canónico con this(...).
-
-Integración con patrones y switch
-
-Los registros forman la base de los Record Patterns (Java 19 preview, final en Java 21), que permiten descomponer un registro directamente en el switch o instanceof:
-java
-
-if (figura instanceof Circulo(double radio)) {
-    // radio es la componente del registro
-}
-
-Y en el switch con exhaustividad cuando se usan con sealed types.
-Cuándo usar records
-
-    DTOs (Data Transfer Objects).
-
-    Mensajes o comandos en arquitecturas CQRS.
-
-    Claves compuestas en mapas.
-
-    Valores retornados de consultas.
-
-    Cualquier estructura de datos inmutable cuyo único propósito sea agrupar valores.
-
-Comparación con Lombok o @Data
-
-Los registros son una solución nativa que no requiere anotaciones ni procesadores. A diferencia de @Data, no son mutables (no tienen setters) y son adecuados solo para inmutabilidad.
-07.05 – SEALED CLASSES (CLASES SELLADAS)
-
-Las Clases Selladas permiten controlar explícitamente qué subclases pueden extender una clase o qué implementaciones tiene una interfaz. Se estandarizaron en Java 17. Son el complemento perfecto para los records y el pattern matching exhaustivo.
-Declaración
-java
-
-public sealed class Figura permits Circulo, Rectangulo, Triangulo {
-    // cuerpo de la clase sellada
-}
-
-La clase Figura declara que solo las clases listadas en permits pueden extenderla. Las subclases permitidas deben estar en el mismo módulo (o paquete si no se usa módulo) y a su vez deben elegir uno de estos modificadores:
-
-    final → no se puede extender más.
-
-    sealed → sigue restringiendo la herencia (con su propio permits).
-
-    non‑sealed → permite que cualquier clase pueda extenderla (rompe el sellado).
-
-Ejemplo:
-java
-
-sealed interface Expr permits Suma, Resta, Num {}
-record Suma(Expr izq, Expr der) implements Expr {}
-record Resta(Expr izq, Expr der) implements Expr {}
-final class Num implements Expr { int valor; }
-
-O bien usando records y clases finales.
-Reglas
-
-    La clase sellada y sus subclases permitidas deben pertenecer al mismo módulo (o al mismo paquete sin módulos). No se pueden declarar subclases en otro módulo sin usar permits explícito, pero aun así deben ser del mismo módulo.
-
-    Si las subclases son anidadas o están en el mismo archivo, se puede omitir permits y el compilador las deduce:
-
-java
-
-sealed class Op {
-    final class A extends Op {}
-    final class B extends Op {}
-}
-
-    No se pueden declarar permits con clases que no pertenezcan al mismo módulo/paquete.
-
-    La clase sellada puede ser abstracta.
-
-    Las interfaces también pueden ser selladas.
-
-Exhaustividad en el switch
-
-La gran ventaja es que el compilador conoce todas las posibilidades, por lo que en un switch con pattern matching no se necesita default si se cubren todos los permits:
-java
-
-double evaluar(Expr e) {
-    return switch (e) {
-        case Suma(var i, var d) -> evaluar(i) + evaluar(d);
-        case Resta(var i, var d) -> evaluar(i) - evaluar(d);
-        case Num n          -> n.valor;
-    };  // sin default, exhaustivo
-}
-
-Esto hace que los añadidos futuros a la jerarquía sellada provoquen un error de compilación en los switch que no los contemplen, aumentando la robustez del código (comportamiento deseable en patrones modelo‑vista o intérpretes).
-Compatibilidad con instanceof
-
-El patrón de instanceof con tipos sellados permite comprobaciones en cascada; también el compilador puede inferir exhaustividad en flujos de control si se usa una cadena de if‑else if. Sin embargo, el switch es la forma más clara y concisa.
-Cuándo usar clases selladas
-
-    Modelado de tipos algebraicos (sum types) junto con records.
-
-    Jerarquías de dominio restringidas (p.ej., estados de un pedido: Pendiente, Enviado, Entregado, Cancelado).
-
-    Reemplazo de enumeraciones complejas que necesitan comportamientos distintos por estado.
-
-    API internas en las que no se desea que terceros extiendan ciertas clases.
-
-Relación con records
-
-A menudo se combinan sealed interface con varios record que la implementan. Esto permite un modelado funcional muy potente y seguro para manipular datos.
-Ejemplo completo
-java
-
-sealed interface Figura permits Rectangulo, Circulo, Triangulo {}
-record Rectangulo(double ancho, double alto) implements Figura {}
-record Circulo(double radio) implements Figura {}
-final class Triangulo implements Figura { double base, altura; } // o record
-
-// Uso
-double area(Figura f) {
-    return switch (f) {
-        case Rectangulo(var a, var al) -> a * al;
-        case Circulo(var r) -> Math.PI * r * r;
-        case Triangulo t -> (t.base * t.altura) / 2;
-    };
-}
-
-08.01 – VIRTUAL THREADS (PROJECT LOOM, FINAL)
-
-Los hilos virtuales son la respuesta de Java para la programación concurrente masiva de una manera sencilla y eficiente. Se integran sin cambios en la gran mayoría del código existente.
-¿Qué son?
-
-Los hilos del sistema operativo (hilos de plataforma) son recursos costosos (típicamente ~1 MB de pila por hilo). Los hilos virtuales son hilos ligeros gestionados por la JVM que se multiplexan sobre un pequeño número de hilos de plataforma (carriers). Cuando un hilo virtual se bloquea (por I/O, sleep, espera en un lock), su carrier puede ejecutar otro hilo virtual, liberando el recurso del SO.
-
-Esto permite el modelo «un hilo por petición» escalando a millones de tareas concurrentes sin el coste de memoria ni de cambio de contexto.
-Creación y uso
-Mediante Thread.startVirtualThread
-java
-
-Thread.startVirtualThread(() -> {
-    System.out.println("Ejecutando en hilo virtual: " + Thread.currentThread());
-});
-
-Con Executors.newVirtualThreadPerTaskExecutor()
-
-Devuelve un ExecutorService que asigna un nuevo hilo virtual a cada tarea:
-java
-
-try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-    executor.submit(() -> procesar());
-    executor.submit(() -> recuperar());
-} // se cierra el executor tras las tareas
-
-Con el nuevo Thread.Builder (API más flexible)
-java
-
-Thread.Builder builder = Thread.ofVirtual()
-        .name("worker-", 0)
-        .uncaughtExceptionHandler((t, e) -> e.printStackTrace());
-Thread hilo = builder.start(() -> { ... });
-
-Características importantes
-
-    Los hilos virtuales son daemon por defecto y no tienen prioridad (no aplica).
-
-    No se deben agrupar en pools: crear un hilo virtual es tan barato (~1 KB) que se crean y descartan según necesidad. La API del executor proporciona un pool conceptual que genera uno nuevo por tarea.
-
-    No hay problema si un hilo virtual bloquea (con sleep, LockSupport.park(), I/O síncrona). La JVM desacopla el carrier.
-
-    Los problemas tradicionales con ThreadLocal y synchronized son más evidentes con millones de hilos: synchronized en grano grueso puede causar pinning (el hilo virtual se ancla al carrier, impidiendo su liberación). Se recomienda sustituir synchronized por ReentrantLock en nuevos desarrollos de alta concurrencia.
-
-    Herramientas: jcmd, jstack muestran hilos virtuales sin coste.
-
-Ejemplo de servicio web
-java
-
-try (var serverSocket = new ServerSocket(8080)) {
-    while (true) {
-        Socket socket = serverSocket.accept();
-        Thread.startVirtualThread(() -> handleRequest(socket));
+    @MessageMapping("/chat.privado")
+    public void privado(Mensaje msg, Principal principal) {
+        // Enviar a un usuario específico (destino /queue/privado-{username})
+        simpMessagingTemplate.convertAndSendToUser(msg.getDestinatario(), "/queue/privado", msg);
     }
 }
 
-Con miles de conexiones simultáneas, este código sigue funcionando con un consumo mínimo de recursos.
-Migración
+    @MessageMapping("/ruta"): escucha mensajes enviados por clientes a /app/ruta.
 
-No es necesario reescribir código legacy. Cualquier aplicación que use ExecutorService, Thread o frameworks como Spring Boot 3.2+ (activando spring.threads.virtual.enabled=true) puede aprovechar los hilos virtuales casi de inmediato.
+    @SendTo: define a qué destino broker se envía el valor de retorno del método (broadcast).
 
-    Estado: Definitivo en Java 21. Sin necesidad de flags adicionales.
+    Principal: disponible si la sesión está autenticada.
 
-08.02 – SEQUENCED COLLECTIONS (FINAL)
+Envío de mensajes desde el servidor
 
-Las Secuenciated Collections son un conjunto de nuevas interfaces que aportan un contrato uniforme para colecciones con un orden de encuentro definido, permitiendo operar con el primer y el último elemento de manera directa y obtener una vista invertida. Afecta a List, SortedSet, LinkedHashSet, Deque, SortedMap y LinkedHashMap.
-Nuevas interfaces en java.util
-
-    SequencedCollection<E> extendiendo Collection<E>
-
-    SequencedSet<E> extendiendo Set<E> y SequencedCollection<E>
-
-    SequencedMap<K,V> extendiendo Map<K,V>
-
-Todas las colecciones que ya tenían un orden (inserción o natural) han sido retroactivamente modificadas para implementar estas interfaces.
-Métodos principales
-SequencedCollection
+Inyectamos SimpMessagingTemplate:
 java
 
-void    addFirst(E e)
-void    addLast(E e)
-E       getFirst()
-E       getLast()
-E       removeFirst()
-E       removeLast()
-SequencedCollection<E> reversed()   // vista invertida (no copia)
+@Autowired
+private SimpMessagingTemplate messagingTemplate;
 
-SequencedSet
-
-Hereda los mismos métodos y reversed() devuelve SequencedSet<E>.
-SequencedMap
-java
-
-V       putFirst(K k, V v)
-V       putLast(K k, V v)
-Entry<K,V> firstEntry()
-Entry<K,V> lastEntry()
-Entry<K,V> pollFirstEntry()
-Entry<K,V> pollLastEntry()
-SequencedMap<K,V> reversed()
-SequencedSet<K> sequencedKeySet()
-SequencedCollection<V> sequencedValues()
-SequencedSet<Entry<K,V>> sequencedEntrySet()
-
-Ejemplos
-java
-
-SequencedCollection<String> lista = new ArrayList<>();
-lista.add("A"); lista.add("B"); lista.add("C");
-System.out.println(lista.getFirst()); // A
-System.out.println(lista.getLast());  // C
-lista.addFirst("Inicio");
-lista.addLast("Fin");
-System.out.println(lista); // [Inicio, A, B, C, Fin]
-
-SequencedCollection<String> invertida = lista.reversed();
-invertida.addFirst("Nuevo");       // modifica la original al final
-System.out.println(lista.getLast()); // Nuevo
-
-SequencedMap<Integer, String> mapa = new LinkedHashMap<>();
-mapa.put(1, "Uno"); mapa.put(2, "Dos"); mapa.put(3, "Tres");
-System.out.println(mapa.firstEntry()); // 1=Uno
-mapa.pollLastEntry();                  // elimina 3=Tres
-for (var entry : mapa.reversed().entrySet()) {
-    System.out.println(entry.getKey()); // 2, 1
+public void notificarCambio(Evento evento) {
+    messagingTemplate.convertAndSend("/topic/eventos", evento);
 }
 
-Beneficios
+public void notificarUsuario(String username, Notificacion notif) {
+    messagingTemplate.convertAndSendToUser(username, "/queue/notificaciones", notif);
+}
 
-    Código más expresivo sin necesidad de list.get(list.size()-1) o list.get(0).
+convertAndSendToUser envía a un destino único por usuario: internamente se resuelve a /user/{username}/queue/notificaciones. El cliente debe suscribirse a /user/queue/notificaciones.
+Autenticación y autorización en STOMP
 
-    La vista invertida facilita recorridos en orden inverso sin crear copias.
-
-    Unificación de API: antes SortedSet y List tenían formas distintas de acceder a los extremos; ahora todas las colecciones ordenadas comparten el mismo contrato.
-
-    Estado: Definitivo en Java 21. Listo para producción.
-
-08.03 – RECORD PATTERNS (FINAL)
-
-Los Record Patterns permiten descomponer un registro en sus componentes directamente después de una comprobación de tipo, ya sea en un instanceof o en un case de un switch. Se basa en los registros y el pattern matching ya existente.
-Uso en instanceof
+Spring Security se integra con WebSocket. Se puede interceptar el handshake HTTP para extraer credenciales y luego aplicar seguridad a los destinos:
 java
 
-record Punto(double x, double y) {}
-
-void imprimir(Object obj) {
-    if (obj instanceof Punto(double x, double y)) {
-        System.out.println("Coordenadas: " + x + ", " + y);
+@Configuration
+public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer {
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    // autenticar vía token en headers
+                }
+                return message;
+            }
+        });
     }
 }
 
-La variable x e y se vinculan directamente a los componentes del registro, con su tipo inferido.
-Uso en switch
+Y autorización con @PreAuthorize en métodos @MessageMapping.
+Broker externo: RabbitMQ o ActiveMQ
+
+Para aplicaciones en cluster, el broker simple no es suficiente porque no replica mensajes entre instancias. Spring permite conectar un broker STOMP externo (RabbitMQ, ActiveMQ) que haga de relay:
 java
 
-sealed interface Figura permits Circulo, Rectangulo {}
-record Circulo(double radio) implements Figura {}
-record Rectangulo(double ancho, double alto) implements Figura {}
-
-double area(Figura f) {
-    return switch (f) {
-        case Circulo(var r) -> Math.PI * r * r;
-        case Rectangulo(var a, var h) -> a * h;
-    };
+@Override
+public void configureMessageBroker(MessageBrokerRegistry registry) {
+    registry.enableStompBrokerRelay("/topic", "/queue")
+            .setRelayHost("localhost")
+            .setRelayPort(61613)
+            .setClientLogin("guest")
+            .setClientPasscode("guest");
 }
 
-var r equivale a double r, pero también se puede poner el tipo explícito.
-Patrones anidados
+Ahora el broker externo maneja las suscripciones y la distribución, mientras los controladores siguen funcionando igual.
+Cliente JavaScript (STOMP.js)
+javascript
 
-Se pueden descomponer registros dentro de registros:
-java
-
-record Punto(double x, double y) {}
-record Segmento(Punto inicio, Punto fin) {}
-
-if (s instanceof Segmento(Punto(var x1, var y1), Punto(var x2, var y2))) {
-    // uso directo de x1, y1, x2, y2
-}
-
-La legibilidad y la seguridad de tipos aumentan drásticamente.
-when clauses (guardas)
-
-No hay guardas en instanceof (se usa && adicional), pero en el switch los patrones de registro pueden combinarse con when (parte del pattern matching del switch) para refinar el caso.
-Exhaustividad con tipos sellados
-
-Cuando se usan registros que implementan interfaces selladas, el compilador asegura que el switch cubra todos los casos, y los patrones de registro permiten extraer la información de golpe.
-
-    Estado: Definitivo en Java 21. Es la culminación del pattern matching estructural.
-
-08.04 – PATTERN MATCHING FOR SWITCH (FINAL)
-
-El Pattern Matching para switch convierte a esta estructura en una potente herramienta de despacho polimórfico. Se unifican los patrones de tipo, los patrones de registro, los patrones de array y el manejo explícito de null.
-Características principales
-
-    switch sobre cualquier objeto, no solo sobre números, strings y enums.
-
-    Cada case especifica un patrón: de tipo, de registro, de array o de literal.
-
-    Exhaustividad: el compilador garantiza que todos los casos posibles están cubiertos si el selector es una clase o interfaz sellada (o se incluye default).
-
-    Manejo de null explícito con case null -> .... Si no se incluye y la variable es null, se lanza NullPointerException.
-
-    Se puede usar when para añadir guardas a cualquier patrón.
-
-Ejemplo completo
-java
-
-Object obj = obtenerAlgo();
-switch (obj) {
-    case null -> System.out.println("Es nulo");
-    case String s when s.length() > 5 -> System.out.println("String largo: " + s);
-    case String s -> System.out.println("String corto: " + s);
-    case Integer i -> System.out.println("Entero: " + (i * i));
-    case int[] arr -> System.out.println("Array de ints con " + arr.length + " elementos");
-    default -> System.out.println("Tipo desconocido");
-}
-
-    Los casos se evalúan en orden. El más específico debe ir primero (por ejemplo, String s when ... antes que String s).
-
-    Si se usa switch como expresión, debe devolver un valor en cada rama y ser exhaustivo:
-
-java
-
-String desc = switch (obj) {
-    case null -> "nulo";
-    case String s -> "texto";
-    default -> "desconocido";
-};
-
-Con tipos sellados y registros
-java
-
-sealed interface Op permits Add, Mul {}
-record Add(Op left, Op right) implements Op {}
-record Mul(Op left, Op right) implements Op {}
-
-int eval(Op op) {
-    return switch (op) {
-        case Add(var l, var r) -> eval(l) + eval(r);
-        case Mul(var l, var r) -> eval(l) * eval(r);
-    };
-}
-
-El compilador sabe que Op solo puede ser Add o Mul, por lo que no necesita default.
-Patrones de array
-
-case int[] arr -> o case String[] arr -> permite capturar el array y usarlo directamente.
-
-    Estado: Definitivo en Java 21. La evolución del switch se completa con esta poderosa función.
-
-08.05 – STRING TEMPLATES (PREVIEW)
-
-Los String Templates permiten la interpolación de expresiones dentro de cadenas de forma segura, evitando concatenaciones manuales y riesgos de inyección.
-Sintaxis
-
-Se utiliza un procesador de plantillas (normalmente STR) seguido de un punto y un bloque de texto delimitado por """ (o también con comillas simples):
-java
-
-String nombre = "Mundo";
-String mensaje = STR."Hola \{nombre}!";
-// Resultado: "Hola Mundo!"
-
-Las expresiones van entre \{ y }. Pueden ser cualquier expresión Java que devuelva un valor convertible a String.
-Procesadores incorporados
-
-    STR: reemplaza cada expresión por su representación toString().
-
-    FMT: similar a STR pero permite especificar formatos al estilo printf en las expresiones:
-    java
-
-    double precio = 123.456;
-    String texto = FMT."Precio: %.2f\{precio}";
-
-    RAW: no procesa el resultado, devuelve un StringTemplate para inspeccionar las partes y valores antes de procesarlos. Útil para crear procesadores personalizados.
-
-Procesadores personalizados
-
-Se puede crear un procesador implementando StringTemplate.Processor<R, E>:
-java
-
-var SQL = StringTemplate.Processor.of((template) -> {
-    // template.fragments() y template.values() para construir sentencia
-    return new SQLQuery(...);
-});
-SQLQuery q = SQL."SELECT * FROM \{tabla} WHERE id = \{id}";
-
-Seguridad
-
-A diferencia de la concatenación ingenua, los procesadores pueden escapar caracteres especiales o aplicar políticas de seguridad. Por ejemplo, un procesador para SQL podría parametrizar automáticamente las expresiones, evitando inyección SQL.
-Text blocks y templates
-
-Las plantillas funcionan perfectamente con text blocks:
-java
-
-String json = STR."""
-    {
-        "name": "\{nombre}",
-        "age": \{edad}
-    }
-    """;
-
-Consideraciones
-
-    Es una feature en preview; requiere --enable-preview para compilar y ejecutar.
-
-    Los nombres de procesadores (STR, FMT, RAW) se importan implícitamente (están en java.lang).
-
-    No es un simple azúcar sintáctico: la separación entre fragmentos literales y valores permite construir DSLs seguros.
-
-    Estado: Preview en Java 21. Activar con --enable-preview --source 21.
-
-08.06 – SCOPED VALUES (PREVIEW)
-
-Los Scoped Values son una alternativa moderna a ThreadLocal para compartir datos inmutables dentro de un hilo y sus hijos (virtuales o no), especialmente en concurrencia estructurada. Ofrecen mejor rendimiento y un ciclo de vida claramente delimitado.
-Problema de ThreadLocal
-
-    Acoplamiento implícito: cualquier código dentro del hilo puede leer/modificar un ThreadLocal.
-
-    Dificultad en la limpieza (memory leaks si no se elimina adecuadamente, especialmente con pools de hilos).
-
-    Coste en hilos virtuales: heredar ThreadLocal al crear un hilo virtual añade sobrecarga.
-
-Uso de ScopedValue
-java
-
-final static ScopedValue<String> USUARIO_ACTUAL = ScopedValue.newInstance();
-
-ScopedValue.where(USUARIO_ACTUAL, "admin").run(() -> {
-    System.out.println("Usuario: " + USUARIO_ACTUAL.get());
-});
-// Fuera del bloque, USUARIO_ACTUAL no está definido (llamar a get() lanza NoSuchElementException)
-
-where crea un binding (asociación) que dura durante la ejecución del Runnable proporcionado. Los hilos hijos heredan automáticamente el valor, pero no pueden cambiarlo. Es inmutable.
-Vinculación con hilos virtuales y concurrencia estructurada
-java
-
-ScopedValue.where(USUARIO_ACTUAL, "admin").run(() -> {
-    Thread.startVirtualThread(() -> {
-        // dentro del hilo virtual, USUARIO_ACTUAL.get() == "admin"
+const socket = new SockJS('/ws');
+const stompClient = Stomp.over(socket);
+stompClient.connect({}, function(frame) {
+    stompClient.subscribe('/topic/mensajes', function(mensaje) {
+        // JSON.parse(mensaje.body)
     });
+    stompClient.send("/app/chat.enviar", {}, JSON.stringify({texto: "Hola"}));
 });
 
-El valor se hereda sin sobrecarga adicional, ya que los hilos virtuales pueden compartir el contenedor de scoped values de manera eficiente.
-API adicional
+Serialización y mensajes
 
-    ScopedValue.getWhere(ScopedValue<T>, T, Supplier<Runnable>) para obtener un Runnable con un binding alternativo de manera funcional.
+Spring usa un MessageConverter para convertir entre objetos Java y el cuerpo del mensaje STOMP. Por defecto, MappingJackson2MessageConverter con JSON, configurable.
+Consideraciones de escalabilidad y estado
 
-    ScopedValue.where(..., ...).call(() -> ...) para tareas que devuelven valor (con Callable).
+    Los clientes mantienen una sesión con el servidor. En un cluster, el broker externo permite compartir suscripciones.
 
-Ventajas sobre ThreadLocal
+    El fallback SockJS puede crear múltiples peticiones HTTP; hay que dimensionar el pool de hilos.
 
-    Inmutabilidad: los valores no se pueden cambiar una vez establecidos.
+    Cuida el envío masivo: para miles de usuarios, el broker externo es obligatorio.
 
-    Ámbito visible: el binding solo existe dentro de la ejecución del bloque, imposible de olvidar limpiar.
+    Las sesiones WebSocket no comparten el HttpSession automáticamente; se puede configurar un HandshakeInterceptor para transferir el usuario autenticado.
 
-    Mejor rendimiento y escalabilidad (especialmente en hilos virtuales).
+09_Miscelaneos/Integracion_JMS_y_Kafka.md
+Mensajería asíncrona en Spring
 
-    Herencia clara sin fugas.
+Spring ofrece abstracciones para los dos estándares de mensajería más extendidos: JMS (Java Message Service) para brokers tradicionales como ActiveMQ o Artemis, y Apache Kafka para streaming de eventos de alto rendimiento.
 
-    Estado: Preview en Java 21. Habilitar con --enable-preview.
+Aunque los detalles difieren, el patrón es similar: un Template para enviar mensajes y un Listener anotado para recibirlos.
+Integración JMS
+Configuración con Spring Boot
 
-08.07 – STRUCTURED CONCURRENCY (PREVIEW)
+Starter: spring-boot-starter-artemis (o -activemq). Boot autoconfigura una ConnectionFactory y un JmsTemplate a partir de las propiedades:
+properties
 
-La Concurrencia Estructurada busca tratar varias tareas concurrentes como una unidad de trabajo, confinando su ciclo de vida a un bloque sintáctico. Esto facilita la cancelación, el manejo de errores y la observabilidad.
-Idea central
+spring.artemis.mode=native
+spring.artemis.broker-url=tcp://localhost:61616
+spring.artemis.user=admin
+spring.artemis.password=admin
 
-En lugar de lanzar hilos y unirlos manualmente, se usa un StructuredTaskScope que controla las subtareas. Cuando el bloque termina, el scope espera a que todas las tareas finalicen (o las cancela si falla alguna) antes de continuar. Se asemeja a un try-with-resources.
-Ejemplo con ShutdownOnFailure
+O con ActiveMQ:
+properties
+
+spring.activemq.broker-url=tcp://localhost:61616
+spring.activemq.user=admin
+spring.activemq.password=admin
+
+Envío de mensajes con JmsTemplate
 java
 
-try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-    Future<String> tarea1 = scope.fork(() -> leerBaseDatos());
-    Future<Integer> tarea2 = scope.fork(() -> calcularEstadisticas());
+@Autowired
+private JmsTemplate jmsTemplate;
 
-    scope.join();            // espera a que todas las subtareas terminen o fallen
-    scope.throwIfFailed();   // si alguna falló, lanza la excepción
-
-    String resultado1 = tarea1.resultNow();
-    int resultado2 = tarea2.resultNow();
-    return combinar(resultado1, resultado2);
+public void enviarPedido(Pedido pedido) {
+    jmsTemplate.convertAndSend("cola.pedidos", pedido);
 }
 
-    fork lanza la tarea y devuelve un Future.
+convertAndSend utiliza un MessageConverter (por defecto MappingJackson2MessageConverter si Jackson está presente) para serializar a JSON.
 
-    join() bloquea hasta que todas las tareas finalicen o alguna falle (según política).
-
-    throwIfFailed() propaga cualquier excepción ocurrida en las subtareas.
-
-Políticas de manejo de errores
-
-    ShutdownOnFailure: si cualquier subtarea falla, se cancelan las demás y la excepción se lanza en throwIfFailed.
-
-    ShutdownOnSuccess: obtiene el primer resultado exitoso y cancela las otras (útil para consultas redundantes).
-
-    Se pueden crear políticas propias extendiendo StructuredTaskScope.
-
-Ventajas
-
-    Árbol de tareas observable: la relación padre‑hijo queda reflejada en los volcados de hilos y herramientas de monitoreo.
-
-    Cancelación automática: al cerrar el scope, se cancelan las subtareas aún en ejecución.
-
-    Código más simple: sin CountDownLatch, ExecutorService manual ni colecciones externas para recolectar resultados.
-
-    Integración con hilos virtuales para máxima escalabilidad.
-
-Consideraciones
-
-    Al ser preview, puede haber cambios en la API final.
-
-    Requiere habilitar --enable-preview.
-
-    Los Future devueltos por fork no son los mismos Future de java.util.concurrent (son internos del scope), y no se deben pasar fuera del bloque del scope.
-
-    Estado: Preview en Java 21.
-
-08.08 – FOREIGN FUNCTION & MEMORY API (PREVIEW)
-
-La Foreign Function & Memory API (FFM API) reemplaza a JNI (Java Native Interface) para interactuar con código nativo y gestionar memoria fuera del heap de manera segura y eficiente. Unifica en una sola API el acceso a funciones externas y la manipulación de memoria nativa.
-Componentes principales
-
-    MemorySegment: representa una región continua de memoria (nativa o en el heap). Puede ser cero-copy con arrays de bytes, o provenir de malloc, etc.
-
-    Arena: controla el ciclo de vida de los segmentos de memoria (similar a un asignador). Tipos:
-
-        Arena.global(): memoria que nunca se libera.
-
-        Arena.ofAuto(): liberación gestionada por el garbage collector.
-
-        Arena.ofConfined() y Arena.ofShared(): control manual o thread‑safe.
-
-    ValueLayout: describe tipos básicos (JAVA_INT, JAVA_LONG, etc.) para leer/escribir en segmentos.
-
-    FunctionDescriptor y Linker: permiten describir funciones nativas y llamarlas.
-
-Acceso a memoria nativa
+Si necesitas control fino (headers, propiedades JMS), puedes crear un Message con JmsTemplate.send().
+Recepción con @JmsListener
 java
 
-try (var arena = Arena.ofConfined()) {
-    MemorySegment segment = arena.allocate(10); // 10 bytes nativos
-    segment.set(ValueLayout.JAVA_INT, 0, 123); // escribe un int en offset 0
-    int valor = segment.get(ValueLayout.JAVA_INT, 0); // lee
-}
-
-Los segmentos proporcionan acceso tipado y seguro (con bounds checks en modo depuración).
-Llamada a funciones nativas (downcall)
-java
-
-Linker linker = Linker.nativeLinker();
-MethodHandle strlen = linker.downcallHandle(
-    linker.defaultLookup().find("strlen").get(),
-    FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
-);
-MemorySegment str = arena.allocateFrom("Hello"); // guarda una cadena C
-long len = (long) strlen.invoke(str);
-
-Exposición de funciones Java a código nativo (upcall)
-
-Es posible crear punteros a funciones Java que sean llamables desde C.
-Seguridad y rendimiento
-
-    Acceso restringido por defecto; se requieren permisos o flags de JVM para operaciones nativas.
-
-    Mejor rendimiento que JNI al evitar transiciones complejas y permitir optimizaciones del compilador JIT.
-
-    La API está diseñada para ser amigable con los Value types (futuros) y el vector API.
-
-    Estado: Preview en Java 21 (tercera incubación). Requiere --enable-preview.
-
-08.09 – UNNAMED PATTERNS AND VARIABLES (PREVIEW)
-
-Los Patrones y Variables sin nombre permiten usar el carácter _ para declarar variables o componentes de patrón cuyo valor no se necesita, mejorando la legibilidad y reduciendo advertencias.
-Unnamed variable (_)
-
-En cualquier lugar donde se declare una variable local, parámetro de lambda o catch, se puede usar _ si el valor no se usa:
-java
-
-try (var _ = ScopedValue.where(FLAG, true)) {
-    // No necesitamos la variable del scope auto-closeable
-}
-
-// En un catch
-try { ... } catch (Exception _) {
-    // No nos interesa la excepción concreta
-}
-
-// En lambdas
-lista.stream().collect(Collectors.toMap(k -> k, _ -> 1)); // el valor no importa
-
-// En bucles for-each
-for (var _ : lista) {
-    // solo interesa contar iteraciones
-}
-
-El compilador no emite advertencias por no uso, y la variable no consume memoria significativa.
-Unnamed patterns (_)
-
-En patrones de registro o de switch, se puede usar _ para componentes que no interesan:
-java
-
-record Rectangulo(double ancho, double alto) {}
-if (figura instanceof Rectangulo(double _, double alto)) {
-    System.out.println("Alto: " + alto);
-}
-
-switch (figura) {
-    case Rectangulo(var _, var alto) -> "Alto: " + alto;
-    ...
-}
-
-También se puede usar en patrones de registro anidados: Segmento(Punto(_, _), Punto(var x, var y)).
-Unnamed pattern en case
-
-En un switch, un pattern _ puede funcionar como default pero capturando cualquier valor sin vincular la variable:
-java
-
-case _ -> System.out.println("Caso por defecto");
-
-A diferencia de default, _ es un patrón que coincide con todo, y si hay varios case _, se aplica el orden.
-Beneficios
-
-    Claridad: se documenta explícitamente que el valor no se usa.
-
-    Menos contaminación del espacio de nombres.
-
-    Mejora en las revisiones de código.
-
-    Estado: Preview en Java 21. Habilitar con --enable-preview.
-
-09 – CONCURRENCIA AVANZADA EN JAVA 21
-
-Esta sección está dedicada a la concurrencia clásica y moderna en Java. Aunque los hilos de plataforma y los Executors llevan años con nosotros, entenderlos a fondo es imprescindible para apreciar las innovaciones de Java 21 y para combinar ambas aproximaciones en aplicaciones reales. A continuación, se presentan los contenidos detallados para cada uno de los tres archivos.
-09.01 – HILOS DE PLATAFORMA (PLATFORM THREADS)
-1. Modelo de hilos tradicional
-
-Un hilo de plataforma es un hilo del sistema operativo envuelto por la JVM. Cada uno tiene su propia pila (típicamente ~1 MB) y es gestionado directamente por el SO. Crear miles de estos hilos consume una cantidad de memoria prohibitiva y el cambio de contexto puede degradar el rendimiento.
-
-En Java, la clase java.lang.Thread representa un hilo de plataforma (también llamado kernel thread). Aunque en Java 21 existe Thread.ofVirtual(), el constructor clásico new Thread(...) sigue creando un hilo de plataforma.
-2. Ciclo de vida de un hilo de plataforma
-
-Los estados definidos en Thread.State son:
-
-    NEW: creado pero no iniciado (start() no llamado).
-
-    RUNNABLE: ejecutándose o listo para ejecutarse.
-
-    BLOCKED: esperando adquirir un monitor (bloqueo intrínseco con synchronized).
-
-    WAITING: esperando indefinidamente a que otro hilo realice una acción (Object.wait(), Thread.join(), LockSupport.park()).
-
-    TIMED_WAITING: espera con tiempo límite (sleep(), wait(timeout), join(timeout), etc.).
-
-    TERMINATED: el hilo ha finalizado su ejecución.
-
-3. Creación de hilos de plataforma
-Extendiendo Thread
-java
-
-class MiHilo extends Thread {
-    @Override public void run() {
-        System.out.println("Hilo ejecutándose: " + Thread.currentThread().getName());
-    }
-}
-MiHilo h = new MiHilo();
-h.start(); // inicia el nuevo hilo
-
-Implementando Runnable
-java
-
-Runnable tarea = () -> System.out.println("Tarea en hilo: " + Thread.currentThread().getName());
-new Thread(tarea).start();
-
-Desde Java 8 podemos usar lambdas o referencias a métodos para definir el Runnable.
-4. Propiedades y métodos útiles
-
-    setName(String) / getName(): nombre del hilo.
-
-    setDaemon(boolean): un hilo demonio termina cuando todos los hilos no demonio han finalizado.
-
-    setPriority(int): prioridad (1..10), solo una sugerencia al SO.
-
-    join(): espera a que el hilo termine.
-
-    interrupt(): envía una señal de interrupción. El hilo destino debe cooperar verificando Thread.interrupted() o manejando InterruptedException.
-
-    Thread.sleep(long): suspende el hilo actual durante un tiempo; puede lanzar InterruptedException.
-
-5. Sincronización básica
-synchronized
-
-Mecanismo de bloqueo intrínseco sobre objetos.
-
-    Método sincronizado:
-    java
-
-    public synchronized void incrementar() {
-        contador++;
-    }
-
-    Bloque sincronizado:
-    java
-
-    synchronized (objetoBloqueo) {
-        // sección crítica
-    }
-
-wait(), notify(), notifyAll() deben llamarse dentro de un bloque synchronized y sobre el objeto de bloqueo.
-volatile
-
-Garantiza visibilidad de los cambios en una variable entre hilos, pero no atómica.
-java
-
-private volatile boolean detenido = false;
-public void detener() { detenido = true; }
-
-6. Problemas clásicos
-
-    Condiciones de carrera: múltiples hilos acceden desordenadamente a datos compartidos.
-
-    Deadlock: dos o más hilos se bloquean mutuamente esperando cerrojos que nunca liberan.
-
-    Starvation: un hilo nunca obtiene acceso a un recurso.
-
-    Inanición de hilos: mal uso de notify() en lugar de notifyAll().
-
-7. Limitaciones del modelo de plataforma
-
-    Escalabilidad: un hilo por petición no escala a decenas de miles de conexiones simultáneas.
-
-    Consumo de recursos: memoria de pila y coste de creación.
-
-    Gestión explícita: hay que definir pools, sincronización, etc.
-
-Estas limitaciones motivaron la evolución hacia los Executors (siguiente tema) y, en Java 21, hacia los hilos virtuales.
-09.02 – EXECUTORS Y FUTURES
-
-El framework Executors (desde Java 5) desacopla la definición de una tarea de la mecánica de ejecución. Permite manejar pools de hilos, programación periódica y obtener resultados de manera asincrónica.
-1. La interfaz Executor
-java
-
-void execute(Runnable command);
-
-La implementación más simple ejecuta el comando en un hilo nuevo o directamente en el invocador. No se usa casi nunca directamente; su subinterfaz ExecutorService es la relevante.
-2. ExecutorService y sus implementaciones
-
-ExecutorService añade métodos para el ciclo de vida:
-
-    submit(Callable<T>) y submit(Runnable) devuelven un Future.
-
-    invokeAll(), invokeAny().
-
-    shutdown() y shutdownNow().
-
-Obtenemos instancias mediante la clase Executors (factory methods):
-
-    Executors.newFixedThreadPool(int): pool con un número fijo de hilos.
-
-    Executors.newCachedThreadPool(): crea hilos bajo demanda y los reutiliza.
-
-    Executors.newSingleThreadExecutor(): un único hilo que ejecuta tareas secuencialmente.
-
-    Executors.newScheduledThreadPool(int): para tareas programadas o periódicas.
-
-    Executors.newWorkStealingPool(): pool basado en ForkJoinPool.
-
-    En Java 21: Executors.newVirtualThreadPerTaskExecutor(): crea un hilo virtual por cada tarea.
-
-3. Callable y Future
-
-Callable<V> es como Runnable pero devuelve un resultado y puede lanzar excepciones comprobadas.
-java
-
-Callable<Integer> tarea = () -> {
-    Thread.sleep(100);
-    return 42;
-};
-Future<Integer> futuro = executor.submit(tarea);
-// ... hacer otras cosas
-Integer resultado = futuro.get(); // bloquea hasta que esté disponible
-
-Future ofrece:
-
-    get() con o sin timeout.
-
-    cancel(boolean): intenta cancelar la tarea.
-
-    isDone(), isCancelled().
-
-4. Limitaciones de Future
-
-    No hay forma de componer múltiples futures sin bloqueos manuales.
-
-    No se puede reaccionar a la finalización de una tarea de manera no bloqueante (salvo encuestas).
-
-    Errores difíciles de manejar en cadenas.
-
-5. CompletableFuture (Java 8+)
-
-CompletableFuture<T> implementa Future y CompletionStage, proporcionando un modelo de programación asíncrona rico y no bloqueante.
-Creación
-java
-
-CompletableFuture.supplyAsync(() -> calcular());
-CompletableFuture.runAsync(() -> enviarMensaje());
-
-Sin especificar Executor usan el ForkJoinPool.commonPool(); se puede pasar un Executor.
-Composición
-
-    thenApply(Function): transforma el resultado.
-
-    thenAccept(Consumer): consume el resultado.
-
-    thenRun(Runnable): ejecuta acción tras finalizar, sin usar el resultado.
-
-    thenCompose(Function): encadena otro CompletableFuture (flatMap).
-
-    thenCombine(other, BiFunction): combina dos futures independientes.
-
-java
-
-CompletableFuture<String> futuro = CompletableFuture
-    .supplyAsync(() -> obtenerId())
-    .thenCompose(id -> CompletableFuture.supplyAsync(() -> buscarPorId(id)))
-    .thenApply(entidad -> entidad.getNombre())
-    .exceptionally(ex -> "Error: " + ex.getMessage());
-
-Métodos de coordinación
-
-    allOf(...): espera a que todos los futures especificados terminen.
-
-    anyOf(...): devuelve el resultado del primero que termine.
-
-Completado manual
-
-    complete(valor): completa el futuro con un valor si aún no se ha completado.
-
-    completeExceptionally(Throwable): completa con una excepción.
-
-6. ScheduledExecutorService
-
-Permite programar tareas para ejecutarse tras un retraso o de forma periódica:
-
-    schedule(Callable, delay, unit): ejecución única diferida.
-
-    scheduleAtFixedRate(Runnable, delay, period, unit): tarea periódica a intervalos regulares, sin importar el tiempo de ejecución.
-
-    scheduleWithFixedDelay(Runnable, delay, delay, unit): tarea periódica con retraso entre finalización e inicio de la siguiente.
-
-7. Fork/Join Framework (breve)
-
-ForkJoinPool está optimizado para trabajo que se puede dividir recursivamente (divide y vencerás). Es la base del parallelStream(). Se programa con RecursiveTask<V> o RecursiveAction.
-8. El nuevo Executor de hilos virtuales (Java 21)
-
-Executors.newVirtualThreadPerTaskExecutor() devuelve un ExecutorService que crea un nuevo hilo virtual por cada tarea. Es una recomendación para la mayoría de las cargas de trabajo de alta concurrencia, ya que combina la facilidad de uso de un Executor con la escalabilidad de los hilos virtuales. Internamente, cada tarea obtiene su propio hilo virtual; no hay pool de hilos virtuales (no es necesario). Ejemplo:
-java
-
-try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-    for (int i = 0; i < 1_000; i++) {
-        executor.submit(() -> procesarPeticion());
+@Component
+public class PedidoListener {
+
+    @JmsListener(destination = "cola.pedidos")
+    public void recibirPedido(Pedido pedido) {
+        // procesar pedido
     }
 }
 
-09.03 – VIRTUAL THREADS Y CONCURRENCIA ESTRUCTURADA EN PROFUNDIDAD
-1. Arquitectura interna de los hilos virtuales
-
-Los hilos virtuales se implementan sobre una pequeña cantidad de hilos de plataforma llamados carriers. Cuando un hilo virtual ejecuta una operación que lo bloquearía (I/O, sleep, park), la JVM desmonta el hilo virtual del carrier y lo registra en un heap interno hasta que la condición se complete. El carrier queda libre para ejecutar otro hilo virtual.
-
-    El programador (scheduler) de hilos virtuales es ForkJoinPool con un modo de paralelismo que por defecto iguala al número de procesadores disponibles.
-
-    La pila del hilo virtual se almacena en el heap como objetos Java; al cambiar de contexto solo se intercambian referencias (muy eficiente).
-
-    Se puede monitorear con jcmd y jstack; los volcados muestran hilos virtuales sin coste adicional.
-
-2. Modelo de uso recomendado
-
-    No reutilizar hilos virtuales: son desechables y muy baratos (~1 KB de sobrecarga inicial). Se crea uno por tarea.
-
-    No usar pools: ni Executors.newFixedThreadPool con hilos virtuales; usar directamente el executor virtual.
-
-    Cuidado con el pinning: si un hilo virtual ejecuta código que no se puede desmontar (por ejemplo, un bloque synchronized que no se libera pronto, o un método nativo JNI que bloquea), el carrier queda ocupado y puede reducir la capacidad de concurrencia. En Java 21, algunas situaciones comunes de pinning se han eliminado o mitigado (p.ej., Object.wait() libera el carrier). Para evitar pinning en secciones críticas largas, usar ReentrantLock en lugar de synchronized.
-
-    ThreadLocal: los hilos virtuales soportan ThreadLocal, pero su uso excesivo puede incrementar la memoria porque cada hilo virtual mantiene su copia. En su lugar, se recomiendan Scoped Values (preview) para datos de ámbito controlado.
-
-3. Ejemplo de migración de un servidor
-
-Antes (con pool de plataforma):
+Para lecturas transaccionales, añade @Transactional al método (si hay un JmsTransactionManager o JtaTransactionManager). También se puede configurar concurrency para paralelismo:
 java
 
-ExecutorService pool = Executors.newFixedThreadPool(200);
-while (true) {
-    Socket s = server.accept();
-    pool.submit(() -> manejar(s));
-}
+@JmsListener(destination = "cola.pedidos", concurrency = "3-10")
 
-Ahora (con hilos virtuales):
+Configuración avanzada de JMS
+
+    Destinos dinámicos: usar "dynamicQueues/..." en Artemis.
+
+    Mensajes de texto plano: cambiar MessageConverter por SimpleMessageConverter.
+
+    Dead Letter Queue: configurar en el broker.
+
+    Pub/Sub con tópicos: jmsTemplate.setPubSubDomain(true) y destino tema.nombre.
+
+Integración Apache Kafka
+Dependencias y configuración
+
+Starter: spring-kafka. Spring Boot autoconfigura KafkaTemplate y consumer factories.
+
+Propiedades base:
+properties
+
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=pedidos-group
+spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.JsonDeserializer
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+
+Productor con KafkaTemplate
 java
 
-while (true) {
-    Socket s = server.accept();
-    Thread.startVirtualThread(() -> manejar(s));
+@Autowired
+private KafkaTemplate<String, Pedido> kafkaTemplate;
+
+public void enviarPedido(Pedido pedido) {
+    kafkaTemplate.send("topic-pedidos", pedido.getId().toString(), pedido)
+        .addCallback(
+            result -> log.info("Enviado: {}", result.getProducerRecord().value()),
+            ex -> log.error("Error", ex)
+        );
 }
 
-El código se simplifica, el límite pasa a ser la memoria general de la JVM en lugar de los hilos del SO.
-4. Concurrencia estructurada (Structured Concurrency, preview)
-
-La concurrencia estructurada extiende el concepto de hilos virtuales al agrupar varias tareas relacionadas como una unidad de trabajo, confinando su ciclo de vida a un bloque léxico. Se implementa mediante StructuredTaskScope (en java.util.concurrent, preview en Java 21).
-StructuredTaskScope.ShutdownOnFailure
-
-El más común: si una subtarea falla, se cancelan las demás y se propaga la excepción.
+Se envía con una clave para particionamiento. El serializador JSON maneja el objeto.
+Consumidor con @KafkaListener
 java
 
-try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-    Future<String> pedido = scope.fork(() -> obtenerPedido(id));
-    Future<Cliente> cliente = scope.fork(() -> obtenerCliente(idCliente));
+@Component
+public class PedidoConsumer {
 
-    scope.join();           // espera a que todas las subtareas terminen o falle alguna
-    scope.throwIfFailed();  // si alguna falló, lanza la excepción
-
-    // Aquí ambas tareas han finalizado con éxito
-    return new Factura(cliente.resultNow(), pedido.resultNow());
+    @KafkaListener(topics = "topic-pedidos", groupId = "pedidos-group")
+    public void escuchar(Pedido pedido) {
+        // procesar pedido
+    }
 }
 
-    fork(Callable) devuelve un Future interno que NO debe salir del scope.
+Spring gestiona el offset commit automáticamente (por defecto enable.auto.commit=true, se commit tras el procesamiento). Para control manual, usar Acknowledgment en el parámetro y spring.kafka.consumer.enable-auto-commit=false.
+Manejo de errores y reintentos
 
-    join() bloquea al hilo virtual actual de manera eficiente. Internamente, la JVM puede desmontar el hilo virtual mientras espera.
-
-    Si lanza ThrowIfFailed, las excepciones de las subtareas se agrupan adecuadamente.
-
-StructuredTaskScope.ShutdownOnSuccess
-
-Útil para obtener el primer resultado exitoso de un conjunto de tareas redundantes y cancelar las otras.
+Se puede configurar un ErrorHandler o SeekToCurrentErrorHandler para reintentos locales:
 java
 
-try (var scope = new StructuredTaskScope.ShutdownOnSuccess<String>()) {
-    scope.fork(() -> consultarApi1());
-    scope.fork(() -> consultarApi2());
-
-    scope.join();
-    String resultado = scope.result();  // obtiene el resultado del primero exitoso
-    // las demás tareas se cancelaron automáticamente
+@Bean
+public ConcurrentKafkaListenerContainerFactory<String, Pedido> kafkaListenerContainerFactory() {
+    ConcurrentKafkaListenerContainerFactory<String, Pedido> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+    factory.setCommonErrorHandler(new DefaultErrorHandler(
+            new FixedBackOff(1000L, 3))); // 3 reintentos, 1 seg entre ellos
+    return factory;
 }
 
-Custom policies
+Para dead-letter topics, con DeadLetterPublishingRecoverer se envían los mensajes fallidos a un topic de error.
+Procesamiento batch
 
-Podemos extender StructuredTaskScope y sobrescribir handleComplete(Future) para decidir cuándo detener otras tareas.
-Integración con Scoped Values
+Se pueden consumir lotes configurando factory.setBatchListener(true) y el método del listener con List<Pedido>.
+Kafka Streams con Spring
 
-Los valores de ámbito se heredan automáticamente dentro de las subtareas lanzadas por el scope.
-java
+Spring también soporta escribir aplicaciones de streaming mediante KafkaStreams. Configurando un StreamsBuilder bean se definen topologías. Pero eso ya forma parte de un módulo más avanzado (Spring Cloud Stream con Kafka Streams).
+Spring Cloud Stream (abstracción de alto nivel)
 
-ScopedValue.where(TRACE_ID, trace).run(() -> {
-    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-        scope.fork(() -> logWithTrace());
-        ...
-    }
-});
+Para quienes prefieren una capa aún más alta, Spring Cloud Stream abstrae JMS, Kafka, RabbitMQ y otros bajo un modelo de canales (Source, Sink, Processor). No se cubre aquí en profundidad, pero es importante mencionarlo.
+¿Cuándo elegir JMS vs Kafka?
 
-La combinación de hilos virtuales, scoped values y concurrencia estructurada representa el nuevo estándar para aplicaciones concurrentes seguras y escalables en Java.
-5. Observabilidad
+    JMS: transacciones distribuidas tradicionales con garantías "exactly-once" mediante protocolo XA, integración con servidores de aplicaciones, colas y tópicos clásicos. Adecuado para integraciones empresariales clásicas y entornos donde ya existe un broker JMS.
 
-    Los hilos virtuales se integran con el sistema de monitoreo: jcmd Thread.dump_to_file captura todos los hilos sin overhead.
+    Kafka: altísimo rendimiento, persistencia inmuttable, retroconsumo (reprocesar eventos), particionamiento, escalado horizontal nativo. Ideal para microservicios con CQRS, event sourcing y datos en tiempo real.
 
-    La concurrencia estructurada refleja las relaciones padre-hijo en los nombres de hilos y en los volcados, facilitando la depuración de fallos en cascada.
-
-6. Buenas prácticas y transición
-
-    Nuevas aplicaciones: usar hilos virtuales y concurrencia estructurada cuando sea posible.
-
-    Código heredado: las bibliotecas que realizan I/O bloqueante (p.ej., JDBC antiguo) se benefician automáticamente sin cambios; miles de hilos virtuales pueden estar bloqueados en lectura de base de datos sin agotar los hilos del SO.
-
-    Frameworks: Spring Boot 3.2+ ofrece opción para hilos virtuales en Tomcat; Quarkus y Micronaut también.
-
-    Cuidado con la limitación de recursos: aunque los hilos virtuales son baratos, aún se pueden agotar recursos como conexiones de base de datos o memoria total.
-
-10 – JVM Y RENDIMIENTO EN JAVA 21
-
-La Máquina Virtual Java (JVM) es el entorno de ejecución que convierte el bytecode en instrucciones nativas y gestiona los recursos de la aplicación. Comprenderla a fondo es indispensable para escribir código eficiente, diagnosticar problemas de rendimiento y aprovechar al máximo las mejoras que trae Java 21. A continuación se desarrollan los tres ficheros de esta sección.
-10.01 – FUNCIONAMIENTO DE LA JVM
-1. Arquitectura global de la JVM
-
-La especificación de la JVM define varios subsistemas:
-
-    Cargador de clases (Class Loader): carga, enlaza e inicializa las clases.
-
-    Áreas de datos en tiempo de ejecución (Runtime Data Areas): pilas, heap, área de métodos, registros del PC, etc.
-
-    Motor de ejecución (Execution Engine): interpreta el bytecode, ejecuta métodos nativos y realiza la compilación JIT.
-
-    Interfaz nativa (JNI) y Foreign Function & Memory API (preview en 21): interacción con código no Java.
-
-En Java 21, la JVM sigue siendo un proceso nativo que aloja el ecosistema Java y ha evolucionado para soportar hilos virtuales, nuevos GCs y mejoras de rendimiento.
-2. Carga de clases
-
-Se realiza bajo demanda (lazy loading). El proceso consta de:
-
-    Carga: el ClassLoader busca el archivo .class y genera la representación interna (Class<?>).
-
-    Enlace (Linking):
-
-        Verificación: comprueba que el bytecode es correcto y seguro.
-
-        Preparación: asigna memoria para variables estáticas y las inicializa con valores por defecto.
-
-        Resolución (opcional): convierte referencias simbólicas a referencias directas (a clases, campos, métodos).
-
-    Inicialización: ejecuta los inicializadores estáticos y asigna los valores iniciales definidos por el programador.
-
-Jerarquía de ClassLoaders (típicamente):
-
-    Bootstrap ClassLoader (nativo, carga las clases del núcleo de java.base).
-
-    Platform ClassLoader (carga APIs de la plataforma, antiguo Extension ClassLoader).
-
-    Application ClassLoader (carga clases del classpath).
-
-En el sistema de módulos (JPMS), cada módulo tiene su propio cargador o se apoya en el de la aplicación.
-3. Áreas de datos en tiempo de ejecución
-
-    Registro del contador de programa (PC Register): por cada hilo, apunta a la instrucción actual.
-
-    Pilas de la JVM (JVM Stacks): cada hilo tiene una pila que almacena marcos (frames). Un marco contiene variables locales, pila de operandos y referencia al runtime constant pool. La pila puede ser de tamaño fijo o dinámico (-Xss). Al lanzar una excepción, se recorre la pila para buscar un manejador.
-
-    Heap: área compartida donde residen los objetos y arrays. Gestionado por el recolector de basura. Se puede dimensionar con -Xms (tamaño inicial) y -Xmx (máximo).
-
-    Área de métodos (Metaspace desde Java 8): almacena metadatos de las clases (estructuras del class, constant pool, métodos, campos). Fuera del heap, en memoria nativa. Su tamaño se controla con -XX:MaxMetaspaceSize.
-
-    Runtime Constant Pool: por cada clase, contiene constantes simbólicas, strings y referencias a métodos.
-
-4. Motor de ejecución
-
-Ejecuta las instrucciones bytecode. Combina dos modos:
-Interpretación
-
-Cada bytecode se decodifica y ejecuta por un intérprete. Arranque rápido pero ejecución lenta.
-Compilación Just-In-Time (JIT)
-
-Cuando un método o bucle se considera “caliente” (basado en contadores de invocación y ciclos), el compilador JIT lo traduce a código nativo optimizado.
-
-Compiladores JIT en HotSpot:
-
-    C1 (Client Compiler): compilación rápida con optimizaciones ligeras. Adecuado para aplicaciones con tiempo de arranque limitado.
-
-    C2 (Server Compiler): optimizaciones agresivas, compilación más lenta pero código final muy eficiente.
-
-Java 21 introduce mejoras en el compilador JIT: refinamiento de inlining, eliminación de bloqueos innecesarios, y soporte para nuevas instrucciones de CPU.
-
-Compilación por niveles (Tiered Compilation) (activada por defecto):
-
-    Nivel 0: interpretación.
-
-    Nivel 1-3: compilación C1 con diferentes grados de optimización y recolección de perfiles.
-
-    Nivel 4: compilación C2 usando los perfiles recogidos.
-
-Compilación anticipada (AOT): mediante jaotc (en desuso a favor de GraalVM Native Image) no es soportada directamente en Java 21; GraalVM Native Image permite compilar a binario nativo con sus propias ventajas.
-5. Hilos en la JVM
-
-Java 21 soporta dos tipos de hilos:
-
-    Hilos de plataforma: mapeados 1:1 a hilos del SO.
-
-    Hilos virtuales: gestionados por la JVM sobre un pequeño número de carriers.
-
-La JVM utiliza librerías nativas para la gestión de hilos y para operaciones de bloqueo (como Unsafe.park). Con los hilos virtuales, la JVM puede desacoplar el bloqueo virtual del bloqueo del carrier.
-6. Herramientas de monitoreo en Java 21
-
-    jps, jstat, jinfo, jmap, jstack, jcmd siguen siendo las herramientas estándar.
-
-    jconsole y Java Mission Control (JMC) para monitoreo gráfico.
-
-    jcmd permite obtener volcados de hilos de forma ligera (especialmente importante con hilos virtuales).
-
-    -XX:+PrintFlagsFinal muestra las flags de la JVM.
-
-    -Xlog:gc proporciona logs detallados del GC (unificado desde Java 9).
-
-10.02 – GARBAGE COLLECTION
-1. Principios básicos del GC
-
-El recolector de basura libera memoria ocupada por objetos que ya no son alcanzables desde las raíces (variables locales, estáticas, referencias activas de hilos, etc.). La JVM divide el heap en regiones (o generaciones) para aplicar distintos algoritmos según la longevidad de los objetos.
-2. Hipótesis generacional
-
-    La mayoría de los objetos mueren jóvenes (weak generational hypothesis).
-
-    Los objetos viejos que sobreviven tienden a persistir mucho tiempo.
-    Por ello, se divide en:
-
-    Young Generation: objeto recién creado. Subdividida en Eden y dos espacios Survivor (S0, S1).
-
-    Old Generation (Tenured): objetos que han sobrevivido varios ciclos de GC menor.
-
-    Metaspace (fuera del heap): metadatos de clases.
-
-3. Conceptos comunes
-
-    GC menor (Minor GC): recolecta solo la generación joven. Rápido.
-
-    GC mayor (Major GC) / Full GC: involucra la generación vieja y a menudo todo el heap. Pausas largas, intentar minimizarlas.
-
-    Stop-The-World (STW): todos los hilos de aplicación se detienen para que el GC realice su trabajo.
-
-    Compactación: reorganiza objetos vivos para eliminar fragmentación.
-
-    Promoción: mover objetos supervivientes de la generación joven a la vieja.
-
-4. Recolectores disponibles en Java 21
-Serial GC ( -XX:+UseSerialGC )
-
-    Un solo hilo para GC menor y mayor.
-
-    Adecuado para aplicaciones con heap pequeño (~<100 MB) o entornos embebidos.
-
-    Pausas largas con heap grande.
-
-Parallel GC ( -XX:+UseParallelGC )
-
-    Varios hilos para GC menor y mayor (stop-the-world en ambos).
-
-    Maximiza throughput (rendimiento).
-
-    Buena opción para procesos batch que toleran pausas.
-
-G1 GC ( -XX:+UseG1GC ) – Predeterminado desde Java 9
-
-    Divide el heap en regiones de tamaño fijo y recolecta preferentemente las regiones con más basura.
-
-    Balance entre pausas y throughput.
-
-    Pausas configurables con -XX:MaxGCPauseMillis (por defecto 200 ms).
-
-    Realiza compactaciones parciales y ciclos de marcado concurrente (SATB).
-
-    Mejoras en Java 21: refinamiento de la predicción de pausa, mejor manejo de regiones humongous.
-
-ZGC ( -XX:+UseZGC )
-
-    Diseñado para pausas inferiores a 1 ms, incluso con heaps de terabytes.
-
-    Concurrente en casi todas las fases (marcado, compactación, referencias).
-
-    A partir de Java 21, ZGC soporta generaciones (activando -XX:+ZGenerational). Separa objetos jóvenes de viejos para recolectar los jóvenes con mucha más frecuencia, reduciendo la presión de asignación.
-
-    Sus algoritmos de “punteros coloreados” y “load barriers” permiten mover objetos sin detener los hilos de aplicación.
-
-    Muy recomendado para aplicaciones que requieren baja latencia.
-
-Shenandoah GC ( -XX:+UseShenandoahGC )
-
-    También de latencia ultrabaja, con compactación concurrente mediante evacuación.
-
-    A diferencia de ZGC, no requiere punteros coloreados; usa barreras de lectura y escritura.
-
-    Soporta generaciones opcionales (modo generacional en desarrollo/preview).
-
-    Disponible en JDK builds que lo incluyan; en Oracle JDK está presente.
-
-Epsilon GC ( -XX:+UseEpsilonGC )
-
-    No recolecta basura; solo asigna memoria hasta que se acaba.
-
-    Útil para pruebas de rendimiento, benchmarks, o aplicaciones de vida corta.
-
-5. Factores que afectan la elección del GC
-
-    Latencia máxima aceptable: ZGC / Shenandoah.
-
-    Throughput: Parallel GC.
-
-    Equilibrio: G1.
-
-    Tamaño del heap: ZGC escala mejor a heaps muy grandes.
-
-    Número de núcleos: Parallel GC y G1 se benefician de muchos cores; ZGC requiere algunos cores para concurrencia.
-
-6. Parámetros de ajuste comunes
-Parámetro	Descripción
--Xmx<size>	Tamaño máximo del heap (ej: -Xmx2g)
--Xms<size>	Tamaño inicial del heap
--XX:MaxGCPauseMillis	Objetivo de pausa máxima (G1)
--XX:+UseStringDeduplication	Elimina duplicados de String en el heap (G1, ZGC)
--XX:+PrintGCDetails	(obsoleto, usar -Xlog:gc*)
--Xlog:gc	Logging unificado del GC
--XX:MetaspaceSize	Tamaño inicial del metaspace
--XX:MaxMetaspaceSize	Tamaño máximo del metaspace
--XX:+UseZGC	Activa ZGC
--XX:+ZGenerational	Modo generacional en ZGC (Java 21+)
--XX:ConcGCThreads	Número de hilos para fases concurrentes
--XX:ParallelGCThreads	Número de hilos para fases STW
-7. Logs y análisis
-
-Con el sistema unificado de logging (-Xlog):
-text
-
--Xlog:gc*=info:file=gc.log:time,uptimemillis:filecount=5,filesize=10M
-
-Herramientas como GCViewer, GCEasy, o JMC permiten visualizar los logs y ajustar parámetros.
-10.03 – OPTIMIZACIÓN DE RENDIMIENTO
-
-Optimizar una aplicación Java implica un proceso iterativo de medición, análisis y ajuste tanto del código como de la JVM.
-1. Métricas clave
-
-    Throughput: cantidad de trabajo por unidad de tiempo.
-
-    Latencia: tiempo de respuesta a una petición.
-
-    Footprint: memoria ocupada (heap + nativa).
-
-    Tiempo de arranque: desde inicio hasta que la aplicación está lista.
-
-    Tiempo de calentamiento (warmup): hasta que el JIT ha optimizado los caminos calientes.
-
-2. Herramientas de profiling y diagnóstico
-
-    Java Flight Recorder (JFR) + Java Mission Control (JMC): recopilación de eventos de la JVM con bajo overhead. Permite analizar asignación de memoria, GC, bloqueos, actividad de hilos, etc.
-
-    Async Profiler: genera flamegraphs de CPU y memoria utilizando perf sin instrumentación costosa.
-
-    VisualVM: herramienta gráfica para monitoreo y profiling.
-
-    JMH (Java Microbenchmark Harness): imprescindible para microbenchmarks precisos, evitando la interferencia del JIT (ej: @BenchmarkMode, @Warmup).
-
-3. Estrategias de optimización de memoria
-
-    Dimensionar correctamente el heap: establecer -Xms igual a -Xmx para evitar redimensionamientos.
-
-    Elegir el GC adecuado y afinarlo con pausas objetivo.
-
-    Reducir el uso de objetos temporales en bucles calientes (autoboxing, Strings concatenados → usar StringBuilder o text blocks en tiempo de compilación).
-
-    Aprovechar colecciones inmutables (List.of) y records para evitar mutabilidad innecesaria.
-
-    Uso de Optional sin abusar; no para campos de entidades.
-
-    Liberar recursos explícitamente (try-with-resources).
-
-    Evitar finalize() (obsoleto y costoso). Usar Cleaner si es imprescindible.
-
-4. Optimización de CPU
-
-    Dejar que el JIT trabaje: evite micro-optimizaciones prematuras; el JIT inlinea métodos y elimina código muerto.
-
-    Perfiles de compilación: el JIT aprovecha perfiles de tipos para devirtualizar llamadas a métodos. Cuanto más estable sea el flujo de tipos, mejor.
-
-    Conversión escalar y eliminación de autoboxing: los análisis de escape permiten eliminar objetos si no escapan del hilo.
-
-    Usar Streams con criterio: para operaciones sencillas pueden generar objetos intermedios; para cálculos críticos medir si conviene un bucle tradicional.
-
-    Concurrencia virtual: sustituir pools de hilos de plataforma por hilos virtuales y concurrencia estructurada para reducir latencia y mejorar throughput en aplicaciones I/O-bound.
-
-5. Optimización del arranque y despliegue
-
-    CDS (Class Data Sharing): -Xshare:on y creación de archivo compartido (-XX:ArchiveClassesAtExit / -XX:SharedArchiveFile) para reducir tiempo de carga.
-
-    AOT con GraalVM Native Image si el tiempo de arranque es crítico (microservicios ephemeral), sacrificando algunas optimizaciones de pico.
-
-    AppCDS permite incluir clases de la aplicación en el archivo compartido.
-
-    Usar módulos y jlink para generar una JRE personalizada y ligera.
-
-6. Técnicas avanzadas en Java 21
-
-    Hilos virtuales para I/O intensiva: migrar servidores y procesos batch que antes requerían pools enormes.
-
-    Scoped Values en lugar de ThreadLocal: menor consumo de memoria, herencia automática sin coste en hilos virtuales.
-
-    Structured Concurrency: evita la pérdida de hilos, mejora la cancelación y la observabilidad.
-
-    Pattern matching y records: reducen el código propenso a errores y la creación de clases intermedias, mejorando el uso de caché de instrucciones.
-
-7. Pasos prácticos de optimización
-
-    Definir objetivos de rendimiento (ej: p95 < 10ms, 1000 req/s).
-
-    Establecer un entorno de pruebas reproducible.
-
-    Perfilar con JFR/Async Profiler para identificar cuellos de botella (CPU, asignación, bloqueos).
-
-    Analizar logs de GC y ajustar tamaño de heap o cambiar de GC si es necesario.
-
-    Aplicar mejoras de código (evitar antipatrones, reducir asignaciones).
-
-    Medir nuevamente para validar la mejora.
-
-    Automatizar pruebas de rendimiento en el CI/CD para detectar regresiones.
-
-8. Flags de JVM útiles para afinamiento
-Flag	Propósito
--server	Selecciona el compilador servidor (suele ser por defecto en 64 bits)
--XX:+AggressiveOpts	Habilita optimizaciones experimentales (no necesario hoy)
--XX:TieredStopAtLevel=1	Solo compila con C1; reduce calentamiento a costa de máximo rendimiento
--XX:+AlwaysPreTouch	Toca toda la memoria del heap al inicio (evita page faults)
--XX:+UseStringDeduplication	Deduplicación de Strings (G1, ZGC)
--XX:+UseTransparentHugePages	Mejora rendimiento con páginas grandes de memoria
--XX:MaxInlineLevel=15	Ajusta la profundidad máxima de inlining
-9. Ejemplo: ajuste para un microservicio con ZGC generacional
-text
-
-java -Xmx2g -Xms2g -XX:+UseZGC -XX:+ZGenerational \
-     -Xlog:gc*:file=gc.log:time,uptimemillis:filecount=5,filesize=20M \
-     -XX:+AlwaysPreTouch \
-     -jar aplicacion.jar
-
-Se logra latencia de GC < 1ms y buen rendimiento incluso bajo cargas altas.
-
-
-11 – ECOSISTEMA DE CONSTRUCCIÓN, PRUEBAS Y EMPAQUETADO
-
-El ecosistema moderno de Java gira en torno a herramientas que automatizan la construcción, las pruebas y la distribución de aplicaciones. Esta sección profundiza en Maven y Gradle como gestores de proyectos, JUnit 5 como plataforma de pruebas y jlink / jpackage para crear distribuciones nativas y ligeras. Todas las explicaciones están actualizadas para Java 21.
-11.01 – MAVEN Y GRADLE: GESTIÓN AVANZADA DE PROYECTOS
-1. El papel de las herramientas de construcción
-
-Antes de Maven/Gradle se usaba Ant (scripts XML) o simplemente javac. Hoy es impensable un proyecto sin gestión automática de dependencias, ciclo de vida estandarizado y plugins.
-2. Maven
-
-Maven se basa en la convención sobre configuración. Utiliza un archivo pom.xml que describe el proyecto, sus dependencias y los plugins que ejecutan tareas.
-2.1. Estructura de un proyecto Maven
-text
-
-miapp/
-├── pom.xml
-└── src/
-    ├── main/java/         # código fuente
-    ├── main/resources/    # recursos (application.properties, etc.)
-    ├── test/java/         # pruebas
-    └── test/resources/
-
-2.2. pom.xml mínimo para Java 21
-xml
-
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>com.empresa</groupId>
-    <artifactId>miapp</artifactId>
-    <version>1.0.0</version>
-    <packaging>jar</packaging>
-
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.10.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <release>21</release>
-                    <!-- para características preview: <compilerArgs>--enable-preview</compilerArgs> -->
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-
-2.3. Ciclo de vida de Maven
-
-Fases principales:
-
-    validate, compile, test, package, verify, install, deploy.
-    Ejecutar mvn package compila, ejecuta tests y empaqueta un JAR.
-
-2.4. Plugins importantes
-
-    maven-compiler-plugin: configura la versión de Java.
-
-    maven-surefire-plugin: ejecución de tests unitarios.
-
-    maven-failsafe-plugin: tests de integración.
-
-    maven-jar-plugin: empaquetado base.
-
-    maven-shade-plugin / maven-assembly-plugin: crear fat JAR con dependencias.
-
-    maven-jlink-plugin: construir imágenes JRE personalizadas.
-
-    maven-jpackage-plugin: invocar jpackage.
-
-2.5. Gestión de dependencias
-
-Las dependencias se declaran con groupId, artifactId, version y scope (compile, test, provided, runtime). Maven resuelve las dependencias transitivas y las almacena en el repositorio local (~/.m2).
-
-Para evitar conflictos se puede usar <dependencyManagement> y la sección <exclusions>.
-3. Gradle
-
-Gradle usa un DSL basado en Groovy o Kotlin. Es más flexible y se adapta mejor a proyectos grandes o multimódulo.
-3.1. Estructura típica
-text
-
-miapp/
-├── build.gradle (o build.gradle.kts)
-├── settings.gradle
-└── src/
-    ├── main/java/
-    ├── main/resources/
-    ├── test/java/
-    └── test/resources/
-
-3.2. build.gradle.kts mínimo (Kotlin DSL) para Java 21
-kotlin
-
-plugins {
-    java
-    application
-}
-
-group = "com.empresa"
-version = "1.0.0"
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-    // para preview: options.compilerArgs.add("--enable-preview")
-}
-
-application {
-    mainClass.set("com.empresa.Main")
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-3.3. Ciclo de vida y tareas
-
-    gradle build compila, ejecuta tests y empaqueta.
-
-    gradle run ejecuta la aplicación.
-
-    Las tareas pueden encadenarse y crearse automáticamente por los plugins.
-
-3.4. Plugins principales
-
-    java, application
-
-    org.gradlex.java.enable-preview (para preview fácil).
-
-    org.beryx.jlink (para jlink).
-
-    com.github.johnrengelman.shadow (fat JAR).
-
-    org.panteleyev.jpackage o com.github.ben-manes.gradle-versions-plugin.
-
-3.5. Gestión de dependencias
-
-    implementation: dependencia necesaria en compilación y ejecución, no expuesta a consumidores del módulo.
-
-    api: expuesta a consumidores.
-
-    testImplementation, testRuntimeOnly, etc.
-
-    Se pueden usar BOMs (Bill of Materials) para alinear versiones, por ejemplo Spring Boot, Jackson, etc.
-
-4. Comparativa rápida Maven vs Gradle
-Característica	Maven	Gradle
-Lenguaje	XML	Groovy/Kotlin DSL
-Extensibilidad	Plugins XML	Scripts/plugins program.
-Rendimiento	Más lento en builds grandes	Mayor velocidad, incremental y build cache
-Convención	Muy estricta y homogénea	Flexible, adaptable
-Curva aprendizaje	Menor	Moderada
-
-Ambos son perfectamente capaces y se integran con IDEs y CI/CD. Gradle suele preferirse en nuevos desarrollos de Android, grandes multimódulos o cuando se necesita mucha personalización; Maven sigue siendo el estándar en muchos entornos enterprise.
-11.02 – PRUEBAS CON JUNIT 5
-1. JUnit 5: la plataforma moderna de testing
-
-JUnit 5 (Jupiter) es el estándar para pruebas unitarias y de integración en Java. Lanzado en 2017, ha ido mejorando cada versión y en Java 21 sigue evolucionando (versión 5.10+). Está compuesto por:
-
-    JUnit Platform: base que permite ejecutar cualquier motor de tests (JUnit Vintage para JUnit 3/4, Jupiter, etc.).
-
-    JUnit Jupiter: nuevo API de programación de tests.
-
-    JUnit Vintage: retrocompatibilidad con JUnit 3/4.
-
-2. Anotaciones y estructura básica de un test
-java
-
-import org.junit.jupiter.api.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CalculadoraTest {
-
-    Calculadora calc;
-
-    @BeforeAll
-    void initAll() {
-        System.out.println("Antes de todos los tests");
-    }
-
-    @BeforeEach
-    void init() {
-        calc = new Calculadora();
-    }
-
-    @Test
-    @DisplayName("Suma de dos números positivos")
-    void testSuma() {
-        assertEquals(5, calc.sumar(2, 3), "2+3 debería ser 5");
-    }
-
-    @Test
-    @Disabled("Funcionalidad aún no implementada")
-    void testResta() { }
-
-    @AfterEach
-    void tearDown() {
-        calc = null;
-    }
-
-    @AfterAll
-    static void cleanAll() {
-        System.out.println("Después de todos los tests");
-    }
-}
-
-3. Aserciones principales
-
-    assertEquals(expected, actual)
-
-    assertTrue(condition), assertFalse(condition)
-
-    assertNull(obj), assertNotNull(obj)
-
-    assertSame, assertNotSame
-
-    assertThrows(Exception.class, () -> { ... }) → captura y verifica excepciones.
-
-    assertTimeout(Duration.ofMillis(100), () -> { ... })
-
-    assertAll(...) para agrupar varias aserciones y que se ejecuten todas aunque alguna falle.
-
-Desde JUnit 5.8 se pueden usar aserciones con mensaje como Supplier (() -> "mensaje costoso") para evaluación perezosa.
-4. Test parametrizados
-
-Ejecutan un mismo test con múltiples conjuntos de datos.
-java
-
-@ParameterizedTest
-@ValueSource(ints = {1, 2, 3, 4, 5})
-void testCuadrado(int numero) {
-    assertEquals(numero * numero, calc.cuadrado(numero));
-}
-
-@ParameterizedTest
-@CsvSource({
-    "1, 2, 3",
-    "0, 0, 0",
-    "-1, -1, -2"
-})
-void testSuma(int a, int b, int resultado) {
-    assertEquals(resultado, calc.sumar(a, b));
-}
-
-Otras fuentes: @MethodSource, @EnumSource, @CsvFileSource, @ArgumentsSource.
-5. Ciclo de vida y extensión
-
-El modelo de extensión permite hooks avanzados mediante @ExtendWith.
-
-    SpringExtension para integrar Spring TestContext Framework.
-
-    MockitoExtension para inicializar mocks de Mockito.
-
-    Extensiones propias implementando BeforeEachCallback, AfterEachCallback, etc.
-
-6. Testing de hilos virtuales y concurrencia
-
-Con JUnit 5 podemos probar código asíncrono con assertTimeoutPreemptively o utilizando Thread.startVirtualThread dentro de los tests. Para probar concurrencia estructurada, se puede ejecutar un try (scope) { ... } y verificar resultados con assertAll.
-7. Tests de integración con testcontainers
-
-Aunque no es parte de JUnit 5, se integra perfectamente. Testcontainers permite arrancar una base de datos real en un contenedor Docker dentro del test, ideal para pruebas de repositorio. La anotación @Testcontainers y el GenericContainer se combinan con JUnit Jupiter.
-8. Prácticas recomendadas
-
-    Nombre descriptivo de tests: usar @DisplayName o el método en estilo shouldReturnSum_whenGivenTwoNumbers.
-
-    Seguir la estructura AAA: Arrange, Act, Assert.
-
-    No realizar I/O real en tests unitarios; usar mocks o stubs.
-
-    Limpiar recursos compartidos en @AfterEach.
-
-    Aislar tests: no deben depender del orden de ejecución.
-
-    Ejecutar tests frecuentemente, integrados con Maven/Gradle.
-
-11.03 – EMPAQUETADO CON JLINK Y JPACKAGE
-1. El declive del JRE monolítico
-
-Con la modularización (JPMS), podemos crear imágenes de ejecución ligeras que contengan solo los módulos necesarios para nuestra aplicación. Para distribuir aplicaciones a usuarios finales de forma nativa, jpackage genera instaladores como .exe, .dmg o .deb.
-2. jlink: imagen JRE personalizada
-
-jlink crea una imagen de tiempo de ejecución a partir de un conjunto de módulos. Requiere que la aplicación esté modularizada (tener module-info.java) o al menos que conozcamos los módulos que necesita (se puede hacer con jdeps).
-2.1. Comando básico
-bash
-
-jlink --module-path módulos:libs --add-modules com.miapp.mimodulo \
-      --output mi-jre --launcher mi-app=com.miapp.mimodulo/com.miapp.Main
-
-    --add-modules: lista los módulos a incluir (el raíz y sus dependencias transitivas).
-
-    --output: directorio de la imagen generada (contiene binarios, libs, etc.).
-
-    --launcher: crea un script ejecutable en mi-jre/bin.
-
-2.2. Plugins de Maven/Gradle
-
-    Maven: maven-jlink-plugin se configura dentro del pom.xml.
-
-    Gradle: plugin org.beryx.jlink (badass-jlink-plugin).
-    Ambos simplifican la invocación y se integran en el ciclo de package.
-
-2.3. Ejemplo con Gradle (Kotlin DSL)
-kotlin
-
-plugins {
-    id("org.beryx.jlink") version "2.25.0"
-}
-
-jlink {
-    imageDir.set(file("$buildDir/image"))
-    options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
-    launcher {
-        name = "miapp"
-        jvmArgs = listOf("-Xmx256m")
-    }
-}
-
-3. jpackage: empaquetado nativo
-
-jpackage toma la imagen generada por jlink y crea un paquete nativo para el sistema operativo. Genera un instalador autocontenido que no requiere que el usuario instale Java.
-3.1. Modos de operación
-
-    Aplicación nativa (--type app-image): genera una carpeta ejecutable ligada a una JRE ya incluida.
-
-    Instalador (--type msi, --type deb, --type rpm, --type dmg, --type pkg): crea un instalador para distribución.
-
-3.2. Requisitos
-
-    La aplicación debe estar empaquetada como JAR modular o no modular (puede usar classpath, pero mejor si está en una imagen jlink previa).
-
-    Se necesita tener herramientas nativas (En Windows: Wix para MSI; en macOS: herramientas de línea de comandos; en Linux: dpkg, rpm).
-
-3.3. Comando típico desde jlink a jpackage
-
-Primero creamos la imagen con jlink, luego ejecutamos jpackage:
-bash
-
-# 1) jlink crea la JRE personalizada y launcher
-jlink --module-path libs --add-modules com.mi.modulo \
-      --output build/app-jre --launcher mi-app=com.mi.modulo/com.mi.Main
-
-# 2) jpackage empaqueta esa imagen como instalador
-jpackage --type deb \
-         --name "MiAplicacion" \
-         --input build/app-jre/bin \
-         --main-jar miapp.jar \
-         --main-class com.mi.Main \
-         --java-options "-Xmx256m" \
-         --dest build/dist
-
-Alternativamente, se puede saltar jlink y que jpackage genere la JRE automáticamente con --runtime-image (señalando a un JDK).
-3.4. Personalización
-
-    --icon icono.ico (Windows) o --icon icono.icns (macOS).
-
-    --file-associations para asociar extensiones de archivo.
-
-    --install-dir, --vendor, --description.
-
-    --win-console para habilitar consola en Windows.
-
-3.5. Integración con herramientas de construcción
-
-    Maven: org.panteleyev.jpackageplugin o se.vidstige.jpackage-maven-plugin.
-
-    Gradle: org.panteleyev.jpackageplugin.
-
-Ejemplo básico con Gradle:
-kotlin
-
-plugins {
-    id("org.panteleev.jpackageplugin") version "1.5.0"
-}
-
-tasks.jpackage {
-    dependsOn("build")
-    appName = "MiApp"
-    appVersion = project.version.toString()
-    inputDir = file("${buildDir}/libs")
-    mainJar = bootJar.archiveFileName.get()
-    mainClass = "com.mi.Main"
-    type = "deb" // o "msi", "dmg", etc.
-    destinationDir = file("${buildDir}/dist")
-    javaOptions = listOf("-Xmx256m")
-}
-
-3.6. Ventajas de jpackage en Java 21
-
-    Distribuciones más seguras y pequeñas.
-
-    Experiencia de instalación nativa.
-
-    Compatibilidad con actualizaciones futuras (firma de código).
-
-    Integración fluida con pipelines CI/CD.
-
+Spring unifica la experiencia de desarrollo con anotaciones y templates similares, lo que facilita migrar o convivir con ambos.
