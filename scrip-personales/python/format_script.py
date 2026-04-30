@@ -15,7 +15,8 @@ def main():
         '}', ']', ')', 'type', 'interface', '{', '/*', '*', '//', '<', 
         '...', 'await', 'async', 'class', 'console.log', "'use", '"use',
         'npm', 'npx', 'yarn', 'pnpm', 'node', 'git', 'yaml', 'bash', 'javascript',
-        'cd', 'ls', 'cat', 'echo', 'mkdir', 'rm', 'cp', 'mv', 'sudo', 'docker', 'apt', 'apt-get', 'export','java', 'curl', 'wget'
+        'cd', 'ls', 'cat', 'echo', 'mkdir', 'rm', 'cp', 'mv', 'sudo', 'docker', 'apt', 'apt-get', 'export','java', 'curl', 'wget',
+        'public', 'private', 'protected', 'static', 'void', 'final', 'package', 'System.out.println', 'String', 'int', 'boolean', 'double', 'long', 'byte', 'short', 'float', 'char'
     }
 
     def is_text_line(line, prev_line_empty):
@@ -25,8 +26,8 @@ def main():
             
         first_word = stripped.split()[0] if stripped.split() else ''
         
-        # If it starts with common JS/bash keywords or brackets, it's code
-        if first_word in code_start_keywords or stripped.startswith(('}', ')', ']', '</', '/>', '{', '[', '"', "'", '`', '-', '$')):
+        # If it starts with common JS/bash/Java keywords or brackets, it's code
+        if first_word in code_start_keywords or stripped.startswith(('}', ')', ']', '</', '/>', '{', '[', '"', "'", '`', '-', '$', '#', '@')):
             return False
             
         # Exception for Next.js folder structures (text blocks)
@@ -54,7 +55,7 @@ def main():
             continue
 
         # 2. Start of code block
-        if not in_code_block and line.strip() in ['jsx', 'js', 'tsx', 'ts', 'text', 'html', 'css', 'json', 'bash', 'sh']:
+        if not in_code_block and line.strip() in ['jsx', 'js', 'tsx', 'ts', 'text', 'html', 'css', 'json', 'bash', 'sh', 'java']:
             lang = line.strip()
             in_code_block = True
             lines_in_block = 0
