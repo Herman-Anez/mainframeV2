@@ -1,7 +1,7 @@
 import re
 
 def main():
-    with open('bash-index.md', 'r', encoding='utf-8') as f:
+    with open('aux-index.md', 'r', encoding='utf-8') as f:
         lines = [line.rstrip() for line in f]
 
     out_lines = []
@@ -15,7 +15,7 @@ def main():
         '}', ']', ')', 'type', 'interface', '{', '/*', '*', '//', '<', 
         '...', 'await', 'async', 'class', 'console.log', "'use", '"use',
         'npm', 'npx', 'yarn', 'pnpm', 'node', 'git', 'yaml', 'bash', 'javascript',
-        'cd', 'ls', 'cat', 'echo', 'mkdir', 'rm', 'cp', 'mv', 'sudo', 'docker', 'apt', 'apt-get', 'export', 'curl', 'wget'
+        'cd', 'ls', 'cat', 'echo', 'mkdir', 'rm', 'cp', 'mv', 'sudo', 'docker', 'apt', 'apt-get', 'export','java', 'curl', 'wget'
     }
 
     def is_text_line(line, prev_line_empty):

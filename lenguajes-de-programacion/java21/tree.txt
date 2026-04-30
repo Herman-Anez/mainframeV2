@@ -1,0 +1,52 @@
+Java21-Knowledge/
+├── 01-Fundamentos/
+│   ├── 01-sintaxis-basica.md
+│   ├── 02-tipos-datos-variables.md
+│   ├── 03-operadores.md
+│   └── 04-control-flujo.md
+├── 02-Programacion-Orientada-Objetos/
+│   ├── 01-clases-objetos.md
+│   ├── 02-encapsulacion.md
+│   ├── 03-herencia.md
+│   ├── 04-polimorfismo.md
+│   └── 05-interfaces-y-abstraccion.md
+├── 03-Colecciones-y-Genericos/
+│   ├── 01-colecciones.md
+│   ├── 02-genericos.md
+│   └── 03-optional.md
+├── 04-Programacion-Funcional/
+│   ├── 01-lambdas.md
+│   ├── 02-streams.md
+│   └── 03-method-references.md
+├── 05-Manejo-Excepciones/
+│   └── 01-excepciones.md
+├── 06-Modulos-JPMS/
+│   └── 01-modulos.md
+├── 07-Novedades-Java-17-20/
+│   ├── 01-text-blocks.md
+│   ├── 02-switch-expressions.md
+│   ├── 03-pattern-matching-instanceof.md
+│   ├── 04-records.md
+│   └── 05-sealed-classes.md
+├── 08-Java-21-Features/
+│   ├── 01-virtual-threads.md
+│   ├── 02-sequenced-collections.md
+│   ├── 03-record-patterns.md
+│   ├── 04-pattern-matching-switch.md
+│   ├── 05-string-templates.md
+│   ├── 06-scoped-values.md
+│   ├── 07-structured-concurrency.md
+│   ├── 08-ffm-api.md
+│   └── 09-unnamed-variables-patterns.md
+├── 09-Concurrencia-Avanzada/
+│   ├── 01-hilos-plataforma.md
+│   ├── 02-executors-futures.md
+│   └── 03-virtual-threads-structured-concurrency-deep.md
+├── 10-JVM-Rendimiento/
+│   ├── 01-funcionamiento-jvm.md
+│   ├── 02-garbage-collection.md
+│   └── 03-optimizacion.md
+└── 11-Ecosistema/
+    ├── 01-maven-gradle.md
+    ├── 02-pruebas-junit5.md
+    └── 03-empaquetado-jlink-jpackage.md
