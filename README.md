@@ -22,7 +22,7 @@ Bienvenido a **Mainframe V2**, un repositorio estructurado para la documentació
 
 > [!NOTE]
 > **Cosas en progreso:**
-> - 🟨 **JavaScript:** Estandarización de formato en archivos de documentación.
+> - 🟨 **JavaScript:** Estandarización de formato en archivos de documentación. (revisar)
 > - 🟦 **Bash:** Generación de contenido base y guías avanzadas.
 
 ---
