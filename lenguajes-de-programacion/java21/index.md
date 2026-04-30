@@ -1,3 +1,7 @@
+^(?:###\s+)?\d{2}\.\d{2}\s+[–-]
+
+reemplazar por "#"
+
 01 – SINTAXIS BÁSICA
 1.1. El esqueleto de todo programa Java
 

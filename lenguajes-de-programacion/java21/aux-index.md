@@ -1,4 +1,4 @@
-01 – SINTAXIS BÁSICA
+# SINTAXIS BÁSICA
 1.1. El esqueleto de todo programa Java
 
 Tradicionalmente, un programa Java se compone de al menos una clase y un método main con la firma exacta:
@@ -63,7 +63,7 @@ Si se desea acceder a los argumentos. Esta característica requiere compilar con
 1.5. Bloques de código y ámbito
 
 Cada par de llaves {} define un bloque. Las variables declaradas dentro de un bloque viven únicamente en ese ámbito, incluyendo parámetros de métodos y variables de control de bucles.
-02 – TIPOS DE DATOS Y VARIABLES
+# TIPOS DE DATOS Y VARIABLES
 2.1. Tipos primitivos
 
 Java posee 8 tipos primitivos. No son objetos y viven en la pila.
@@ -149,7 +149,7 @@ int i = (int) d;  // 3
 
     Promoción automática en expresiones: todos los byte, short, char se promueven a int al evaluar operadores.
 
-03 – OPERADORES
+# OPERADORES
 3.1. Operadores aritméticos
 
 +, -, *, /, % (módulo). Funcionan sobre tipos numéricos. División entera trunca. Precedencia: *, /, % antes que +, -.
@@ -249,7 +249,7 @@ La tabla de precedencia ordena la evaluación. Lo más relevante:
     Asignación (= += ...)
 
 Ante la duda, usar paréntesis.
-04 – CONTROL DE FLUJO
+# CONTROL DE FLUJO
 4.1. Estructuras de decisión
 if, else if, else
 
@@ -446,7 +446,7 @@ Los streams usan operaciones intermedias (que devuelven stream) y terminales (qu
 Con esto completamos los cuatro pilares de la base sintáctica de Java 21.
 Las nuevas posibilidades del switch con patrones, la inferencia con var, los registros y las clases selladas que vimos de pasada, y las mejoras en instanceof forman un conjunto sólido y moderno. Te recomiendo practicar cada apartado con pequeños programas para asimilar estos fundamentos antes de pasar a la Orientación a Objetos y las novedades avanzadas de concurrencia y rendimiento.
 
-02.01 – CLASES Y OBJETOS
+# CLASES Y OBJETOS
 1. Definición de clase
 
 Una clase es la plantilla que describe los atributos (campos) y comportamientos (métodos) que tendrán sus instancias. Se define con la palabra clave class:
@@ -577,7 +577,7 @@ java
 Runnable r = () -> System.out.println("Ejecutando");
 
 Ambas crean objetos que se comportan según lo especificado, y son parte esencial del polimorfismo funcional.
-02.02 – ENCAPSULACIÓN
+# ENCAPSULACIÓN
 1. Principio de encapsulación
 
 Consiste en ocultar el estado interno de un objeto y solo permitir su manipulación a través de una interfaz pública de métodos. Reduce el acoplamiento y facilita el mantenimiento.
@@ -646,7 +646,7 @@ public record Persona(String nombre, int edad) {
 }
 
 Los campos siguen siendo private final y solo se accede a través de los getter automáticos.
-02.03 – HERENCIA
+# HERENCIA
 1. Concepto de herencia
 
 La herencia permite que una clase (subclase) reutilice los campos y métodos de otra (superclase). Se declara con la palabra clave extends:
@@ -726,7 +726,7 @@ record Suma(Expr izq, Expr der) implements Expr {}
 record Resta(Expr izq, Expr der) implements Expr {}
 
 Esta codificación, típica de lenguajes funcionales, es ahora directa en Java y explota al máximo el pattern matching.
-02.04 – POLIMORFISMO
+# POLIMORFISMO
 1. Definición de polimorfismo
 
 Capacidad de una variable de un tipo base de referirse a objetos de distintas subclases y que la ejecución del método sobrescrito sea la correspondiente al objeto real (enlace dinámico o dynamic binding).
@@ -784,7 +784,7 @@ El compilador garantiza la seguridad de tipos en tiempo de compilación. Es otra
 7. Métodos virtuales en Java
 
 Todos los métodos de instancia no static ni private son virtuales por defecto, es decir, se resuelven dinámicamente. Únicamente los métodos static y private no participan en el enlace dinámico.
-02.05 – INTERFACES Y ABSTRACCIÓN
+# INTERFACES Y ABSTRACCIÓN
 1. Clases abstractas
 
 Una clase declarada abstract no puede instanciarse directamente. Puede contener métodos abstractos (sin implementación, obligando a las subclases concretas a implementarlos) y métodos concretos. Ejemplo:
@@ -872,7 +872,7 @@ double area(Figura f) {
 
 La primera encapsula cada comportamiento en su clase; la segunda centraliza operaciones y puede aprovecharse mejor con registros y patrones.
 
-03.01 – COLECCIONES
+# COLECCIONES
 1. El Java Collections Framework (JCF)
 
 El JCF es una arquitectura unificada para representar y manipular grupos de objetos. Proporciona:
@@ -1049,7 +1049,7 @@ public void procesarPedidos(SequencedCollection<Pedido> pedidos) {
     reverso.forEach(p -> p.archivar());
 }
 
-03.02 – GENÉRICOS
+# GENÉRICOS
 1. Motivación y beneficios
 
 Los genéricos permiten que una clase, interfaz o método opere sobre un tipo que se especifica como parámetro. Aportan:
@@ -1171,7 +1171,7 @@ public class Util {
 }
 
 Este método acepta una lista de cualquier subtipo de T, y T es comparable consigo mismo o con un supertipo.
-03.03 – OPTIONAL
+# OPTIONAL
 1. El problema del null
 
 null puede causar NullPointerException, es opaco en la API (no sabes si un método devuelve null) y obliga a comprobaciones manuales. java.util.Optional<T> es un contenedor inmutable que puede contener o no un valor no nulo, forzando al cliente a lidiar explícitamente con la ausencia.
@@ -1288,7 +1288,7 @@ Optional<String> optStr = switch (resultado) {
 
 Se prefiere mantener la lógica de nulos dentro de Optional y usar sus métodos.
 
-04.01 – LAMBDAS
+# LAMBDAS
 1. ¿Qué es una expresión lambda?
 
 Una lambda es un bloque de código compacto que implementa el único método abstracto de una interfaz funcional. Permite tratar funciones como objetos y pasar comportamiento como parámetro.
@@ -1434,7 +1434,7 @@ Runnable r = () -> { try { Files.lines(...); } catch (IOException e) { ... } };
 
     Preferir method reference cuando la lambda consista en la llamada directa a un método existente.
 
-04.02 – STREAMS
+# STREAMS
 1. Concepto y estructura
 
 Un Stream es una secuencia de elementos que soporta operaciones secuenciales y paralelas de forma agregada. No es una estructura de datos; es una vista sobre una fuente (colección, array, I/O, etc.) que se procesa de forma perezosa.
@@ -1628,7 +1628,7 @@ sequencedList.reversed().stream().forEach(...);
 
     Utilizar takeWhile/dropWhile para streams ordenados cuando se necesita cortar o saltar con condiciones.
 
-04.03 – REFERENCIAS A MÉTODOS
+# REFERENCIAS A MÉTODOS
 1. ¿Qué son?
 
 Una referencia a método es una expresión lambda aún más compacta que indica exactamente qué método debe invocarse. Usa el operador :: y mejora la legibilidad cuando la lambda se limita a llamar a un método existente.
@@ -1729,7 +1729,7 @@ Usar referencias a métodos cuando el código ya está bien nombrado en el méto
 
     Las referencias a métodos no pueden capturar variables para usarlas como argumentos adicionales, salvo que el receptor sea el primer parámetro (tipo 3) y el resto parámetros del método, lo que limita su flexibilidad.
 
-05 – MANEJO DE EXCEPCIONES
+# MANEJO DE EXCEPCIONES
 
 El manejo de excepciones en Java es un mecanismo robusto para controlar situaciones anómalas que pueden ocurrir en tiempo de ejecución. Java 21 mantiene el modelo consolidado desde las primeras versiones, con pequeñas mejoras de calidad de vida introducidas en versiones anteriores que siguen plenamente vigentes.
 1. Jerarquía de excepciones
@@ -1882,7 +1882,7 @@ a.b.c = 5; // NPE dirá "Cannot read field 'c' because 'a.b' is null"
 Esto está disponible y es útil en Java 21.
 
 Con esto, el archivo 01-excepciones.md queda detallado y actualizado para Java 21.
-06.01 – MÓDULOS JPMS (Java Platform Module System)
+# MÓDULOS JPMS (Java Platform Module System)
 
 El Java Platform Module System (JPMS), introducido en Java 9 y plenamente vigente en Java 21, permite organizar el código en módulos que declaran explícitamente sus dependencias y qué paquetes exportan. Proporciona encapsulación fuerte a nivel de módulo y mejora el rendimiento de carga de clases.
 1. ¿Qué es un módulo?
@@ -2112,7 +2112,7 @@ java --module-path out -m app/com.app.App
 Salida: Hello!
 
 
-07.01 – TEXT BLOCKS
+# TEXT BLOCKS
 
 Los Text Blocks (bloques de texto) facilitan la escritura de cadenas literales que ocupan varias líneas sin necesidad de concatenaciones, escapes engorrosos ni saltos de línea explícitos. Esta característica fue previsualizada en Java 13‑14 y se convirtió en estándar definitivo en Java 15, por lo que en Java 17/21 está completamente estable.
 Sintaxis básica
@@ -2219,7 +2219,7 @@ Buenas prácticas
 
     Recordar que todos los espacios en blanco son significativos. Cuidado con líneas que parecen vacías pero contienen espacios.
 
-07.02 – SWITCH EXPRESSIONS
+# SWITCH EXPRESSIONS
 
 Las Switch Expressions fueron introducidas como preview en Java 12 y se estandarizaron en Java 14. Permiten usar switch como una expresión que devuelve un valor, evitando la típica necesidad de variables temporales y break. Aportan un código más conciso y eliminan la fuente de bugs por olvido de break.
 Forma con flecha ->
@@ -2285,7 +2285,7 @@ En este caso no se requiere exhaustividad, es una sentencia tradicional con sint
 Combinación con Pattern Matching (Java 21)
 
 En Java 21, el switch se expande con pattern matching, convirtiéndose en una herramienta central para el polimorfismo. Las switch expressions con patrones permiten descomponer records y comprobar tipos de forma elegante, heredando toda la potencia de las expresiones descritas aquí.
-07.03 – PATTERN MATCHING PARA INSTANCEOF
+# PATTERN MATCHING PARA INSTANCEOF
 
 El Pattern Matching para instanceof se estandarizó en Java 16 y elimina la ceremonia de comprobación + casting manual. Permite asignar una variable de patrón directamente dentro de la condición.
 Sintaxis
@@ -2349,7 +2349,7 @@ Limitaciones
 
     La variable de patrón es final implícitamente (no se puede reasignar).
 
-07.04 – RECORDS
+# RECORDS
 
 Los Records son clases inmutables transparentes, diseñadas específicamente para transportar datos de manera concisa. Fueron previsualizados en Java 14, segunda preview en 15 y se estandarizaron en Java 16. En Java 21 son una herramienta fundamental.
 Declaración
@@ -2439,7 +2439,7 @@ Cuándo usar records
 Comparación con Lombok o @Data
 
 Los registros son una solución nativa que no requiere anotaciones ni procesadores. A diferencia de @Data, no son mutables (no tienen setters) y son adecuados solo para inmutabilidad.
-07.05 – SEALED CLASSES (CLASES SELLADAS)
+# SEALED CLASSES (CLASES SELLADAS)
 
 Las Clases Selladas permiten controlar explícitamente qué subclases pueden extender una clase o qué implementaciones tiene una interfaz. Se estandarizaron en Java 17. Son el complemento perfecto para los records y el pattern matching exhaustivo.
 Declaración
@@ -2532,7 +2532,7 @@ double area(Figura f) {
     };
 }
 
-08.01 – VIRTUAL THREADS (PROJECT LOOM, FINAL)
+# VIRTUAL THREADS (PROJECT LOOM, FINAL)
 
 Los hilos virtuales son la respuesta de Java para la programación concurrente masiva de una manera sencilla y eficiente. Se integran sin cambios en la gran mayoría del código existente.
 ¿Qué son?
@@ -2595,7 +2595,7 @@ No es necesario reescribir código legacy. Cualquier aplicación que use Executo
 
     Estado: Definitivo en Java 21. Sin necesidad de flags adicionales.
 
-08.02 – SEQUENCED COLLECTIONS (FINAL)
+# SEQUENCED COLLECTIONS (FINAL)
 
 Las Secuenciated Collections son un conjunto de nuevas interfaces que aportan un contrato uniforme para colecciones con un orden de encuentro definido, permitiendo operar con el primer y el último elemento de manera directa y obtener una vista invertida. Afecta a List, SortedSet, LinkedHashSet, Deque, SortedMap y LinkedHashMap.
 Nuevas interfaces en java.util
@@ -2669,7 +2669,7 @@ Beneficios
 
     Estado: Definitivo en Java 21. Listo para producción.
 
-08.03 – RECORD PATTERNS (FINAL)
+# RECORD PATTERNS (FINAL)
 
 Los Record Patterns permiten descomponer un registro en sus componentes directamente después de una comprobación de tipo, ya sea en un instanceof o en un case de un switch. Se basa en los registros y el pattern matching ya existente.
 Uso en instanceof
@@ -2721,7 +2721,7 @@ Cuando se usan registros que implementan interfaces selladas, el compilador aseg
 
     Estado: Definitivo en Java 21. Es la culminación del pattern matching estructural.
 
-08.04 – PATTERN MATCHING FOR SWITCH (FINAL)
+# PATTERN MATCHING FOR SWITCH (FINAL)
 
 El Pattern Matching para switch convierte a esta estructura en una potente herramienta de despacho polimórfico. Se unifican los patrones de tipo, los patrones de registro, los patrones de array y el manejo explícito de null.
 Características principales
@@ -2782,7 +2782,7 @@ case int[] arr -> o case String[] arr -> permite capturar el array y usarlo dire
 
     Estado: Definitivo en Java 21. La evolución del switch se completa con esta poderosa función.
 
-08.05 – STRING TEMPLATES (PREVIEW)
+# STRING TEMPLATES (PREVIEW)
 
 Los String Templates permiten la interpolación de expresiones dentro de cadenas de forma segura, evitando concatenaciones manuales y riesgos de inyección.
 Sintaxis
@@ -2843,7 +2843,7 @@ Consideraciones
 
     Estado: Preview en Java 21. Activar con --enable-preview --source 21.
 
-08.06 – SCOPED VALUES (PREVIEW)
+# SCOPED VALUES (PREVIEW)
 
 Los Scoped Values son una alternativa moderna a ThreadLocal para compartir datos inmutables dentro de un hilo y sus hijos (virtuales o no), especialmente en concurrencia estructurada. Ofrecen mejor rendimiento y un ciclo de vida claramente delimitado.
 Problema de ThreadLocal
@@ -2893,7 +2893,7 @@ Ventajas sobre ThreadLocal
 
     Estado: Preview en Java 21. Habilitar con --enable-preview.
 
-08.07 – STRUCTURED CONCURRENCY (PREVIEW)
+# STRUCTURED CONCURRENCY (PREVIEW)
 
 La Concurrencia Estructurada busca tratar varias tareas concurrentes como una unidad de trabajo, confinando su ciclo de vida a un bloque sintáctico. Esto facilita la cancelación, el manejo de errores y la observabilidad.
 Idea central
@@ -2948,7 +2948,7 @@ Consideraciones
 
     Estado: Preview en Java 21.
 
-08.08 – FOREIGN FUNCTION & MEMORY API (PREVIEW)
+# FOREIGN FUNCTION & MEMORY API (PREVIEW)
 
 La Foreign Function & Memory API (FFM API) reemplaza a JNI (Java Native Interface) para interactuar con código nativo y gestionar memoria fuera del heap de manera segura y eficiente. Unifica en una sola API el acceso a funciones externas y la manipulación de memoria nativa.
 Componentes principales
@@ -3001,7 +3001,7 @@ Seguridad y rendimiento
 
     Estado: Preview en Java 21 (tercera incubación). Requiere --enable-preview.
 
-08.09 – UNNAMED PATTERNS AND VARIABLES (PREVIEW)
+# UNNAMED PATTERNS AND VARIABLES (PREVIEW)
 
 Los Patrones y Variables sin nombre permiten usar el carácter _ para declarar variables o componentes de patrón cuyo valor no se necesita, mejorando la legibilidad y reduciendo advertencias.
 Unnamed variable (_)
@@ -3061,10 +3061,10 @@ Beneficios
 
     Estado: Preview en Java 21. Habilitar con --enable-preview.
 
-09 – CONCURRENCIA AVANZADA EN JAVA 21
+# CONCURRENCIA AVANZADA EN JAVA 21
 
 Esta sección está dedicada a la concurrencia clásica y moderna en Java. Aunque los hilos de plataforma y los Executors llevan años con nosotros, entenderlos a fondo es imprescindible para apreciar las innovaciones de Java 21 y para combinar ambas aproximaciones en aplicaciones reales. A continuación, se presentan los contenidos detallados para cada uno de los tres archivos.
-09.01 – HILOS DE PLATAFORMA (PLATFORM THREADS)
+# HILOS DE PLATAFORMA (PLATFORM THREADS)
 1. Modelo de hilos tradicional
 
 Un hilo de plataforma es un hilo del sistema operativo envuelto por la JVM. Cada uno tiene su propia pila (típicamente ~1 MB) y es gestionado directamente por el SO. Crear miles de estos hilos consume una cantidad de memoria prohibitiva y el cambio de contexto puede degradar el rendimiento.
@@ -3166,7 +3166,7 @@ public void detener() { detenido = true; }
     Gestión explícita: hay que definir pools, sincronización, etc.
 
 Estas limitaciones motivaron la evolución hacia los Executors (siguiente tema) y, en Java 21, hacia los hilos virtuales.
-09.02 – EXECUTORS Y FUTURES
+# EXECUTORS Y FUTURES
 
 El framework Executors (desde Java 5) desacopla la definición de una tarea de la mecánica de ejecución. Permite manejar pools de hilos, programación periódica y obtener resultados de manera asincrónica.
 1. La interfaz Executor
@@ -3294,7 +3294,7 @@ try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
     }
 }
 
-09.03 – VIRTUAL THREADS Y CONCURRENCIA ESTRUCTURADA EN PROFUNDIDAD
+# VIRTUAL THREADS Y CONCURRENCIA ESTRUCTURADA EN PROFUNDIDAD
 1. Arquitectura interna de los hilos virtuales
 
 Los hilos virtuales se implementan sobre una pequeña cantidad de hilos de plataforma llamados carriers. Cuando un hilo virtual ejecuta una operación que lo bloquearía (I/O, sleep, park), la JVM desmonta el hilo virtual del carrier y lo registra en un heap interno hasta que la condición se complete. El carrier queda libre para ejecutar otro hilo virtual.
@@ -3406,10 +3406,10 @@ La combinación de hilos virtuales, scoped values y concurrencia estructurada re
 
     Cuidado con la limitación de recursos: aunque los hilos virtuales son baratos, aún se pueden agotar recursos como conexiones de base de datos o memoria total.
 
-10 – JVM Y RENDIMIENTO EN JAVA 21
+# JVM Y RENDIMIENTO EN JAVA 21
 
 La Máquina Virtual Java (JVM) es el entorno de ejecución que convierte el bytecode en instrucciones nativas y gestiona los recursos de la aplicación. Comprenderla a fondo es indispensable para escribir código eficiente, diagnosticar problemas de rendimiento y aprovechar al máximo las mejoras que trae Java 21. A continuación se desarrollan los tres ficheros de esta sección.
-10.01 – FUNCIONAMIENTO DE LA JVM
+# FUNCIONAMIENTO DE LA JVM
 1. Arquitectura global de la JVM
 
 La especificación de la JVM define varios subsistemas:
@@ -3508,7 +3508,7 @@ La JVM utiliza librerías nativas para la gestión de hilos y para operaciones d
 
     -Xlog:gc proporciona logs detallados del GC (unificado desde Java 9).
 
-10.02 – GARBAGE COLLECTION
+# GARBAGE COLLECTION
 1. Principios básicos del GC
 
 El recolector de basura libera memoria ocupada por objetos que ya no son alcanzables desde las raíces (variables locales, estáticas, referencias activas de hilos, etc.). La JVM divide el heap en regiones (o generaciones) para aplicar distintos algoritmos según la longevidad de los objetos.
@@ -3628,7 +3628,7 @@ text
 -Xlog:gc*=info:file=gc.log:time,uptimemillis:filecount=5,filesize=10M
 
 Herramientas como GCViewer, GCEasy, o JMC permiten visualizar los logs y ajustar parámetros.
-10.03 – OPTIMIZACIÓN DE RENDIMIENTO
+# OPTIMIZACIÓN DE RENDIMIENTO
 
 Optimizar una aplicación Java implica un proceso iterativo de medición, análisis y ajuste tanto del código como de la JVM.
 1. Métricas clave
@@ -3737,10 +3737,10 @@ java -Xmx2g -Xms2g -XX:+UseZGC -XX:+ZGenerational \
 Se logra latencia de GC < 1ms y buen rendimiento incluso bajo cargas altas.
 
 
-11 – ECOSISTEMA DE CONSTRUCCIÓN, PRUEBAS Y EMPAQUETADO
+# ECOSISTEMA DE CONSTRUCCIÓN, PRUEBAS Y EMPAQUETADO
 
 El ecosistema moderno de Java gira en torno a herramientas que automatizan la construcción, las pruebas y la distribución de aplicaciones. Esta sección profundiza en Maven y Gradle como gestores de proyectos, JUnit 5 como plataforma de pruebas y jlink / jpackage para crear distribuciones nativas y ligeras. Todas las explicaciones están actualizadas para Java 21.
-11.01 – MAVEN Y GRADLE: GESTIÓN AVANZADA DE PROYECTOS
+# MAVEN Y GRADLE: GESTIÓN AVANZADA DE PROYECTOS
 1. El papel de las herramientas de construcción
 
 Antes de Maven/Gradle se usaba Ant (scripts XML) o simplemente javac. Hoy es impensable un proyecto sin gestión automática de dependencias, ciclo de vida estandarizado y plugins.
@@ -3918,7 +3918,7 @@ Convención	Muy estricta y homogénea	Flexible, adaptable
 Curva aprendizaje	Menor	Moderada
 
 Ambos son perfectamente capaces y se integran con IDEs y CI/CD. Gradle suele preferirse en nuevos desarrollos de Android, grandes multimódulos o cuando se necesita mucha personalización; Maven sigue siendo el estándar en muchos entornos enterprise.
-11.02 – PRUEBAS CON JUNIT 5
+# PRUEBAS CON JUNIT 5
 1. JUnit 5: la plataforma moderna de testing
 
 JUnit 5 (Jupiter) es el estándar para pruebas unitarias y de integración en Java. Lanzado en 2017, ha ido mejorando cada versión y en Java 21 sigue evolucionando (versión 5.10+). Está compuesto por:
@@ -4041,7 +4041,7 @@ Aunque no es parte de JUnit 5, se integra perfectamente. Testcontainers permite 
 
     Ejecutar tests frecuentemente, integrados con Maven/Gradle.
 
-11.03 – EMPAQUETADO CON JLINK Y JPACKAGE
+# EMPAQUETADO CON JLINK Y JPACKAGE
 1. El declive del JRE monolítico
 
 Con la modularización (JPMS), podemos crear imágenes de ejecución ligeras que contengan solo los módulos necesarios para nuestra aplicación. Para distribuir aplicaciones a usuarios finales de forma nativa, jpackage genera instaladores como .exe, .dmg o .deb.
