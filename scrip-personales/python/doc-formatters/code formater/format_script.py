@@ -27,7 +27,7 @@ def main():
         first_word = stripped.split()[0] if stripped.split() else ''
         
         # If it starts with common JS/bash/Java keywords or brackets, it's code
-        if first_word in code_start_keywords or stripped.startswith(('}', ')', ']', '</', '/>', '{', '[', '"', "'", '`', '-', '$', '#', '@')):
+        if first_word in code_start_keywords or stripped.startswith(('}', ')', ']', '</', '/>', '{', '[', '"', "'", '`', '-', '$', '#', '@', '<')):
             return False
             
         # Exception for Next.js folder structures (text blocks)
@@ -37,8 +37,8 @@ def main():
         # If it's indented...
         if line.startswith(' ') or line.startswith('\t'):
             # If it's heavily indented text that starts with a capital letter and previous line was empty, it might be a list item/text.
-            # Especially if it doesn't contain typical code symbols like =, {, }, (, )
-            if prev_line_empty and first_word[0].isupper() and not any(c in stripped for c in '={}()'):
+            # Especially if it doesn't contain typical code symbols like =, {, }, ;
+            if prev_line_empty and first_word[0].isupper() and not any(c in stripped for c in '={};'):
                 return True
             return False
 
@@ -55,7 +55,7 @@ def main():
             continue
 
         # 2. Start of code block
-        if not in_code_block and line.strip() in ['jsx', 'js', 'tsx', 'ts', 'text', 'html', 'css', 'json', 'bash', 'sh', 'java']:
+        if not in_code_block and line.strip() in ['jsx', 'js', 'tsx', 'ts', 'text', 'html', 'css', 'json', 'bash', 'sh', 'java', 'xml', 'yml', 'yaml']:
             lang = line.strip()
             in_code_block = True
             lines_in_block = 0
@@ -85,10 +85,12 @@ def main():
         # Headers heuristic
         if not in_code_block and line.strip():
             stripped = line.strip()
-            if len(stripped) > 2 and len(stripped) < 80:
-                if not stripped.endswith(('.', ':', '?', '!')) and not stripped.startswith(('-', '*', '1.', '2.', '3.')):
-                    if i > 0 and lines[i-1].strip() == '':
-                        if out_lines and out_lines[-1].strip() == '':
+            # If line is indented by more than 4 spaces, it's likely not a header
+            indent = len(line) - len(line.lstrip())
+            if indent <= 4 and len(stripped) > 2 and len(stripped) < 80:
+                if not stripped.endswith(('.', ':', '?', '!', ')', ']')) and not stripped.startswith(('-', '*', '1.', '2.', '3.', '<')):
+                    if i == 0 or lines[i-1].strip() == '':
+                        if not out_lines or out_lines[-1].strip() == '':
                             out_lines.append(f"### {stripped}")
                             i += 1
                             continue

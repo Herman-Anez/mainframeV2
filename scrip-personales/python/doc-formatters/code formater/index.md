@@ -1,4 +1,4 @@
-00 - ¿Qué es Spring? La filosofía y el ecosistema
+### 00 - ¿Qué es Spring? La filosofía y el ecosistema
 
 Spring no es simplemente un conjunto de utilidades. Es un marco de trabajo completo que redefine cómo se construye software empresarial en Java. Para entenderlo a fondo hay que responder a tres preguntas: ¿por qué surgió?, ¿qué problema resuelve realmente? y ¿cómo está diseñado?
 El problema original: J2EE pesado
@@ -62,11 +62,11 @@ public class PedidoService {
         this.notificacion = notificacion;
     }
 }
+```
 
     Ventajas: el objeto siempre está completamente inicializado, permite final (inmutabilidad), las dependencias son explícitas y obligatorias. Facilita el testing (no necesitas campo @Autowired ni MockBean).
 
     Inconvenientes: si hay muchas dependencias, el constructor puede tener demasiados parámetros (síntoma de que la clase necesita un refactor).
-```
 
 2. Inyección por setter
 ```java
@@ -87,9 +87,9 @@ public class PedidoService {
 ```java
 @Autowired
 private PedidoRepository repository;
+```
 
     Es la más legible pero tiene graves desventajas: oculta las dependencias (no sabes qué necesita la clase sin mirar los campos), dificulta las pruebas unitarias sin Spring (necesitas usar reflexión o @InjectMocks), impide final y rompe la encapsulación.
-```
 
 ### Cómo resuelve Spring las dependencias
 
@@ -239,18 +239,18 @@ Comparación detallada con ejemplos equivalentes
 ### Definir un DataSource y un JdbcTemplate
 
 XML:
-xml
-
-### <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+```xml
+<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
       destroy-method="close">
     <property name="jdbcUrl" value="${db.url}"/>
     <property name="username" value="${db.user}"/>
     <property name="password" value="${db.pass}"/>
 </bean>
 
-### <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
     <constructor-arg ref="dataSource"/>
 </bean>
+```
 
 Configuración Java:
 ```java
@@ -326,7 +326,7 @@ Imagina que Spring está arrancando y decide instanciar un bean MiServicio. El p
 
         Se llama al constructor (o al método estático de fábrica) usando la información de BeanDefinition. El objeto es "crudo", sin dependencias.
 
-### Inyección de propiedades (dependencias)
+    Inyección de propiedades (dependencias)
 
         Spring inyecta las dependencias vía setters o directamente en campos anotados con @Autowired, @Value, @Inject, etc. Esto lo hacen BeanPostProcessors específicos como AutowiredAnnotationBeanPostProcessor y CommonAnnotationBeanPostProcessor.
 
@@ -334,11 +334,11 @@ Imagina que Spring está arrancando y decide instanciar un bean MiServicio. El p
 
         Si el bean implementa ciertas interfaces Aware, se invocan sus métodos en este orden típico:
 
-### BeanNameAware.setBeanName(String name)
+            BeanNameAware.setBeanName(String name)
 
-### BeanClassLoaderAware.setBeanClassLoader(ClassLoader)
+            BeanClassLoaderAware.setBeanClassLoader(ClassLoader)
 
-### BeanFactoryAware.setBeanFactory(BeanFactory) (si es un BeanFactory)
+            BeanFactoryAware.setBeanFactory(BeanFactory) (si es un BeanFactory)
 
             ApplicationContextAware.setApplicationContext(ApplicationContext) (solo en contexto ApplicationContext)
 
@@ -366,7 +366,7 @@ Imagina que Spring está arrancando y decide instanciar un bean MiServicio. El p
 
         El bean se almacena en el contenedor singleton (en un ConcurrentHashMap). Cualquier otra dependencia que lo necesite recibirá el bean ya completamente vestido.
 
-### Destrucción del bean (al cerrar el contexto)
+    Destrucción del bean (al cerrar el contexto)
 
         Métodos anotados con @PreDestroy.
 
@@ -376,7 +376,7 @@ Imagina que Spring está arrancando y decide instanciar un bean MiServicio. El p
 
         Los DestructionAwareBeanPostProcessor pueden ejecutar lógica previa.
 
-### Diagrama resumido (texto)
+Diagrama resumido (texto)
 ```text
 [Constructor o Fábrica] --> [Inyección de Deps] --> [Aware: BenaName, ApplicationContext, etc.]
 --> [BeanPostProcessor::before] --> [@PostConstruct / afterPropertiesSet / init-method]
@@ -858,7 +858,7 @@ Configuración explícita
 public class AppConfig { }
 ```
 
-### El problema de la auto-invocación (self-invocation)
+El problema de la auto-invocación (self-invocation)
 
 Este es el punto más importante y malinterpretado. Como el proxy envuelve al target, cuando desde fuera se llama a bean.metodoA(), la llamada va al proxy, que aplica los aspectos. Pero si metodoA() internamente llama a this.metodoB(), this es el target, no el proxy, por lo que metodoB() no pasa por los aspectos. Así, anotaciones como @Transactional en metodoB no tienen efecto si se llama desde metodoA dentro del mismo bean.
 
@@ -894,6 +894,7 @@ Soluciones:
     public void metodoBatch() {
         for (Item i : items) procesador.procesarItem(i); // ahora sí es proxy
     }
+```
 
     Obtener el proxy mediante AopContext.currentProxy():
 
@@ -902,8 +903,7 @@ Soluciones:
         Luego en el código: ((TransaccionalService) AopContext.currentProxy()).procesarItem(i);
 
     Inyectarse a sí mismo (con @Autowired o @Resource):
-    java
-
+```java
     @Autowired
     private TransaccionalService self;
     public void metodoBatch() {
@@ -1098,15 +1098,15 @@ La respuesta se puede construir de varias formas:
         return p != null ? ResponseEntity.ok(p)
                          : ResponseEntity.notFound().build();
     }
+```
 
     ResponseEntity tiene métodos estáticos: ok(), created(URI), noContent(), badRequest(), status(HttpStatus), etc.
 
     HttpServletResponse: en el propio parámetro del método, se puede escribir directamente (no recomendado para REST moderno).
 
     HttpEntity<T>: similar a ResponseEntity pero también puede usarse como parámetro de entrada con HttpEntity<Producto> (accede a headers y cuerpo de la petición).
-```
 
-### Negociación de contenido (Content Negotiation)
+Negociación de contenido (Content Negotiation)
 
 Spring MVC decide automáticamente qué converter usar basándose en:
 
@@ -1675,7 +1675,7 @@ class MiApiIntegrationTest {
 }
 ```
 
-### Slices de contexto (testing ligero de capas)
+Slices de contexto (testing ligero de capas)
 
 Para no levantar todo el contexto y acelerar las pruebas, Boot ofrece anotaciones de "slice":
 Anotación	Carga solo	Típico use case
@@ -1734,11 +1734,11 @@ Fuentes de propiedades y orden de prioridad
 
 Spring Boot lee las propiedades desde 17 fuentes diferentes (ordenadas de mayor a menor prioridad):
 
-### Argumentos de línea de comandos (--server.port=9090)
+    Argumentos de línea de comandos (--server.port=9090)
 
-### Propiedades de Java System (System.getProperties())
+    Propiedades de Java System (System.getProperties())
 
-### Variables de entorno (export SERVER_PORT=9090)
+    Variables de entorno (export SERVER_PORT=9090)
 
 ### Archivos application.properties / .yml
 
@@ -1759,15 +1759,15 @@ properties
 spring.datasource.url=jdbc:mysql://localhost/midb
 
 yml:
-yaml
-
+```yaml
 server:
   port: 8080
 spring:
   datasource:
     url: jdbc:mysql://localhost/midb
+```
 
-### Perfiles (profiles)
+Perfiles (profiles)
 
 Los perfiles permiten tener múltiples conjuntos de configuración para distintos entornos (dev, test, prod). Se activan con spring.profiles.active=dev (en variable de entorno, línea de comandos, o en el application.properties principal). Los archivos específicos de perfil se nombran application-{profile}.properties o .yml. Si un perfil está activo, sus propiedades se superponen a las del archivo base.
 
@@ -1777,9 +1777,8 @@ application-prod.properties define puerto 80 y datasource de producción.
 Al activar prod, el puerto se sobrescribe a 80.
 
 Los documentos multi-perfil en YAML permiten agrupar configuraciones:
-yaml
-
-### # application.yml
+```yaml
+# application.yml
 server:
   port: 8080
 ---
@@ -1797,13 +1796,14 @@ spring:
 server:
   port: 80
 
-### @Value y @ConfigurationProperties
+@Value y @ConfigurationProperties
 
     @Value("${clave}"): inyecta un valor simple, con posibilidad de valor por defecto (${clave:defecto}). Útil para una o pocas propiedades. Pero no ofrece chequeo de tipos ni auto-completado en IDE.
 
     @ConfigurationProperties: mapea un prefijo de propiedades a un bean Java, con binding relajado (camelCase, kebab-case, snake_case). Más seguro y escalable.
 
-```java
+java
+
 @ConfigurationProperties(prefix = "app.pedidos")
 @Component
 public class PedidosProperties {
@@ -1831,7 +1831,7 @@ Relajación del binding
 
 ### app.pedidos.max_items
 
-### APP_PEDIDOS_MAXITEMS (variable de entorno)
+    APP_PEDIDOS_MAXITEMS (variable de entorno)
 
 Todos se mapean a la misma propiedad maxItems.
 Placeholders y SpEL en propiedades
@@ -2633,7 +2633,7 @@ Flujos más usados:
 
     Refresh Token: para renovar access tokens sin molestar al usuario.
 
-### JSON Web Tokens (JWT)
+JSON Web Tokens (JWT)
 
 Un token JWT (JSON Web Token) es una cadena codificada en Base64 que contiene tres partes:
 header.payload.signature
@@ -2744,7 +2744,7 @@ Y en la configuración:
 http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 ```
 
-### OAuth2 Client (login social)
+OAuth2 Client (login social)
 
 Con spring-boot-starter-oauth2-client y propiedades:
 properties
@@ -3212,7 +3212,7 @@ Conceptos básicos:
 
     JobLauncher: interfaz para lanzar jobs.
 
-### Configuración de un Job simple (lectura de CSV a BD)
+Configuración de un Job simple (lectura de CSV a BD)
 ```java
 @Configuration
 @EnableBatchProcessing
@@ -3406,21 +3406,20 @@ public class EurekaServerApplication {
 
     Configura application.yml:
 
-### yaml
-
+```yaml
 server:
   port: 8761
 eureka:
   client:
     register-with-eureka: false   # no se registra a sí mismo
     fetch-registry: false
+```
 
 ¡El servidor ya está listo! Se accede a un dashboard en http://localhost:8761.
 Eureka Client (microservicio)
 
 Añade spring-cloud-starter-netflix-eureka-client a cada microservicio. Con spring.application.name se asigna el nombre lógico del servicio.
-yaml
-
+```yaml
 spring:
   application:
     name: producto-service
@@ -3428,6 +3427,7 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+```
 
 Al iniciar, el cliente se registra. Opcional: eureka.instance.prefer-ip-address=true para registrar la IP en lugar del hostname (mejor en contenedores).
 Descubrimiento en el código: RestTemplate + @LoadBalanced
@@ -3465,23 +3465,23 @@ Mono<List<Producto>> productos = client.get()
 ### Salud y autorenovación
 
 El Eureka client envía latidos (heartbeats) cada 30 segundos por defecto. Si el server no los recibe, la instancia se saca del registro. Se puede afinar con:
-yaml
-
+```yaml
 eureka:
   instance:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+```
 
 ### Zonas y alta disponibilidad
 
 Para tolerancia a fallos del servidor Eureka, se despliegan múltiples servidores peer-to-peer que replican el registro. Cada servidor es cliente de los demás.
-yaml
-
-### # server1
+```yaml
+# server1
 eureka:
   client:
     service-url:
       defaultZone: http://server2:8762/eureka,http://server3:8763/eureka
+```
 
 Los clientes pueden apuntar a todos los servidores en la lista, y Spring Cloud selecciona uno disponible.
 Eureka vs. otras soluciones
@@ -3511,8 +3511,7 @@ public class ConfigServerApplication {
 ```
 
 Configuración application.yml:
-yaml
-
+```yaml
 server:
   port: 8888
 spring:
@@ -3523,6 +3522,7 @@ spring:
           uri: https://github.com/mi-organizacion/config-repo
           default-label: main
           clone-on-start: true
+```
 
 El servidor clona el repositorio Git y sirve las propiedades bajo /{application}/{profile} (ej. /producto-service/dev). El cliente consulta esta URL al arrancar y fusiona las propiedades.
 Config Client
@@ -3556,11 +3556,11 @@ Al llamar a /refresh, el bean se reinicializa con los nuevos valores sin reinici
 ### Cifrado y secretos
 
 El Config Server puede cifrar valores en reposo usando claves simétricas o asimétricas. Los valores en los archivos de configuración pueden estar prefijados con {cipher}:
-yaml
-
+```yaml
 spring:
   datasource:
     password: '{cipher}AQBt...'
+```
 
 El servidor descifra antes de enviar a los clientes. La clave se configura con encrypt.key (simétrica). Para mayor seguridad, se puede integrar Vault como backend.
 Estrategias de repositorio y composición
@@ -3586,8 +3586,7 @@ En microservicios, un API Gateway es el punto de entrada único que encamina las
 Spring Cloud Gateway
 
 Es el gateway oficial (reactivo, no bloqueante) construido sobre Spring WebFlux. Alternativa a Netflix Zuul (obsoleto). Se configura con spring-cloud-starter-gateway.
-yaml
-
+```yaml
 spring:
   cloud:
     gateway:
@@ -3604,6 +3603,7 @@ spring:
             - Path=/api/pedidos/**
           filters:
             - StripPrefix=1
+```
 
 El prefijo lb:// indica balanceo de carga a través del Service Discovery (Eureka). Los predicates determinan si la ruta aplica; los filters modifican la petición/respuesta.
 Predicados (predicates)
@@ -3624,15 +3624,15 @@ Factores que determinan si una ruta coincide. Spring Cloud Gateway incluye mucho
 
 ### Before/After/Between: horarios
 
-### Weight: para distribución ponderada (canary releases)
+    Weight: para distribución ponderada (canary releases)
 
 Ejemplo de combinación:
-yaml
-
+```yaml
 predicates:
   - Path=/api/**
   - Method=GET
   - Header=X-Api-Version, v2
+```
 
 ### Filtros
 
@@ -3657,10 +3657,10 @@ Filtros comunes de Gateway:
     DedupeResponseHeader: elimina cabeceras duplicadas.
 
 Ejemplo con circuit breaker:
-yaml
-
+```yaml
 filters:
   - CircuitBreaker=name=productoCB, fallbackUri=forward:/fallback/productos
+```
 
 ### Filtros personalizados
 
@@ -3716,13 +3716,13 @@ public KeyResolver userKeyResolver() {
 ```
 
 Configuración:
-yaml
-
+```yaml
 filters:
   - name: RequestRateLimiter
     args:
       redis-rate-limiter.replenishRate: 10
       redis-rate-limiter.burstCapacity: 20
+```
 
 ### Resiliencia y tolerancia a fallos
 
@@ -3773,8 +3773,7 @@ public class ProductoService {
 ```
 
 Para habilitarlo, necesita una configuración application.yml:
-yaml
-
+```yaml
 resilience4j:
   circuitbreaker:
     instances:
@@ -3783,6 +3782,7 @@ resilience4j:
         failure-rate-threshold: 50
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 3
+```
 
 Parámetros principales:
 
@@ -3804,25 +3804,25 @@ public List<Producto> listar() { ... }
 ```
 
 Configuración del retry:
-yaml
-
+```yaml
 resilience4j:
   retry:
     instances:
       productoRetry:
         max-attempts: 3
         wait-duration: 500ms
+```
 
 ### Circuit Breaker en el API Gateway
 
 Spring Cloud Gateway permite aplicar circuit breaker directamente en las rutas:
-yaml
-
+```yaml
 filters:
   - name: CircuitBreaker
     args:
       name: productoCB
       fallbackUri: forward:/fallback/productos
+```
 
 El fallback puede ser un endpoint interno que devuelva una respuesta controlada.
 Eventos y métricas
@@ -3838,11 +3838,10 @@ CircuitBreaker cb = registry.circuitBreaker("productoCB");
 cb.getEventPublisher().onSuccess(event -> log.info("Éxito"));
 ```
 
-### Bulkhead (compartimentos estancos)
+Bulkhead (compartimentos estancos)
 
 Aísla partes del sistema para evitar que un fallo en una dependencia consuma todos los hilos del pool.
-yaml
-
+```yaml
 resilience4j:
   bulkhead:
     instances:
@@ -3850,7 +3849,8 @@ resilience4j:
         max-concurrent-calls: 5
         max-wait-duration: 100ms
 
-```java
+java
+
 @Bulkhead(name = "productoBulkhead", fallbackMethod = "fallback")
 public List<Producto> listar() { ... }
 ```
@@ -3865,13 +3865,13 @@ public CompletableFuture<List<Producto>> listarAsync() { ... }
 ```
 
 Configuración:
-yaml
-
+```yaml
 resilience4j:
   timelimiter:
     instances:
       productoTimeLimiter:
         timeout-duration: 2s
+```
 
 ### Consideraciones importantes
 
@@ -4038,11 +4038,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .withSockJS(); // habilita fallback SockJS
     }
 }
+```
 
     Broker simple (/topic, /queue): es un broker en memoria que reenvía mensajes a los clientes suscritos.
 
     /app: prefijo para los destinos de los métodos @MessageMapping (mensajes que llegan del cliente).
-```
 
     SockJS: emula WebSocket en navegadores antiguos usando long polling.
 

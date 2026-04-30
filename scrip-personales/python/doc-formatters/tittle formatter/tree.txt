@@ -1,0 +1,62 @@
+00_Fundamentos/
+├── 00_Que_es_Spring.md
+├── 01_IoC_y_DI.md
+├── 02_Contenedor_y_Beans.md
+├── 03_Configuracion_Java_vs_XML.md
+└── 04_Ciclo_de_vida_Bean.md
+01_Spring_Core/
+├── Scopes_y_Proxies.md
+├── BeanPostProcessor_y_Aware_Interfaces.md
+├── Profiles.md
+└── SpEL.md
+02_AOP/
+├── Conceptos_JoinPoint_Pointcut_Advice.md
+├── Aspectos_personalizados.md
+└── Proxies_JDK_vs_CGLIB.md
+03_Spring_MVC/
+├── DispatcherServlet_y_Flujo.md
+├── Controladores_REST.md
+├── Manejo_de_Excepciones.md
+├── Validacion_y_BindingResult.md
+└── Vistas_y_Templates.md
+04_Spring_Boot/
+├── Autoconfiguracion_y_Starters.md
+├── Estructura_Proyecto_Spring_Boot.md
+├── Actuator_y_Metricas.md
+├── Testing.md
+└── Perfiles_y_Propiedades.md
+05_Acceso_Datos/
+├── JDBC_Template.md
+├── JPA_y_Hibernate_Integracion.md
+├── Spring_Data_JPA.md
+├── Transacciones_y_Transactional.md
+└── Consultas_Nativas_y_Procedure.md
+06_Seguridad/
+├── Spring_Security_Arquitectura.md
+├── Configuracion_DSL.md
+├── JWT_y_OAuth2.md
+└── Metodo_Security.md
+07_Temas_Avanzados/
+├── Eventos_de_Aplicacion.md
+├── Cache.md
+├── Programacion_Reactiva_WebFlux.md
+└── Batch_y_Tareas_Programadas.md
+08_Spring_Cloud/
+├── Service_Discovery_Eureka.md
+├── Config_Server.md
+├── API_Gateway.md
+└── Circuit_Breaker.md
+09_Miscelaneos/
+├── Internacionalizacion_i18n.md
+├── Websockets_y_STOMP.md
+└── Integracion_JMS_y_Kafka.md
+Proyectos_Ejemplo/
+├── 01_hola_mundo/
+├── 02_mvc_rest/
+├── 03_jpa_security/
+└── 04_microservicios/
+Recursos/
+├── Diagramas/
+├── Libros_y_Referencias.md
+├── Enlaces_Utiles.md
+└── Cheatsheets/
