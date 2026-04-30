@@ -1,4368 +1,4294 @@
-01-que-es-bash.md
-Bash: el intérprete de comandos que se convirtió en lenguaje
+00 - ¿Qué es Spring? La filosofía y el ecosistema
 
-Bash (Bourne Again SHell) es un intérprete de comandos y lenguaje de scripting creado por Brian Fox para el proyecto GNU en 1989. Es el shell por defecto en la mayoría de las distribuciones Linux y macOS (hasta Catalina; de ahí en adelante usa zsh como shell interactivo, pero bash sigue presente en /bin/bash y se puede usar para scripts).
+Spring no es simplemente un conjunto de utilidades. Es un marco de trabajo completo que redefine cómo se construye software empresarial en Java. Para entenderlo a fondo hay que responder a tres preguntas: ¿por qué surgió?, ¿qué problema resuelve realmente? y ¿cómo está diseñado?
+El problema original: J2EE pesado
 
-    No solo un shell interactivo: Bash puede ejecutar comandos uno a uno, pero su verdadero poder reside en los scripts. Un script de Bash es un archivo de texto con una secuencia de comandos que el intérprete ejecuta en orden.
+A principios de los 2000, desarrollar aplicaciones empresariales con J2EE (antecesor de Jakarta EE) implicaba un infierno de configuración XML, obligatoriedad de heredar de clases del servidor de aplicaciones (EjBs), interfaces remotas, despliegues larguísimos y código fuertemente acoplado. Spring nació en 2003 de la mano de Rod Johnson como una reacción contra esa complejidad, basándose en las ideas de su libro *Expert One-on-One J2EE Design and Development*.
+Principios fundamentales de Spring
 
-    Familia de shells:
+    Contenedor ligero: no necesitas un servidor de aplicaciones pesado; Spring puede ejecutarse en un simple Tomcat o incluso en un entorno standalone. Gestiona el ciclo de vida de los objetos (beans) sin imponer contratos como EJBObject o interfaces específicas.
 
-        sh (shell Bourne original): ancestro mínimo. /bin/sh puede ser un enlace a bash (que se ejecuta en modo de compatibilidad POSIX) o a dash (más ligero).
+    No invasivo: las clases de tu dominio o servicio no tienen que extender clases de Spring ni implementar interfaces del framework (salvo alguna interfaz opcional para conveniencia). Solo se usan anotaciones que son puras marcas o importaciones de javax.inject / Jakarta.
 
-        bash: añade características como arrays, expansión de llaves, [[, etc.
+    Configuración por convención y anotaciones: en lugar de una montaña de XML, hoy se utiliza principalmente configuración por código Java y anotaciones, complementada con la autoconfiguración de Spring Boot.
 
-        ksh, zsh, fish: otros shells con sintaxis similares pero diferencias importantes.
+    Modularidad: Spring se compone de una veintena de módulos que puedes usar o ignorar. El núcleo (spring-core, spring-beans, spring-context) es obligatorio; el resto se añade según necesidad.
 
-    ¿Por qué aprender Bash?
+### Arquitectura general de Spring
 
-        Automatización de tareas del sistema (backups, despliegues, monitorización).
+Se organiza en capas:
 
-        Administración de servidores y tuberías CI/CD.
+    Core Container (spring-core, spring-beans, spring-context, spring-expression): el contenedor IoC, el lenguaje SpEL, manejo de beans, etc.
 
-        Es ubicuo: cualquier máquina Unix/Linux lo tiene.
+    AOP and Instrumentation (spring-aop, spring-aspects): programación orientada a aspectos.
 
-        Es la “navaja suiza” para pegar comandos.
+    Data Access/Integration (spring-jdbc, spring-tx, spring-orm, spring-jms): abstracción sobre JDBC, JPA, transacciones y mensajería.
 
-Distinciones clave:
+    Web (spring-web, spring-webmvc, spring-websocket, spring-webflux): soporte para MVC, WebSocket y reactivo.
 
-    Shell interactivo vs no interactivo: cuando ejecutas un script (bash script.sh) estás en modo no interactivo. El comportamiento de algunos comandos y la carga de archivos de configuración cambian.
+    Test (spring-test): utilidades para pruebas unitarias y de integración.
 
-    Shell de login vs no login: un shell de login lee /etc/profile, ~/.bash_profile, etc.; el no login lee ~/.bashrc. Veremos esto en detalle en 06-entorno-y-configuracion.md.
+Sobre estos bloques se construye el ecosistema Spring Boot (que empaqueta y autoconfigura todo), Spring Data, Spring Security, Spring Cloud, etc.
+¿Qué no es Spring?
 
-Modos de operación:
+    No es un servidor de aplicaciones, aunque puede reemplazar gran parte de su funcionalidad.
 
-    Interactivo: lee entrada del usuario, muestra prompt, manejo de señales por defecto, historial activo.
+    No es solo un framework de inyección de dependencias; DI es solo el pegamento.
 
-    Non-interactivo: ejecuta un script o comando pasado con -c. No carga todos los archivos de inicialización.
+    No obliga a usar solo su forma de hacer las cosas; puedes combinar XML y anotaciones, usar solo partes del ecosistema.
 
-    Modo POSIX: si se invoca como sh o con --posix, Bash se comporta de manera más estricta y compatible.
+En resumen: Spring es una plataforma de productividad para Java empresarial que proporciona infraestructura, abstracciones y una filosofía de diseño limpia.
+01 - IoC y DI: el corazón del desacoplamiento
+La inversión de control (IoC) como principio
 
-Entender estas diferencias es fundamental para evitar comportamientos inesperados al ejecutar scripts desde cron, systemd o SSH.
-02-shebang-y-ejecucion.md
-El shebang y las distintas formas de ejecutar un script
-El shebang (#!)
+En un programa tradicional, tu código controla el flujo: instancia objetos, llama a métodos, decide cuándo finalizar. La inversión de control entrega ese control a un framework. No es un patrón exclusivo de Spring; los servlets, los event listeners o los callbacks ya lo implementan.
 
-La primera línea de un script debe ser el shebang (contracción de “sharp” y “bang”). Indica al sistema qué intérprete usar.
-bash
+En Spring, IoC toma la forma de un contenedor que crea y ensambla tus objetos (beans). Tú escribes clases "inocentes" que declaran sus dependencias, y el contenedor se las suministra en tiempo de ejecución. Esto es el Hollywood Principle: "No nos llames; nosotros te llamaremos".
+Inyección de dependencias (DI) – La implementación concreta
 
-#!/bin/bash
+DI es la técnica principal con la que Spring logra IoC. Consiste en que una clase no instancia sus dependencias (no hace new Servicio()), sino que las recibe desde el exterior.
 
-O la forma portátil (recomendada para scripts que deben correr en sistemas sin /bin/bash en esa ruta exacta):
-bash
+Formas de DI en Spring:
+1. Inyección por constructor (recomendada)
+```java
+@Service
+public class PedidoService {
+    private final PedidoRepository repository;
+    private final NotificacionService notificacion;
 
-#!/usr/bin/env bash
-
-/usr/bin/env busca bash en el PATH y lo ejecuta. Ventaja: no depende de una ruta fija. Desventaja: el entorno puede no ser controlable (el PATH puede ser distinto).
-
-Opciones en el shebang: puedes pasar una sola opción, por ejemplo:
-bash
-
-#!/bin/bash -u
-
-Pero no se pueden pasar múltiples opciones de manera fiable. Lo mejor es usar set dentro del script (ver depuración).
-Ejecución de un script
-
-    Convertirlo en ejecutable y lanzarlo:
-    bash
-
-    chmod +x script.sh
-    ./script.sh
-
-    Esto ejecuta un proceso nuevo con el intérprete indicado en el shebang. El script debe tener permiso de ejecución.
-
-    Invocar explícitamente el intérprete:
-    bash
-
-    bash script.sh
-
-    No necesita ser ejecutable. Puedes pasar opciones extra: bash -x script.sh.
-
-    Ejecutar en el shell actual con source o .:
-    bash
-
-    source script.sh
-    . script.sh
-
-    Esto ejecuta los comandos en el entorno actual, sin lanzar un proceso hijo. Los cambios de variables, funciones y directorio actual persisten en la sesión interactiva. Importante: si el script tiene exit, finalizará la sesión interactiva.
-
-Diferencias prácticas:
-
-    ./script.sh vs bash script.sh: el shebang se respeta o se ignora respectivamente.
-
-    source es muy usado para cargar bibliotecas de funciones o archivos de configuración en el mismo shell.
-
-Argumentos del script: al ejecutar un script, puedes pasar argumentos posicionales. Estos estarán disponibles dentro como $1, $2, etc. (ver variables).
-Comportamiento de los shells no interactivos
-
-Cuando se invoca un script con bash script.sh, Bash arranca en modo no interactivo, no lee ~/.bashrc a menos que se fuerce con BASH_ENV. Es común tener funciones que dependen de ~/.bashrc y no estarán disponibles en el script. Solución: cargar explícitamente la librería necesaria.
-03-variables.md
-Variables: cajones con nombre para tus datos
-Definición y asignación
-
-En Bash, la asignación no puede tener espacios alrededor del =:
-bash
-
-nombre="Juan"
-numero=42
-
-Acceso: $nombre o ${nombre}. Las llaves son obligatorias en ciertos contextos (concatenación con texto, o expansiones especiales):
-bash
-
-echo "Hola ${nombre}, tu número es ${numero}"
-
-Variables sin declarar: si accedes a una variable no definida, Bash devuelve una cadena vacía. Con set -u (modo estricto) causará un error.
-Tipos de variables
-
-Bash no tiene tipado fuerte. Todo se almacena como cadena. Con declare se pueden establecer atributos:
-
-    declare -i var → variable entera (las asignaciones evalúan aritmética automáticamente).
-
-    declare -r var=valor → solo lectura (constante).
-
-    declare -a arr → array indexado.
-
-    declare -A map → array asociativo (diccionario).
-
-    declare -x var → exportar al entorno.
-
-También existe local dentro de funciones (restringe el ámbito).
-Variables de entorno
-
-Las variables de entorno son heredadas por los procesos hijos. Para verlas: env o printenv.
-Para hacer que una variable de shell pase al entorno: export VAR=valor.
-Para eliminarla del entorno (pero no del shell actual): export -n VAR.
-Para eliminar la variable por completo: unset VAR.
-Variables especiales (parámetros posicionales y otros)
-Variable	Significado
-$0	Nombre del script o shell
-$1 … $9	Argumentos posicionales del 1º al 9º
-${10}	A partir del décimo es obligatorio usar llaves
-$#	Número de argumentos
-$@	Todos los argumentos como lista de palabras separadas (cada uno entrecomillado si se usa "$@")
-$*	Todos los argumentos como una sola palabra (separados por el primer carácter de IFS)
-$?	Código de salida del último comando (0 = éxito, otro = error)
-$$	PID del shell actual
-$!	PID del último proceso lanzado en segundo plano
-$_	Último argumento del último comando ejecutado (en algunos contextos)
-
-Nota sobre $@ vs $*: casi siempre quieres "$@". Conserva los argumentos que contienen espacios. Ejemplo:
-bash
-
-set -- "a b" c
-for arg in "$@"; do echo "$arg"; done   # "a b", "c" (correcto)
-for arg in $*;   do echo "$arg"; done   # "a", "b", "c"   (separó por espacio)
-
-Variables predefinidas útiles
-
-    HOME: directorio home del usuario.
-
-    PATH: lista de directorios donde buscar ejecutables.
-
-    USER: nombre del usuario actual.
-
-    PWD: directorio de trabajo actual (mantenido por el shell).
-
-    OLDPWD: directorio anterior.
-
-    RANDOM: genera un entero aleatorio entre 0 y 32767 (se puede reinicializar asignándole un valor).
-
-    SECONDS: segundos transcurridos desde que arrancó el shell.
-
-    UID: UID numérico del usuario.
-
-    LINENO: número de línea actual (útil para depuración).
-
-    FUNCNAME: array con la pila de funciones en ejecución.
-
-Ámbito (scope)
-
-Por defecto las variables son globales. Dentro de una función puedes usar local para que no afecten al exterior:
-bash
-
-mi_func() {
-    local var_interna="solo aquí"
+    public PedidoService(PedidoRepository repository,
+                         NotificacionService notificacion) {
+        this.repository = repository;
+        this.notificacion = notificacion;
+    }
 }
 
-Expansión de parámetros (solo una muestra)
-
-    ${var:-valor_por_defecto}: devuelve valor_por_defecto si var no está definida o es nula.
-
-    ${var:=valor}: asigna y devuelve si no está definida.
-
-    ${var:?mensaje}: muestra error si no está definida/nula y aborta (si no es interactivo).
-
-    ${var:+alternativo}: si var existe y no es nula, devuelve alternativo.
-
-    ${#var}: longitud de la cadena.
-
-    ${var#patrón}: elimina la coincidencia más corta del prefijo.
-
-    ${var##patrón}: elimina la más larga del prefijo.
-
-    ${var%patrón}: sufijo más corto.
-
-    ${var%%patrón}: sufijo más largo.
-
-    ${var/buscar/reemplazar}: reemplaza la primera ocurrencia.
-
-    ${var//buscar/reemplazar}: reemplazo global.
-
-    Mayúsculas/minúsculas: ${var^^} (todo mayúsculas), ${var,,} (minúsculas), ${var^} (primera mayúscula), ${var,} (primera minúscula).
-
-04-sustituciones-y-expansiones.md
-Expansiones: cómo Bash transforma las líneas antes de ejecutarlas
-
-Bash realiza varios pasos de expansión tras leer una línea. Conocerlos evita dolores de cabeza con comillas y caracteres especiales.
-1. Expansión de llaves (brace expansion)
-
-Genera combinaciones o secuencias sin necesidad de que existan los archivos.
-bash
-
-echo archivo-{a,b,c}.txt   # archivo-a.txt archivo-b.txt archivo-c.txt
-echo {1..10}               # 1 2 3 ... 10
-echo {01..10}              # 01 02 ... 10
-echo {a..z}                # a b c ... z
-echo prefijo-{a,b,c}-sufijo  # combinaciones
-
-No puede haber espacios dentro de las llaves. Se expande antes de cualquier otra cosa.
-2. Sustitución de comandos
-
-Ejecuta un comando y captura su salida estándar.
-Sintaxis moderna (anidable sin escapes):
-bash
-
-fecha=$(date)
-
-Sintaxis clásica (menos recomendada por problemas con anidamiento):
-bash
-
-fecha=`date`
-
-Se puede almacenar en variables, pasar como argumento, etc. La salida sustituida recorta el salto de línea final.
-3. Sustitución de procesos (process substitution)
-
-Permite tratar la salida (o entrada) de un comando como un archivo.
-bash
-
-diff <(ls dir1) <(ls dir2)
-
-Aquí <(...) crea un descriptor de archivo temporal que contiene la salida del comando. También existe >(...) para escribir a un comando como si fuera un archivo, útil para comandos que esperan un archivo de salida.
-4. Expansión aritmética
-
-Evalúa una expresión matemática entera y la sustituye por el resultado.
-bash
-
-resultado=$(( 3 + 4 * 2 ))   # 11
-let "a = 5 * 2"              # alternativa, afecta variable "a"
-
-Soporta los operadores básicos, incrementos (++), asignaciones (+=), operadores bit a bit y comparaciones (que retornan 1 o 0). No admite punto flotante; usa bc para eso.
-5. Expansión de tilde
-
-    ~ → $HOME
-
-    ~usuario → home de ese usuario
-
-    ~+ → $PWD
-
-    ~- → $OLDPWD
-
-6. Expansión de variables y comodines
-
-Después de las expansiones anteriores, se realiza la expansión de variables (sustitución de parámetros) y el globbing (expansión de nombres de archivo): *, ?, [...]. Esto ocurre solo si no está entrecomillado.
-Orden de evaluación (resumen)
-
-    Dividir en palabras (word splitting) basado en IFS
-
-    Expansión de llaves
-
-    Sustitución de tilde
-
-    Sustitución de parámetros y variables
-
-    Sustitución de comandos
-
-    Expansión aritmética
-
-    División de palabras (de nuevo)
-
-    Expansión de nombres de archivo (globbing)
-
-Comillas: las comillas dobles ("...") protegen contra división de palabras y globbing, pero permiten variables y sustituciones. Las simples ('...') suprimen toda expansión.
-05-comentarios-y-sintaxis.md
-Comentarios y la gramática básica de las líneas
-Comentarios
-
-Cualquier línea que comience con # (excepto el shebang) es un comentario.
-bash
-
-# Esto es un comentario
-echo "Hola"   # comentario después de un comando (el # debe estar seguido de espacio o sin ambigüedad)
-
-No existen comentarios multilínea nativos. Se suelen usar here-docs no leídos:
-bash
-
-: <<'COMENTARIO_LARGO'
-Todo esto es ignorado.
-Puede tener comillas sin problemas.
-COMENTARIO_LARGO
-
-El comando : (dos puntos) es un no-op que no hace nada y siempre retorna éxito.
-Separadores de comandos
-
-    ; : ejecuta un comando tras otro secuencialmente, independientemente del éxito.
-
-    && : ejecuta el siguiente solo si el anterior tuvo éxito (código de salida 0).
-
-    || : ejecuta el siguiente solo si el anterior falló (código de salida distinto de 0).
-
-Continuación de línea
-
-Si una línea termina con \, Bash interpreta que el comando continúa en la siguiente línea:
-bash
-
-echo "esto es un comando muy largo" \
-     "y sigue aquí"
-
-La barra invertida debe ser el último carácter, sin espacios después.
-Listas de comandos y agrupación
-
-    (comandos) : ejecuta en un subshell (entorno heredado pero aislado; cambios de variables, directorio, etc., no afectan al padre).
-
-    { comandos; } : agrupa comandos en el entorno actual. La sintaxis requiere punto y coma después del último comando y espacios alrededor de las llaves.
-
-Comillas y escapes
-
-    \ : quita el significado especial del siguiente carácter.
-
-    '...' : literal absoluto, ni $ ni \ funcionan.
-
-    "..." : permiten expansiones de variables ($), sustitución de comandos y caracteres de escape como \$, \", \\.
-
-Ejemplo de diferencias:
-bash
-
-nombre=Juan
-echo '$nombre'   # muestra literal $nombre
-echo "$nombre"   # muestra Juan
-
-El comando test y sus alias
-
-El if evalúa comandos, no expresiones. Pero es común usar:
-bash
-
-if [ "$a" -eq 5 ]; then ...
-
-[ es un comando (alias de test) que exige coincidencia sintáctica: espacios alrededor, y el último argumento ]. [[ ]] es una palabra reservada de Bash más moderna y segura, que permite &&, ||, =~ (regex) y no hace división de palabras. Recomendación: en scripts para bash, usar siempre [[ ]] en condicionales.
-06-entorno-y-configuracion.md
-Cómo se configura Bash según sea login, interactivo, etc.
-
-Bash lee distintos archivos según el tipo de sesión. Este es uno de los aspectos más confusos y causantes de errores.
-Tipos de shell y archivos de inicio
-Tipo de shell	Archivos leídos
-Login shell interactivo	/etc/profile, luego el primero que exista de: ~/.bash_profile, ~/.bash_login, ~/.profile
-Login shell no interactivo	/etc/profile, luego el primero de: ~/.bash_profile, ~/.bash_login, ~/.profile (pero no lee .bashrc a menos que se invoque explícitamente con source)
-Shell interactivo no login	/etc/bash.bashrc (si existe), ~/.bashrc
-Shell no interactivo no login	Variable BASH_ENV: si está definida, se expande y se interpreta como un archivo de inicio. No lee ni .bashrc ni .profile automáticamente.
-Invocado como sh (POSIX)	Solo archivos especificados por ENV, o comp. POSIX
-Propósito de cada archivo
-
-    ~/.bash_profile: ideal para configuraciones de sesión de login (variables globales, arranque de agentes, etc.). Normalmente debería sourciar ~/.bashrc para que los shells interactivos no login también tengan esas configuraciones:
-    bash
-
-    if [ -f ~/.bashrc ]; then
-        source ~/.bashrc
-    fi
-
-    ~/.bashrc: para configuraciones de shells interactivos (alias, prompt, funciones, atajos, etc.). Se carga cada vez que abres una terminal.
-
-    ~/.profile: se usa en shells de login que no son bash (como sh), o por retrocompatibilidad. A menudo contiene solo lo necesario para cargar .bashrc y establecer el PATH.
-
-Variables de entorno importantes para la configuración
-
-    BASH_ENV: si se define, los scripts no interactivos la expandirán y tratarán de cargar ese archivo. Útil para dotar de funciones a scripts sin tener que hacer source explícito.
-
-    ENV: similar pero para shells POSIX.
-
-    PATH: $HOME/.local/bin:/usr/local/bin:...
-
-    PS1, PS2, PS4: prompts (interactivo, continuación y traza de depuración).
-
-Comportamiento típico en scripts ejecutados por cron, systemd o SSH remoto
-
-    Cron y systemd ejecutan shells no interactivos y no login. No cargan .bashrc.
-
-    SSH ejecuta un login shell interactivo si se invoca con ssh usuario@host, pero si pasas un comando: ssh host script.sh, se ejecuta un shell no interactivo, no login, sin .bash_profile y sin .bashrc.
-
-    Para scripts que necesiten el entorno completo, se puede forzar: bash -l script.sh (simula login) o incluir source ~/.bashrc al principio.
-
-Cómo gestionar el entorno correctamente
-
-    Mantén las variables de entorno en ~/.bash_profile o ~/.profile y las funciones/alias en ~/.bashrc.
-
-    Nunca definas variables de entorno necesarias para scripts en .bashrc sin cargarlo explícitamente.
-
-    Para automatización, es mejor definir todo en el propio script o en un archivo de configuración aparte.
-
-Scripts de ejemplo
-
-A continuación los dos scripts sugeridos, con comentarios explicativos integrados.
-scripts/hola-mundo.sh
-bash
-
-#!/usr/bin/env bash
-# --------------------------------------------------------------------
-# hola-mundo.sh
-# Script mínimo que demuestra shebang, variables, entrada y salida.
-# --------------------------------------------------------------------
-
-# Anunciamos el modo estricto (detiene el script ante errores y variables no definidas)
-set -euo pipefail
-
-# 1. Uso de variable simple
-saludo="Hola, mundo"
-echo "$saludo"
-
-# 2. Capturar argumentos de línea de comandos
-if [ "$#" -gt 0 ]; then
-    echo "Recibiste $# argumento(s):"
-    # Iteramos sobre todos los argumentos respetando espacios
-    for arg in "$@"; do
-        echo "  -> $arg"
-    done
-else
-    echo "No pasaste argumentos. Intenta: $0 Juan María"
-fi
-
-# 3. Leer entrada del usuario
-read -r -p "¿Cómo te llamas? " nombre
-echo "Encantado, ${nombre:-invitado}."
-# ${nombre:-invitado} imprime "invitado" si el usuario no escribió nada.
-
-# 4. Mostrar algunas variables especiales
-echo "PID de este script: $$"
-echo "Directorio actual: $PWD"
-echo "Último código de salida: $? (debería ser 0)"
-
-exit 0
-
-scripts/ejemplo-variables.sh
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# --------------------------------------------------------------------
-# ejemplo-variables.sh
-# Ilustra diferentes tipos de variables, expansiones y ámbito.
-# --------------------------------------------------------------------
-
-# --- Variables globales y de entorno ---
-export MENSAJE_GLOBAL="Hola desde el entorno"
-no_exportado="Solo en este script"
-
-echo "MENSAJE_GLOBAL = $MENSAJE_GLOBAL"
-echo "no_exportado  = $no_exportado"
-
-# --- Variables numéricas y de solo lectura ---
-declare -i entero=10
-entero+=5                      # Ahora vale 15 (gracias a -i)
-echo "Entero tras suma: $entero"
-
-declare -r CONSTANTE=3.1416
-echo "Constante PI aproximado: $CONSTANTE"
-# Descomentar la siguiente línea causaría error:
-# CONSTANTE=4
-
-# --- Arrays ---
-# Array indexado
-frutas=(manzana naranja pera)
-frutas+=("uva")                # Añade un elemento
-echo "Primera fruta: ${frutas[0]}"
-echo "Todas las frutas: ${frutas[@]}"
-echo "Número de frutas: ${#frutas[@]}"
-
-# Array asociativo (requiere declare -A)
-declare -A capitales
-capitales=([Francia]="París" [Japón]="Tokio" [Brasil]="Brasilia")
-capitales["Alemania"]="Berlín"
-echo "Capital de Japón: ${capitales[Japón]}"
-echo "Todas las capitales: ${capitales[@]}"
-
-# --- Expansiones de parámetros ---
-nombre="Juan Carlos"
-# Longitud
-echo "Longitud de nombre: ${#nombre}"
-# Subcadena: del carácter 0, longitud 4
-echo "Primer nombre: ${nombre:0:4}"
-# Reemplazo
-echo "Con guiones: ${nombre// /_}"
-# Default
-echo "Apellido (si no existe): ${apellido:-Desconocido}"
-
-# --- Ámbito con funciones ---
-mi_funcion() {
-    local local_var="soy local"
-    echo "Dentro de la función: local_var = $local_var"
-    # Esta variable global se modifica fuera
-    global_modificada="modificada dentro de función"
+    Ventajas: el objeto siempre está completamente inicializado, permite final (inmutabilidad), las dependencias son explícitas y obligatorias. Facilita el testing (no necesitas campo @Autowired ni MockBean).
+
+    Inconvenientes: si hay muchas dependencias, el constructor puede tener demasiados parámetros (síntoma de que la clase necesita un refactor).
+```
+
+2. Inyección por setter
+```java
+@Service
+public class PedidoService {
+    private PedidoRepository repository;
+
+    @Autowired
+    public void setRepository(PedidoRepository repository) {
+        this.repository = repository;
+    }
 }
-mi_funcion
-echo "Fuera de la función: global_modificada = $global_modificada"
-# Esto estaría vacío si intentáramos imprimir local_var (es local)
+```
 
-# --- Exit code y captura de salida de comandos ---
-comando_inexistente 2>/dev/null || echo "Código de salida tras fallo: $?"
+    Se usa cuando la dependencia es opcional o se necesita reconfigurar después de la construcción. Menos recomendada porque el objeto puede existir en un estado temporal sin la dependencia.
 
-output=$(date "+%Y-%m-%d")
-echo "Fecha formateada: $output"
+3. Inyección por campo (@Autowired en atributo)
+```java
+@Autowired
+private PedidoRepository repository;
 
-exit 0
+    Es la más legible pero tiene graves desventajas: oculta las dependencias (no sabes qué necesita la clase sin mirar los campos), dificulta las pruebas unitarias sin Spring (necesitas usar reflexión o @InjectMocks), impide final y rompe la encapsulación.
+```
 
-We'll produce detailed content for the 02-control-de-flujo/ folder, covering all the specified .md files and both scripts, as requested. The user wants a deep dive similar to the previous fundamentals section. We'll structure the response as if writing the documentation for each file, with thorough explanations, examples, and best practices. We'll also include the scripts with explanatory comments. The language must be Spanish, consistent with the previous answer. Let's outline each file:
+### Cómo resuelve Spring las dependencias
 
-    01-condicionales-if.md: Explain if, then, elif, else, fi, the command evaluation model, how if works with the exit status of commands (0=true, non-zero=false). Include common pitfalls (missing spaces, using [ vs [[). Show simple examples, nested if, and how to combine with &&, || to avoid deep nesting.
+El proceso de autowiring sigue estos pasos cuando encuentra @Autowired:
 
-    02-test-y-operadores.md: Deep dive into the test command, [ and [[. Cover string operators (=, !=, -z, -n), integer comparisons (-eq, -ne, -lt, -le, -gt, -ge), file tests (-f, -d, -e, -r, -w, -x, -s, etc.), and logical operators (-a, -o, ! for [, &&, ||, ! for [[). Emphasize that [[ is a Bash keyword with enhanced features (regex =~, pattern matching, no word splitting). Also mention (( )) for arithmetic tests.
+    Por tipo: busca un bean que coincida con el tipo declarado (si es una interfaz, busca la implementación única).
 
-    03-case.md: Pattern matching with case, syntax (case expresión in patron1) comandos;; patron2) comandos;; *) default;; esac), glob patterns, multiple patterns with |, ending with ;;, ;&, ;;&. Provide examples like parsing options, categorizing input.
+    Si encuentra exactamente uno, lo inyecta.
 
-    04-bucles-for-while-until.md: Cover for in two forms: for var in lista and for (( expr1; expr2; expr3 )). while loop, until loop. Explain break and continue. Show iteration over arguments, files (with globbing), arrays, and reading lines from a file or command with while read. Mention IFS issues.
+    Si encuentra varios candidatos del mismo tipo, busca un calificador:
 
-    05-select-menus.md: The select construct for simple menus. Syntax, how it works with PS3 prompt, REPLY variable, and case inside. Show example.
+        @Primary: el bean marcado con @Primary tendrá preferencia.
 
-    scripts/condiciones.sh: A script demonstrating file tests, string and numeric comparisons, the use of if/elif/else, [[ ]], (()), maybe case.
+        @Qualifier("nombre"): especifica el bean por su nombre lógico.
 
-    scripts/adivina-numero.sh: A number guessing game using loops, random number generation ($RANDOM), input validation with while, conditions. Shows while, if, user input, arithmetic.
+    Si no hay ninguna coincidencia, por defecto lanza una excepción en tiempo de arranque (NoSuchBeanDefinitionException), a menos que required = false en @Autowired(required = false) o que la inyección sea dentro de un Optional<T> o @Nullable.
 
-We'll write all this as a continuation of the previous answer. The user expects the same depth and style: informative, with code snippets, warnings, and tips. The response will be structured with headings and content for each file. We'll avoid repeating the entire folder structure but just deliver the content. We'll provide it in a single message, as requested "profundicemos estos temas ahora", similar to the previous long answer.
+```java
+@Autowired
+@Qualifier("emailService")
+private NotificacionService notificacion; // inyecta el bean con nombre "emailService"
+```
 
-We'll ensure all code examples are well-commented and clear. Since this is a knowledge base, we'll use a pedagogical tone.
+También se puede usar @Resource (JSR-250) que inyecta por nombre por defecto, o @Inject (JSR-330) que es funcionalmente equivalente a @Autowired sin required.
+Laziness y dependencias circulares
 
-A continuación profundizamos en los temas de 02-control-de-flujo/, incluyendo el contenido de cada archivo .md y los scripts de ejemplo con explicaciones.
-01-condicionales-if.md
-La estructura if en Bash: evaluar comandos, no expresiones
-
-En Bash, la sentencia if evalúa el código de salida de un comando (o lista de comandos). No evalúa directamente una expresión booleana como en otros lenguajes. La regla es:
-
-    Código de salida 0 → verdadero (éxito)
-
-    Código de salida distinto de 0 → falso (fallo)
-
-Esto permite usar cualquier comando o pipeline como condición.
-Sintaxis básica
-bash
-
-if comando1; then
-    # se ejecuta si comando1 retorna 0
-elif comando2; then
-    # se ejecuta si comando1 falla y comando2 retorna 0
-else
-    # si todos los anteriores fallaron
-fi
-
-then debe estar en una nueva línea o precedido por ;. El elif (opcional) puede repetirse y también va acompañado de then. El cierre es siempre fi (al revés).
-Cómo funciona en la práctica
-
-El comando puede ser cualquiera: una tubería, una llamada a grep, test, [[ ]], (( )), etc.
-bash
-
-# Verificar si un archivo existe
-if ls archivo.txt >/dev/null 2>&1; then
-    echo "Existe"
-fi
-
-# Usando test/[
-if [ "$nombre" = "admin" ]; then
-    echo "Acceso concedido"
-fi
-
-# Usando [[ ]]
-if [[ $numero -gt 10 ]]; then
-    echo "Mayor que 10"
-fi
-
-# Evaluación aritmética (( ))
-if (( x > 10 )); then
-    echo "x mayor que 10"
-fi
-
-# Comprobar el éxito de varios comandos
-if comando1 && comando2; then
-    echo "Ambos exitosos"
-fi
-
-Uso de && y || como condicionales en línea
-
-Se pueden encadenar comandos sin necesidad de un if completo:
-bash
-
-[ -f config.cfg ] && echo "Existe" || echo "No existe"
-
-Equivale a un if then else simple, pero con cuidado: si el primer echo fallara (raro), el || se ejecutaría también. Para lógica segura usa if.
-Anidamiento y buenas prácticas
-
-    Evita escaleras muy profundas de if/elif; considera usar case cuando evalúes múltiples valores discretos.
-
-    Siempre usa comillas dobles alrededor de variables en [ ] para evitar división de palabras y errores de sintaxis. Con [[ ]] no es necesario (pero no hace daño).
-
-    Usa [[ ]] para todo excepto cuando necesites compatibilidad POSIX estricta (sh).
-
-    Aprovecha elif para evitar anidar varios else if.
-
-Ejemplo de anidamiento y uso de elif:
-bash
-
-if [[ $1 == "iniciar" ]]; then
-    systemctl start mi-servicio
-elif [[ $1 == "detener" ]]; then
-    systemctl stop mi-servicio
-elif [[ $1 == "reiniciar" ]]; then
-    systemctl restart mi-servicio
-else
-    echo "Uso: $0 {iniciar|detener|reiniciar}"
-    exit 1
-fi
-
-Trucos avanzados
-
-    Negación con !: if ! comando; then ... → se ejecuta si el comando falla.
-
-    Comprobación de comandos builtin vs externos: if type -P tmux >/dev/null; then ... para ver si un programa está instalado.
-
-    Redirigir la salida de if: El if no captura la salida estándar, pero puedes almacenarla previamente o usar grep -q.
-
-02-test-y-operadores.md
-El comando test, [ ], y la palabra reservada [[ ]]
-test y su alias [
-
-El comando test evalúa condiciones y retorna 0 (verdadero) o 1 (falso). [ es un enlace simbólico a test que exige que el último argumento sea ]. Por eso los espacios son cruciales:
-bash
-
-if [ "$a" = "$b" ]; then ...   # correcto
-if [$a=$b]; then               # error de sintaxis
-
-Los operadores dentro de [ ] se clasifican en:
-
-    Cadenas: = (igual), != (distinto), -z (cadena vacía), -n (cadena no vacía).
-
-    Números: -eq, -ne, -lt, -le, -gt, -ge. Solo enteros.
-
-    Archivos: -e (existe), -f (archivo regular), -d (directorio), -r (legible), -w (escribible), -x (ejecutable), -s (no vacío), -L (enlace simbólico), -O (propietario), etc.
-
-    Lógicos: ! (NOT), -a (AND), -o (OR). Deben ser operadores dentro del mismo [ ], con todos los espacios.
-
-Limitaciones de [:
-
-    No maneja bien cadenas vacías sin comillas.
-
-    Los operadores && y || de shell no funcionan dentro de [ ]; hay que hacerlos fuera o usar -a/-o.
-
-    Con variables no entrecomilladas, el word splitting rompe la sintaxis.
-
-Ejemplo:
-bash
-
-# Peligroso: si $archivo está vacío, se convierte en [ = ".txt" ] y da error
-[ $archivo = ".txt" ]
-
-# Seguro
-[ "$archivo" = ".txt" ]
-
-[[ ]]: la mejora nativa de Bash
-
-[[ ]] es una palabra reservada de Bash (no un comando) que soluciona muchos problemas:
-
-    No realiza word splitting ni expansión de nombres de archivo sobre las variables dentro.
-
-    Permite && y || lógicos dentro sin confundir con redirecciones.
-
-    Soporta el operador =~ para expresiones regulares.
-
-    Permite patrones de globbing con == (sin entrecomillar el patrón).
-
-    Soporta el operador -v para verificar si una variable está definida.
-
-Operadores adicionales en [[ ]]:
-
-    =~ : compara con expresión regular.
-
-    == : igual que =, pero además permite patrones glob (*, ?, [...]) si la parte derecha no está entrecomillada. Ej: [[ $name == admin* ]].
-
-    <, > : comparación lexicográfica (según locale). No confundir con redirecciones; deben escaparse (\<) o usarse dentro de [[ ]] sin problemas.
-
-Ejemplos con [[ ]]:
-bash
-
-# Regex
-if [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "IP válida"
-fi
-
-# Globbing
-if [[ "$archivo" == *.log ]]; then
-    echo "Es un archivo de log"
-fi
-
-# Verificar si variable definida
-if [[ -v usuario ]]; then
-    echo "Variable usuario existe"
-fi
-
-Evaluación aritmética (( ))
-
-Para comparaciones numéricas, Bash ofrece (( )) que devuelve 0 si la expresión aritmética es verdadera (distinta de 0) y 1 si es 0 (falsa). Es más natural para números:
-bash
-
-if (( contador > 10 && contador <= 20 )); then
-    echo "En rango"
-fi
-
-Dentro de (( )) no se necesita $ para las variables, y se pueden usar operadores de C: >, <, >=, <=, ==, !=, &&, ||, !.
-03-case.md
-case: cuando tienes muchas ramas sobre un mismo valor
-
-La sentencia case compara una expresión con una serie de patrones glob. Es mucho más limpia que concatenar if/elif para comparaciones de igualdad.
-Sintaxis
-bash
-
-case $variable in
-    patrón1)
-        comandos;;
-    patrón2|patrón3)
-        comandos;;
-    *)
-        comandos por defecto;;
-esac
-
-Cada rama termina con ;; (equivalente a un break). Existen otros finalizadores:
-
-    ;& → ejecuta la siguiente rama sin evaluar su patrón (fall-through al estilo C).
-
-    ;;& → ejecuta la siguiente rama evaluando su patrón (útil para múltiples coincidencias).
-
-Patrones
-
-Los patrones son los mismos que usa el globbing: *, ?, [...], y se puede usar | para alternativas. No son expresiones regulares.
-
-Ejemplos de patrones:
-
-    [0-9]* : empieza con dígito.
-
-    *.txt : termina en .txt.
-
-    si|s|yes|y : cualquiera de esas palabras.
-
-    ?*.log : al menos un carácter seguido de .log.
-
-Ejemplo típico: menú de opciones
-bash
-
-read -p "Elige [iniciar|detener|estado]: " opcion
-case $opcion in
-    iniciar|start)
-        systemctl start mi-servicio
-        ;;
-    detener|stop)
-        systemctl stop mi-servicio
-        ;;
-    estado|status)
-        systemctl status mi-servicio
-        ;;
-    *)
-        echo "Opción no válida"
-        ;;
-esac
-
-Uso de ;;& para múltiples tests
-bash
-
-case $var in
-    a*)
-        echo "Empieza con a"
-        ;;&
-    *b*)
-        echo "Contiene b"
-        ;;&
-    *)
-        echo "Rama por defecto"
-        ;;
-esac
-
-Si var="abc", imprimirá las tres líneas.
-Capturar patrones con shopt -s extglob
-
-Con la opción extglob activada, case puede usar patrones extendidos como @(pat1|pat2), *(pat), +(pat), ?(pat), !(pat). Esto potencia mucho las posibilidades.
-04-bucles-for-while-until.md
-Bucles en Bash: iteraciones controladas
-for estilo lista
-bash
-
-for variable in lista; do
-    comandos
-done
-
-La lista puede ser literal (1 2 3), expansión de llaves ({1..10}), globbing (*.txt), salida de un comando ($(seq 1 5)), o un array (${arr[@]}).
-
-Iterar sobre argumentos: por defecto in "$@":
-bash
-
-for arg; do
-    echo "Argumento: $arg"
-done
-
-for estilo C
-bash
-
-for (( inicialización; condición; incremento )); do
-    comandos
-done
-
-Ejemplo:
-bash
-
-for (( i=0; i<10; i++ )); do
-    echo "i=$i"
-done
-
-Este estilo es exclusivo de Bash/Ksh/Zsh, no POSIX.
-while
-
-Ejecuta el cuerpo mientras el comando de prueba retorne 0.
-bash
-
-while [ condición ]; do
-    comandos
-done
-
-También se puede usar [[ ]] o (( )). Se puede combinar con read para leer líneas de un archivo o entrada estándar.
-bash
-
-while IFS= read -r linea; do
-    echo "Línea: $linea"
-done < archivo.txt
-
-Cuidado con la variable dentro de tuberías: si usas cmd | while ..., el while se ejecuta en un subshell y las variables modificadas dentro no sobreviven. Soluciones: usar <<< here-string, redirección, o shopt -s lastpipe (en Bash 4.2+).
-until
-
-Es el opuesto de while: se ejecuta hasta que el comando retorne 0 (éxito).
-bash
-
-until ping -c1 -W1 servidor &>/dev/null; do
-    echo "Esperando servidor..."
-    sleep 2
-done
-
-Control de bucles: break y continue
-
-    break [n] : sale del bucle (o de n niveles anidados).
-
-    continue [n] : salta a la siguiente iteración.
-
-Iterar sobre archivos con espacios en nombres
-
-El globbing maneja correctamente los espacios si se usa "$var". Ejemplo:
-bash
-
-for archivo in *.txt; do
-    [ -e "$archivo" ] || continue   # por si no hay archivos
-    echo "Procesando $archivo"
-done
-
-05-select-menus.md
-Creando menús interactivos sencillos con select
-
-Bash incorpora select para construir menús numéricos automáticos, ideales para scripts interactivos.
-Sintaxis
-bash
-
-select variable in lista; do
-    case $variable in
-        opcion1) ... ;;
-        opcion2) ... ;;
-        *) ... ;;
-    esac
-    break  # normalmente se sale con break, o no si se quiere repetir el menú
-done
-
-El sistema muestra un menú numerado (usando PS3 como prompt) y asigna el texto seleccionado a variable, además de guardar el número en REPLY. Si el usuario ingresa un número inválido, variable queda vacía.
-Ejemplo completo
-bash
-
-#!/bin/bash
-PS3="Elige una opción (1-4): "
-select opcion in "Listar" "Crear archivo" "Ver fecha" "Salir"; do
-    case $opcion in
-        "Listar")
-            ls -l
-            ;;
-        "Crear archivo")
-            touch nuevo.txt && echo "Creado"
-            ;;
-        "Ver fecha")
-            date
-            ;;
-        "Salir")
-            echo "Adiós"
-            break
-            ;;
-        *)
-            echo "Opción no válida: $REPLY"
-            ;;
-    esac
-done
-
-El break en la rama "Salir" termina el bucle select. Las demás ramas no llevan break, por lo que el menú se repetirá.
-Personalización
-
-    PS3: prompt que se muestra antes de leer la entrada.
-
-    COLUMNS: ancho del terminal; si se define un valor pequeño, el formato puede cambiar.
-
-    select es ideal para prototipos rápidos. Para diálogos más complejos, existen herramientas como dialog o whiptail.
-
-Scripts de ejemplo
-scripts/condiciones.sh
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ---------------------------------------------------------------
-# condiciones.sh - Demostración de estructuras condicionales
-# ---------------------------------------------------------------
-
-# --- Recibir argumento ---
-archivo="${1:-}"
-
-# 1. Verificar si se proporcionó el argumento
-if [[ -z "$archivo" ]]; then
-    echo "Uso: $0 <archivo>"
-    exit 1
-fi
-
-# 2. Pruebas de archivo con if/elif/else
-if [[ ! -e "$archivo" ]]; then
-    echo "El archivo '$archivo' no existe."
-    exit 2
-elif [[ -d "$archivo" ]]; then
-    echo "'$archivo' es un directorio."
-elif [[ -f "$archivo" ]]; then
-    echo "'$archivo' es un archivo regular."
-    # Pruebas adicionales
-    [[ -r "$archivo" ]] && echo "  -> Tiene permiso de lectura." || echo "  -> No se puede leer."
-    [[ -s "$archivo" ]] && echo "  -> No está vacío." || echo "  -> Está vacío."
-else
-    echo "'$archivo' es otro tipo de archivo."
-fi
-
-# 3. Comparaciones numéricas y de cadena
-contador=15
-umbral=10
-if (( contador > umbral )); then
-    echo "El contador ($contador) supera el umbral ($umbral)."
-fi
-
-# Usando [[ ]] para cadenas con patrón
-if [[ "$archivo" == *.log ]]; then
-    echo "Advertencia: Estás trabajando con un archivo de log."
-fi
-
-# 4. Uso de case para clasificar extensión
-extension="${archivo##*.}"
-case "$extension" in
-    txt|md)
-        echo "Parece un archivo de texto."
-        ;;
-    sh|bash)
-        echo "Es un script de shell."
-        ;;
-    jpg|png|gif)
-        echo "Imagen detectada."
-        ;;
-    *)
-        echo "Extensión desconocida: .$extension"
-        ;;
-esac
-
-scripts/adivina-numero.sh
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ---------------------------------------------------------------
-# adivina-numero.sh - Juego de adivinanza con bucles y condiciones
-# ---------------------------------------------------------------
-
-# Generar número aleatorio entre 1 y 100
-numero_secreto=$(( RANDOM % 100 + 1 ))
-intentos=0
-max_intentos=7
-
-echo "Adivina el número entre 1 y 100. Tienes $max_intentos intentos."
-
-# Bucle principal while
-while (( intentos < max_intentos )); do
-    # Incrementar contador de intentos
-    (( intentos++ ))
-    
-    # Leer entrada del usuario de manera robusta
-    read -r -p "Intento $intentos/$max_intentos: " entrada
-
-    # Validar que sea un número entero positivo (usando [[ ]] y regex)
-    if [[ ! "$entrada" =~ ^[0-9]+$ ]]; then
-        echo "Por favor, ingresa un número válido."
-        (( intentos-- ))  # no cuenta como intento
-        continue
-    fi
-
-    # Convertir a entero (aunque ya es cadena numérica)
-    suposicion=$entrada
-
-    # Evaluar con condicionales
-    if (( suposicion == numero_secreto )); then
-        echo "¡Correcto! Adivinaste en $intentos intentos."
-        exit 0
-    elif (( suposicion < numero_secreto )); then
-        echo "Demasiado bajo."
-    else
-        echo "Demasiado alto."
-    fi
-done
-
-# Si sale del bucle, se acabaron los intentos
-echo "Lo siento, has agotado tus intentos. El número era: $numero_secreto"
-exit 1
-
-01-definicion-y-parametros.md
-Definiendo funciones: la base de la modularidad en Bash
-
-En Bash existen dos sintaxis equivalentes para definir funciones. Ambas hacen exactamente lo mismo:
-bash
-
-# Sintaxis clásica (POSIX)
-nombre_de_funcion() {
-    comandos
+Spring intenta crear los beans en orden para satisfacer las dependencias. Si hay una dependencia circular irresoluble (A → B → A), el contexto no puede levantarse. Sin embargo, se puede romper con @Lazy en uno de los puntos de inyección, lo que hace que Spring inyecte un proxy en lugar del bean real, que se resolverá solo en el primer acceso.
+```java
+@Component
+public class A {
+    private final B b;
+    public A(@Lazy B b) { this.b = b; }
 }
-
-# Sintaxis con palabra reservada
-function nombre_de_funcion {
-    comandos
-}
-
-Puedes mezclar estilos (aunque no es recomendable): function nombre() { ... } también funciona. Las llaves { } delimitan el cuerpo y deben ir separadas por espacios o saltos de línea del contenido.
-Parámetros posicionales dentro de la función
-
-Las funciones reciben sus propios argumentos, igual que un script. Los parámetros $1, $2, ..., $@, $# se refieren a los argumentos pasados a la función, no a los del script principal.
-bash
-
-saludar() {
-    echo "Hola, $1!"
-}
-saludar "María"   # Imprime: Hola, María!
-
-Dentro de una función, $0 sigue siendo el nombre del script (o del shell). Para obtener el nombre de la función actual se usa FUNCNAME[0].
-
-Acceso a todos los argumentos:
-
-    $@ se expande a la lista de argumentos, cada uno entrecomillado si usas "$@".
-
-    $* los expande como una sola palabra unida por el primer carácter de IFS.
-
-    $# indica el número de argumentos.
-
-Ejemplo de función robusta que itera argumentos:
-bash
-
-listar_argumentos() {
-    echo "Recibí $# argumentos:"
-    local i=1
-    for arg in "$@"; do
-        echo "  Arg $i: $arg"
-        ((i++))
-    done
-}
-listar_argumentos "a b" c d   # los espacios en "a b" se respetan
-
-Desplazamiento de parámetros con shift
-
-Dentro de la función también se puede usar shift para descartar los primeros argumentos, muy útil para procesar opciones.
-bash
-
-parsear_opciones() {
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            -v|--verbose) verbose=1 ;;
-            -o|--output)  shift; output="$1" ;;
-            --) shift; break ;;
-            -*) echo "Opción desconocida: $1"; return 1 ;;
-            *) break ;;
-        esac
-        shift
-    done
-    echo "Resto de argumentos: $@"
-}
-
-Parámetros con valores por defecto y validación
-
-Puedes usar las expansiones de parámetros para asignar valores por defecto:
-bash
-
-conectar() {
-    local host="${1:-localhost}"
-    local puerto="${2:-22}"
-    echo "Conectando a $host en puerto $puerto..."
-}
-conectar            # localhost:22
-conectar "server"   # server:22
-
-Para validar que un argumento sea obligatorio:
-bash
-
-procesar_archivo() {
-    local archivo="${1:?Error: falta el nombre del archivo}"
-    [[ -f "$archivo" ]] || { echo "No existe $archivo"; return 1; }
-    # ...
-}
-
-Pasar argumentos desde arrays o variables
-
-Si necesitas pasar argumentos almacenados en un array, la expansión correcta es "${array[@]}":
-bash
-
-args=("--verbose" "--output=salida.txt")
-mi_funcion "${args[@]}"
-
-02-retorno-y-variables-locales.md
-Sacar datos de una función: códigos de salida y captura de salida
-
-Las funciones en Bash no pueden devolver objetos complejos; tienen dos mecanismos principales de retorno:
-1. Códigos de salida con return
-
-La instrucción return [n] finaliza la función y establece $? con el valor n (entre 0 y 255). Por convención, 0 indica éxito y otro valor error.
-bash
-
-es_par() {
-    (( $1 % 2 == 0 )) && return 0
-    return 1
-}
-
-if es_par 4; then
-    echo "Es par"
-else
-    echo "Es impar"
-fi
-
-No uses return para devolver datos (como cadenas), solo para indicar estado. Si necesitas devolver un valor numérico mayor a 255, tienes que capturarlo por otro medio (ver abajo).
-2. Captura de la salida estándar (stdout)
-
-La forma más versátil de devolver información es emitirla con echo o printf y capturarla mediante sustitución de comandos:
-bash
-
-obtener_fecha() {
-    date "+%Y-%m-%d"
-}
-
-hoy=$(obtener_fecha)
-echo "Hoy es $hoy"
-
-Ten cuidado con echo: si tu función produce salida de depuración o logs, también será capturada. Usa stderr para mensajes informativos:
-bash
-
-buscar_usuario() {
-    local login="$1"
-    echo "Buscando en base de datos..." >&2   # no interfiere con el resultado
-    grep "^$login:" /etc/passwd | cut -d: -f5
-}
-
-Devolver múltiples valores: puedes emitirlos separados por espacios (o cualquier delimitador) y luego leerlos con read:
-bash
-
-calcular_min_max() {
-    local a=$1 b=$2
-    if (( a < b )); then
-        echo "$a $b"
-    else
-        echo "$b $a"
-    fi
-}
-
-read min max < <(calcular_min_max 10 5)
-echo "min=$min, max=$max"   # min=5, max=10
-
-3. Variables globales y locales
-
-Por defecto, las variables definidas dentro de una función son globales (visibles en todo el script). Para limitar su alcance a la función (y a las funciones que ésta llame, debido al scoping dinámico), debes declararlas con local.
-bash
-
-mi_script() {
-    global=10
-    local local_var=20
-
-    otra_funcion
-    echo "global=$global, local_var=$local_var"  # 10, 20
-}
-
-otra_funcion() {
-    echo "Dentro de otra_funcion: global=$global, local_var=$local_var"
-    global=30            # modifica la global del ámbito superior
-    local_var=40         # ¡modifica la local de mi_script! (scoping dinámico)
-}
-
-mi_script
-
-El comportamiento es que local crea una variable ligada al ámbito de la función que la declaró, y cualquier función anidada puede leerla y escribirla (como si fuera global en ese árbol de llamadas). Para evitar colisiones, es buena práctica usar local siempre en funciones.
-FUNCNAME, BASH_SOURCE y LINENO para depuración
-
-    FUNCNAME es un array con la pila de llamadas: ${FUNCNAME[0]} es la función actual, ${FUNCNAME[1]} la que la llamó, etc.
-
-    BASH_SOURCE contiene los nombres de los archivos de cada nivel.
-
-    LINENO es el número de línea actual (en el script o función).
-
-bash
-
-depurar() {
-    echo "Función: ${FUNCNAME[1]} en ${BASH_SOURCE[1]}, línea ${BASH_LINENO[0]}"
-}
-
-03-librerias-y-source.md
-Creando bibliotecas de funciones reutilizables
-
-Puedes agrupar funciones en archivos separados y cargarlos en tu script con source (o su alias .). Esto evita duplicar código y facilita el mantenimiento.
-Sintaxis
-bash
-
-# Desde un script o línea de comandos
-source ./ruta/archivo_funciones.sh
-# o bien
-. ./ruta/archivo_funciones.sh
-
-La diferencia entre source y la ejecución directa (bash archivo.sh) es que source no inicia un proceso hijo; las definiciones de funciones, variables y cambios de entorno ocurren en el shell actual.
-Rutas relativas y absolutas
-
-Si usas rutas relativas en un script, recuerda que se resolverán respecto al directorio de trabajo actual ($PWD), que puede no ser el directorio donde está el script. Para cargar una biblioteca que siempre acompaña al script, determina el directorio del script con:
-bash
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/utils.sh"
-
-BASH_SOURCE[0] es el camino al archivo actual (incluso si fue sourceado), mientras que $0 es el script principal.
-Protección contra ejecución doble
-
-Una función común es incluir una biblioteca que sólo debe ser sourceada, no ejecutada directamente. Para detectar si el script está siendo ejecutado (no sourceado), comparamos $0 con BASH_SOURCE[0]:
-bash
-
-# Al final de utils.sh
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    echo "Este archivo debe ser sourceado, no ejecutado."
-    echo "Uso: source $(basename "$0")"
-    exit 1
-fi
-
-Alternativamente, si el script debe comportarse diferente al ser ejecutado directamente, podemos usar esta detección para mostrar tests o ejemplos.
-Técnicas avanzadas de bibliotecas
-
-    Evitar recarga innecesaria: usa una variable de guarda para no cargar la biblioteca dos veces.
-
-bash
-
-if [[ -n "${_UTILS_SH_LOADED:-}" ]]; then
-    return 0
-fi
-_UTILS_SH_LOADED=1
-
-# ... definiciones de funciones ...
-
-    Bibliotecas con funciones y constantes: exporta variables solo si es necesario, y usa readonly para constantes.
-
-    Organización: guarda las bibliotecas en $HOME/lib/bash o en /usr/local/lib/bash y añádelas al path, o utiliza un directorio relativo al script.
-
-04-recursividad.md
-Funciones que se llaman a sí mismas
-
-Bash soporta recursividad sin límite explícito fijado por el lenguaje, pero la pila de llamadas consume recursos del sistema y puede llegar a saturarse con unos miles de niveles (depende del sistema). No hay optimización de recursión de cola.
-Ejemplo clásico: factorial
-bash
-
-factorial() {
-    local n=$1
-    if (( n <= 1 )); then
-        echo 1
-    else
-        local prev
-        prev=$(factorial $((n - 1)))
-        echo $(( n * prev ))
-    fi
-}
-
-resultado=$(factorial 5)
-echo "5! = $resultado"   # 120
-
-Nota: al usar $() se invoca un subshell, lo que puede impactar el rendimiento. En este ejemplo el resultado se emite con echo y se captura, lo cual es correcto pero no muy eficiente. Una alternativa es usar variables globales para acumular (con cuidado de no interferir con llamadas concurrentes).
-Ejemplo: recorrido recursivo de directorios
-bash
-
-listar_recursivo() {
-    local dir="$1"
-    for entrada in "$dir"/* "$dir"/.[!.]* "$dir"/..?*; do
-        [ -e "$entrada" ] || continue
-        if [[ -d "$entrada" && ! -L "$entrada" ]]; then
-            echo "[DIR] $entrada"
-            listar_recursivo "$entrada"
-        else
-            echo "[FILE] $entrada"
-        fi
-    done
-}
-listar_recursivo "/ruta/a/directorio"
-
-Ten cuidado con los enlaces simbólicos a directorios: podrías generar un bucle infinito. En el ejemplo excluimos los enlaces con ! -L.
-Control de la profundidad
-
-Para evitar sobrepasar un límite de recursión, puedes pasar un contador:
-bash
-
-explorar() {
-    local profundidad=$1 max=$2 dir=$3
-    if (( profundidad > max )); then
-        return
-    fi
-    echo "Procesando $dir (nivel $profundidad)"
-    for sub in "$dir"/*/; do
-        [ -d "$sub" ] && explorar $(( profundidad + 1 )) "$max" "$sub"
-    done
-}
-
-Consideraciones de rendimiento y depuración
-
-    La recursividad con echo y $() crea muchos procesos hijos; para tareas masivas considera un enfoque iterativo.
-
-    La variable FUNCNAME te permite inspeccionar la pila de llamadas; útil para depurar.
-
-    set -x muestra todas las llamadas, pero puede generar una salida enorme.
-
-Scripts de ejemplo
-scripts/calculadora.sh
-
-Una calculadora interactiva que utiliza funciones para cada operación, con menú select y validación de entrada. Demuestra parámetros, retorno por echo y manejo de errores.
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Función: sumar
-sumar() {
-    echo "$(( $1 + $2 ))"
-}
-
-# Función: restar
-restar() {
-    echo "$(( $1 - $2 ))"
-}
-
-# Función: multiplicar
-multiplicar() {
-    echo "$(( $1 * $2 ))"
-}
-
-# Función: dividir (con validación)
-dividir() {
-    local a=$1 b=$2
-    if (( b == 0 )); then
-        echo "Error: división por cero" >&2
-        return 1
-    fi
-    # Bash no hace división flotante; usamos bc para decimales
-    echo "scale=4; $a / $b" | bc
-}
-
-# --- Menú interactivo ---
-PS3="Elige operación (1-5): "
-opciones=("Sumar" "Restar" "Multiplicar" "Dividir" "Salir")
-
-select opcion in "${opciones[@]}"; do
-    if [[ "$opcion" == "Salir" ]]; then
-        echo "Adiós"
-        break
-    fi
-
-    # Pedir operandos
-    read -r -p "Primer número: " num1
-    read -r -p "Segundo número: " num2
-
-    # Validar que sean números (enteros o decimales simples)
-    if [[ ! "$num1" =~ ^-?[0-9]+(\.[0-9]+)?$ ]] || [[ ! "$num2" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
-        echo "Ambos operandos deben ser números" >&2
-        continue
-    fi
-
-    case "$opcion" in
-        "Sumar")
-            resultado=$(sumar "$num1" "$num2")
-            ;;
-        "Restar")
-            resultado=$(restar "$num1" "$num2")
-            ;;
-        "Multiplicar")
-            resultado=$(multiplicar "$num1" "$num2")
-            ;;
-        "Dividir")
-            if ! resultado=$(dividir "$num1" "$num2"); then
-                # La función devolvió error (>2 ya mostró mensaje)
-                continue
-            fi
-            ;;
-        *)
-            echo "Opción no válida: $REPLY"
-            continue
-            ;;
-    esac
-
-    echo "Resultado: $resultado"
-done
-
-scripts/utils.sh
-
-Librería de funciones útiles para cualquier script. Incluye funciones para logging, manejo de errores y comprobación de permisos. Está preparada para ser sourceada.
-bash
-
-#!/usr/bin/env bash
-# utils.sh - Funciones de utilidad reutilizables
-# Debe ser cargado con: source utils.sh
-
-# Evitar carga múltiple
-if [[ -n "${_UTILS_SH_LOADED:-}" ]]; then
-    return 0
-fi
-readonly _UTILS_SH_LOADED=1
-
-# ------------------------------------------------------------
-# Configuración
-# ------------------------------------------------------------
-
-# Colores para mensajes (opcional)
-readonly COLOR_RESET='\e[0m'
-readonly COLOR_RED='\e[31m'
-readonly COLOR_GREEN='\e[32m'
-readonly COLOR_YELLOW='\e[33m'
-
-# Activar colores solo si la salida es una terminal
-if [[ -t 1 ]]; then
-    _USE_COLOR=1
-else
-    _USE_COLOR=0
-fi
-
-# ------------------------------------------------------------
-# Funciones de logging
-# ------------------------------------------------------------
-
-info() {
-    if (( _USE_COLOR )); then
-        echo -e "${COLOR_GREEN}[INFO]${COLOR_RESET} $(date '+%Y-%m-%d %H:%M:%S') - $*"
-    else
-        echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $*"
-    fi
-}
-
-warn() {
-    if (( _USE_COLOR )); then
-        echo -e "${COLOR_YELLOW}[WARN]${COLOR_RESET} $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2
-    else
-        echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2
-    fi
-}
-
-error() {
-    if (( _USE_COLOR )); then
-        echo -e "${COLOR_RED}[ERROR]${COLOR_RESET} $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2
-    else
-        echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2
-    fi
-}
-
-# ------------------------------------------------------------
-# Manejor de errores críticos (finaliza el script)
-# ------------------------------------------------------------
-
-die() {
-    error "$*"
-    exit 1
-}
-
-# ------------------------------------------------------------
-# Verificar si se ejecuta como root
-# ------------------------------------------------------------
-
-require_root() {
-    if [[ $EUID -ne 0 ]]; then
-        die "Este script debe ejecutarse como root"
-    fi
-}
-
-# ------------------------------------------------------------
-# Verificar comandos necesarios
-# ------------------------------------------------------------
-
-require_cmd() {
-    local cmd
-    for cmd in "$@"; do
-        if ! command -v "$cmd" >/dev/null 2>&1; then
-            die "Comando '$cmd' no encontrado. Instálalo e inténtalo de nuevo."
-        fi
-    done
-}
-
-# ------------------------------------------------------------
-# Función de ayuda (genérica)
-# ------------------------------------------------------------
-
-show_help() {
-    cat <<EOF
-Uso: $(basename "$0") [opciones]
-
-Opciones:
-  -h, --help    Muestra esta ayuda
-  -v, --verbose Modo detallado
-
-EOF
-}
-
-# ------------------------------------------------------------
-# Protección: si se ejecuta directamente, mostrar advertencia
-# ------------------------------------------------------------
-
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    echo "Este archivo es una biblioteca de funciones. Debe ser cargado con:"
-    echo "   source $(basename "$0")"
-    exit 1
-fi
-
-01-redirecciones-y-pipes.md
-El arte de redirigir entradas y salidas
-
-Bash maneja tres flujos estándar para cada proceso: stdin (entrada, descriptor 0), stdout (salida normal, descriptor 1) y stderr (errores, descriptor 2). Las redirecciones permiten conectar estos flujos a archivos, otros comandos o dispositivos.
-Redirección de salida estándar (stdout)
-Operador	Acción
-comando > archivo	Redirige stdout a archivo, sobrescribiéndolo si existe. Crea el archivo si no existe.
-comando >> archivo	Redirige stdout a archivo, añadiendo al final.
-
-Ejemplo:
-bash
-
-echo "Línea 1" > salida.txt   # Crea/sobrescribe
-echo "Línea 2" >> salida.txt  # Añade
-
-Redirección de errores estándar (stderr)
-Operador	Acción
-comando 2> archivo	Redirige stderr a archivo (sobrescribir).
-comando 2>> archivo	Añade stderr.
-
-Ejemplo:
-bash
-
-ls /ruta_inexistente 2> errores.log
-
-Redirigir ambos (stdout y stderr) al mismo destino
-
-Existen dos sintaxis comunes:
-Operador	Acción
-comando > archivo 2>&1	Redirige stdout a archivo, y luego stderr al mismo lugar que stdout. El orden importa: primero > archivo y luego 2>&1.
-comando &> archivo	Redirige ambos a archivo (equivalente a > archivo 2>&1). Sintaxis preferida en Bash moderno.
-comando &>> archivo	Añade ambos.
-
-Ejemplo:
-bash
-
-complejo.sh &> todo.log
-
-Redirigir a /dev/null
-
-Para descartar salida:
-bash
-
-comando > /dev/null 2>&1   # Silencia todo
-
-Redirigir entrada estándar (stdin)
-Operador	Acción
-comando < archivo	Lee stdin desde archivo.
-comando << EOF	Here-document (ver tema 03).
-comando <<< "cadena"	Here-string (ver tema 03).
-Duplicar y mover descriptores
-
-Con exec puedes manipular descriptores personalizados (3-9) para tareas avanzadas como rotar salidas o mantener múltiples flujos simultáneos.
-bash
-
-# Abrir archivo como descriptor 3 para escritura
-exec 3> log.txt
-echo "Mensaje 1" >&3       # Escribe en log.txt vía descriptor 3
-exec 3>&-                  # Cerrar descriptor
-
-Tuberías (pipelines)
-
-Las tuberías (|) conectan la salida estándar de un comando con la entrada estándar del siguiente:
-bash
-
-comando1 | comando2 | comando3
-
-Características importantes:
-
-    Cada comando en la tubería se ejecuta en un subshell (excepto builtins en ciertos casos con shopt -s lastpipe en Bash 4.2+).
-
-    PIPESTATUS es un array con los códigos de salida de cada comando de la última tubería (útil para detectar fallos intermedios).
-
-    La opción set -o pipefail hace que una tubería falle si cualquier comando falla (no solo el último).
-
-Ejemplo con PIPESTATUS:
-bash
-
-curl -s http://ejemplo.com/inexistente | grep "algo"
-echo "${PIPESTATUS[0]}"   # Código de curl
-echo "${PIPESTATUS[1]}"   # Código de grep
-
-Tuberías con stderr y tee
-
-    |& es un atajo para 2>&1 |, redirige stderr y stdout a la tubería (Bash 4+).
-
-    tee lee de stdin y escribe tanto a stdout como a uno o más archivos. Ideal para registrar salida y seguir viéndola.
-
-bash
-
-comando 2>&1 | tee -a registro.log
-
-Sustitución de procesos avanzada
-
-    <(comando) genera un archivo temporal (o pipe) con la salida del comando. Se comporta como un archivo de solo lectura.
-
-    >(comando) proporciona un archivo donde escribir; la entrada se envía al comando.
-
-bash
-
-diff <(ls dir1) <(ls dir2)          # Compara listados sin archivos temporales
-tar cf >(ssh destino "tar xf -") .  # Transfiere tar por ssh
-
-02-lectura-y-escritura.md
-Leer del usuario y escribir en pantalla o archivos con seguridad
-read: capturar entrada del usuario o de un archivo
-bash
-
-read [-p prompt] [-s] [-t timeout] [-n nchars] [-a array] [-d delim] variable1 variable2 ...
-
-    -p "texto": muestra un prompt sin necesidad de echo.
-
-    -s: modo silencioso (no eco, ideal para contraseñas).
-
-    -t segundos: tiempo máximo de espera.
-
-    -n n: leer solo n caracteres (sin esperar Intro).
-
-    -a arr: leer en un array, split según IFS.
-
-    -d delim: cambiar delimitador (por defecto newline).
-
-    -r: siempre usa -r para evitar que las barras invertidas se interpreten como escapes (trata la entrada de forma literal).
-
-Ejemplo robusto:
-bash
-
-read -r -p "Nombre: " nombre
-read -r -s -p "Contraseña: " pass; echo   # El echo extra para el salto de línea
-
-Leer varias variables:
-bash
-
-read -r col1 col2 col3 <<< "uno dos tres"   # col3 recibe "tres"
-
-IFS (Internal Field Separator)
-
-IFS define los caracteres que separan palabras cuando read o la expansión de variables sin comillas dividen. Por defecto contiene espacio, tabulador y nueva línea. Puedes cambiarlo temporalmente para parsear líneas con campos delimitados:
-bash
-
-while IFS=: read -r usuario pass uid gid resto; do
-    echo "Usuario: $usuario, UID: $uid"
-done < /etc/passwd
-
-Escribir en archivos de manera segura
-
-Además de las redirecciones, puedes usar printf para formatear la salida y cat para combinar contenido.
-
-    echo "algo" > archivo: simple pero echo puede interpretar escapes (\n) a menos que uses echo -E o el modo POSIX.
-
-    printf "%s\n" "línea" > archivo: más predecible y seguro, especialmente con datos que pueden comenzar con -.
-
-Crear un archivo vacío:
-bash
-
-> nuevo.txt      # Redirigir nada (crea/trunca)
-: > nuevo.txt    # Alternativa con comando : (no-op)
-
-Bloqueos de archivos (flock)
-
-Para evitar condiciones de carrera al escribir en un mismo archivo desde múltiples procesos, puedes usar flock:
-bash
-
-exec 200>archivo.lock
-flock -e 200  # bloqueo exclusivo
-# ... operaciones ...
-flock -u 200  # desbloquear
-
-Leer línea por línea (sin problemas de subshell)
-
-El clásico bucle while read con redirección al final del bucle es la forma correcta para que las variables sobrevivan:
-bash
-
-while IFS= read -r linea || [[ -n "$linea" ]]; do   # maneja última línea sin newline
-    echo "Procesando: $linea"
-done < archivo.txt
-
-Si se usa tubería (cat archivo | while ...), el while se ejecuta en un subshell y cualquier variable modificada se pierde. Alternativas: redirección simple como arriba, o shopt -s lastpipe (en scripts, no interactivo).
-03-here-docs-y-strings.md
-Documentos incrustados y cadenas redirigidas
-Here-document (<<)
-
-Permiten introducir bloques multilínea directamente en el script:
-bash
-
-comando << DELIMITADOR
-línea 1
-línea 2
-DELIMITADOR
-
-La palabra delimitadora puede ser cualquier identificador; por convención se usa EOF, END, etc. Si el delimitador está entrecomillado (<< "EOF"), no se realiza expansión de variables ni comandos dentro del bloque (como comillas simples). Si no está entrecomillado, se expanden $var, $(comando), etc.
-
-Ejemplo con expansión:
-bash
-
-cat << FIN
-Hoy es $(date)
-Tu home es $HOME
-FIN
-
-Ejemplo sin expansión:
-bash
-
-cat << 'FIN'
-La variable $HOME no se expande aquí.
-FIN
-
-Here-document con supresión de tabuladores
-
-Usando <<- (con guión), las tabulaciones iniciales de cada línea (solo tabuladores, no espacios) se eliminan, lo que permite indentar el bloque sin que aparezcan en el resultado.
-bash
-
-if [[ condicion ]]; then
-    cat <<- EOF
-        Mensaje indentado con tabs,
-        pero al imprimir se eliminan los tabs.
-    EOF
-fi
-
-Here-string (<<<)
-
-Pasa una cadena como entrada estándar a un comando. Es más limpia que echo "cadena" | comando.
-bash
-
-tr 'a-z' 'A-Z' <<< "hola mundo"   # HOLA MUNDO
-read -r var1 var2 <<< "uno dos"
-
-Usos típicos
-
-    Generar archivos de configuración temporales.
-
-    Enviar múltiples líneas a un comando (como mail, cat, bc).
-
-    Proporcionar respuestas automáticas a programas interactivos:
-
-bash
-
-./instalador << RESPUESTAS
-yes
-/ruta/de/instalacion
-no
-RESPUESTAS
-
-Combinar con cat y redirecciones para crear archivos
-bash
-
-cat > archivo.conf << 'EOF'
-server {
-    listen 80;
-    server_name ejemplo.com;
-}
-EOF
-
-04-manipulacion-de-cadenas.md
-El poder de las expansiones de parámetros sin herramientas externas
-
-Bash ofrece un conjunto muy rico de operaciones sobre cadenas directamente con la sintaxis ${variable...}. Rara vez necesitarás sed o awk para tareas básicas de cadenas (aunque siguen siendo potentes complementos).
-Obtener longitud
-bash
-
-cadena="Hola Mundo"
-echo "${#cadena}"         # 10
-
-Extraer subcadenas
-bash
-
-echo "${cadena:0:4}"      # Hola  (offset, longitud)
-echo "${cadena:5}"        # Mundo (desde offset hasta el final)
-echo "${cadena:(-5):5}"   # Mundo (índices negativos cuentan desde el final)
-
-Eliminar prefijo o sufijo (más corto y más largo)
-Expresión	Significado
-${var#patrón}	Elimina la coincidencia más corta del prefijo.
-${var##patrón}	Elimina la coincidencia más larga del prefijo.
-${var%patrón}	Elimina la coincidencia más corta del sufijo.
-${var%%patrón}	Elimina la coincidencia más larga del sufijo.
-
-Los patrones son globs, no regex.
-
-Ejemplos:
-bash
-
-ruta="/home/usuario/documento.txt"
-echo "${ruta##*/}"    # documento.txt  (todo antes del último /)
-echo "${ruta%/*}"     # /home/usuario  (todo después del último /)
-echo "${ruta%.txt}"   # /home/usuario/documento
-echo "${ruta%%.*}"    # /home/usuario/documento (si no hay otro punto)
-
-Reemplazo de subcadenas
-
-    ${var/patrón/reemplazo}: reemplaza la primera ocurrencia.
-
-    ${var//patrón/reemplazo}: reemplaza todas las ocurrencias.
-
-    ${var/#patrón/reemplazo}: reemplaza solo si está al inicio.
-
-    ${var/%patrón/reemplazo}: reemplaza solo si está al final.
-
-bash
-
-texto="gato. perro. gato."
-echo "${texto/gato/ratón}"    # ratón. perro. gato.
-echo "${texto//gato/ratón}"   # ratón. perro. ratón.
-echo "${texto/#gato/ratón}"   # ratón. perro. gato.
-echo "${texto/%gato./ratón}"  # gato. perro. ratón
-
-Cambiar mayúsculas/minúsculas
-
-    ${var^^}: todo a mayúsculas.
-
-    ${var,,}: todo a minúsculas.
-
-    ${var^}: primera letra a mayúscula.
-
-    ${var,}: primera letra a minúscula.
-
-bash
-
-nombre="juan carlos"
-echo "${nombre^}"     # Juan carlos
-echo "${nombre^^}"    # JUAN CARLOS
-
-Uso de @ o * en arrays
-
-Las expansiones sobre arrays usando @ o * aplican la transformación a cada elemento:
-bash
-
-ciudades=("buenos aires" "la paz")
-echo "${ciudades[@]^}"   # Buenos Aires La Paz
-
-Combinar con patrones extendidos (extglob)
-
-Las expansiones admiten patrones de extglob si se activa shopt -s extglob. Ejemplo: quitar extensión múltiple:
-bash
-
-shopt -s extglob
-archivo="script.tar.gz"
-echo "${archivo%.*}"    # script.tar
-echo "${archivo%%.*}"   # script
-echo "${archivo##*.}"   # gz
-
-Truco: comprobar si una cadena contiene un patrón
-
-Con [[ ]] y * como comodín:
-bash
-
-if [[ "$cadena" == *"subcadena"* ]]; then ...
-
-Cuando necesitas sed o awk
-
-Para tareas más complejas (expresiones regulares con grupos, reemplazos condicionales, cálculos numéricos), puedes incrustar sed o awk en el script, pero primero intenta con las expansiones nativas.
-05-globbing-y-comodines.md
-Selección de archivos mediante patrones
-
-El globbing (expansión de nombres de archivo) es el mecanismo que convierte *.txt en la lista de archivos que coinciden. No usa expresiones regulares, sino patrones propios.
-Caracteres comodín básicos
-Patrón	Coincidencia
-*	Cualquier cadena (incluso vacía).
-?	Un carácter cualquiera (exactamente uno).
-[abc]	Un carácter de la lista.
-[a-z]	Rango de caracteres (según locale).
-[!abc] o [^abc]	Un carácter que NO esté en la lista.
-
-Ejemplos:
-bash
-
-ls -l *.txt       # Archivos .txt
-ls -l foto?.jpg   # foto1.jpg, fotoA.jpg, pero no foto10.jpg
-rm -i Archivo[1-5].log
-
-shopt y opciones de globbing
-
-    shopt -s nullglob: si no hay coincidencias, el patrón se expande a nada (en lugar de devolverse literal).
-
-    shopt -s failglob: si no hay coincidencias, se produce un error.
-
-    shopt -s nocaseglob: hace que el globbing sea insensible a mayúsculas/minúsculas.
-
-    shopt -s globstar: habilita ** para coincidencia recursiva de directorios (Bash 4.0+).
-
-    shopt -s dotglob: incluye archivos cuyo nombre comienza con punto (ocultos).
-
-Ejemplo crucial con nullglob:
-bash
-
-shopt -s nullglob
-for archivo in *.log; do
-    # Si no hay .log, el bucle no se ejecuta ni una sola vez
-    echo "Procesando $archivo"
-done
-
-Sin nullglob, el bucle ejecutaría un iteración con archivo='*.log' literal.
-Expresiones de clase POSIX
-
-Dentro de [...] se pueden usar clases:
-
-    [:alpha:], [:digit:], [:alnum:], [:lower:], [:upper:], [:space:], etc.
-
-Ejemplo: archivo[[:digit:]].txt coincide con archivos con un carácter dígito.
-Recorrido recursivo con ** (globstar)
-
-Con shopt -s globstar, ** coincide con cualquier número de subdirectorios:
-bash
-
-shopt -s globstar
-for archivo in **/*.py; do
-    echo "Script Python: $archivo"
-done
-
-Cuidado: puede ser costoso en árboles grandes.
-Extended globbing (shopt -s extglob)
-
-Habilita patrones compuestos avanzados:
-Patrón	Coincidencia
-?(patrón)	Cero o una ocurrencia del patrón.
-*(patrón)	Cero o más ocurrencias del patrón.
-+(patrón)	Una o más ocurrencias del patrón.
-@(pat1|pat2)	Exactamente uno de los patrones (como OR).
-!(patrón)	Cualquier cosa que no coincida con el patrón.
-
-Ejemplos:
-bash
-
-shopt -s extglob
-ls -d ?(*.txt|*.md)        # archivos con cero o una ocurrencia: .txt o .md
-rm !(*.bak|*.tmp)          # borrar todo excepto .bak y .tmp (¡peligroso!)
-cp @(uno|dos|tres).txt dir # copia solo esos tres archivos
-
-Precauciones con globbing y espacios
-
-El globbing maneja correctamente archivos con espacios siempre que las variables se entrecomillen. Nunca hagas for f in $(ls *.txt); prefiere:
-bash
-
-for f in *.txt; do
-    echo "$f"
-done
-
-Scripts de ejemplo
-scripts/backup-logs.sh
-
-Un script que demuestra redirecciones, lectura de directorios, compresión, logging y comprobación de errores.
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ---------------------------------------------------------------
-# backup-logs.sh – Comprime logs y registra toda la actividad
-# ---------------------------------------------------------------
-
-# Configuración
-LOG_DIR="${1:-/var/log}"
-BACKUP_DIR="${2:-./backups}"
-MAX_LOG_AGE=7   # días
-
-# Archivo de log del propio script
-SCRIPT_LOG="./backup.log"
-
-# Función para escribir en log y mostrar por pantalla
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $*" | tee -a "$SCRIPT_LOG"
-}
-
-# --- Inicio ---
-log "Iniciando backup de $LOG_DIR hacia $BACKUP_DIR"
-
-# Crear directorio de destino si no existe
-mkdir -p "$BACKUP_DIR"
-
-# Buscar archivos .log con más de MAX_LOG_AGE días y empaquetarlos
-# Usamos find con -mtime y redirigimos errores a stderr (por defecto ya)
-# La salida de find la procesamos con while read para manejar nombres con espacios
-
-# Enfoque seguro: read con -print0 y null delimitador
-find "$LOG_DIR" -type f -name "*.log" -mtime +$MAX_LOG_AGE -print0 2>> "$SCRIPT_LOG" | 
-    while IFS= read -r -d '' archivo; do
-        # Comprimir cada archivo en el directorio de backup, preservando estructura
-        rel_path="${archivo#$LOG_DIR/}"
-        dest="$BACKUP_DIR/${rel_path}.gz"
-
-        # Crear subdirectorios necesarios
-        mkdir -p "$(dirname "$dest")"
-        
-        if gzip -c "$archivo" > "$dest" 2>> "$SCRIPT_LOG"; then
-            log "Comprimido: $archivo -> $dest"
-            # Opcional: eliminar original si la compresión fue exitosa
-            # rm "$archivo"
-        else
-            log "ERROR al comprimir: $archivo" >&2
-        fi
-    done
-
-# Comprobar el código de salida del pipeline (si usamos pipefail, detecta fallos)
-if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-    log "find reportó errores. Revisar $SCRIPT_LOG"
-fi
-
-# Crear un tarball general con todos los backups (con fecha)
-fecha=$(date +%Y%m%d)
-tarball="$BACKUP_DIR/backup-logs-$fecha.tar.gz"
-log "Creando tarball general: $tarball"
-if tar czf "$tarball" -C "$BACKUP_DIR" . --exclude='*.tar.gz' 2>> "$SCRIPT_LOG"; then
-    log "Tarball creado exitosamente"
-else
-    log "Fallo al crear tarball"
-    exit 1
-fi
-
-log "Backup finalizado."
-
-scripts/renombrar-archivos.sh
-
-Demuestra manipulación de cadenas, globbing, cambio de extensiones y prefijo/sufijo.
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ---------------------------------------------------------------
-# renombrar-archivos.sh – Cambia nombres de archivos en masa
-# ---------------------------------------------------------------
-
-mostrar_ayuda() {
-    cat << EOF
-Uso: $0 [opciones] <directorio>
-
-Opciones:
-  -p PREFIJO  Añadir prefijo a todos los archivos.
-  -s SUFIJO   Añadir sufijo (antes de la extensión).
-  -e EXT      Cambiar extensión (ej: -e .txt).
-  --lower     Convertir nombres a minúsculas.
-  --upper     Convertir nombres a mayúsculas.
-  -n          Modo simulación (no renombra, solo muestra).
-  -h          Esta ayuda.
-
-Ejemplo:
-  $0 -p "old_" -e .bak ./directorio
-EOF
-}
-
-# --- Parseo de opciones ---
-prefijo=""
-sufijo=""
-nueva_ext=""
-lower=0
-upper=0
-simular=0
-
-while getopts "p:s:e:hlnu" opt; do
-    case $opt in
-        p) prefijo="$OPTARG" ;;
-        s) sufijo="$OPTARG" ;;
-        e) nueva_ext="$OPTARG" ;;
-        l) lower=1 ;;
-        u) upper=1 ;;
-        n) simular=1 ;;
-        h) mostrar_ayuda; exit 0 ;;
-        *) mostrar_ayuda >&2; exit 1 ;;
-    esac
-done
-shift $((OPTIND -1))
-
-directorio="${1:-.}"
-if [[ ! -d "$directorio" ]]; then
-    echo "Error: '$directorio' no es un directorio válido." >&2
-    exit 1
-fi
-
-# Activar nullglob para que los bucles no ejecuten si no hay archivos
-shopt -s nullglob
-
-# Procesar todos los archivos (no recursivo por defecto)
-for archivo in "$directorio"/*; do
-    # Saltamos si no es un archivo regular
-    [[ -f "$archivo" ]] || continue
-
-    dir=$(dirname "$archivo")
-    nombre_base=$(basename "$archivo")
-    nombre="${nombre_base%.*}"       # nombre sin extensión
-    extension="${nombre_base##*.}"   # extensión (todo tras el último punto)
-
-    # Si no hay extensión (nombre_base no tiene punto), 'nombre' y 'nombre_base' coinciden
-    if [[ "$nombre_base" = "$extension" ]]; then
-        # Caso sin extensión
-        extension=""
-        nombre="$nombre_base"
-    else
-        extension=".$extension"
-    fi
-
-    nuevo_nombre="$nombre"
-
-    # Aplicar minúsculas/mayúsculas
-    if (( lower )); then
-        nuevo_nombre="${nuevo_nombre,,}"
-    elif (( upper )); then
-        nuevo_nombre="${nuevo_nombre^^}"
-    fi
-
-    # Añadir prefijo y sufijo
-    nuevo_nombre="${prefijo}${nuevo_nombre}${sufijo}"
-
-    # Cambiar extensión si se especifica
-    if [[ -n "$nueva_ext" ]]; then
-        # Asegurar que la nueva extensión comience con punto
-        [[ "$nueva_ext" == .* ]] || nueva_ext=".$nueva_ext"
-        extension="$nueva_ext"
-    fi
-
-    nuevo_archivo="$dir/$nuevo_nombre$extension"
-
-    # Si el nombre no cambió, seguir
-    if [[ "$archivo" == "$nuevo_archivo" ]]; then
-        continue
-    fi
-
-    # Evitar sobrescribir archivos existentes
-    if [[ -e "$nuevo_archivo" ]]; then
-        echo "Error: ya existe '$nuevo_archivo', no se renombrará '$archivo'" >&2
-        continue
-    fi
-
-    if (( simular )); then
-        echo "[SIMULACIÓN] '$archivo' -> '$nuevo_archivo'"
-    else
-        mv -- "$archivo" "$nuevo_archivo"
-        echo "Renombrado: '$archivo' -> '$nuevo_archivo'"
-    fi
-done
-
-05 – ARRAYS
-01-arrays-indexados.md
-Listas ordenadas con índice numérico
-
-Los arrays indexados en Bash son colecciones de elementos accesibles mediante un índice entero, comenzando en 0. No tienen un tamaño fijo; pueden crecer y reducirse dinámicamente.
-Creación y asignación
-
-Forma compacta (elementos separados por espacios):
-bash
-
-frutas=("manzana" "naranja" "pera")
-
-Asignación por índice:
-bash
-
-colores[0]="rojo"
-colores[1]="verde"
-colores[2]="azul"
-
-Usando declare -a (opcional pero explícito):
-bash
-
-declare -a numeros=(1 2 3 4)
-
-Añadir elementos al final:
-bash
-
-frutas+=("uva" "sandía")   # el operador += con paréntesis
-
-Desde la salida de un comando (usando mapfile o readarray):
-bash
-
-mapfile -t lineas < archivo.txt   # cada línea es un elemento
-# o readarray -t lineas < archivo.txt (sinónimo)
-
-Acceso a elementos
-Expresión	Significado
-${array[i]}	Elemento en índice i.
-${array[0]}	Primer elemento.
-${array[@]}	Todos los elementos como palabras separadas (cada uno entrecomillado con "${array[@]}").
-${#array[@]}	Número de elementos.
-${#array[i]}	Longitud del elemento en índice i.
-"${!array[@]}"	Lista de índices (útil si hay huecos).
-
-Iterar sobre todos los elementos (forma segura):
-bash
-
-for elem in "${frutas[@]}"; do
-    echo "$elem"
-done
-
-Iterar sobre índices:
-bash
-
-for i in "${!frutas[@]}"; do
-    echo "Índice $i: ${frutas[$i]}"
-done
-
-Operaciones con arrays
-
-Eliminar un elemento:
-bash
-
-unset frutas[1]            # quita el índice 1, deja un hueco
-unset frutas               # elimina todo el array
-
-Extraer sub-array (slicing):
-bash
-
-"${frutas[@]:inicio:longitud}"   # desde inicio, longitud opcional
-
-Ejemplo: "${frutas[@]:1:2}" devuelve los índices 1 y 2.
-
-Concatenar arrays:
-bash
-
-todos=("${array1[@]}" "${array2[@]}")
-
-Copiar un array:
-bash
-
-copia=("${original[@]}")
-
-Rellenar desde un comando (evitando ls):
-bash
-
-archivos=( *.txt )                # expande globbing con nullglob si es necesario
-
-Huecos y comportamiento
-
-Los arrays pueden tener índices no contiguos. ${#array[@]} cuenta los elementos definidos, no el índice máximo.
-Trucos adicionales
-
-    Comprobar si un array está vacío: [[ ${#miarray[@]} -eq 0 ]]
-
-    Unir elementos en una cadena: usar IFS temporalmente:
-
-bash
-
-IFS=:
-echo "${frutas[*]}"   # manzana:naranja:pera
-
-El * los une con el primer carácter de IFS.
-
-    Convertir cadena a array: usando read -a o mapfile con delimitador.
-
-02-arrays-asociativos.md
-Diccionarios: claves alfanuméricas
-
-Los arrays asociativos (diccionarios) permiten usar cadenas como índices en lugar de números. Requieren Bash ≥ 4.0 y deben declararse explícitamente con declare -A.
-Declaración y asignación
-bash
-
-declare -A capitales
-capitales["Francia"]="París"
-capitales=([Japón]="Tokio" [Brasil]="Brasilia")
-
-# Añadir más
-capitales+=(["Alemania"]="Berlín")
-
-No se pueden crear asociativos sin declare -A.
-Acceso a elementos
-
-    ${capitales["clave"]} devuelve el valor.
-
-    "${!capitales[@]}" devuelve todas las claves.
-
-    "${capitales[@]}" devuelve todos los valores (sin las claves).
-
-    ${#capitales[@]} es el número de elementos.
-
-Iterar sobre el array
-bash
-
-for pais in "${!capitales[@]}"; do
-    echo "$pais -> ${capitales[$pais]}"
-done
-
-El orden de las claves no está garantizado (no preserva el orden de inserción).
-Comprobar si una clave existe
-bash
-
-if [[ -v capitales["$clave"] ]]; then
-    echo "Existe"
-fi
-
-O usando -n con una expansión:
-bash
-
-if [[ -n "${capitales[$clave]+presente}" ]]; then ...
-
-Eliminar claves
-bash
-
-unset capitales["Brasil"]
-unset capitales   # borrar todo
-
-Usos típicos
-
-    Mapeos de configuración (ej.: puertos por servicio).
-
-    Caché de resultados.
-
-    Contadores por categoría.
-
-Precauciones
-
-    No confundir arrays indexados con asociativos: declare -a vs declare -A.
-
-    No asignar con paréntesis sin declare -A.
-
-    Si usas local -A dentro de una función, también funciona (Bash 4.3+).
-
-scripts/gestion-contactos.sh
-
-Script interactivo que demuestra arrays asociativos con un menú completo.
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ---------------------------------------------------------------
-# gestion-contactos.sh – Agenda de contactos con array asociativo
-# ---------------------------------------------------------------
-
-declare -A contactos    # nombre -> teléfono
-
-# Cargar algunos de ejemplo
-contactos=(
-    ["Ana García"]="555-1234"
-    ["Luis Pérez"]="555-5678"
-    ["Marta Ruiz"]="555-9012"
-)
-
-# Guardar agenda en archivo (opcional)
-ARCHIVO_AGENDA="./agenda.txt"
-
-cargar_agenda() {
-    if [[ -f "$ARCHIVO_AGENDA" ]]; then
-        while IFS=: read -r nombre telefono; do
-            [[ -z "$nombre" ]] && continue
-            contactos["$nombre"]="$telefono"
-        done < "$ARCHIVO_AGENDA"
-    fi
-}
-
-guardar_agenda() {
-    : > "$ARCHIVO_AGENDA"   # truncar
-    for nombre in "${!contactos[@]}"; do
-        echo "$nombre:${contactos[$nombre]}" >> "$ARCHIVO_AGENDA"
-    done
-}
-
-listar() {
-    if [[ ${#contactos[@]} -eq 0 ]]; then
-        echo "Agenda vacía."
-    else
-        echo "--- Contactos ---"
-        for nombre in "${!contactos[@]}"; do
-            echo "  $nombre: ${contactos[$nombre]}"
-        done | sort
-    fi
-}
-
-buscar() {
-    read -r -p "Nombre a buscar: " patron
-    local encontrados=0
-    for nombre in "${!contactos[@]}"; do
-        if [[ "$nombre" == *"$patron"* ]]; then
-            echo "$nombre: ${contactos[$nombre]}"
-            ((encontrados++))
-        fi
-    done
-    (( encontrados == 0 )) && echo "No se encontraron coincidencias."
-}
-
-añadir() {
-    read -r -p "Nombre: " nombre
-    if [[ -v contactos["$nombre"] ]]; then
-        echo "Ya existe '$nombre'. Usa modificar para cambiarlo."
-        return
-    fi
-    read -r -p "Teléfono: " telefono
-    contactos["$nombre"]="$telefono"
-    echo "Añadido."
-}
-
-modificar() {
-    read -r -p "Nombre a modificar: " nombre
-    if [[ ! -v contactos["$nombre"] ]]; then
-        echo "No existe '$nombre'."
-        return
-    fi
-    read -r -p "Nuevo teléfono: " telefono
-    contactos["$nombre"]="$telefono"
-    echo "Actualizado."
-}
-
-eliminar() {
-    read -r -p "Nombre a eliminar: " nombre
-    if [[ -v contactos["$nombre"] ]]; then
-        unset contactos["$nombre"]
-        echo "Eliminado."
-    else
-        echo "No existe '$nombre'."
-    fi
-}
-
-# Menú principal
-PS3="Elige opción (1-6): "
-opciones=("Listar" "Buscar" "Añadir" "Modificar" "Eliminar" "Salir")
-
-cargar_agenda   # Recuperar datos previos si existen
-
-while true; do
-    select opcion in "${opciones[@]}"; do
-        case "$opcion" in
-            "Listar")   listar ;;
-            "Buscar")   buscar ;;
-            "Añadir")   añadir ;;
-            "Modificar") modificar ;;
-            "Eliminar") eliminar ;;
-            "Salir")
-                guardar_agenda
-                echo "¡Hasta luego!"
-                exit 0
-                ;;
-            *) echo "Opción no válida" ;;
-        esac
-        break
-    done
-done
-
-06 – PROCESOS Y SEÑALES
-01-trabajos-en-segundo-plano.md
-Ejecutar tareas sin bloquear la terminal
-El operador &
-
-Poner & al final de un comando lo envía al segundo plano inmediatamente:
-bash
-
-sleep 60 &
-echo "PID de sleep: $!"   # $! es el PID del último proceso lanzado en bg
-
-El proceso se ejecuta en background y el prompt retorna al instante. Bash muestra el número de trabajo ([1] 12345).
-nohup: ignorar SIGHUP
-
-Cuando cierras la terminal (señal SIGHUP), los procesos en segundo plano normalmente terminan. nohup los protege, generalmente redirigiendo la salida a nohup.out:
-bash
-
-nohup script_largo.sh &
-
-disown: desvincular del shell
-
-Permite que un trabajo siga corriendo incluso después de cerrar el shell, eliminándolo de la tabla de trabajos de Bash:
-bash
-
-proceso_largo &
-disown          # desvincula el último trabajo en bg
-disown %1       # desvincula trabajo con id 1
-disown -h %1    # no envía SIGHUP pero lo mantiene en lista de trabajos
-
-Salida estándar y errores
-
-Los trabajos en bg siguen heredando la terminal como salida. Es buena práctica redirigir:
-bash
-
-comando > salida.log 2>&1 &
-
-Listar trabajos (jobs)
-
-jobs -l muestra los trabajos activos y sus PIDs.
-Diferencia entre proceso y trabajo
-
-Un proceso es una entidad del sistema con PID. Un trabajo es un concepto del shell: puede consistir en varios procesos (tuberías). El shell asigna números de trabajo (%1, %2, etc.).
-02-control-de-trabajos.md
-fg, bg y manejo interactivo
-
-Cuando un trabajo está en segundo plano, puedes traerlo al primer plano o reactivarlo.
-fg: traer al primer plano
-bash
-
-sleep 100 &
-fg %1        # o fg 1, o simplemente fg (si solo hay un trabajo)
-
-El trabajo recibe entrada de teclado y señales de terminal; el shell espera a que termine.
-bg: reanudar en segundo plano
-
-Si un trabajo está detenido (con Ctrl+Z), puedes reanudarlo en segundo plano:
-bash
-
-bg %1
-
-Suspender con Ctrl+Z
-
-Envía SIGTSTP, suspendiendo el proceso en primer plano. Aparece como detenido (Stopped) en jobs.
-Matar trabajos con kill %n
-
-kill %1 envía SIGTERM al grupo de procesos del trabajo. También puedes usar números de PID con kill $PID.
-Estado de los trabajos
-Estado mostrado por jobs	Significado
-Running	Ejecutándose
-Stopped	Detenido (suspendido)
-Done	Terminado (esperando recolección)
-Trabajos con tuberías
-bash
-
-cat archivo | grep algo | wc -l &
-
-El trabajo %1 agrupa los tres procesos. jobs -l mostrará los PIDs individuales.
-Limitaciones
-
-El control de trabajos (job control) está habilitado por defecto en shells interactivos. En scripts no interactivos (set -m lo activa, pero rara vez se usa). En scripts es más común manejar procesos directamente con wait y PIDs.
-03-seniales-y-trap.md
-Manejar eventos asíncronos: señales
-
-Las señales son interrupciones software que el sistema o el usuario envían a un proceso. Bash permite capturar varias de ellas con trap.
-Señales comunes relevantes para scripts
-Señal	Número típico	Disparador
-SIGHUP	1	Terminal cerrada / recargar configuración
-SIGINT	2	Ctrl+C
-SIGQUIT	3	Ctrl+\ (abandona y genera core)
-SIGTERM	15	kill por defecto
-SIGKILL	9	Imposible de capturar
-SIGUSR1	10	Definido por el usuario
-SIGUSR2	12	Definido por el usuario
-SIGSTOP	19	Imposible de capturar
-SIGTSTP	20	Ctrl+Z
-EXIT	0 (pseudo)	El script termina (normal o por señal)
-ERR	—	Atrapa cualquier comando que falle (solo en algunos contextos)
-RETURN	—	Al volver de una función o script sourceado
-DEBUG	—	Antes de cada comando simple (para depuración)
-Sintaxis de trap
-bash
-
-trap 'comandos' SEÑAL1 SEÑAL2 ...
-
-    comandos se ejecutan cuando se recibe alguna de las señales.
-
-    trap '' SEÑAL ignora la señal.
-
-    trap - SEÑAL restaura el comportamiento por defecto.
-
-    trap sin argumentos lista los traps activos.
-
-Ejemplo típico: limpiar archivos temporales al salir
-bash
-
-#!/bin/bash
-tempfile=$(mktemp)
-trap 'rm -f "$tempfile"; echo "Limpieza hecha"' EXIT
-
-Si el script termina normalmente o por SIGINT, se ejecuta la limpieza.
-Capturar Ctrl+C pero confirmar
-bash
-
-trap 'echo "¿Seguro que quieres salir? Pulsa Ctrl+\ para forzar."' SIGINT SIGTERM
-
-trap con funciones
-bash
-
-cleanup() {
-    echo "Limpiando..."
-    rm -f /tmp/mitemp
-}
-trap cleanup EXIT SIGINT SIGTERM
-
-Señal ERR y depuración
-
-trap 'echo "Error en línea $LINENO"' ERR muestra un mensaje cada vez que un comando falle (si set -e no está activo). Cuidado: con set -e, al capturar ERR el script no termina a menos que explícitamente llames a exit.
-Señales definibles por usuario: SIGUSR1, SIGUSR2
-
-Pueden usarse para comunicación simple: un script atrapa SIGUSR1 y vuelca estadísticas, por ejemplo.
-bash
-
-trap 'echo "Estado: $(date)";' SIGUSR1
-
-Luego desde otra terminal: kill -SIGUSR1 $PID.
-Limitaciones
-
-    No se pueden capturar SIGKILL ni SIGSTOP.
-
-    Las funciones de trap se ejecutan en el entorno global; pueden interferir si no se diseñan con cuidado.
-
-    Si el script recibe una señal mientras ejecuta la acción de trap, puede interrumpirse a medias (no es atómico).
-
-04-espera-y-concurrencia.md
-Controlar múltiples procesos simultáneos
-wait: esperar procesos hijos
-
-wait sin argumentos espera a que todos los procesos hijos terminen y devuelve el código de salida del último.
-
-wait $PID espera a un PID concreto y retorna su código de salida.
-
-Ejemplo de lanzamiento paralelo y espera:
-bash
-
-#!/bin/bash
-for i in 1 2 3; do
-    (sleep $i; echo "Tarea $i completada") &
-done
-wait
-echo "Todas las tareas han terminado."
-
-Recoger resultados de procesos hijos
-
-No se puede capturar stdout directo de hijos en bg con $() porque son asíncronos. Opciones:
-
-    Guardar en archivos temporales y luego leerlos.
-
-    Usar coproc para comunicación bidireccional.
-
-    Con Bash ≥ 4.3, wait $! y luego ...& con redirección a un archivo; después leer el archivo.
-
-Técnica con archivos temporales:
-bash
-
-for i in 1 2 3; do
-    (    # subshell para tarea
-        resultado=$(echo "Tarea $i: $(date)")
-        echo "$resultado" > "/tmp/resultado$i"
-    ) &
-done
-wait
-for i in 1 2 3; do
-    cat "/tmp/resultado$i"
-    rm "/tmp/resultado$i"
-done
-
-Pool de procesos (concurrencia limitada)
-
-Lanzar demasiados procesos a la vez puede sobrecargar el sistema. Se puede implementar un pool sencillo contando hijos activos:
-bash
-
-MAX_PROCS=4
-contador=0
-for item in "${items[@]}"; do
-    procesar "$item" &
-    ((contador++))
-    if (( contador >= MAX_PROCS )); then
-        wait -n   # espera al menos uno (Bash 4.3+)
-        ((contador--))
-    fi
-done
-wait   # esperar los últimos
-
-wait -n espera el siguiente trabajo hijo que termine y devuelve su código.
-Uso de xargs -P o parallel
-
-Para tareas masivas, a veces es más sencillo:
-bash
-
-xargs -I{} -P 4 comando {} < lista.txt
-
-O parallel de GNU:
-bash
-
-parallel -j 4 procesar ::: "${items[@]}"
-
-Coprocesos (coproc)
-
-Permiten comunicación bidireccional con un proceso en segundo plano sin necesidad de archivos temporales:
-bash
-
-coproc NOMBRE { comando; }
-echo "entrada" >&"${NOMBRE[1]}"    # stdin del coproceso
-read salida <&"${NOMBRE[0]}"       # stdout
-
-Útil para interactuar con procesos persistentes.
-Scripts de ejemplo
-scripts/paralelo.sh
-
-Un script que descarga URLs en paralelo con un pool limitado, usando arrays para almacenar los resultados.
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ---------------------------------------------------------------
-# paralelo.sh – Descarga URLs concurrentemente con un máximo de hilos
-# ---------------------------------------------------------------
-
-urls=(
-    "https://www.example.com"
-    "https://www.example.org"
-    "https://httpbin.org/get"
-    "https://httpbin.org/delay/2"
-)
-MAX_HILOS=2
-declare -a resultados        # almacenamos mensajes
-
-# Función que descarga y guarda en archivo temporal
-descargar() {
-    local url="$1"
-    local tmpfile
-    tmpfile=$(mktemp)
-    # Intentar descargar con curl; timeout de 5 seg
-    if curl -s -o "$tmpfile" --connect-timeout 3 --max-time 5 "$url"; then
-        size=$(stat -c %s "$tmpfile" 2>/dev/null || echo 0)
-        echo "EXITO:$url:$size:$tmpfile"
-    else
-        echo "FALLO:$url:0:$tmpfile"
-    fi
-}
-
-# Lanzar descargas en paralelo controlado
-contador=0
-for url in "${urls[@]}"; do
-    descargar "$url" &
-    ((contador++))
-    # Alcanzado el máximo, esperar a que uno termine
-    if (( contador >= MAX_HILOS )); then
-        wait -n
-        ((contador--))
-    fi
-done
-wait   # esperar los últimos
-
-# Recoger resultados (los procesos escribieron en stdout)
-# Pero capturamos la salida de descargar desde aquí? No directamente.
-# En lugar de eso, hagamos que descargar escriba en un archivo de resultados.
-# Modifiquemos: cada trabajo escribe en un fifo o mejor en un archivo con su PID.
-# Vamos a rehacer con almacenamiento en array asociativo usando archivos.
-
-# Para simplificar, aquí mostraremos cómo usar wait y archivos temporales:
-declare -A resultados_asoc  # url -> "EXITO:size" o "FALLO"
-
-# Limpiar función anterior; redefinimos descargar para que escriba en un directorio compartido
-tmpdir=$(mktemp -d)
-trap 'rm -rf "$tmpdir"' EXIT
-
-descargar_v2() {
-    local url="$1" out="$2"
-    if curl -s -o "$out" --connect-timeout 3 --max-time 5 "$url"; then
-        echo "EXITO:$(stat -c %s "$out")" > "$tmpdir/$BASHPID"
-    else
-        echo "FALLO:0" > "$tmpdir/$BASHPID"
-    fi
-}
-
-for url in "${urls[@]}"; do
-    # Archivo de salida único por descarga
-    outfile="$tmpdir/$(echo "$url" | md5sum | cut -d' ' -f1).dat"
-    descargar_v2 "$url" "$outfile" &
-    echo "$url -> $outfile" >> "$tmpdir/mapeo"   # guardamos url -> archivo
-done
-wait
-
-# Leer resultados
-echo "==== Resultados ===="
-while read -r linea; do
-    url=$(echo "$linea" | awk -F' -> ' '{print $1}')
-    f=$(echo "$linea" | awk -F' -> ' '{print $2}')
-    if [[ -f "$f" ]]; then
-        estado=$(cat "$f")
-        echo "$url: $estado"
-    else
-        echo "$url: resultado perdido"
-    fi
-done < "$tmpdir/mapeo"
-
-scripts/demonio-simple.sh
-
-Un script que se ejecuta como demonio, atrapa señales y ejecuta tareas periódicas.
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ---------------------------------------------------------------
-# demonio-simple.sh – Script residente que ejecuta tareas periódicas
-# ---------------------------------------------------------------
-
-PIDFILE="./demonio.pid"
-LOGFILE="./demonio.log"
-INTERVALO=5    # segundos entre ejecuciones de la tarea
-
-# Función de limpieza al salir
-cleanup() {
-    echo "$(date) - Recibida señal, finalizando demonio..." >> "$LOGFILE"
-    rm -f "$PIDFILE"
-    exit 0
-}
-
-# Atrapar señales
-trap cleanup SIGINT SIGTERM EXIT
-trap 'echo "$(date) - SIGHUP recibido, ignorando..." >> "$LOGFILE"' SIGHUP
-trap 'echo "$(date) - SIGUSR1: estado $(date)" >> "$LOGFILE"' SIGUSR1
-
-# Asegurar que solo una instancia corre
-if [[ -f "$PIDFILE" ]]; then
-    oldpid=$(cat "$PIDFILE")
-    if kill -0 "$oldpid" 2>/dev/null; then
-        echo "El demonio ya está corriendo (PID $oldpid)." >&2
-        exit 1
-    else
-        echo "Eliminando PID huérfano." >&2
-        rm -f "$PIDFILE"
-    fi
-fi
-
-# Guardar el PID actual
-echo "$$" > "$PIDFILE"
-echo "Demonio iniciado con PID $$." | tee -a "$LOGFILE"
-echo "Envía SIGUSR1 (kill -SIGUSR1 $$) para estado, SIGINT para terminar." | tee -a "$LOGFILE"
-
-# Bucle principal
-while true; do
-    # --- Tarea del demonio ---
-    echo "$(date) - Realizando tarea programada..." >> "$LOGFILE"
-    # Ejemplo: comprobar espacio en disco
-    df -h / | tail -1 >> "$LOGFILE"
-    # -------------------------
-
-    sleep "$INTERVALO"
-done
-
-Instrucciones para probar:
-bash
-
-chmod +x demonio-simple.sh
-./demonio-simple.sh &        # lanzar en bg o en otra terminal
-# En otra terminal:
-kill -SIGUSR1 $(cat demonio.pid)   # ver estado
-kill $(cat demonio.pid)            # terminar (SIGTERM)
-
-01-regex-en-bash.md
-Expresiones regulares dentro de Bash: [[ =~ ]]
-
-Bash incorpora soporte nativo de expresiones regulares (regex) mediante el operador =~ dentro de la construcción [[ ]]. Esto permite hacer comprobaciones complejas de cadenas sin necesidad de invocar grep o sed.
-Sintaxis básica
-bash
-
-if [[ "$cadena" =~ expresión_regular ]]; then
-    echo "Coincidencia"
-fi
-
-La expresión regular va sin comillas (o al menos los metacaracteres deben estar sin entrecomillar). Si se usan comillas, Bash los trata como literales. Para usar una variable que contiene la regex, no se debe entrecomillar:
-bash
-
-patron="^[0-9]+$"
-if [[ "$num" =~ $patron ]]; then ...
-
-¡Correcto! En ese caso $patron se expande sin comillas y Bash interpreta su contenido como regex.
-El array BASH_REMATCH
-
-Después de una coincidencia exitosa, Bash almacena la parte que coincidió completamente en ${BASH_REMATCH[0]} y los grupos capturados (entre paréntesis) en ${BASH_REMATCH[1]}, ${BASH_REMATCH[2]}, etc.
-bash
-
-if [[ "Nombre: Juan" =~ Nombre:[[:space:]]+([a-zA-Z]+) ]]; then
-    echo "Nombre encontrado: ${BASH_REMATCH[1]}"
-fi
-
-Metacaracteres y sintaxis (ERE)
-
-Bash utiliza Expresiones Regulares Extendidas (ERE), similares a grep -E. Estos son los elementos principales:
-
-    Anclas: ^ (inicio de cadena), $ (fin de cadena).
-
-    Cuasificadores: * (cero o más), + (uno o más), ? (cero o uno).
-
-    Cuantificador de rango: {n}, {n,m}, {n,}. Ojo: en algunas versiones antiguas de Bash hay que escapar las llaves \{3\}; desde Bash 3.2+ con expresión sin comillas funciona sin escapar.
-
-    Clases de caracteres POSIX: [[:alnum:]], [[:alpha:]], [[:digit:]], [[:lower:]], [[:upper:]], [[:space:]], etc. Dentro de [] tradicionales también se pueden usar.
-
-    Grupos y alternación: ( ) para agrupar y capturar, | para alternación.
-
-    Punto: . coincide con cualquier carácter salvo nueva línea.
-
-    Listas negadas: [^abc] cualquier carácter que no sea a,b,c.
-
-    Secuencias de escape: \t (tabulador), \n (nueva línea) — ten en cuenta que en $'...' se interpretan, pero en la regex suelen funcionar.
-
-Ejemplo de regex para una hora HH:MM:
-bash
-
-patron_hora='^([01][0-9]|2[0-3]):[0-5][0-9]$'
-if [[ "$hora" =~ $patron_hora ]]; then
-    echo "Formato de hora válido"
-fi
-
-Consideraciones importantes
-
-    Sin comillas en la regex: si quieres que ^, $, * etc. se interpreten como metacaracteres, no encierres la expresión en comillas dentro del [[ ]]. Pero si toda la regex está en una variable y la expandes sin comillas ($var), funciona.
-
-    Locales y clases: Los rangos como [a-z] dependen del locale (LC_COLLATE). Para mayor consistencia usa clases [[:lower:]].
-
-    Escapando espacios: Los espacios en la regex deben tal cual; si la regex se guarda en variable, hay que protegerla con comillas al definirla pero no al usarla en =~.
-
-    Compatibilidad: [[ ]] y =~ existen en Bash, ksh y zsh (con algunos matices). Si buscas máxima portabilidad POSIX, usa grep.
-
-    Detección del fin de línea: El metacarácter $ coincide con el final de la cadena sin salto de línea. Si la variable tiene un salto de línea al final (común al leer archivos sin -r), puede fallar. Usa printf en vez de echo para evitar añadidos.
-
-Ejemplo práctico: validar email sencillo
-bash
-
-is_valid_email() {
-    local email="$1"
-    local patron='^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
-    [[ "$email" =~ $patron ]]
-}
-
-Errores comunes
-
-    Intentar usar =~ en [ ]; solo funciona en [[ ]].
-
-    Escapar incorrectamente: [\w] no es válido; usa [[:word:]] en algunos Perl-like no, resort a [A-Za-z0-9_].
-
-    Olvidar que * en regex no es igual que en glob: .* es cualquier cadena; * ya es cuantificador, necesita un prefijo.
-
-02-extglob.md
-Patrones extendidos: el poder del globbing avanzado
-
-El extended globbing (extglob) es una extensión de Bash (activada con shopt -s extglob) que añade cuantificadores y alternación a los patrones de nombres de archivo. No son expresiones regulares; se rigen por las reglas del globbing (coincidencia sobre nombres de archivo existentes, salvo en contextos de case y [[ == ]]).
-Habilitar
-bash
-
-shopt -s extglob   # activar
-shopt -u extglob   # desactivar
-
-Patrones disponibles
-Patrón	Equivalente lógico	Descripción
-?(pat)	pat es opcional	Cero o una ocurrencia de pat.
-*(pat)	pat repetido	Cero o más ocurrencias.
-+(pat)	pat al menos una vez	Una o más ocurrencias.
-@(pat1|pat2|...)	uno de los patrones	Coincide con exactamente uno de la lista (OR).
-!(pat)	cualquier cosa excepto pat	Todo lo que no coincida (puede ser una lista: !(pat1|pat2)).
-
-Los patrones pueden contener los comodines clásicos (*, ?, [...]).
-Uso en case
-
-El case ya usa patrones glob, así que extglob se integra naturalmente:
-bash
-
-shopt -s extglob
-case $archivo in
-    +(*.txt|*.log))
-        echo "Es un montón de texto/logs" ;;
-    !(*.bak|*.tmp))
-        echo "No es backup ni temporal" ;;
-esac
-
-Aquí +(*.txt|*.log) significa "uno o más bloques de *.txt o *.log", útil para cadenas como "nota.txt.log.txt" (aunque con nombres de archivo es raro). Realmente en case se usa más a nivel de cadena: @(si|yes) para opciones.
-Uso en [[ == ]]
-
-Cuando usas == o != dentro de [[ ]] y la parte derecha no está entrecomillada, Bash la interpreta como un patrón glob (con extglob si está activo). Esto permite coincidencias de subcadenas sin regex:
-bash
-
-shopt -s extglob
-if [[ "$respuesta" == @(sí|yes|SI|YES) ]]; then
-    echo "Aceptaste"
-fi
-
-También se pueden hacer comprobaciones como [[ $var == +([[:digit:]]) ]] para ver si contiene solo dígitos y es no vacío (una o más ocurrencias).
-Uso en expansiones de parámetros
-
-Las expansiones ${var#patron}, ${var%patron}, etc., también respetan extglob si está activo. Ejemplo:
-bash
-
-shopt -s extglob
-ruta="/home/user/docs/reporte.txt"
-echo "${ruta##!(/)+(\/)}"     # reporte.txt (quita todo hasta el último /)
-
-Explicación: !(/)+(\/) coincide con "cualquier secuencia que no sea barra, seguida de una o más barras", es decir, todo hasta la última barra inclusive. Truco avanzado.
-Uso como parte de comandos (generación de archivos)
-
-Con extglob, al generar nombres de archivo puedes hacer cosas como:
-bash
-
-ls -d !(backup|tmp)   # lista todos los archivos/dirs excepto 'backup' y 'tmp'
-
-Cuidado: !(...) con una lista larga puede fallar con Argument list too long. Usa find en esos casos.
-Comparación con regex
-
-    Extglob no tiene anclas implícitas; un patrón +(a)c coincide con "aaac" pero también con "Xabc" porque puede aparecer en cualquier parte de la cadena (en [[ == ]] es igual que glob: implícitamente anclado al inicio y fin si la variable completa, no? En [[ $var == +(a)c ]] el patrón debe coincidir con la cadena completa, no parcialmente. En globbing de archivos, la coincidencia es sobre el nombre completo. En case, el patrón debe coincidir con todo el valor. Así que sí, está anclado). Para coincidencias parciales habría que usar *...*.
-
-    Extglob no tiene cuantificadores numéricos rígidos {3}, ni grupos de captura, ni aserciones. Para eso se usa regex.
-
-03-grep-sed-awk-basico.md
-Herramientas externas esenciales para scripts
-
-Aunque Bash ofrece potentes capacidades de manipulación de cadenas, hay situaciones donde grep, sed y awk brillan, especialmente cuando se trabaja con archivos grandes, tuberías complejas o cuando necesitas portabilidad fuera de Bash puro.
-grep
-
-Busca líneas que coinciden con un patrón. Soporta varios sabores de regex.
-Opción	Significado
--E	Expresiones Regulares Extendidas (ERE, como en Bash).
--P	Expresiones Regulares Perl (PCRE), más potentes (si disponible).
--i	Ignorar mayúsculas/minúsculas.
--v	Invertir selección (líneas que no coinciden).
--c	Contar líneas coincidentes.
--n	Mostrar número de línea.
--o	Mostrar solo la parte de la línea que coincide.
--q	Silencioso; solo interesa el código de salida.
--R / -r	Búsqueda recursiva en directorios.
---color=auto	Resaltar coincidencias.
-
-Ejemplos en scripts:
-bash
-
-# Verificar si una palabra está en un diccionario
-if grep -iq "^$palabra$" /usr/share/dict/words; then
-    echo "Palabra válida"
-fi
-
-# Extraer todas las direcciones IP de un registro
-grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' log.txt | sort -u
-
-sed
-
-Editor de flujo (stream editor). Lee línea por línea y aplica comandos de sustitución, borrado, inserción, etc.
-
-Sustitución: s/patrón/remplazo/opciones
-
-    g: reemplazar todas las ocurrencias en la línea.
-
-    i: ignorar mayúsculas (solo GNU sed con I).
-
-    p: imprimir si hubo sustitución (con -n).
-
-    -n suprime la salida automática; solo imprime cuando se pide (p).
-
-    -i edita el archivo en el lugar (haz copia antes con -i.bak).
-
-    Se pueden usar diferentes delimitadores: s#ruta/antigua#ruta/nueva#.
-
-Ejemplos:
-bash
-
-# Reemplazar la primera coma por tabulador
-sed 's/,/\t/' archivo.csv
-
-# Reemplazar todas las 'a' por 'A'
-sed 's/a/A/g'
-
-# Borrar líneas que empiezan con #
-sed '/^#/d'
-
-# Imprimir solo entre líneas que contienen START y END
-sed -n '/START/,/END/p'
-
-# Usar grupos capturados
-echo "Nombre: Juan" | sed 's/^Nombre: \([a-zA-Z]*\)/\1/'
-
-awk
-
-Lenguaje de procesamiento de patrones y campos. Cada línea se divide en campos según FS (por defecto espacios/tab), accesibles como $1, $2, ..., $NF (último), $0 (línea completa).
-
-Estructura típica: awk 'patrón { acción }' archivo
-
-    Patrón puede ser una expresión regular, condición numérica, o BEGIN/END.
-
-    Acción entre llaves con código estilo C.
-
-Variables internas:
-
-    FS: field separator (entrada)
-
-    OFS: output field separator
-
-    RS: record separator (por defecto nueva línea)
-
-    NR: número de registro (línea) actual
-
-    NF: número de campos en el registro actual
-
-Ejemplos:
-bash
-
-# Sumar una columna (2da columna)
-awk '{sum += $2} END {print sum}' datos.txt
-
-# Filtrar líneas cuyo primer campo > 10 e imprimir con otro formato
-awk '$1 > 10 { printf "%-10s %5d\n", $3, $1 }' archivo.txt
-
-# Imprimir solo la primera y última columna
-awk '{print $1, $NF}'
-
-# Calcular promedio de la 3ra columna
-awk '{ total += $3; count++ } END { if(count>0) print total/count }' numeros.tsv
-
-awk va más allá: puede hacer contadores, arrays asociativos, e incluso escribir programas completos. En scripts de Bash se usa para tareas de formato rápido o para procesar datos tabulares.
-¿Cuándo usar cada uno?
-
-    grep cuando solo necesitas encontrar o filtrar líneas.
-
-    sed para sustituciones simples o transformaciones línea a línea.
-
-    awk cuando necesitas lógica sobre campos, cálculos o informes.
-
-    Las capacidades nativas de Bash (expansiones de parámetros, [[ =~ ]]) cubren la mayoría de manipulaciones de cadenas simples sin lanzar subshells.
-
-Buenas prácticas: no abuses de las herramientas externas por una operación que Bash puede hacer con parameter expansion; el rendimiento importa.
-Script de ejemplo
-scripts/validador-email.sh
-
-Script que valida direcciones de correo electrónico usando regex de Bash y permite comprobar un archivo de correos además de argumentos.
-bash
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ---------------------------------------------------------------
-# validador-email.sh - Verifica si uno o más correos son válidos
-# ---------------------------------------------------------------
-
-# Patrón de email pragmático (no RFC completo, pero suficiente)
-# Caracteres permitidos: letras, dígitos, . _ % + -
-# Dominio: letras, dígitos, guiones y puntos
-# TLD: mínimo 2 letras
-readonly EMAIL_REGEX='^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
-
-# Función que imprime en color si es válido o no
-print_result() {
-    local email="$1"
-    if is_valid "$email"; then
-        echo -e "\e[32m✓\e[0m $email"
-    else
-        echo -e "\e[31m✗\e[0m $email"
-    fi
-}
-
-# Comprueba un email con la regex
-is_valid() {
-    [[ "$1" =~ $EMAIL_REGEX ]]
-}
-
-# Procesar un archivo línea por línea (una dirección por línea)
-check_file() {
-    local file="$1"
-    [[ -f "$file" ]] || { echo "Error: archivo '$file' no existe." >&2; exit 1; }
-    while IFS= read -r email; do
-        # Ignorar líneas vacías o comentarios
-        [[ -z "$email" || "$email" == \#* ]] && continue
-        print_result "$email"
-    done < "$file"
-}
-
-# Mostrar ayuda
-help() {
-    cat <<EOF
-Uso: $0 [opciones] [correo1 correo2 ...]
-
-Sin argumentos, lee de stdin.
-Opciones:
-  -f ARCHIVO    Leer correos del archivo especificado (uno por línea)
-  -h            Mostrar esta ayuda
-
-Ejemplos:
-  $0 juan@example.com
-  $0 test@correo,com otro@dominio.org
-  cat lista.txt | $0
-  $0 -f correos.txt
-EOF
-}
-
-# Parseo de opciones simples
-archivo=""
-while getopts "hf:" opt; do
-    case $opt in
-        h) help; exit 0 ;;
-        f) archivo="$OPTARG" ;;
-        *) help >&2; exit 1 ;;
-    esac
-done
-shift $((OPTIND-1))
-
-# Ejecutar según origen
-if [[ -n "$archivo" ]]; then
-    check_file "$archivo"
-elif [[ $# -gt 0 ]]; then
-    for addr in "$@"; do
-        print_result "$addr"
-    done
-else
-    # Leer de stdin
-    while IFS= read -r line; do
-        [[ -z "$line" || "$line" == \#* ]] && continue
-        print_result "$line"
-    done
-fi
-
-Ejemplo de uso:
-bash
-
-$ ./validador-email.sh user@example.com otro@@invalido
-✓ user@example.com
-✗ otro@@invalido
-$ echo "admin@site.co" | ./validador-email.sh
-✓ admin@site.co
-
-El script demuestra [[ =~ ]], manejo de argumentos, lectura de archivos y stdin, y buenas prácticas de programación en Bash.
-
-01-opciones-de-depuracion-set.md
-Opciones de depuración y cómo activarlas
-
-Bash ofrece varias opciones que se pueden activar con set o desde la línea de comandos para facilitar la depuración. Las más importantes son:
-Opción	set -	Efecto
-xtrace	set -x	Muestra cada orden simple expandida en stderr, precedida por PS4.
-verbose	set -v	Muestra cada línea del script tal cual se lee, antes de ser ejecutada.
-nounset	set -u	Trata las variables no definidas como error y termina el script.
-errexit	set -e	Termina inmediatamente si un comando retorna un estado distinto de 0 (con algunas excepciones).
-pipefail	set -o pipefail	El código de salida de una tubería es el del último comando que falló (o 0 si todos exitosos).
-functrace	set -T	Se heredan las trampas DEBUG y RETURN a funciones llamadas (útil para depurar).
-errtrace	set -E	Las trampas ERR también se activan en funciones y subshells.
-Modo xtrace (-x)
-
-Activar set -x provoca que antes de cada orden (después de las expansiones), se imprima la línea precedida por PS4. El valor por defecto de PS4 es + .
-bash
-
-#!/bin/bash -x
-# o
-set -x
-echo "Hola mundo"
-set +x    # desactivar
-
-Para personalizar la traza, define PS4 con información como número de línea y nombre de función:
-bash
-
-PS4='+ (${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-set -x
-
-Esto mostrará algo como + (script.sh:5): main(): echo "Hola".
-Modo verbose (-v)
-
-Imprime la línea leída del script justo antes de ser interpretada (sin expandir). Útil para detectar problemas de expansiones inesperadas.
-Modo nounset (-u)
-
-Con set -u, cualquier intento de expandir una variable no definida causará un error y la finalización del script. Para proporcionar valores por defecto se usan expansiones como ${var:-default}.
-Modo errexit (-e)
-
-set -e hace que el script aborte si un comando devuelve un código distinto de 0. Excepciones: no se aplica en:
-
-    Comandos que son parte de if, while, until.
-
-    Comandos en tuberías (salvo con pipefail).
-
-    Comandos que se ejecutan con || o &&.
-
-Es habitual combinarlo con pipefail para que las tuberías sean seguras:
-bash
-
-set -eo pipefail
-
-Combinación recomendada
-bash
-
-set -euo pipefail
-
-    -e: para errores de comando.
-
-    -u: para variables sin definir.
-
-    -o pipefail: para que los fallos en tuberías no pasen desapercibidos.
-
-Para depuración se añade -x temporalmente.
-trap para depuración (adelanto)
-
-Se puede usar trap 'comandos' DEBUG para ejecutar código antes de cada comando simple. Por ejemplo, mostrar la pila de llamadas:
-bash
-
-trap 'echo "[DEBUG] ${BASH_SOURCE[0]}:$LINENO ${FUNCNAME[0]}: $BASH_COMMAND"' DEBUG
-
-02-trampas-de-depuracion.md
-Usar trap para introspección en tiempo de ejecución
-
-Además de las opciones anteriores, las trampas ofrecen una fina granularidad para depurar.
-trap ... ERR
-
-Se activa cuando cualquier comando falla (siempre que el error no sea enmascarado por una estructura condicional). Muy útil para mostrar la línea exacta del fallo:
-bash
-
-trap 'echo "Error en la línea $LINENO"; exit 1' ERR
-
-Si usas set -e, la combinación con ERR puede ser poderosa para volcar el estado en el momento del error.
-trap ... DEBUG
-
-Se ejecuta antes de cada comando simple. La variable BASH_COMMAND contiene el comando que se va a ejecutar.
-bash
-
-trap 'echo "Ejecutando: $BASH_COMMAND"' DEBUG
-
-Normalmente se usa con funciones como:
-bash
-
-debug_trap() {
-    echo "DEBUG: ${BASH_SOURCE[1]}:${BASH_LINENO[0]} ${FUNCNAME[1]} -> $BASH_COMMAND"
-}
-trap debug_trap DEBUG
-
-Ojo: el trap DEBUG se hereda a las funciones si se activa functrace (set -T).
-trap ... RETURN
-
-Se activa al volver de una función o de un script sourceado. Muestra la traza al salir.
-bash
-
-trap 'echo "Saliendo de ${FUNCNAME[0]} con código $?"' RETURN
-
-Ejemplo de trampa de volcado de pila
-bash
-
-_stacktrace() {
-    local i
-    echo "=== Stacktrace ==="
-    for (( i=0; i<${#FUNCNAME[@]}; i++ )); do
-        echo "  #$i ${FUNCNAME[$i]} (${BASH_SOURCE[$i]}:${BASH_LINENO[$i-1]})"
-    done
-}
-trap _stacktrace ERR
-
-Si ocurre un error, se imprime la pila de llamadas completa hasta la función main.
-Limpieza al salir
-
-EXIT (pseudo-señal) se dispara al terminar el script, incluso si es por error o señal (aunque no por SIGKILL). Usa trap ... EXIT para limpiar temporales.
-bash
-
-tmpdir=$(mktemp -d)
-trap 'rm -rf "$tmpdir"' EXIT
-
-Combinar con ERR no es redundante: EXIT siempre se ejecuta; ERR permite reaccionar a errores específicos.
-03-shellcheck.md
-ShellCheck: tu revisor de scripts
-
-ShellCheck es una herramienta de análisis estático para shell scripts que detecta errores comunes, malas prácticas y advertencias de portabilidad.
-Instalación
-
-    Ubuntu/Debian: apt install shellcheck
-
-    macOS: brew install shellcheck
-
-    Online: pega el código en shellcheck.net
-
-    Integraciones: plugins para VSCode, Vim, Sublime, etc.
-
-Uso básico
-bash
-
-shellcheck mi_script.sh
-
-ShellCheck dará avisos categorizados: Error (con código SC), Warning, Info, Style.
-Códigos de aviso más comunes
-Código	Descripción	Ejemplo
-SC2086	Variables sin comillas	rm $file → rm "$file"
-SC2164	cd sin comprobar error	cd dir && ... o cd dir || exit
-SC2206	Citar arrays	arr=($var) → read -ra arr <<< "$var"
-SC2046	Word splitting en sustitución de comandos	for f in $(ls) → usa globbing
-SC2068	Elementos de array sin comillas	${array[@]} → "${array[@]}"
-SC2155	Declarar y asignar locales en la misma línea	local var=$(cmd) → local var; var=$(cmd)
-SC2120	Variable no asignada en función	Revisa parámetros
-SC2015	Uso de A && B || C como if/else	No es equivalente, usar if
-SC1090	Archivo sourceado no encontrado	Ruta no fija; usar verificación
-SC1117	Escape de barra invertida innecesaria	\d no es un dígito, mejor [0-9]
-
-Nota: Puedes desactivar avisos con comentarios especiales: # shellcheck disable=SC2086.
-Ejemplo de corrección con ShellCheck
-bash
-
-# original (con problemas)
-cat $archivo | while read line; do echo $line; done
-
-# ShellCheck sugiere:
-# SC2002: Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead.
-# SC2086: Double quote to prevent globbing and word splitting.
-# SC2162: read without -r will mangle backslashes.
-
-# corregido
-while IFS= read -r line; do
-    echo "$line"
-done < "$archivo"
-
-Integrar en CI
-
-Para asegurar la calidad de los scripts en un repositorio:
-bash
-
-shellcheck *.sh && echo "OK"
-
-ShellCheck permite especificar la severidad mínima (-S error) y excluir checks (-e SC1090).
-04-estilo-y-convenciones.md
-Escribir Bash que otros (y tú en 6 meses) entiendan
-
-Un estilo consistente mejora la legibilidad y reduce errores. Aquí algunas convenciones recomendadas:
-Nombres
-
-    Variables locales y globales no exportadas: snake_case, en minúsculas. Ej: contador, nombre_archivo.
-
-    Constantes y variables de entorno: UPPER_CASE. Ej: readonly MAX_INTENTOS=5.
-
-    Nombres de funciones: snake_case o camelCase, pero consistente. Prefiere verbos: calcular_total, enviar_correo.
-
-    Evitar palabras reservadas: readonly está bien, local también.
-
-Indentación
-
-    Usa 4 espacios (o tabuladores, pero sé consistente).
-
-    Las estructuras if, for, while alinean sus palabras clave:
-
-bash
-
-if [[ ... ]]; then
-    comandos
-fi
-
-    Las funciones comienzan en la columna 0; el cuerpo indentado.
-
-bash
-
-mi_funcion() {
-    local variable
-    comandos
-}
-
-Comillas
-
-    Siempre entrecomilla las expansiones de variables a menos que tengas una razón específica para no hacerlo (word splitting deseado).
-
-    Usa "$var" no $var.
-
-    Dentro de [[ ]], las variables pueden ir sin comillas, pero es más seguro comillarlas.
-
-Uso de [[ ]] sobre [ ]
-
-Dentro de scripts de Bash (no POSIX), prefiere [[ ]]:
-
-    Más seguro: no hace word splitting ni pathname expansion.
-
-    Soporta =~, &&, ||.
-
-    Sintaxis más natural.
-
-No uses [ ] a menos que necesites compatibilidad con /bin/sh.
-Comprobaciones y retorno temprano
-
-    Valida argumentos y condiciones al inicio y retorna o sale con error.
-
-    Patrón guard clause:
-
-bash
-
-if (( $# < 2 )); then
-    echo "Uso: ..."
-    exit 1
-fi
-
-Uso de printf sobre echo
-
-    printf es más portátil y predecible.
-
-    echo puede interpretar escapes y tener comportamientos distintos según la shell.
-
-    Usa printf "%s\n" "$mensaje".
-
-Comentarios
-
-    Cada script debe tener un encabezado con propósito y uso.
-
-    Las funciones complejas deben describir parámetros y retorno.
-
-    No comentes lo obvio; explica por qué, no qué.
-
-Funciones: main y modularización
-
-Encapsula la lógica principal en una función main y al final del script llámala:
-bash
-
-#!/bin/bash
-set -euo pipefail
-
-main() {
-    # lógica
-}
-
-main "$@"
-
-Esto permite sourciar el script sin ejecutarlo y facilita las pruebas.
-Evitar eval
-
-eval puede ser peligroso. Usa arrays para construir comandos con opciones dinámicas.
-Variables de entorno y readonly
-bash
-
-readonly CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/mi_app.conf"
-
-Crear subsecciones con comentarios
-
-Usa separadores visuales:
-bash
-
-# -------------------------------------------------------------------
-# Configuración
-# -------------------------------------------------------------------
-
-05-scripts-robustos.md
-El checklist para un script a prueba de balas
-
-Un script robusto debe contemplar gestión de errores, limpieza, argumentos y un comportamiento predecible.
-1. Encabezado robusto
-bash
-
-#!/usr/bin/env bash
-# script.sh - Descripción corta
-# Uso: script.sh [opciones] arg1
-set -euo pipefail
-# Opcional: activar más banderas
-shopt -s nullglob    # globs que no coinciden se expanden a nada
-shopt -s extglob      # si se necesitan patrones extendidos
-
-2. Función main y llamada
-bash
-
-main() {
-    # lógica
-}
-main "$@"
-
-3. Parseo de opciones con getopts
-bash
-
-usage() {
-    cat <<EOF
-Uso: $0 [-v] [-o archivo] entrada
+```
+
+También existen mecanismos como ObjectFactory, Provider<T> y ObjectProvider para obtener el bean bajo demanda (dependencia de tipo "lookup"):
+```java
+@Autowired
+private ObjectProvider<ServicioCostoso> servicioProvider;
 ...
-EOF
+ServicioCostoso s = servicioProvider.getIfAvailable();
+```
+
+### IoC no es solo DI
+
+Spring también ofrece Eventos y Listeners como variante de IoC: un componente publica un evento y no sabe quién lo recibe; los consumidores reaccionan sin acoplamiento directo. Igualmente con la programación orientada a aspectos (AOP): el código transversal se ejecuta sin que la clase invocada lo sepa.
+02 - Contenedor y Beans: el motor interno
+BeanFactory vs ApplicationContext
+
+    BeanFactory: es la interfaz raíz, proporciona las capacidades básicas: crear, obtener y mantener beans. Pereza (lazy load por defecto). Sin funcionalidades de internacionalización, eventos, etc. Rara vez se usa directamente.
+
+    ApplicationContext: hereda de BeanFactory y añade:
+
+        Carga automática de bean post-processors y beans de configuración (incluye BeanFactoryPostProcessor).
+
+        Publicación de eventos (ApplicationEventPublisher).
+
+        Acceso a mensajes y recursos (MessageSource, cargar archivos .properties i18n).
+
+        Soporte para múltiples fuentes de configuración (web, xml, anotaciones).
+
+        Registro automático de BeanPostProcessor.
+
+En la práctica siempre usamos ApplicationContext. Spring Boot crea un AnnotationConfigApplicationContext o un AnnotationConfigServletWebServerApplicationContext.
+BeanDefinition y el registro de beans
+
+Cuando Spring arranca, no almacena directamente instancias de beans, sino sus definiciones en una estructura BeanDefinition. Una BeanDefinition contiene:
+
+    Nombre del bean (id).
+
+    Nombre de la clase (className).
+
+    Ámbito (scope: singleton, prototype...).
+
+    Dependencias (nombres de otros beans).
+
+    Modo de inicialización (lazy o eager).
+
+    Métodos de callback (init/destroy).
+
+    Si es abstracto, primario, etc.
+
+Estas definiciones se cargan a través de un BeanDefinitionReader (para XML sería XmlBeanDefinitionReader, para anotaciones AnnotatedBeanDefinitionReader) y se almacenan en un BeanDefinitionRegistry (normalmente el mismo ApplicationContext).
+
+Ejemplo de configuración programática:
+```java
+AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+ctx.register(AppConfig.class); // registra una clase @Configuration
+ctx.refresh(); // aquí se procesan las definiciones y se instancian los beans
+```
+
+### Component Scanning: cómo encuentra Spring tus beans
+
+@ComponentScan indica los paquetes base donde buscar clases anotadas con estereotipos (@Component, @Service, @Repository, @Controller). Spring escanea el classpath y crea una BeanDefinition por cada clase encontrada que cumpla con los filtros.
+
+Puedes afinar con:
+
+    basePackages o basePackageClasses para evitar escanear todo.
+
+    includeFilters y excludeFilters con expresiones como @ComponentScan.Filter(type=FilterType.REGEX, pattern=".*Test") o FilterType.ASSIGNABLE_TYPE.
+
+Estereotipos: @Service, @Repository y @Controller son especializaciones de @Component que añaden semántica. En particular @Repository habilita la traducción de excepciones de persistencia a la jerarquía DataAccessException de Spring.
+Inicialización perezosa vs ansiosa (Eager)
+
+Por defecto, los beans singleton se crean en el arranque (eager), lo que ayuda a detectar fallos de configuración rápidamente. Se puede marcar un bean con @Lazy para que se cree solo cuando sea requerido.
+
+A nivel global: en Spring Boot, spring.main.lazy-initialization=true hace que todos los beans sean perezosos.
+Configuración Java: @Configuration y @Bean
+
+Una clase @Configuration es una forma elegante de definir beans mediante métodos anotados con @Bean. El contenedor llamará a esos métodos y registrará el objeto devuelto. Importante:
+
+    proxyBeanMethods = true (por defecto) : Spring crea un proxy de la clase de configuración mediante CGLIB para interceptar las llamadas a los métodos @Bean. Así, si dentro de un método @Bean se invoca a otro método @Bean, se devuelve la instancia única del contenedor en lugar de crear una nueva, respetando el ámbito singleton.
+
+    proxyBeanMethods = false (modo ligero, "Lite mode") : no se genera proxy; las llamadas entre métodos @Bean invocan directamente el método Java, creando un nuevo objeto cada vez. Es más rápido y útil cuando no hay dependencia entre los beans definidos.
+
+```java
+@Configuration(proxyBeanMethods = false)
+public class AppConfig {
+    @Bean
+    public DataSource dataSource() {
+        return ...; // único
+    }
+    @Bean
+    public JdbcTemplate jdbcTemplate() {
+        return new JdbcTemplate(dataSource()); // si proxyBeanMethods=true, dataSource() devuelve el bean singleton
+    }
+}
+```
+
+### Internacionalización, Eventos y Recursos
+
+ApplicationContext extiende MessageSource. Si defines un bean messageSource, Spring lo utiliza para resolver mensajes multi-idioma con getMessage(String code, Object[] args, Locale). Ideal para mensajes de validación o UI.
+
+Los eventos de aplicación (ApplicationEvent y @EventListener) permiten comunicación desacoplada entre componentes. El publicador no conoce a los suscriptores.
+
+La interfaz ResourceLoader del contexto permite cargar archivos con prefijos: classpath:, file:, http:, etc.
+03 - Configuración: Java vs. XML (evolución, comparación y mejores prácticas)
+El viaje desde XML puro hasta Java config
+
+Etapa 1 (2004-2008) : XML era la única opción. Archivos <beans> con <bean id=".." class="..">. Ventaja: configuración explícita y centralizada, fácil de cambiar sin recompilar. Desventaja: verbosidad, sin chequeo de tipos en tiempo de compilación, complejo para grandes proyectos.
+
+Etapa 2 (2008-2012) : surgen anotaciones como @Autowired, @Component y @Transactional. Empieza a convivir XML con escaneo de componentes. El XML queda para beans de infraestructura.
+
+Etapa 3 (2013-presente) : @Configuration + @Bean permiten escribir configuración en Java puro, con comprobación de tipos y refactorización segura. Spring Boot prácticamente elimina el XML obligatorio, salvo integraciones heredadas. Hoy es el estándar.
+Comparación detallada con ejemplos equivalentes
+
+### Definir un DataSource y un JdbcTemplate
+
+XML:
+xml
+
+### <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+      destroy-method="close">
+    <property name="jdbcUrl" value="${db.url}"/>
+    <property name="username" value="${db.user}"/>
+    <property name="password" value="${db.pass}"/>
+</bean>
+
+### <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+    <constructor-arg ref="dataSource"/>
+</bean>
+
+Configuración Java:
+```java
+@Configuration
+@PropertySource("classpath:datasource.properties")
+public class DbConfig {
+    @Value("${db.url}") private String url;
+    @Value("${db.user}") private String user;
+    @Value("${db.pass}") private String pass;
+
+    @Bean(destroyMethod = "close")
+    public DataSource dataSource() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(user);
+        config.setPassword(pass);
+        return new HikariDataSource(config);
+    }
+
+    @Bean
+    public JdbcTemplate jdbcTemplate(DataSource ds) {
+        return new JdbcTemplate(ds);
+    }
+}
+```
+
+Ventajas de Java Config:
+
+    Refactorización y autocompletado del IDE.
+
+    Validación de tipos en compilación.
+
+    Capacidad de lógica condicional (if, profile, @Conditional).
+
+    Mejor integración con el ecosistema moderno.
+
+### Condicionalidad y perfiles
+
+En XML, los perfiles se aplican con beans profile="dev" dentro del archivo. En Java config, con @Profile a nivel de clase o método.
+```java
+@Configuration
+@Profile("prod")
+public class ProductionConfig { ... }
+```
+
+Además, con @Conditional (y derivados como @ConditionalOnClass, @ConditionalOnMissingBean, etc. en Boot), se puede activar una configuración en función de la presencia de clases, beans o propiedades.
+Mezclar XML y Java Config
+
+Todavía hay proyectos que necesitan importar XML existente. Se hace con @ImportResource:
+```java
+@Configuration
+@ImportResource("classpath:old-config.xml")
+public class HybridConfig { }
+```
+
+Y a la inversa, desde XML se puede incluir una clase de configuración con <bean class="com.example.AppConfig"/>.
+Buenas prácticas actuales
+
+    Usa siempre configuración basada en Java (@Configuration).
+
+    Mantén las clases de configuración pequeñas y cohesivas (p.ej. SecurityConfig, PersistenceConfig, WebConfig).
+
+    Externaliza valores con @ConfigurationProperties en lugar de dispersar @Value: agrupa propiedades por prefijo en un POJO.
+
+### 04 - Ciclo de vida del Bean: paso a paso con internals
+
+Comprender el ciclo de vida es indispensable para personalizar el comportamiento del contenedor y para entender cómo funcionan las transacciones, aspectos y la seguridad.
+Fases completas del ciclo de vida (arranque de un bean singleton)
+
+Imagina que Spring está arrancando y decide instanciar un bean MiServicio. El proceso detallado es:
+
+### Instanciación del objeto
+
+        Se llama al constructor (o al método estático de fábrica) usando la información de BeanDefinition. El objeto es "crudo", sin dependencias.
+
+### Inyección de propiedades (dependencias)
+
+        Spring inyecta las dependencias vía setters o directamente en campos anotados con @Autowired, @Value, @Inject, etc. Esto lo hacen BeanPostProcessors específicos como AutowiredAnnotationBeanPostProcessor y CommonAnnotationBeanPostProcessor.
+
+### Ejecución de interfaces Aware
+
+        Si el bean implementa ciertas interfaces Aware, se invocan sus métodos en este orden típico:
+
+### BeanNameAware.setBeanName(String name)
+
+### BeanClassLoaderAware.setBeanClassLoader(ClassLoader)
+
+### BeanFactoryAware.setBeanFactory(BeanFactory) (si es un BeanFactory)
+
+            ApplicationContextAware.setApplicationContext(ApplicationContext) (solo en contexto ApplicationContext)
+
+        De esta forma, el bean puede obtener referencias al entorno de Spring sin buscar el contexto por fuera.
+
+### BeanPostProcessor – Antes de inicialización
+
+        Para cada BeanPostProcessor registrado, se ejecuta postProcessBeforeInitialization(bean, beanName). Aquí se puede modificar el bean, envolverlo en un proxy temprano, o hacer cualquier lógica transversal (p.ej., en Spring AOP se marcan los beans candidatos a ser proxy, aunque el proxy real se crea después).
+
+        Ejemplo común: InitDestroyAnnotationBeanPostProcessor busca métodos @PostConstruct pero su ejecución real ocurrirá en el siguiente paso, no aquí; esta fase es más de preparación.
+
+### Inicialización del bean
+    Se ejecutan los métodos de inicialización en el siguiente orden de prioridad:
+    a. Método anotado con @PostConstruct (detectado por el CommonAnnotationBeanPostProcessor que se ejecutó antes).
+    b. afterPropertiesSet() de la interfaz InitializingBean.
+    c. Método init-method personalizado definido en @Bean(initMethod = "nombre") o en XML.
+
+    Durante esta fase el bean puede configurarse a sí mismo, validar dependencias o iniciar recursos.
+
+### BeanPostProcessor – Después de inicialización
+
+        Se ejecuta postProcessAfterInitialization(bean, beanName). Esta es la etapa donde normalmente se generan los proxies (AOP, transacciones, seguridad). Si el bean necesita ser envuelto en un proxy, el AbstractAutoProxyCreator (un BeanPostProcessor) reemplaza la instancia original por un proxy CGLIB o JDK. Por eso si llamas a un método interno dentro del mismo bean, la anotación @Transactional no se aplica: porque la llamada no pasa por el proxy.
+
+### El bean está listo para ser usado
+
+        El bean se almacena en el contenedor singleton (en un ConcurrentHashMap). Cualquier otra dependencia que lo necesite recibirá el bean ya completamente vestido.
+
+### Destrucción del bean (al cerrar el contexto)
+
+        Métodos anotados con @PreDestroy.
+
+        destroy() de DisposableBean interface.
+
+        Método destroy-method personalizado de @Bean o XML.
+
+        Los DestructionAwareBeanPostProcessor pueden ejecutar lógica previa.
+
+### Diagrama resumido (texto)
+```text
+[Constructor o Fábrica] --> [Inyección de Deps] --> [Aware: BenaName, ApplicationContext, etc.]
+--> [BeanPostProcessor::before] --> [@PostConstruct / afterPropertiesSet / init-method]
+--> [BeanPostProcessor::after] (proxies creados aquí) --> [Bean listo]
+--> [Al cerrar: @PreDestroy / destroy()]
+```
+
+Extensiones poderosas: BeanFactoryPostProcessor y BeanDefinitionRegistryPostProcessor
+
+Antes de que ningún bean sea instanciado, el contenedor permite modificar las propias definiciones de los beans. Los BeanFactoryPostProcessor trabajan con el BeanFactory (en realidad ConfigurableListableBeanFactory). Los BeanDefinitionRegistryPostProcessor pueden incluso registrar nuevas definiciones de beans.
+
+El caso más famoso es ConfigurationClassPostProcessor, que procesa todas las clases @Configuration, @ComponentScan y @Import para registrar las definiciones correspondientes.
+
+### Ejemplo: modificar una propiedad tras la lectura del Classpath
+```java
+@Component
+public class CustomBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+        BeanDefinition bd = beanFactory.getBeanDefinition("dataSource");
+        bd.getPropertyValues().add("maxPoolSize", 20);
+    }
+}
+```
+
+### Ejemplo práctico de un BeanPostProcessor personalizado
+
+Supón que quieres medir el tiempo de ejecución de todos los métodos de los beans de un paquete.
+```java
+@Component
+public class TimingBeanPostProcessor implements BeanPostProcessor {
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) {
+        if (bean.getClass().getPackageName().startsWith("com.empresa.servicio")) {
+            return Proxy.newProxyInstance(
+                bean.getClass().getClassLoader(),
+                bean.getClass().getInterfaces(),
+                (proxy, method, args) -> {
+                    long start = System.nanoTime();
+                    Object result = method.invoke(bean, args);
+                    long time = System.nanoTime() - start;
+                    System.out.println(method.getName() + ": " + time + " ns");
+                    return result;
+                });
+        }
+        return bean; // si no, devuelve el bean sin tocar
+    }
+}
+```
+
+Este processor envuelve el bean en un proxy JDK justo después de la inicialización, añadiendo el comportamiento de medición.
+¿Por qué es vital este entendimiento?
+
+    Te permite implementar cross-cutting concerns sin necesidad de AOP declarativa para casos específicos.
+
+    Explica por qué funciona @Transactional: un BeanPostProcessor crea el proxy que maneja la transacción alrededor del método real.
+
+    Depuración de problemas de beans: si una dependencia se resuelve mal, sabrás en qué fase mirar.
+
+### 02_AOP/Conceptos_JoinPoint_Pointcut_Advice.md
+¿Qué es AOP? El problema que resuelve
+
+En una aplicación OOP, hay preocupaciones que atraviesan múltiples capas: registro de auditoría, manejo de transacciones, seguridad, control de caché, medición de rendimiento. Si no se tratan con cuidado, el mismo código se repite por todas partes (código cross-cutting). AOP permite encapsular ese comportamiento en módulos llamados aspectos y aplicarlo de forma declarativa, sin modificar la lógica de negocio.
+
+Spring AOP se basa en proxies para interceptar ejecuciones de métodos y añadir comportamiento antes, después o alrededor de dichas invocaciones.
+Terminología fundamental
+
+    Join point: Un punto durante la ejecución del programa donde se puede insertar un aspecto. En Spring AOP, un join point siempre es la ejecución de un método (nunca acceso a campos o inicialización de clases, como en AspectJ completo).
+
+    Pointcut (punto de corte): Un predicado o expresión que selecciona uno o varios join points. Define en qué métodos debe aplicarse el consejo. Ej: execution(* com.empresa..servicio.*.*(..)).
+
+    Advice (consejo): El código que se ejecuta en un join point. Define qué hacer y cuándo (antes, después, alrededor, etc.). Es la implementación real de la preocupación transversal.
+
+    Aspect (aspecto): La combinación de un pointcut y un advice. En Spring se modela con una clase anotada con @Aspect que contiene métodos de pointcut y métodos de advice.
+
+    Weaving (tejido): Proceso de aplicar los aspectos a los objetos objetivo para crear objetos proxy. En Spring AOP ocurre en tiempo de ejecución mediante proxies dinámicos.
+
+    Target object: El objeto original que será interceptado por el consejo.
+
+    Proxy: El objeto creado por Spring AOP que envuelve al target e implementa las interceptaciones.
+
+    Introduction: Posibilidad de añadir nuevos métodos o interfaces a un objeto existente. En Spring AOP se logra mediante @DeclareParents.
+
+### Tipos de Advice en detalle
+
+Un advice puede aplicarse en distintos momentos del ciclo de ejecución del método:
+Tipo	Anotación	Momento de ejecución
+Before	@Before	Antes de la ejecución del método.
+AfterReturning	@AfterReturning	Después de que el método retorne exitosamente (sin excepción).
+AfterThrowing	@AfterThrowing	Después de que el método lance una excepción.
+After (finally)	@After	Siempre, sin importar si hubo éxito o excepción.
+Around	@Around	Rodea completamente el método, tiene control sobre cuándo y si se ejecuta, y puede modificar argumentos y valor de retorno.
+@Before
+
+El consejo se invoca antes de la ejecución del método objetivo. No puede evitar que el método se ejecute, salvo que lance una excepción.
+```java
+@Aspect
+@Component
+public class LoggingAspect {
+    @Before("execution(* com.empresa..*Service.*(..))")
+    public void logBefore(JoinPoint joinPoint) {
+        System.out.println("Llamando a: " + joinPoint.getSignature().toShortString());
+    }
+}
+```
+
+Se puede acceder a los parámetros del join point a través del objeto JoinPoint.
+@AfterReturning
+
+Se ejecuta después de un retorno normal. Puede obtener el valor retornado mediante el atributo returning.
+```java
+@AfterReturning(
+    pointcut = "execution(* com.empresa..*Repository.save(..))",
+    returning = "result"
+)
+public void logAfterReturning(JoinPoint joinPoint, Object result) {
+    System.out.println(joinPoint.getSignature().getName() + " retornó " + result);
+}
+```
+
+El nombre de la variable en el argumento del método debe coincidir con el atributo returning.
+@AfterThrowing
+
+Interviene cuando el método lanza una excepción. Puede capturar la excepción lanzada con throwing.
+```java
+@AfterThrowing(
+    pointcut = "execution(* com.empresa..*Service.*(..))",
+    throwing = "ex"
+)
+public void logAfterThrowing(JoinPoint joinPoint, Exception ex) {
+    System.err.println("Error en " + joinPoint.getSignature() + ": " + ex.getMessage());
 }
 
-verbose=0
-output="salida.txt"
-while getopts "hvo:" opt; do
-    case "$opt" in
-        h) usage; exit 0 ;;
-        v) verbose=1 ;;
-        o) output="$OPTARG" ;;
-        *) usage >&2; exit 1 ;;
-    esac
-done
-shift $((OPTIND-1))
+@After (finally)
+```
 
-if (( $# == 0 )); then
-    usage >&2
-    exit 1
-fi
-input="$1"
-
-4. Logging con niveles
-bash
-
-log_info()  { echo "[INFO] $(date '+%F %T') $*"; }
-log_warn()  { echo "[WARN] $(date '+%F %T') $*" >&2; }
-log_error() { echo "[ERROR] $(date '+%F %T') $*" >&2; }
-
-5. Manejo de archivos temporales con mktemp
-bash
-
-tmpdir=$(mktemp -d)
-trap 'rm -rf "$tmpdir"' EXIT
-
-Si creas un archivo temporal para guardar resultados, configura la trampa.
-6. Dependencias
-
-Comprobar comandos necesarios al inicio:
-bash
-
-deps=( curl jq )
-for cmd in "${deps[@]}"; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-        log_error "Falta el comando: $cmd"
-        exit 1
-    fi
-done
-
-7. Variables con valores por defecto y validadas
-bash
-
-readonly MAX_RETRIES="${MAX_RETRIES:-3}"
-if (( MAX_RETRIES < 1 )); then
-    log_error "MAX_RETRIES debe ser positivo"
-    exit 1
-fi
-
-8. Operaciones con archivos seguras
-
-    Antes de sobrescribir, comprueba con -f y pregunta o usa -i.
-
-    Usa -- para separar opciones de argumentos: rm -- "$archivo".
-
-    Al crear archivos, establece permisos restrictivos (umask 077 o chmod).
-
-9. Internacionalización y rutas
-
-    Usa $HOME y $XDG_*, no rutas fijas.
-
-    No asumas que /tmp es el único lugar para temporales, pero mktemp se encarga.
-
-10. Salir correctamente
-
-    exit 0 para éxito, otros valores según el tipo de error.
-
-    La trampa EXIT ejecutará la limpieza.
-
-11. Idempotencia
-
-Si el script crea algo, verifica si ya existe antes de fallar o sobrescribir.
-12. Evitar fugas de información sensible
-
-    No pongas contraseñas en argumentos visibles con ps. Usa variables de entorno o archivos de configuración con permisos restringidos.
-
-    Siempre redirige a /dev/null o logs la salida que pueda contener secretos.
-
-Script de ejemplo
-scripts/plantilla-robusta.sh
-bash
-
-#!/usr/bin/env bash
-# -------------------------------------------------------------------
-# plantilla-robusta.sh – Plantilla para scripts Bash robustos
-# Incorpora: parseo de opciones, logging, trampas, validación y limpieza.
-# -------------------------------------------------------------------
-set -euo pipefail
-IFS=$'\n\t'
-
-# --- Configuración ---
-readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# --- Variables globales (seteadas por opciones) ---
-VERBOSE=0
-OUTPUT_FILE=""
-INPUT_FILE=""
-
-# --- Logging ---
-log_info()  { echo "[INFO]  $(date '+%F %T') $*"; }
-log_warn()  { echo "[WARN]  $(date '+%F %T') $*" >&2; }
-log_error() { echo "[ERROR] $(date '+%F %T') $*" >&2; }
-
-# --- Uso ---
-usage() {
-    cat <<EOF
-Uso: $SCRIPT_NAME [opciones] <archivo>
-
-Opciones:
-  -o ARCHIVO   Ruta del archivo de salida (por defecto: stdout)
-  -v           Modo detallado
-  -h           Muestra esta ayuda
-
-Descripción del script (reemplazar).
-EOF
+Se ejecuta en cualquier terminación, como un bloque finally. Ideal para liberar recursos o registrar el fin de la operación.
+```java
+@After("execution(* com.empresa..*Service.procesar(..))")
+public void logAfter(JoinPoint joinPoint) {
+    System.out.println("Finalizó: " + joinPoint.getSignature());
 }
 
-# --- Función de limpieza ---
-cleanup() {
-    local exit_code=$?
-    # Eliminar archivos temporales si existen
-    if [[ -n "${tmp_file:-}" && -f "$tmp_file" ]]; then
-        rm -f "$tmp_file"
-    fi
-    if (( exit_code != 0 )); then
-        log_error "Script finalizó con error (código $exit_code)."
-    fi
-    exit $exit_code
+@Around (el más poderoso y complejo)
+```
+
+Tiene el control total: puede modificar argumentos, decidir si invoca o no proceed(), alterar el valor de retorno, medir el tiempo y manejar excepciones.
+```java
+@Around("execution(* com.empresa..*Service.calcular*(..))")
+public Object medirTiempo(ProceedingJoinPoint pjp) throws Throwable {
+    long inicio = System.nanoTime();
+    Object resultado = pjp.proceed(); // ejecuta el método original
+    long tiempo = System.nanoTime() - inicio;
+    System.out.println(pjp.getSignature() + " tardó " + tiempo + " ns");
+    return resultado;
 }
-trap cleanup EXIT INT TERM
-# Opcional: si quieres depuración de errores, añade:
-# trap 'log_error "Comando fallido: $BASH_COMMAND"' ERR
+```
 
-# --- Comprobaciones de dependencias ---
-check_deps() {
-    local deps=( curl jq )   # ajusta según necesidades
-    for dep in "${deps[@]}"; do
-        if ! command -v "$dep" >/dev/null 2>&1; then
-            log_error "Dependencia faltante: '$dep'. Instálala para continuar."
-            exit 1
-        fi
-    done
+Precaución: si no se llama a proceed() se omite la ejecución original, y si no se retorna su resultado, se silencia el valor de retorno real. Además, ProceedingJoinPoint es una subinterfaz de JoinPoint que añade proceed().
+Pointcut: el arte de seleccionar join points
+
+Las expresiones de pointcut se basan en un lenguaje propio. Los designadores más importantes son:
+
+    execution: el más común. Define la firma del método a interceptar.
+
+        Patrón: execution(modificadores? tipo-retorno nombre-clase.nombre-metodo(parametros) throws-excepcion?)
+
+        Ejemplos:
+
+            execution(* com.empresa.servicio.*.*(..)) : cualquier método de cualquier clase en ese paquete.
+
+            execution(public String com.empresa..*.*(Long,..)) : métodos públicos que retornan String, comienzan con un Long y luego cualquier número de parámetros.
+
+            execution(* *..*Service.*(..)) : métodos de cualquier clase cuyo nombre termina en "Service".
+
+    within: limita a métodos dentro de ciertos tipos o paquetes.
+
+        within(com.empresa.servicio.*) : todos los métodos de las clases en ese paquete.
+
+        within(com.empresa..*) : paquete y subpaquetes.
+
+    this y target: this(com.empresa.Interface) hace referencia al objeto proxy; target al objeto objetivo. Útiles cuando se necesita que el objeto sea de un tipo específico.
+
+    args: selecciona según los tipos de parámetros en tiempo de ejecución.
+
+        args(java.io.Serializable) : métodos con un parámetro serializable.
+
+    @annotation: intercepta métodos anotados con una anotación determinada.
+
+        @annotation(com.empresa.Auditable) : excelente para preocupaciones transversales basadas en anotaciones.
+
+    @within: clase anotada con una anotación específica.
+
+    @args: la anotación está en los argumentos en tiempo de ejecución.
+
+    bean (Spring AOP): permite referenciar beans por nombre con comodines: bean(*Service).
+
+Se pueden combinar con &&, || y !:
+```java
+@Pointcut("execution(public * *(..)) && within(com.empresa..*)")
+public void metodosPublicos() {}
+```
+
+### Escribiendo un aspecto completo
+```java
+@Aspect
+@Component
+public class AuditoriaAspect {
+
+    // Pointcut reusable
+    @Pointcut("execution(* com.empresa..*Service.*(..))")
+    public void capaServicio() {}
+
+    @Pointcut("@annotation(com.empresa.anotaciones.Auditable)")
+    public void metodosAuditables() {}
+
+    @Before("capaServicio() && metodosAuditables()")
+    public void auditar(JoinPoint jp) {
+        // Acceso a parámetros
+        Object[] args = jp.getArgs();
+        String usuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        System.out.println(usuario + " ejecuta " + jp.getSignature() + " con " + Arrays.toString(args));
+    }
 }
+```
 
-# --- Función principal ---
-main() {
-    # Parsear opciones
-    while getopts "hvo:" opt; do
-        case "$opt" in
-            h) usage; exit 0 ;;
-            v) VERBOSE=1 ;;
-            o) OUTPUT_FILE="$OPTARG" ;;
-            *) usage >&2; exit 1 ;;
-        esac
-    done
-    shift $((OPTIND-1))
+### Ordenación de aspectos
 
-    # Validar argumento obligatorio
-    if (( $# == 0 )); then
-        log_error "Se requiere un archivo de entrada."
-        usage >&2
-        exit 1
-    fi
-    INPUT_FILE="$1"
+Cuando varios aspectos aplican al mismo join point, se puede controlar el orden con @Order (número más bajo = mayor prioridad) o implementando Ordered. En el caso de @Before, el de menor orden se ejecuta primero; en @After y @Around, el último en ejecutarse es el de menor orden (como capas de cebolla).
+02_AOP/Aspectos_personalizados.md
 
-    # Verificar dependencias
-    check_deps
+Aquí mostramos cómo crear aspectos desde cero, incluyendo técnicas avanzadas para resolver problemas concretos.
+Estructura básica de un aspecto personalizado
 
-    # Verificar que el archivo de entrada existe
-    if [[ ! -f "$INPUT_FILE" ]]; then
-        log_error "El archivo '$INPUT_FILE' no existe o no es regular."
-        exit 1
-    fi
+Todo aspecto requiere:
 
-    # Crear archivo temporal si es necesario
-    tmp_file=$(mktemp) || exit 1
+    @Aspect en la clase.
 
-    # --- Lógica del script (ejemplo) ---
-    log_info "Procesando '$INPUT_FILE'..."
+    @Component (u otra forma de registro) para que Spring lo detecte.
 
-    # Simulación de procesamiento
-    if (( VERBOSE )); then
-        log_info "Modo detallado activado."
-    fi
+    Uno o varios métodos anotados con @Pointcut (opcional, pero buena práctica).
 
-    # Leer entrada y escribir salida
-    while IFS= read -r line; do
-        # Procesar cada línea...
-        echo "$line" >> "$tmp_file"
-    done < "$INPUT_FILE"
+    Métodos de advice anotados con @Before, @Around, etc.
 
-    # Resultado final
-    if [[ -n "$OUTPUT_FILE" ]]; then
-        cp "$tmp_file" "$OUTPUT_FILE"
-        log_info "Salida guardada en '$OUTPUT_FILE'."
-    else
-        cat "$tmp_file"
-    fi
+### Ejemplo: Sistema de caché declarativa con @Around y anotación personalizada
 
-    log_info "Procesamiento completado exitosamente."
+Creemos una anotación @CacheableResult que almacene el resultado de un método en un ConcurrentHashMap durante un tiempo.
+
+Anotación:
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CacheableResult {
+    long ttlMillis() default 30000;
+    String key() default "";
 }
+```
 
-# Llamada a main con los argumentos
-main "$@"
+Aspecto:
+```java
+@Aspect
+@Component
+public class CacheAspect {
+    private final ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<>();
 
-Explicación de las características incluidas:
+    @Around("@annotation(cacheable)")
+    public Object cacheMethod(ProceedingJoinPoint pjp, CacheableResult cacheable) throws Throwable {
+        String key = buildKey(pjp, cacheable);
+        CacheEntry entry = cache.get(key);
+        if (entry != null && (System.currentTimeMillis() - entry.timestamp) < cacheable.ttlMillis()) {
+            return entry.value;
+        }
+        Object result = pjp.proceed();
+        cache.put(key, new CacheEntry(result, System.currentTimeMillis()));
+        return result;
+    }
 
-    IFS=$'\n\t' optimiza el word splitting.
+    private String buildKey(ProceedingJoinPoint pjp, CacheableResult cacheable) {
+        String customKey = cacheable.key();
+        if (!customKey.isEmpty()) return customKey;
+        // Genera clave por clase + método + argumentos
+        return pjp.getTarget().getClass().getSimpleName() + "."
+               + pjp.getSignature().getName() + ":"
+               + Arrays.toString(pjp.getArgs());
+    }
 
-    BASH_SOURCE[0] y dirname resuelven la ruta del script.
+    private static class CacheEntry {
+        final Object value;
+        final long timestamp;
+        CacheEntry(Object value, long timestamp) { this.value = value; this.timestamp = timestamp; }
+    }
+}
+```
 
-    readonly para constantes.
+Uso en un servicio:
+```java
+@Service
+public class DatosExternosService {
+    @CacheableResult(ttlMillis = 60000, key = "ultimo-precio")
+    public BigDecimal obtenerPrecioActual() {
+        // Operación costosa (API externa)
+        return new BigDecimal("100.5");
+    }
+}
+```
 
-    cleanup registrada con EXIT, INT, TERM asegura limpieza incluso en cancelación.
+### Pasando parámetros del método al advice
 
-    check_deps verifica que las herramientas necesarias estén en el PATH.
+Se puede ligar un parámetro del pointcut al advice mediante args y nombre de parámetro. Ejemplo para validar una restricción de acceso:
+```java
+@Before("execution(* com.empresa..*Service.*(Long,..)) && args(id)")
+public void validarId(Long id) {
+    if (id == null || id <= 0) {
+        throw new IllegalArgumentException("ID inválido: " + id);
+    }
+}
+```
 
-    Parseo con getopts, modo -v y opción -o.
+O usando JoinPoint para obtener argumentos dinámicamente.
+Aspectos con lógica condicional (combinando con contexto)
 
-    Uso de variable tmp_file creado con mktemp, se limpia en la trampa.
+Puedes exponer el proxy actual con AopContext.currentProxy() (requiere @EnableAspectJAutoProxy(exposeProxy = true)) para solucionar el problema de auto-invocación, o combinar chequeos de perfiles:
+```java
+@Around("execution(* com.empresa..*Controller.*(..))")
+public Object medirSoloEnDev(ProceedingJoinPoint pjp) throws Throwable {
+    if (EnvironmentUtils.esDev()) {
+        long t0 = System.currentTimeMillis();
+        Object result = pjp.proceed();
+        System.out.println("DEV: " + (System.currentTimeMillis() - t0) + "ms");
+        return result;
+    }
+    return pjp.proceed(); // en otros entornos no mide
+}
+```
 
-    Salida flexible (archivo o stdout).
+Registro de eventos de negocio con @AfterReturning y publicación de eventos Spring
 
-    Uso de [[ ]], comillas consistentes, printf no se necesita tanto aquí porque echo es simple, pero se podría mejorar.
+Podemos acoplar AOP con el modelo de eventos de Spring para desacoplar aún más.
+```java
+@Aspect
+@Component
+public class EventPublisherAspect {
+    private final ApplicationEventPublisher publisher;
 
-Esta plantilla puede ser el esqueleto de cualquier script serio.
+    public EventPublisherAspect(ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
+    }
 
-Vamos a profundizar en los temas avanzados de la carpeta 09-avanzado/, donde Bash deja de ser un simple pegamento de comandos y se convierte en una herramienta de integración y desarrollo profesional.
-01-getopts-y-argumentos.md
-Parseo de opciones de línea de comandos
+    @AfterReturning(
+        pointcut = "@annotation(com.empresa.evento.PublicarEvento)",
+        returning = "result"
+    )
+    public void publicar(JoinPoint jp, Object result) {
+        PublicarEvento anotacion = obtenerAnotacion(jp); // helper con reflexión
+        publisher.publishEvent(new NegocioEvento(anotacion.tipo(), result));
+    }
+}
+```
 
-Un script serio debe aceptar opciones y argumentos de forma estándar. Bash ofrece dos mecanismos: el builtin getopts (para opciones cortas) y la utilidad externa getopt (que también soporta opciones largas y permite reordenar argumentos).
-getopts
+### Buenas prácticas en aspectos personalizados
 
-getopts es un builtin de Bash y cumple POSIX. Procesa las opciones una a una, actualizando las variables OPTARG (argumento de la opción, si procede), OPTIND (índice del siguiente argumento a procesar) y la variable que elijas para el flag.
+    Un aspecto, una responsabilidad: no mezcles medición de tiempos con seguridad. Mantenlos pequeños y enfocados.
 
-Sintaxis básica:
-bash
+    Usa @Pointcut para centralizar expresiones: facilita el mantenimiento.
 
-while getopts ":ho:v" opt; do
-    case "$opt" in
-        h) uso; exit 0 ;;
-        o) output="$OPTARG" ;;
-        v) verbose=1 ;;
-        \?) echo "Opción inválida: -$OPTARG" >&2; exit 1 ;;
-        :) echo "Opción -$OPTARG requiere un argumento." >&2; exit 1 ;;
-    esac
-done
-shift $((OPTIND - 1))
+    Prefiere @Around solo cuando realmente necesitas el control total; los otros consejos son más semánticos y seguros.
 
-    La cadena de opciones (ej: :ho:v) indica las letras válidas. Si una letra va seguida de : significa que espera un argumento.
+    Evita lógica pesada o transaccional dentro del advice; no invoques servicios que a su vez puedan ser interceptados (cuidado con dependencias circulares indirectas).
 
-    Si la cadena comienza con :, getopts funciona en modo silencioso (no imprime errores automáticamente); se debe manejar el caso \? y : manualmente. Así damos mensajes personalizados.
+    Considera la trazabilidad: un advice no debe causar pérdida de información de excepciones ni alterar la semántica del método a menos que así lo hayas diseñado.
 
-    $OPTARG contiene el argumento para la opción actual.
+### 02_AOP/Proxies_JDK_vs_CGLIB.md
+Spring AOP es proxy-based AOP
 
-    $OPTIND es el índice (basado en 1) desde donde empiezan los argumentos no procesados; después del bucle, shift los deja disponibles como $1, $2…
+Spring AOP no modifica bytecode como AspectJ (weaving en compilación o carga). En su lugar, en tiempo de ejecución, el contenedor crea un objeto proxy que envuelve al bean objetivo. Las llamadas externas al bean pasan por el proxy, que aplica los interceptores (aspectos). Toda la magia de @Transactional, @Cacheable, @Secured, etc., ocurre a través de estos proxies.
+JDK Dynamic Proxy
 
-Ejemplo: script que acepta -f archivo, -v (verbose) y -- para separar.
-bash
+Si el bean objetivo implementa al menos una interfaz, Spring utilizará por defecto un proxy dinámico de JDK.
 
-while getopts "f:v-:" opt; do
-    case "$opt" in
-        f) file="$OPTARG" ;;
-        v) verbose=1 ;;
-        -) case "$OPTARG" in
-               help) usage; exit 0 ;;
-               *) echo "Opción larga no soportada: --$OPTARG" >&2; exit 1 ;;
-           esac ;;
-        ?) usage >&2; exit 1 ;;
-    esac
-done
+Cómo funciona internamente:
 
-Truco: si se usa - como opción en la cadena (f:v-:), getopts permite leer después de -- con $OPTARG. Así podemos implementar long options de forma manual (aunque es engorroso).
-getopt (utilidad externa)
+    Se llama a java.lang.reflect.Proxy.newProxyInstance(ClassLoader, interfaces, InvocationHandler).
 
-getopt (del paquete util-linux) soporta opciones largas (--verbose, --output=file), reordenamiento de argumentos y detección de errores. Su salida debe reasignarse a los argumentos posicionales con eval o con set --.
+    Se crea una clase proxy en tiempo de ejecución que implementa las mismas interfaces que el target.
+
+    Cualquier invocación de un método de esas interfaces es redirigida al InvocationHandler, que puede ejecutar los advisors, consejos y delegar al target mediante reflexión (Method.invoke(target, args)).
+
+Ejemplo simplificado:
+```java
+MiServicio target = new MiServicioImpl();
+MiServicio proxy = (MiServicio) Proxy.newProxyInstance(
+    MiServicio.class.getClassLoader(),
+    new Class[]{MiServicio.class},
+    (proxyObj, method, args) -> {
+        System.out.println("Antes del método " + method.getName());
+        Object result = method.invoke(target, args);
+        System.out.println("Después");
+        return result;
+    }
+);
+proxy.hacerAlgo(); // pasa por el handler
+```
+
+Ventajas:
+
+    Más liviano que CGLIB, forma parte del JDK.
+
+    Permite que el proxy solo prometa la interfaz, más desacoplado.
+
+Limitaciones:
+
+    Solo puede interceptar métodos definidos en la interfaz.
+
+    El target debe implementar interfaces; no funciona con clases concretas sin interfaz.
+
+    this.invocacionInterna() dentro del target no es interceptada porque this es el target, no el proxy.
+
+### CGLIB Proxy
+
+Si el bean no implementa interfaces, Spring crea un proxy generando una subclase con la librería CGLIB (Code Generation Library).
+
+Mecanismo:
+
+    CGLIB utiliza Enhancer para generar una subclase del bean target en tiempo de ejecución.
+
+    Sobrescribe los métodos públicos no finales para delegar en un MethodInterceptor.
+
+    Cuando se llama a un método, se invoca al interceptor, que ejecuta los consejos y luego llama al método de la superclase (super.metodo()) o directamente al target si está configurado como callback.
+
+Ejemplo conceptual:
+```java
+Enhancer enhancer = new Enhancer();
+enhancer.setSuperclass(MiServicioConcreto.class);
+enhancer.setCallback((MethodInterceptor) (obj, method, args, proxy) -> {
+    System.out.println("Antes");
+    Object result = proxy.invokeSuper(obj, args); // llama al método real
+    System.out.println("Después");
+    return result;
+});
+MiServicioConcreto proxy = (MiServicioConcreto) enhancer.create();
+proxy.hacerAlgo(); // interceptado
+```
+
+Ventajas:
+
+    No requiere que el bean implemente interfaces.
+
+    Puede interceptar todos los métodos públicos de la clase (si no son final).
+
+Limitaciones:
+
+    No puede interceptar métodos final ni clases final (CGLIB no puede subclasear).
+
+    Los constructores se ejecutan dos veces: una para el target (CGLIB suele crear una instancia del target usando Objenesis que no llama al constructor completo, solo asigna memoria) y otra para la subclase proxy? Realmente CGLIB crea una instancia de la subclase, que inicializa su estado. Para delegar, puede usar un target interno. En Spring, el proxy CGLIB por defecto crea un objeto interceptor sin llamar al constructor real del target (a través de Objenesis) para evitar efectos secundarios, y luego utiliza un callback que delega en el bean real gestionado por el contenedor.
+
+    Aumenta ligeramente el tiempo de creación y el uso de memoria.
+
+    this dentro del target sigue siendo el target, no el proxy, por lo que las llamadas internas no pasan por el proxy.
+
+¿Cuándo usa Spring cada uno?
+
+La decisión se toma en el DefaultAopProxyFactory. La lógica es:
+
+    Si proxyTargetClass es true (configurado con @EnableAspectJAutoProxy(proxyTargetClass = true) o en Boot spring.aop.proxy-target-class=true), fuerza CGLIB incluso si hay interfaces.
+
+    Si proxyTargetClass es false (por defecto), se evalúa:
+
+        Si el bean implementa al menos una interfaz, usa JDK dynamic proxy.
+
+        Si no, usa CGLIB.
+
+    En Spring Boot, por defecto spring.aop.proxy-target-class=true, por lo que se usa CGLIB a menos que se cambie explícitamente. En Spring MVC tradicional, el valor depende de la configuración.
+
+Ojo con el casteo: si tu código espera un objeto de tipo concreto y Spring te entrega un proxy JDK que solo implementa la interfaz, obtendrás ClassCastException. Por eso se prefiere programar contra interfaz o forzar CGLIB.
+Configuración explícita
+```java
+@Configuration
+@EnableAspectJAutoProxy(proxyTargetClass = true) // fuerza CGLIB
+public class AppConfig { }
+```
+
+### El problema de la auto-invocación (self-invocation)
+
+Este es el punto más importante y malinterpretado. Como el proxy envuelve al target, cuando desde fuera se llama a bean.metodoA(), la llamada va al proxy, que aplica los aspectos. Pero si metodoA() internamente llama a this.metodoB(), this es el target, no el proxy, por lo que metodoB() no pasa por los aspectos. Así, anotaciones como @Transactional en metodoB no tienen efecto si se llama desde metodoA dentro del mismo bean.
+
+Demostración:
+```java
+@Service
+public class TransaccionalService {
+    @Transactional
+    public void metodoBatch() {
+        for (Item i : items) {
+            this.procesarItem(i); // ¡problema! this es el target
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void procesarItem(Item i) {
+        // ... debería ejecutarse en transacción separada, pero no lo hará
+    }
+}
+```
+
+Soluciones:
+
+    Reestructurar: mover procesarItem a otro bean e inyectarlo.
+```java
+    @Service
+    public class ProcesadorItemService {
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        public void procesarItem(Item i) { ... }
+    }
+    // en el batch:
+    @Autowired private ProcesadorItemService procesador;
+    public void metodoBatch() {
+        for (Item i : items) procesador.procesarItem(i); // ahora sí es proxy
+    }
+
+    Obtener el proxy mediante AopContext.currentProxy():
+
+        Habilitar exposeProxy = true: @EnableAspectJAutoProxy(exposeProxy = true).
+
+        Luego en el código: ((TransaccionalService) AopContext.currentProxy()).procesarItem(i);
+
+    Inyectarse a sí mismo (con @Autowired o @Resource):
+    java
+
+    @Autowired
+    private TransaccionalService self;
+    public void metodoBatch() {
+        self.procesarItem(i); // self es el proxy
+    }
+```
+
+        Ojo: crea una dependencia circular que Spring maneja, pero puede confundir.
+
+### Diferencias internas y de rendimiento
+
+    Arranque: JDK proxy es más rápido de crear porque es una función del JDK. CGLIB genera una nueva clase en memoria, lo que implica más trabajo.
+
+    Invocación: En JDK proxy, cada llamada usa reflexión (Method.invoke). CGLIB puede generar bytecode que evita reflexión después de la primera invocación (usa índices de método), siendo marginalmente más rápido en llamadas repetitivas. En la práctica, la diferencia es ínfima.
+
+    Compatibilidad: Si usas Java moderno (17+) y necesitas características como records o sealed classes, CGLIB puede tener problemas. Spring ya se ha adaptado, pero es un punto a considerar.
+
+### Tip de depuración: identificación del proxy
+
+Si en tiempo de ejecución necesitas saber si un bean es un proxy, puedes inspeccionar su clase:
+```java
+if (bean instanceof SpringProxy) {
+    System.out.println("Es un proxy de Spring");
+}
+```
+
+SpringProxy es una interfaz marcadora implementada por todos los proxies de Spring AOP.
+
+### 03_Spring_MVC/DispatcherServlet_y_Flujo.md
+El corazón de Spring MVC: DispatcherServlet
+
+DispatcherServlet es el Front Controller del patrón MVC. Recibe todas las peticiones HTTP, las distribuye a los controladores adecuados y gestiona todo el ciclo de vida de la respuesta. Sus responsabilidades principales:
+
+    Recibir la petición.
+
+    Determinar qué controlador y método manejan la solicitud (handler mapping).
+
+    Ejecutar el handler (controlador).
+
+    Resolver la vista lógica o generar la respuesta REST.
+
+    Manejar excepciones.
+
+    Aplicar interceptores.
+
+Spring Boot registra y configura automáticamente un DispatcherServlet cuando detecta el starter spring-boot-starter-web. En un entorno tradicional, se configura en el web.xml o mediante la interfaz WebApplicationInitializer.
+Roles de los beans estratégicos en Spring MVC
+
+El DispatcherServlet utiliza una serie de beans especializados para delegar las tareas. Estos se definen en el contexto de la aplicación web (el WebApplicationContext, hijo del contexto raíz).
+
+    HandlerMapping: Mapea una petición entrante a un handler (típicamente un método de controlador). Varias implementaciones:
+
+        RequestMappingHandlerMapping: maneja las anotaciones @RequestMapping, @GetMapping, etc. Es la principal y está habilitada por defecto en Spring Boot.
+
+        BeanNameUrlHandlerMapping: mapea por nombre de bean si coincide con un patrón de URL (casi en desuso).
+
+        SimpleUrlHandlerMapping: configuraciones explícitas de URLs a beans.
+
+    El proceso de búsqueda es secuencial: se recorre la lista de HandlerMapping en orden hasta que uno devuelve un handler no nulo.
+
+    HandlerAdapter: Ejecuta el handler encontrado. Como los handlers pueden ser de distintos tipos (métodos anotados, controladores que implementan Controller, etc.), el HandlerAdapter sabe cómo invocarlos.
+
+        RequestMappingHandlerAdapter: invoca métodos anotados con @RequestMapping. Se encarga de la conversión de parámetros, manejo de @ResponseBody, binding, validación, etc.
+
+        HttpRequestHandlerAdapter, SimpleControllerHandlerAdapter para otros tipos.
+
+    HandlerExceptionResolver: Maneja excepciones no capturadas que se propagan desde los handlers. Se verá en detalle más adelante.
+
+    ViewResolver: Traduce el nombre lógico de una vista (String devuelto por el controlador) a un objeto View (JSP, Thymeleaf, etc.). En REST no se usa, porque el método está anotado con @ResponseBody.
+
+    LocaleResolver, ThemeResolver, FlashMapManager: Para internacionalización, temas y atributos flash (redirecciones).
+
+### Ciclo de vida detallado de una petición
+
+Suponiendo una petición GET /usuarios/5 con header Accept: text/html.
+
+    Filtros previos (Filter chain) : Antes de llegar al DispatcherServlet, la petición pasa por los filtros de la cadena estándar (Spring Security, filtros personalizados, etc.). El DispatcherServlet se registra como un servlet y se invoca su service().
+
+    Búsqueda del handler: DispatcherServlet consulta cada HandlerMapping registrado. RequestMappingHandlerMapping encuentra que el método getUsuario(Long id) en UsuarioController mapea con GET /usuarios/{id}. Retorna un HandlerExecutionChain que contiene el handler (un HandlerMethod que encapsula el controlador y método) y una lista de interceptores aplicables.
+
+    Ejecución de interceptores (preHandle) : Si la cadena tiene interceptores, se ejecuta preHandle de cada uno en orden. Si alguno devuelve false, se corta la petición y se puede enviar una respuesta temprana.
+
+    Determinación del HandlerAdapter: Se busca un HandlerAdapter que soporte el handler. RequestMappingHandlerAdapter es el adecuado.
+
+    Ejecución del HandlerAdapter:
+
+        Resolución de argumentos: mediante HandlerMethodArgumentResolvers, convierte los parámetros de la petición en los argumentos del método. Por ejemplo, @PathVariable("id") Long id, @RequestParam, @RequestBody, etc. Hay decenas de resolvers predefinidos.
+
+        Llamada al método del controlador: se invoca usuarioController.getUsuario(5L).
+
+        Procesamiento del retorno: mediante HandlerMethodReturnValueHandler. Si el método devuelve un String ("usuario/detalle") y la clase NO tiene @ResponseBody, se interpreta como nombre de vista. Si tiene @ResponseBody, se convierte el objeto a JSON mediante HttpMessageConverter.
+
+    Post-ejecución de interceptores (postHandle) : Después de que el handler se ejecutó pero antes de renderizar la vista, se llama a postHandle. Permite modificar el modelo.
+
+    Resolución de vista (si es necesario) : Si el handler devuelve un nombre de vista lógico, el ViewResolver seleccionado (ej. ThymeleafViewResolver) lo resuelve a una plantilla concreta (/templates/usuario/detalle.html). Se crea el objeto View.
+
+    Renderizado de la vista: La vista se fusiona con el modelo (el ModelAndView o los atributos añadidos) y se escribe la respuesta en el HttpServletResponse.
+
+    Finalización (afterCompletion) : Se llama a afterCompletion de los interceptores, incluso si hubo excepción, similar a un finally. Perfecto para limpiar recursos.
+
+### Interceptores vs Filtros
+
+    Filtros: son parte del contenedor Servlet, no conocen detalles de Spring MVC. Útiles para logging, compresión, CORS, seguridad pre-triaje.
+
+    Interceptores (HandlerInterceptor): tienen acceso al handler, modelo y vista, y se ejecutan dentro del contexto del DispatcherServlet. Ideal para añadir atributos comunes al modelo, verificar permisos tras el binding, medir tiempos, etc.
+
+### Configuración en Spring Boot
+
+Boot autoconfigura DispatcherServlet, RequestMappingHandlerMapping, RequestMappingHandlerAdapter, ViewResolvers (si hay Thymeleaf, el resolver correspondiente), HandlerExceptionResolver, etc. Se puede personalizar implementando WebMvcConfigurer (sin anular @EnableWebMvc):
+```java
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new MiInterceptor()).addPathPatterns("/api/**");
+    }
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        converters.add(new MappingJackson2HttpMessageConverter());
+    }
+}
+```
+
+### 03_Spring_MVC/Controladores_REST.md
+De @Controller a @RestController
+
+Un controlador REST es un controlador que devuelve datos (generalmente JSON o XML) en lugar de un nombre de vista. La anotación @RestController es un atajo que combina @Controller y @ResponseBody. Con @ResponseBody, el valor de retorno del método se serializa directamente al cuerpo de la respuesta HTTP mediante HttpMessageConverter.
+```java
+@RestController
+@RequestMapping("/api/productos")
+public class ProductoController {
+
+    @GetMapping
+    public List<Producto> listar() { ... }
+
+    @GetMapping("/{id}")
+    public Producto obtener(@PathVariable Long id) { ... }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Producto crear(@RequestBody @Valid Producto producto) { ... }
+}
+```
+
+### Anotaciones de mapeo de peticiones
+
+Spring ofrece antaciones compuestas para los métodos HTTP más comunes:
+Anotación	Equivale a
+@GetMapping	@RequestMapping(method = RequestMethod.GET)
+@PostMapping	@RequestMapping(method = RequestMethod.POST)
+@PutMapping	@RequestMapping(method = RequestMethod.PUT)
+@DeleteMapping	@RequestMapping(method = RequestMethod.DELETE)
+@PatchMapping	@RequestMapping(method = RequestMethod.PATCH)
+
+Todas aceptan atributos como value (URL), params, headers, consumes, produces.
+Vinculación de parámetros (Data Binding avanzado)
+
+Spring MVC extrae los datos de la petición y los convierte automáticamente gracias a HandlerMethodArgumentResolver.
+
+    @PathVariable: de la plantilla de la URL. @GetMapping("/{id}") con @PathVariable Long id.
+
+    @RequestParam: de parámetros de consulta o datos de formulario (?nombre=valor).
+```java
+    @GetMapping("/buscar")
+    public List<Producto> buscar(@RequestParam("q") String query,
+                                 @RequestParam(defaultValue = "10") int max) { ... }
+
+    Si el parámetro es opcional, usar required = false o Optional<String>.
+
+    @RequestBody: convierte el cuerpo de la petición (JSON, XML) a un objeto Java usando HttpMessageConverter (normalmente Jackson).
+
+    @RequestHeader: extrae un header específico.
+
+    @CookieValue: extrae el valor de una cookie.
+
+    @ModelAttribute: para binding de parámetros múltiples a un objeto (menos común en REST puro, más en formularios).
+```
+
+    Objetos complejos: Si el método tiene un parámetro de tipo POJO sin anotaciones, Spring lo trata como un @ModelAttribute, haciendo binding de parámetros por nombre de propiedad.
+
+### Manejo de respuestas y códigos de estado
+
+La respuesta se puede construir de varias formas:
+
+    Retornar directamente el objeto (con @ResponseBody o en un @RestController). El código HTTP por defecto es 200 OK. Para otros códigos se usa @ResponseStatus a nivel de método o excepción.
+
+    ResponseEntity<T>: da control total sobre headers, status y cuerpo.
+```java
+    @GetMapping("/{id}")
+    public ResponseEntity<Producto> obtener(@PathVariable Long id) {
+        Producto p = service.findById(id);
+        return p != null ? ResponseEntity.ok(p)
+                         : ResponseEntity.notFound().build();
+    }
+
+    ResponseEntity tiene métodos estáticos: ok(), created(URI), noContent(), badRequest(), status(HttpStatus), etc.
+
+    HttpServletResponse: en el propio parámetro del método, se puede escribir directamente (no recomendado para REST moderno).
+
+    HttpEntity<T>: similar a ResponseEntity pero también puede usarse como parámetro de entrada con HttpEntity<Producto> (accede a headers y cuerpo de la petición).
+```
+
+### Negociación de contenido (Content Negotiation)
+
+Spring MVC decide automáticamente qué converter usar basándose en:
+
+    El header Accept de la petición.
+
+    La extensión de la URL (si está configurado).
+
+    El parámetro format (si está configurado).
+
+    El atributo produces de las anotaciones de mapeo.
+
+Ejemplo: si produces = "application/xml", Spring usará un converter de XML (si está disponible, p.ej. jackson-dataformat-xml). Si no hay converter adecuado, lanza HttpMediaTypeNotAcceptableException.
+Convertidores de mensajes (HttpMessageConverter)
+
+Interfaz que transforma entre objetos Java y el cuerpo de peticiones/respuestas. Spring Boot registra automáticamente:
+
+    MappingJackson2HttpMessageConverter (JSON) si Jackson está en el classpath.
+
+    StringHttpMessageConverter (text/plain).
+
+    FormHttpMessageConverter (formularios).
+
+    Jaxb2RootElementHttpMessageConverter (XML) si JAXB está disponible, pero normalmente se prefiere el jackson XML converter.
+
+Se pueden añadir o personalizar mediante configureMessageConverters() o extendMessageConverters() en WebMvcConfigurer.
+Configuración de CORS en controladores
+
+A nivel global con WebMvcConfigurer.addCorsMappings, o a nivel de controlador/método con @CrossOrigin.
+```java
+@RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:4200", maxAge = 3600)
+public class ApiController { ... }
+```
+
+### HATEOAS y enlaces
+
+Spring HATEOAS permite construir respuestas REST con hipervínculos. Aunque es avanzado, los controladores pueden devolver EntityModel<T> o CollectionModel<T> para añadir enlaces. Spring Boot con spring-boot-starter-hateoas proporciona autoconfiguración.
+Programación reactiva en REST
+
+Con spring-boot-starter-webflux y @RestController (o en WebFlux), los métodos pueden retornar Mono<T> o Flux<T>. Spring maneja la suscripción. Cambia el paradigma a no bloqueante.
+03_Spring_MVC/Manejo_de_Excepciones.md
+Gestión centralizada de excepciones en @ControllerAdvice
+
+En lugar de esparcir try/catch en cada controlador, Spring permite definir clases globales con @ControllerAdvice (o @RestControllerAdvice, que es @ControllerAdvice + @ResponseBody). Los métodos anotados con @ExceptionHandler capturan excepciones específicas.
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDTO manejarNoEncontrado(RecursoNoEncontradoException ex) {
+        return new ErrorDTO(404, ex.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public List<ErrorValidacionDTO> manejarValidacion(MethodArgumentNotValidException ex) {
+        return ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> new ErrorValidacionDTO(e.getField(), e.getDefaultMessage()))
+                .collect(Collectors.toList());
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorDTO manejarGeneral(Exception ex) {
+        // logging del stacktrace real
+        logger.error("Error no esperado", ex);
+        return new ErrorDTO(500, "Error interno del servidor");
+    }
+}
+```
+
+### Jerarquía de manejo de excepciones
+
+Spring busca el manejador más específico:
+
+    @ExceptionHandler dentro del propio controlador (mayor prioridad).
+
+    @ExceptionHandler en clases con @ControllerAdvice aplicables (pueden ser globales, por paquete, o por anotación).
+
+    Implementaciones de HandlerExceptionResolver (resolvers globales).
+
+    Si no se captura, se propaga al contenedor servlet, que responde con una página de error predeterminada (o se puede personalizar con ErrorController).
+
+### HandlerExceptionResolver y sus implementaciones
+
+HandlerExceptionResolver es la interfaz de bajo nivel. La resolución ocurre en el DispatcherServlet antes de llegar a los filtros de error. Implementaciones por defecto:
+
+    ExceptionHandlerExceptionResolver: invoca los métodos @ExceptionHandler de @ControllerAdvice y controladores. Es el más potente y se configura automáticamente al detectar anotaciones.
+
+    ResponseStatusExceptionResolver: busca la anotación @ResponseStatus en la excepción y establece el código de estado.
+
+    DefaultHandlerExceptionResolver: convierte excepciones estándar de Spring MVC (NoHandlerFoundException, HttpMediaTypeNotSupportedException, etc.) a códigos HTTP.
+
+    SimpleMappingExceptionResolver: mapea nombres de excepción a vistas de error (configuración XML/Java), para MVC no REST.
+
+Se pueden agregar resolvers personalizados o ajustar el orden con WebMvcConfigurer.configureHandlerExceptionResolvers.
+Lanzar excepciones con ResponseStatusException
+
+Para evitar crear clases de excepción personalizadas, Spring ofrece ResponseStatusException, que se puede lanzar directamente y será capturada por ResponseStatusExceptionResolver:
+```java
+@GetMapping("/{id}")
+public Producto obtener(@PathVariable Long id) {
+    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
+}
+```
+
+El cuerpo por defecto contendrá el mensaje y el status. Para un formato más rico, es mejor usar un @ControllerAdvice con DTO.
+Errores en filtros y antes del DispatcherServlet
+
+Las excepciones que ocurren en los filtros (fuera del alcance del DispatcherServlet) no son manejadas por los mecanismos anteriores. Para capturarlas y devolver una respuesta JSON consistente, se puede usar un ErrorController implementando ErrorController (Spring Boot provee BasicErrorController). Personalizarlo permite tener respuestas de error uniformes aunque la petición nunca llegue al controlador.
+Response con detalles en errores de validación
+
+Volviendo al ejemplo de MethodArgumentNotValidException: el BindingResult contiene todos los errores de campo (rechazos de @NotNull, @Size, etc.), que podemos serializar en una lista de errores estructurados. Es una práctica recomendada devolver una respuesta legible por el cliente frontend.
+03_Spring_MVC/Validacion_y_BindingResult.md
+Bean Validation (JSR-380) y su integración con Spring MVC
+
+Spring MVC se integra con Hibernate Validator (implementación de referencia) automáticamente cuando está en el classpath. Las anotaciones de validación (@NotNull, @Size, @Email, @Pattern, etc.) se colocan en los campos del DTO o entidad que se recibe.
+```java
+public class ProductoDTO {
+    @NotBlank(message = "El nombre es obligatorio")
+    private String nombre;
+
+    @Positive(message = "El precio debe ser positivo")
+    private BigDecimal precio;
+
+    @Size(min = 3, max = 10, message = "El SKU debe tener entre 3 y 10 caracteres")
+    private String sku;
+}
+```
+
+### Activación de la validación en los controladores
+
+Para que Spring valide automáticamente un @RequestBody, se debe añadir @Valid (o @Validated de Spring) al parámetro.
+```java
+@PostMapping
+public ResponseEntity<Producto> crear(@Valid @RequestBody ProductoDTO dto) { ... }
+```
+
+Si la validación falla, Spring lanza MethodArgumentNotValidException antes de que se ejecute el método del controlador. Por eso es crucial tener un @ControllerAdvice que la maneje.
+Uso de BindingResult para capturar errores manualmente
+
+Cuando no se quiere lanzar una excepción, se puede declarar un parámetro BindingResult justo después del objeto validado. Spring no lanzará la excepción y tú decides cómo actuar.
+```java
+@PostMapping
+public ResponseEntity<?> crear(@Valid @RequestBody ProductoDTO dto, BindingResult result) {
+    if (result.hasErrors()) {
+        // Construir respuesta de error personalizada
+        return ResponseEntity.badRequest().body(crearErrores(result));
+    }
+    // lógica normal
+}
+```
+
+Esta técnica es útil cuando se necesita lógica condicional adicional antes de reportar errores.
+Validación a nivel de servicio con @Validated
+
+Spring también permite validar parámetros de métodos de servicios con @Validated a nivel de clase y anotaciones de Bean Validation en los parámetros. Esto dispara ConstraintViolationException. Para capturarla globalmente, un @ControllerAdvice puede manejar ConstraintViolationException y construir la respuesta apropiada.
+```java
+@Service
+@Validated
+public class ProductoService {
+    public void actualizarPrecio(@Positive double nuevoPrecio) { ... }
+}
+```
+
+### Validación de path variables y request params
+
+Para validar parámetros simples (no cuerpos), se puede anotar el controlador con @Validated y usar anotaciones de validación directamente en los parámetros.
+```java
+@RestController
+@RequestMapping("/api")
+@Validated
+public class BusquedaController {
+
+    @GetMapping("/buscar")
+    public List<Producto> buscar(@RequestParam @Size(min = 2) String q) { ... }
+}
+```
+
+Si falla, se lanza ConstraintViolationException (no MethodArgumentNotValidException), que debe capturarse de forma diferenciada en el @ControllerAdvice.
+Mensajes de validación personalizados y i18n
+
+El valor de message puede referenciar una clave del MessageSource para soportar múltiples idiomas:
+```java
+@NotNull(message = "{producto.nombre.obligatorio}")
+```
+
+Se debe tener un bean messageSource configurado (Spring Boot lo hace automáticamente con messages.properties). En el @ControllerAdvice, al construir los errores, se pueden resolver los mensajes mediante el MessageSource inyectado.
+Grupos de validación
+
+Bean Validation permite definir interfaces de grupos para aplicar distintas reglas en diferentes casos de uso (creación vs actualización). Se especifica el grupo con @Validated(OnCreate.class) en el controlador. Es una funcionalidad avanzada pero a tener en cuenta.
+03_Spring_MVC/Vistas_y_Templates.md
+El concepto de ViewResolver y View
+
+Cuando un método controlador retorna un String sin @ResponseBody, ese string es el nombre lógico de la vista. El DispatcherServlet consulta a los ViewResolvers registrados para convertir ese nombre en un objeto View real (JSP, HTML con Thymeleaf, Freemarker, etc.).
+ViewResolvers más comunes
+
+    InternalResourceViewResolver: para JSP. Prefijo y sufijo configurables (/WEB-INF/views/ y .jsp). Si la vista lógica es "usuarios/lista", busca /WEB-INF/views/usuarios/lista.jsp.
+
+    ThymeleafViewResolver: si Thymeleaf está presente. Resuelve nombres de plantilla como "usuarios/lista" a templates/usuarios/lista.html. Soporta Spring Expression Language (SpEL) dentro del HTML.
+
+    FreeMarkerViewResolver, MustacheViewResolver, etc.
+
+En una aplicación Spring Boot, si usas spring-boot-starter-thymeleaf, no necesitas configurar nada; el ThymeleafViewResolver se registra automáticamente y espera las plantillas en src/main/resources/templates/.
+Paso de datos del controlador a la vista
+
+El controlador añade atributos al modelo. Esto se hace de varias formas:
+
+    Model como parámetro: public String listar(Model model) { model.addAttribute("productos", lista); return "productos/lista"; }
+
+    ModelAndView como retorno.
+
+    @ModelAttribute a nivel de método en el controlador (se añade automáticamente a todos los métodos del controlador). Útil para datos de formularios o menús.
+
+    model.addAttribute sin nombre (se deduce del tipo).
+
+En la vista, con Thymeleaf accedes así: ${productos} o iteraciones th:each="p : ${productos}". Con JSP, mediante Expression Language ${productos}.
+Thymeleaf como motor de plantillas estándar
+
+Thymeleaf es el motor recomendado en Spring Boot por su sintaxis natural y su integración con Spring Security, i18n, etc. Características destacadas:
+
+    Plantillas prototípicas: se pueden abrir en navegador sin servidor porque usan atributos en lugar de etiquetas JSP.
+
+    Expression utilitarias: #strings, #dates, #numbers.
+
+    Formularios: th:object, th:field, th:errors ligados al binding de Spring para mostrar errores de validación.
+
+    Fragmentos y layouts: mediante th:fragment y th:replace se crean layouts reutilizables.
+
+    Soporte de SpEL para seguridad: sec:authorize de Spring Security integrado.
+
+### Redirecciones y flash attributes
+
+El patrón POST-redirect-GET es común para evitar el doble envío de formularios.
+
+    El controlador retorna "redirect:/productos". Spring lo interpreta como una redirección y se invoca RedirectView.
+
+    Para pasar datos a la siguiente petición, como mensajes de éxito, se usan flash attributes: RedirectAttributes.addFlashAttribute("mensaje", "Creado exitosamente"). Estos sobreviven a la redirección y se borran tras mostrarse.
+
+```java
+@PostMapping
+public String crear(@Valid Producto p, BindingResult result, RedirectAttributes ra) {
+    if (result.hasErrors()) return "productos/formulario";
+    service.save(p);
+    ra.addFlashAttribute("success", "Producto creado");
+    return "redirect:/productos";
+}
+```
+
+REST y ¿vistas?
+
+En servicios REST puros no se devuelven vistas. Sin embargo, puede haber endpoints híbridos que devuelvan HTML para documentación (Swagger UI) o que sirvan una SPA. Spring Boot maneja recursos estáticos desde static/, public/, META-INF/resources/. La configuración de vistas no interfiere.
+Resolución de vistas y negociación de contenido en REST
+
+Si un método devuelve un objeto y no tiene @ResponseBody, pero la petición tiene encabezados que indican que acepta JSON, el HttpMessageConverter puede tomar el control. En la práctica, si el controlador tiene @RestController todo es @ResponseBody. En un @Controller puro, para que el valor retornado se interprete como JSON debe estar anotado con @ResponseBody en el método.
+
+### 04_Spring_Boot/Autoconfiguracion_y_Starters.md
+El problema que resolvió Spring Boot
+
+Spring tradicional daba una flexibilidad enorme, pero configurar una aplicación sencilla requería decenas de líneas de XML o Java Config para beans de infraestructura: DataSource, EntityManagerFactory, TransactionManager, ViewResolver, MessageConverter, etc. Spring Boot introdujo dos conceptos rompedores:
+
+    Starters: dependencias agrupadoras que traen todo el classpath necesario y autoconfiguración preparada.
+
+    Autoconfiguración (@EnableAutoConfiguration): basada en lo que hay en el classpath, la aplicación decide qué beans crear y cómo configurarlos, siguiendo el principio "convención sobre configuración".
+
+### La anotación @SpringBootApplication
+
+Es un atajo que combina tres anotaciones:
+```java
+@SpringBootConfiguration  // = @Configuration en contexto Boot
+@EnableAutoConfiguration  // La magia de la autoconfiguración
+@ComponentScan(            // Escanea el paquete actual y subpaquetes
+    excludeFilters = { @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class) }
+)
+public @interface SpringBootApplication {
+```
+
+Así que en una sola línea activas la configuración Java, el escaneo de componentes y la autoconfiguración.
+Funcionamiento interno de la autoconfiguración
+
+    @EnableAutoConfiguration importa AutoConfigurationImportSelector.
+
+    Este selector carga todas las clases listadas en el archivo META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports (en Spring Boot 3+) o en spring.factories (versiones anteriores) del classpath.
+
+    Cada una de esas clases es una configuración (anotada con @AutoConfiguration o @Configuration) con anotaciones condicionales.
+
+    Anotaciones condicionales (@ConditionalOnClass, @ConditionalOnMissingBean, @ConditionalOnProperty, etc.) deciden si la configuración se aplica o no.
+
+    Si se aplica, se definen los beans óptimos para la aplicación.
+
+Ejemplo simplificado de lo que hace DataSourceAutoConfiguration:
+
+    @ConditionalOnClass({ DataSource.class, EmbeddedDatabaseType.class }) → solo si hay clases JDBC en el classpath.
+
+    @ConditionalOnMissingBean(DataSource.class) → solo si el usuario no ha definido ya un DataSource.
+
+    Si se cumple, crea un DataSource usando las propiedades spring.datasource.*. Si no hay propiedades de conexión, Boot intenta crear una base de datos embebida (H2, Derby) si encuentra esas dependencias.
+
+### Anotaciones condicionales más poderosas
+Anotación	Condición
+@ConditionalOnClass	Si una clase específica está en el classpath.
+@ConditionalOnMissingClass	Si una clase NO está.
+@ConditionalOnBean	Si existe un bean de ese tipo.
+@ConditionalOnMissingBean	Si NO existe un bean.
+@ConditionalOnProperty	Si una propiedad tiene un valor determinado.
+@ConditionalOnResource	Si existe un recurso (archivo).
+@ConditionalOnWebApplication	Si es una aplicación web.
+@ConditionalOnNotWebApplication	No web.
+@ConditionalOnExpression	Expresión SpEL evaluada a true.
+
+Estas anotaciones se pueden combinar en una misma clase de autoconfiguración para afinar la activación.
+Starters: la navaja suiza del classpath
+
+Un starter es un POM (Maven) o módulo (Gradle) que agrupa varias dependencias relacionadas entre sí, evitando que tengas que añadirlas una a una y garantizando compatibilidad de versiones. La convención de nombres es spring-boot-starter-*. Ejemplos esenciales:
+Starter	Proporciona
+spring-boot-starter-web	Spring MVC, Tomcat embebido, Jackson, validación.
+spring-boot-starter-data-jpa	Hibernate, Spring Data JPA, Spring ORM, pool HikariCP.
+spring-boot-starter-security	Spring Security, autenticación básica por defecto.
+spring-boot-starter-test	JUnit Jupiter, Mockito, AssertJ, Hamcrest, Spring Test.
+spring-boot-starter-actuator	Endpoints de monitoreo (health, metrics).
+spring-boot-starter-thymeleaf	Thymeleaf, Spring Web.
+spring-boot-starter-oauth2-client	OAuth2 client support.
+spring-boot-starter-webflux	Programación reactiva con Netty.
+
+Cada starter trae también la autoconfiguración correspondiente (en spring-boot-autoconfigure).
+Cómo crear un starter personalizado
+
+    Crea un módulo Maven con dos submódulos: auto-configuracion y starter.
+
+    En auto-configuration: clase @AutoConfiguration con @ConditionalOn... y @Bean. Debe registrar la configuración en META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports.
+
+    En starter: POM vacío (solo dependencias) que trae el módulo de autoconfiguración y las librerías necesarias.
+
+    Opcional: spring-boot-configuration-processor para generar metadatos de propiedades y ayudar al IDE con el autocompletado.
+
+### Orden de las autoconfiguraciones
+
+Las configuraciones pueden anotarse con @AutoConfigureOrder, @AutoConfigureBefore o @AutoConfigureAfter para controlar la secuencia. Esto es vital porque, por ejemplo, la configuración de Hibernate debe aplicarse después de la del DataSource.
+04_Spring_Boot/Estructura_Proyecto_Spring_Boot.md
+Estructura recomendada de directorios
+
+Spring Boot no fuerza una estructura, pero hay una ampliamente aceptada que sigue el estándar Maven/Gradle:
+```text
+mi-proyecto/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── empresa/
+│   │   │           └── miapp/
+│   │   │               ├── MiAppApplication.java   (clase principal)
+│   │   │               ├── controlador/
+│   │   │               ├── servicio/
+│   │   │               ├── repositorio/
+│   │   │               ├── modelo/
+│   │   │               ├── dto/
+│   │   │               ├── configuracion/
+│   │   │               └── excepcion/
+│   │   └── resources/
+│   │       ├── static/                 (contenido estático: css, js, imágenes)
+│   │       ├── templates/              (plantillas Thymeleaf, Freemarker)
+│   │       ├── application.properties  (o application.yml)
+│   │       └── data.sql / schema.sql   (opcional, para inicializar BD)
+│   └── test/
+│       ├── java/
+│       │   └── com/empresa/miapp/
+│       │       ├── integracion/
+│       │       ├── unidad/
+│       │       └── MiAppApplicationTests.java
+│       └── resources/
+│           └── application-test.properties
+├── pom.xml (o build.gradle)
+└── README.md
+
+    static/: servido directamente por Spring Boot (recursos estáticos). Ruta raíz /.
+
+    templates/: plantillas del motor de vistas (Thymeleaf, etc.). No accesibles directamente.
+
+    application.properties o .yml: configuración por defecto. Se puede dividir por perfiles.
+
+    data.sql y schema.sql: si existen, Spring Boot los ejecuta al iniciar la base de datos embebida, a menos que se desactive.
+```
+
+### La clase principal y SpringApplication
+```java
+@SpringBootApplication
+public class MiAppApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MiAppApplication.class, args);
+    }
+}
+```
+
+SpringApplication.run() arranca el contexto de Spring, el servidor embebido (si es web) y todo lo demás. Se puede personalizar mediante SpringApplication builder:
+```java
+new SpringApplicationBuilder(MiAppApplication.class)
+    .bannerMode(Banner.Mode.OFF)
+    .profiles("dev")
+    .run(args);
+```
+
+### Empaquetado y ejecución
+
+Spring Boot ofrece el plugin spring-boot-maven-plugin que genera un fat jar (JAR autocontenido con todas las dependencias, el servidor embebido y un cargador de clases especial). Se ejecuta con:
+```bash
+mvn clean package
+java -jar target/mi-app.jar
+```
+
+El plugin también permite ejecutar directamente con mvn spring-boot:run para desarrollo ágil.
+Convenciones en el package scanning
+
+El @ComponentScan implícito en @SpringBootApplication escanea el paquete donde reside la clase principal y todos sus subpaquetes. Por eso se recomienda ubicar la aplicación en el paquete raíz (com.empresa.miapp). Si necesitas escanear otros paquetes, puedes usar scanBasePackages en la anotación.
+Recursos estáticos y caché
+
+Por defecto, Spring Boot sirve recursos estáticos desde classpath:/static/, classpath:/public/, classpath:/resources/, classpath:/META-INF/resources/. Puedes personalizar con spring.web.resources.static-locations. El mapeo de URL raíz es /. Para control de caché: spring.web.resources.cache.cachecontrol.max-age.
+El servidor embebido
+
+Spring Boot incluye Tomcat por defecto en spring-boot-starter-web. Pero puedes cambiarlo a Jetty o Undertow excluyendo Tomcat y añadiendo el starter correspondiente. La configuración del servidor se realiza mediante propiedades server.* (puerto, SSL, compression, etc.). El servidor se inicia desde ServletWebServerApplicationContext.
+04_Spring_Boot/Actuator_y_Metricas.md
+¿Qué es Actuator?
+
+Spring Boot Actuator expone una serie de endpoints HTTP y JMX que permiten monitorizar y gestionar una aplicación en producción: estado de salud, métricas, variables de entorno, configuración, trazas, mapeos de peticiones, etc. Para habilitarlo se añade el starter spring-boot-starter-actuator.
+Endpoints más relevantes
+Endpoint	Descripción
+health	Estado de la aplicación y sus dependencias (DB, disco, etc.).
+info	Información arbitraria (versión, descripción).
+metrics	Métricas como uso de memoria, peticiones HTTP, tiempo de respuesta.
+env	Propiedades del Environment.
+loggers	Configuración de niveles de logs en tiempo real.
+heapdump	Vuelca la memoria del heap (requiere JVM HotSpot).
+threaddump	Vuelca los hilos.
+mappings	Todos los endpoints de Spring MVC.
+beans	Lista todos los beans del contexto.
+conditions	Evaluación de autoconfiguraciones (positivos y negativos).
+
+Por defecto, solo health está expuesto vía HTTP; los demás se pueden habilitar configurando management.endpoints.web.exposure.include=* (o una lista específica) para desarrollo, pero en producción se debe ser restrictivo y combinar con seguridad.
+Configuración de actuadores
+properties
+
+### management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=when-authorized
+management.endpoint.health.probes.enabled=true   # Para Kubernetes probes
+management.server.port=8081                       # Puerto separado para gestión
+
+Los endpoints pueden ser accedidos mediante /actuator/health, etc. (prefijo configurable).
+Health indicators
+
+El endpoint health agrega el estado de múltiples HealthIndicator. Spring Boot proporciona indicadores automáticos para: DataSource, Redis, MongoDB, DiskSpace, RabbitMQ, etc. Cada uno reporta UP, DOWN, o UNKNOWN. Puedes crear indicadores personalizados:
+```java
+@Component
+public class ServicioExternoHealth implements HealthIndicator {
+    @Override
+    public Health health() {
+        // lógica para comprobar un servicio externo
+        boolean disponible = check();
+        if (disponible) {
+            return Health.up().withDetail("latencia", 120).build();
+        }
+        return Health.down().withDetail("error", "timeout").build();
+    }
+}
+```
+
+### Métricas con Micrometer
+
+Actuator usa Micrometer como fachada de métricas. Se pueden exportar a múltiples sistemas: Prometheus, Datadog, Graphite, New Relic, etc. Basta añadir el registro adecuado (micrometer-registry-prometheus) y las métricas se publican en el formato correspondiente.
+
+Métricas automáticas incluyen:
+
+    JVM (memoria, GC, threads).
+
+    Sistema (CPU, load average).
+
+    Peticiones HTTP (http.server.requests con tag uri, status).
+
+    Tiempos de ejecución de métodos @Timed.
+
+    Conexiones de base de datos.
+
+### Métricas personalizadas
+
+Puedes inyectar MeterRegistry y registrar contadores, timers, gauges.
+```java
+@RestController
+public class PedidoController {
+    private final Counter pedidosCreados;
+
+    public PedidoController(MeterRegistry registry) {
+        pedidosCreados = registry.counter("pedidos.creados.total");
+    }
+
+    @PostMapping("/pedidos")
+    public Pedido crear() {
+        Pedido p = /* ... */;
+        pedidosCreados.increment();
+        return p;
+    }
+}
+```
+
+También se puede utilizar @Timed en métodos (requiere @EnableAspectJAutoProxy y un TimedAspect bean) para medir tiempos y contar invocaciones.
+Info endpoint
+
+Se puede crear un InfoContributor para añadir información personalizada, o simplemente definir propiedades:
+properties
+
+### info.app.name=MiApp
+info.app.version=1.0.0
+
+```java
+@Component
+public class BuildInfoContributor implements InfoContributor {
+    @Override
+    public void contribute(Info.Builder builder) {
+        builder.withDetail("buildTime", Instant.now());
+    }
+}
+```
+
+### Seguridad en Actuator
+
+Combinado con Spring Security, se pueden restringir los endpoints. Lo típico es que /actuator/health esté sin autenticación (para probes de k8s) y el resto requiera un rol ACTUATOR.
+04_Spring_Boot/Testing.md
+Enfoque de testing en Spring Boot
+
+Spring Boot facilita tanto pruebas unitarias (aisladas, sin contexto) como pruebas de integración (con contexto de Spring y/o bases de datos reales). Su starter spring-boot-starter-test trae: JUnit Jupiter, Mockito, AssertJ, Hamcrest, Spring Test, y más.
+Pruebas unitarias con Mockito
+
+No se levanta el contexto Spring; se mockean dependencias.
+```java
+@ExtendWith(MockitoExtension.class)
+class ProductoServiceTest {
+    @Mock
+    ProductoRepository repo;
+    @InjectMocks
+    ProductoService service;
+
+    @Test
+    void buscarPorId_debeRetornarProducto() {
+        Producto esperado = new Producto(1L, "Teclado");
+        when(repo.findById(1L)).thenReturn(Optional.of(esperado));
+
+        Producto resultado = service.buscarPorId(1L);
+        assertThat(resultado.getNombre()).isEqualTo("Teclado");
+    }
+}
+```
+
+### Pruebas de integración con @SpringBootTest
+
+@SpringBootTest levanta el contexto completo (o parcial). Por defecto, busca la clase @SpringBootApplication hacia arriba en el paquete. Útil para pruebas end-to-end de capas completas. Se puede arrancar un servidor real en un puerto aleatorio con webEnvironment = DEFINED_PORT / RANDOM_PORT.
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class MiApiIntegrationTest {
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    void obtenerProductos() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/api/productos", String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+}
+```
+
+### Slices de contexto (testing ligero de capas)
+
+Para no levantar todo el contexto y acelerar las pruebas, Boot ofrece anotaciones de "slice":
+Anotación	Carga solo	Típico use case
+@WebMvcTest	Capa web (controladores), sin servicios ni repos. Mock de dependencias con @MockBean.	Probar controladores REST.
+@DataJpaTest	Entidades, repositorios, DataSource embebido. Transaccional y rollback por defecto.	Probar repositorios y queries.
+@JsonTest	Solo Jackson (serialización).	Probar DTOs JSON.
+@RestClientTest	RestTemplate y componentes de llamada REST.	Probar clientes REST.
+@JdbcTest	Solo JDBC (sin JPA).	Probar consultas directas.
+
+Ejemplo @WebMvcTest:
+```java
+@WebMvcTest(ProductoController.class)
+class ProductoControllerTest {
+    @Autowired
+    private MockMvc mvc;
+    @MockBean
+    private ProductoService service;
+
+    @Test
+    void listarDebeRetornarOk() throws Exception {
+        when(service.listar()).thenReturn(List.of(new Producto()));
+        mvc.perform(get("/api/productos"))
+           .andExpect(status().isOk())
+           .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+}
+```
+
+Nota: @WebMvcTest desactiva la autoconfiguración completa de datos y seguridad, aunque puedes incluir filtros concretos.
+Mocking y sobrescritura de beans en tests
+
+    @MockBean: reemplaza un bean en el contexto por un mock de Mockito. Útil para simular dependencias externas.
+
+    @SpyBean: envuelve el bean real con un spy, permitiendo verificar llamadas.
+
+    @TestConfiguration + @Bean: define beans adicionales o sustituye beans para ese test específico (dentro de la clase de test o en una inner class).
+
+    @SpringBootTest(classes = ...) o @Import para cargar solo configuraciones específicas.
+
+### Base de datos en pruebas
+
+@DataJpaTest configura automáticamente una base de datos embebida en memoria (H2). Las transacciones se revierten al final de cada test. Puedes usar el parámetro @AutoConfigureTestDatabase(replace = Replace.NONE) para conectar a una base de datos real (p.ej. PostgreSQL en un contenedor).
+
+Para pruebas de integración con una base de datos real, el enfoque moderno es Testcontainers: levanta una instancia Docker de PostgreSQL, MySQL, etc., y la inyecta mediante configuraciones dinámicas (@DynamicPropertySource) o usando el módulo Spring Boot de Testcontainers.
+Pruebas con @SpringBootTest y control transaccional
+
+Por defecto, @SpringBootTest no es transaccional (a diferencia de @DataJpaTest). Para pruebas que usan HTTP (TestRestTemplate), ejecutan en hilos separados, por lo que la transacción no se comparte. En esos casos hay que limpiar manualmente o usar @Transactional (solo si las peticiones no cruzan hilos).
+Pruebas con configuración externa
+
+Puedes usar @ActiveProfiles("test") y un archivo application-test.properties para definir propiedades específicas. También @TestPropertySource para añadir propiedades en línea.
+04_Spring_Boot/Perfiles_y_Propiedades.md
+Externalización de la configuración
+
+Spring Boot permite casi todas las propiedades de la aplicación (URL de base de datos, puerto, claves API, etc.) fuera del código, en archivos de propiedades, variables de entorno, argumentos de línea de comandos, o servidores de configuración. Esto sigue las reglas de The Twelve-Factor App.
+Fuentes de propiedades y orden de prioridad
+
+Spring Boot lee las propiedades desde 17 fuentes diferentes (ordenadas de mayor a menor prioridad):
+
+### Argumentos de línea de comandos (--server.port=9090)
+
+### Propiedades de Java System (System.getProperties())
+
+### Variables de entorno (export SERVER_PORT=9090)
+
+### Archivos application.properties / .yml
+
+        application-{profile}.properties dentro del classpath (o spring.config.additional-location).
+
+### @PropertySource en clases @Configuration
+    ... etc. La lista exacta está en la documentación.
+
+La sobreescritura sigue ese orden: un argumento de línea de comandos vence a una variable de entorno, que vence a un archivo de perfil.
+Archivos application.properties y application.yml
+
+Spring Boot soporta ambos formatos. YAML es más legible para estructuras jerárquicas, pero ambos son equivalentes.
+
+properties:
+properties
+
+### server.port=8080
+spring.datasource.url=jdbc:mysql://localhost/midb
+
+yml:
+yaml
+
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:mysql://localhost/midb
+
+### Perfiles (profiles)
+
+Los perfiles permiten tener múltiples conjuntos de configuración para distintos entornos (dev, test, prod). Se activan con spring.profiles.active=dev (en variable de entorno, línea de comandos, o en el application.properties principal). Los archivos específicos de perfil se nombran application-{profile}.properties o .yml. Si un perfil está activo, sus propiedades se superponen a las del archivo base.
 
 Ejemplo:
-bash
-
-OPTS=$(getopt -o ho:v --long help,output:,verbose -n "$0" -- "$@")
-if [[ $? -ne 0 ]]; then
-    echo "Error en opciones." >&2
-    exit 1
-fi
-eval set -- "$OPTS"
-
-while true; do
-    case "$1" in
-        -h|--help) usage; exit 0 ;;
-        -o|--output) output="$2"; shift 2 ;;
-        -v|--verbose) verbose=1; shift ;;
-        --) shift; break ;;
-        *) echo "Error interno"; exit 1 ;;
-    esac
-done
-
-El eval set -- "$OPTS" es necesario porque getopt genera una cadena con los parámetros ya procesados. Es seguro si getopt es moderno y usamos --. La opción -n define el nombre para los mensajes de error.
-
-Ventajas: admite opciones largas, agrupación de cortas (-vo archivo), y separación con --. Desventaja: dependencia externa (aunque util-linux es ubicuo en Linux).
-Mejores prácticas para el parseo
-
-    Proporciona siempre -h o --help.
-
-    Usa -- para marcar fin de opciones y evitar conflictos con argumentos que empiezan con -.
-
-    Valida argumentos obligatorios después del shift.
-
-    Construye una función usage y muéstrala en caso de error.
-
-    Si el script tiene muchas opciones, considera usar getopt o una librería de parseo.
-
-Constantes y valores por defecto
-bash
-
-readonly VERSION="1.2.3"
-OUTPUT_DIR="${OUTPUT_DIR:-./output}"   # valor por defecto desde entorno o fijo
-
-02-coprocesos-y-pipes-con-nombre.md
-Comunicación interprocesos avanzada
-
-Bash permite dos técnicas poderosas para comunicación bidireccional: coprocesos (coproc) y tuberías con nombre (FIFOs).
-Coprocesos (coproc)
-
-Un coproceso es un comando que se ejecuta en segundo plano con dos tuberías conectadas a sus stdin y stdout. El shell proporciona descriptores de archivo para leer/escribir.
-
-Sintaxis:
-bash
-
-coproc NOMBRE { comando; }
-# o simplemente
-coproc { comando; }   # el array se llama COPROC por defecto
-
-Después, $NOMBRE_PID contiene el PID del coproceso y los descriptores están en un array:
-
-    ${NOMBRE[0]} → descriptor de lectura (salida del comando).
-
-    ${NOMBRE[1]} → descriptor de escritura (entrada del comando).
-
-Ejemplo: calculadora bc persistente:
-bash
-
-coproc BC { bc -l; }
-echo "scale=2; 10/3" >&${BC[1]}
-read -u ${BC[0]} resultado
-echo "Resultado: $resultado"
-
-Podemos incluso encapsularlo en funciones:
-bash
-
-bc_send() { echo "$1" >&${BC[1]}; }
-bc_recv() { local r; read -u ${BC[0]} r; echo "$r"; }
-bc_send "sqrt(2)"
-resp=$(bc_recv)
-
-Cuidados:
-
-    El coproceso no termina automáticamente; hay que cerrar sus descriptores y posiblemente enviarle quit.
-
-    Para cerrar entrada: exec {BC[1]}>&-. Luego se puede leer hasta EOF y hacer wait $BC_PID.
-
-    Si el coproceso produce mucha salida, se puede bloquear al no haber quien lea; hay que leer constantemente.
-
-Tuberías con nombre (FIFOs)
-
-Un FIFO es un archivo especial creado con mkfifo. Un proceso escribe en él y otro lee; es bloqueante hasta que ambas puntas estén conectadas.
-
-Creación:
-bash
-
-mkfifo /tmp/mi_pipe
-
-Lector (se bloquea hasta que haya escritor):
-bash
-
-cat < /tmp/mi_pipe
-
-Escritor (se bloquea hasta que haya lector):
-bash
-
-echo "Hola" > /tmp/mi_pipe
-
-En scripts, abrimos descriptores para evitar bloqueos:
-bash
-
-mkfifo pipeio
-exec 3<>pipeio   # abrir lectura/escritura, evita bloqueo
-echo "datos" >&3
-read -u 3 linea
-exec 3>&-        # cerrar
-rm pipeio
-
-El truco <> abre el FIFO para lectura/escritura simultánea, lo que evita el bloqueo por falta de lector/escritor.
-
-Ejemplo de comunicación entre dos scripts:
-
-    script_a abre un FIFO y espera órdenes.
-
-    script_b envía comandos al FIFO y puede leer respuesta de otro FIFO.
-
-Ventaja de los FIFOs: no están ligados al shell; procesos independientes pueden comunicarse fácilmente.
-
-Comparación con coprocesos:
-
-    Coproceso: comunicación con un único proceso controlado por el shell, conveniente para diálogos persistentes.
-
-    FIFO: múltiples procesos pueden escribir/leer; más flexible pero más gestión manual.
-
-03-dialogos-interactivos.md
-Interfaces de usuario en la terminal
-
-Más allá del simple read y select, existen herramientas para crear menús, barras de progreso y diálogos: dialog y whiptail.
-dialog
-
-dialog muestra widgets gráficos de texto. La mayoría de las distribuciones lo incluyen (apt install dialog).
-
-Widgets comunes:
-Widget	Uso
---yesno	Pregunta sí/no; código de salida 0 para sí.
---msgbox	Muestra un mensaje con botón OK.
---inputbox	Solicita una línea de texto.
---passwordbox	Como inputbox pero oculta entrada.
---menu	Menú de selección simple.
---checklist	Lista con casillas de verificación.
---radiolist	Lista con botones de radio.
---gauge	Barra de progreso (lee de stdin).
---infobox	Muestra mensaje y continúa.
-
-Ejemplo: pregunta sí/no:
-bash
-
-if dialog --title "Confirmación" --yesno "¿Continuar?" 8 40; then
-    echo "Usuario dijo Sí"
-else
-    echo "Usuario dijo No"
-fi
-
-Ejemplo: menú:
-bash
-
-opcion=$(dialog --title "Menú principal" \
-    --menu "Elige una opción:" 15 50 4 \
-    1 "Instalar" \
-    2 "Configurar" \
-    3 "Salir" 2>&1 >/dev/tty)
-echo "Seleccionaste: $opcion"
-
-La salida del widget va a stderr; por eso redirigimos 2>&1 >/dev/tty para capturarla en variable (y mostramos por pantalla la interfaz).
-
-Barra de progreso con --gauge:
-bash
-
-(
-    for i in $(seq 1 10); do
-        echo $(( i*10 ))
-        sleep 0.2
-    done
-) | dialog --title "Instalando" --gauge "Copiando archivos..." 8 50 0
-
-whiptail
-
-whiptail es una alternativa ligera (basada en newt) que usa una sintaxis similar pero con algunas diferencias. Suele estar presente en sistemas Debian/Ubuntu por defecto (apt install whiptail).
-
-Ejemplo de menú con whiptail:
-bash
-
-opcion=$(whiptail --title "Menú" --menu "Elige" 15 50 4 \
-    "1" "Opción 1" "2" "Opción 2" 3>&1 1>&2 2>&3)
-
-La redirección es diferente: whiptail escribe la salida en stderr, y comúnmente se hace 3>&1 1>&2 2>&3 para capturarla.
-Combinar con Bash
-
-    Siempre verifica si la herramienta está instalada: command -v dialog >/dev/null || { echo "Instala dialog"; exit 1; }.
-
-    El código de salida indica: 0 (éxito), 1 (Cancelar), 255 (error o ESC).
-
-    Para diálogos de múltiples pasos, se puede encadenar en funciones.
-
-Uso de select vs dialog
-
-select es bueno para menús simples y rápida implementación, pero dialog da una experiencia mucho más profesional para scripts interactivos.
-04-pruebas-unitarias.md
-Testing de scripts con Bats y shunit2
-
-Probar scripts de Bash es imprescindible cuando la complejidad crece. Dos frameworks destacan: Bats y shunit2.
-Bats (Bash Automated Testing System)
-
-Bats permite escribir pruebas con una sintaxis muy legible. Se instala en /usr/local/bin/bats o mediante gestor de paquetes (aunque la versión del sistema puede ser antigua; se recomienda instalar desde su repositorio).
-
-Estructura de un archivo .bats:
-bash
-
-#!/usr/bin/env bats
-
-@test "comprobar suma sencilla" {
-    resultado="$(( 2 + 3 ))"
-    [ "$resultado" -eq 5 ]
+application.properties define puerto 8080.
+application-prod.properties define puerto 80 y datasource de producción.
+Al activar prod, el puerto se sobrescribe a 80.
+
+Los documentos multi-perfil en YAML permiten agrupar configuraciones:
+yaml
+
+### # application.yml
+server:
+  port: 8080
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+server:
+  port: 9090
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+server:
+  port: 80
+
+### @Value y @ConfigurationProperties
+
+    @Value("${clave}"): inyecta un valor simple, con posibilidad de valor por defecto (${clave:defecto}). Útil para una o pocas propiedades. Pero no ofrece chequeo de tipos ni auto-completado en IDE.
+
+    @ConfigurationProperties: mapea un prefijo de propiedades a un bean Java, con binding relajado (camelCase, kebab-case, snake_case). Más seguro y escalable.
+
+```java
+@ConfigurationProperties(prefix = "app.pedidos")
+@Component
+public class PedidosProperties {
+    private int maxItems = 10;    // valor por defecto
+    private Duration timeout;
+    private List<String> estadosValidos;
+    // getters y setters
+}
+```
+
+### properties
+
+### app.pedidos.max-items=20
+app.pedidos.timeout=5s
+app.pedidos.estados-validos=CREADO,ENVIADO
+
+Para activar el autocompletado en el IDE, añade la dependencia spring-boot-configuration-processor (optional). Además, se pueden anidar clases POJO para mapear estructuras complejas.
+Relajación del binding
+
+@ConfigurationProperties soporta nombres de propiedades en distintos formatos:
+
+### app.pedidos.max-items
+
+### app.pedidos.maxItems
+
+### app.pedidos.max_items
+
+### APP_PEDIDOS_MAXITEMS (variable de entorno)
+
+Todos se mapean a la misma propiedad maxItems.
+Placeholders y SpEL en propiedades
+
+Se pueden referenciar otras propiedades o usar expresiones SpEL limitadas en los valores:
+properties
+
+### app.url-base=http://localhost:${server.port}
+app.descripcion=La aplicación ${info.app.name} escuchando en ${app.url-base}
+
+### Configuración externa en producción: variables de entorno y Config Server
+
+En entornos como Kubernetes o plataformas de nube, las propiedades se inyectan mediante variables de entorno (p.ej. SPRING_DATASOURCE_URL). Spring Boot convierte automáticamente variables mayúsculas con guiones bajos al formato de propiedad.
+
+Para aplicaciones distribuidas, Spring Cloud Config Server centraliza la configuración y permite actualizarla en caliente (con @RefreshScope). El listado de fuentes se amplía para incluir la configuración remota con prioridad adecuada.
+Validación de propiedades
+
+Se puede utilizar Bean Validation en el POJO de @ConfigurationProperties para validar en el arranque. Si se añade @Validated a la clase y @NotNull, @Min, etc. en los campos, si la validación falla la aplicación no arranca, lo cual es deseable para evitar errores tardíos.
+```java
+@Validated
+@ConfigurationProperties(prefix = "app.pedidos")
+public class PedidosProperties {
+    @Min(1)
+    private int maxItems;
+    ...
+}
+```
+
+### 05_Acceso_Datos/JDBC_Template.md
+El dolor que resuelve: JDBC crudo
+
+JDBC es potente pero requiere código repetitivo: abrir conexiones, preparar sentencias, recorrer ResultSet, cerrar recursos en finally anidados y manejar la omnipresente SQLException. Spring elimina esa fricción con JdbcTemplate, que sigue el patrón Template Method: el recurso se abre y cierra automáticamente, y tu código se centra en la lógica SQL y el mapeo.
+Configuración del DataSource
+
+Todo comienza con un DataSource. Spring Boot lo autoconfigura a partir de las propiedades spring.datasource.*. Si no hay propiedades, intenta una base de datos embebida (H2) si encuentra el driver. En configuración manual:
+```java
+@Bean
+public DataSource dataSource() {
+    HikariConfig config = new HikariConfig();
+    config.setJdbcUrl("jdbc:mysql://localhost/midb");
+    config.setUsername("user");
+    config.setPassword("pass");
+    return new HikariDataSource(config);
 }
 
-@test "funcion saludar devuelve nombre" {
-    source ./mis_funciones.sh
-    run saludar "Luis"
-    [ "$status" -eq 0 ]
-    [ "$output" = "Hola, Luis" ]
+@Bean
+public JdbcTemplate jdbcTemplate(DataSource ds) {
+    return new JdbcTemplate(ds);
+}
+```
+
+Spring Boot incluye HikariCP como pool por defecto, el más rápido.
+Operaciones básicas con JdbcTemplate
+
+Una vez inyectado JdbcTemplate, los métodos principales son:
+
+    queryForObject(String sql, Class<T> tipo, Object... args) : para un solo valor (ej. Integer count). Lanza EmptyResultDataAccessException si no hay resultados.
+
+    queryForList(String sql, Class<T> tipo, Object... args) : lista de valores únicos.
+
+    query(String sql, RowMapper<T> rowMapper, Object... args) : lista de objetos mapeados.
+
+    queryForMap(String sql, Object... args) : un solo registro como Map<String,Object>.
+
+    update(String sql, Object... args) : INSERT, UPDATE, DELETE. Devuelve el número de filas afectadas.
+
+    batchUpdate(String sql, List<Object[]> batchArgs) : múltiples actualizaciones en lote.
+
+    execute(String sql) : para DDL o ejecución genérica.
+
+### RowMapper: el puente entre ResultSet y objetos
+
+Interfaz funcional clave:
+```java
+public class ProductoRowMapper implements RowMapper<Producto> {
+    @Override
+    public Producto mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Producto p = new Producto();
+        p.setId(rs.getLong("id"));
+        p.setNombre(rs.getString("nombre"));
+        p.setPrecio(rs.getBigDecimal("precio"));
+        return p;
+    }
+}
+```
+
+Se puede usar lambda: (rs, rowNum) -> new Producto(...). Spring proporciona BeanPropertyRowMapper<Producto>(Producto.class) que mapea por nombres de columna (si coinciden), pero tiene limitaciones (no soporta conversiones complejas, ligeramente más lento).
+Ejemplo de consulta con parámetros
+```java
+public Optional<Producto> findById(Long id) {
+    try {
+        Producto p = jdbcTemplate.queryForObject(
+            "SELECT id, nombre, precio FROM productos WHERE id = ?",
+            new ProductoRowMapper(), id);
+        return Optional.of(p);
+    } catch (EmptyResultDataAccessException e) {
+        return Optional.empty();
+    }
+}
+```
+
+### NamedParameterJdbcTemplate
+
+En lugar de ?, puedes usar parámetros con nombre (:id). Requiere un NamedParameterJdbcTemplate, que internamente delega en el JdbcTemplate estándar.
+```java
+String sql = "SELECT * FROM productos WHERE nombre = :nombre AND precio < :precio";
+Map<String, Object> params = Map.of("nombre", "Teclado", "precio", new BigDecimal(100));
+List<Producto> productos = namedJdbcTemplate.query(sql, params, new ProductoRowMapper());
+```
+
+Muy práctico cuando hay muchos parámetros y mejora la legibilidad.
+ResultSetExtractor y RowCallbackHandler
+
+    ResultSetExtractor: para procesar el ResultSet completo dentro de una sola callback (ej. construir estructura jerárquica a partir de múltiples filas). Se usa con query(sql, ResultSetExtractor).
+
+    RowCallbackHandler: para procesar fila a fila sin devolver nada (no acumula resultados). Ideal para volcados o streamings.
+
+### Gestión de excepciones
+
+JDBC lanza SQLException y sus derivados. JdbcTemplate traduce automáticamente estas excepciones a la jerarquía de DataAccessException de Spring, que son unchecked y más informativas: DataIntegrityViolationException, DuplicateKeyException, BadSqlGrammarException, etc. Esta traducción se realiza mediante un SQLExceptionTranslator configurable.
+Operaciones por lotes (batch)
+
+Para insertar miles de registros eficientemente:
+```java
+List<Object[]> batch = productos.stream()
+    .map(p -> new Object[]{p.getNombre(), p.getPrecio()})
+    .collect(toList());
+jdbcTemplate.batchUpdate("INSERT INTO productos (nombre, precio) VALUES (?,?)", batch);
+```
+
+batchUpdate permite también indicar el tamaño de lote y manejar devoluciones de claves generadas mediante PreparedStatement con KeyHolder.
+Recuperación de claves generadas
+```java
+KeyHolder keyHolder = new GeneratedKeyHolder();
+jdbcTemplate.update(connection -> {
+    PreparedStatement ps = connection.prepareStatement(
+        "INSERT INTO productos (nombre, precio) VALUES (?,?)",
+        Statement.RETURN_GENERATED_KEYS);
+    ps.setString(1, p.getNombre());
+    ps.setBigDecimal(2, p.getPrecio());
+    return ps;
+}, keyHolder);
+Long nuevoId = keyHolder.getKey().longValue();
+```
+
+### Llamada a stored procedures y funciones
+
+Se puede usar JdbcTemplate.call(...) con CallableStatementCreator y CallableStatementCallback, pero hay alternativas más modernas como SimpleJdbcCall:
+```java
+SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+    .withProcedureName("actualizar_stock")
+    .declareParameters(
+        new SqlParameter("p_id", Types.INTEGER),
+        new SqlParameter("p_cantidad", Types.INTEGER));
+Map<String, Object> inParams = Map.of("p_id", id, "p_cantidad", cantidad);
+jdbcCall.execute(inParams);
+```
+
+Sin embargo, Spring Data JPA o JDBC simplifican aún más esto.
+Cuándo usar JdbcTemplate frente a JPA
+
+    Si necesitas control absoluto sobre el SQL y rendimiento máximo.
+
+    En aplicaciones pequeñas o consultas muy específicas donde un ORM es excesivo.
+
+    Cuando el modelo de datos no encaja bien con entidades JPA.
+
+    Para migraciones o tareas batch.
+
+Spring ofrece también Spring Data JDBC, que combina el estilo de repositorios de Spring Data con JdbcTemplate pero sin JPA ni mapeo complejo.
+05_Acceso_Datos/JPA_y_Hibernate_Integracion.md
+JPA: estándar, Hibernate: implementación
+
+JPA (Jakarta Persistence API) es la especificación estándar para ORM en Java. Hibernate es la implementación más popular. Spring Boot elige Hibernate automáticamente si está en el classpath (starter spring-boot-starter-data-jpa).
+Configuración sin Spring Boot
+
+En Spring puro, configurar JPA implica:
+```java
+@Bean
+public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource ds) {
+    LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+    emf.setDataSource(ds);
+    emf.setPackagesToScan("com.empresa.modelo");
+    emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+    emf.setJpaProperties(hibernateProperties());
+    return emf;
 }
 
-Características:
-
-    run ejecuta un comando y captura $status, $output, $lines (array de líneas).
-
-    Las pruebas se agrupan en archivos; se ejecutan con bats archivo.bats.
-
-    También se puede cargar funciones auxiliares.
-
-    Soporte para setup() y teardown() dentro del archivo.
-
-Ejemplo más completo:
-bash
-
-setup() {
-    # Crear un directorio temporal
-    TESTDIR=$(mktemp -d)
+@Bean
+public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
+    return new JpaTransactionManager(emf);
 }
-teardown() {
-    rm -rf "$TESTDIR"
+```
+
+Spring Boot autoconfigura todo esto con un simple spring.jpa.* en las propiedades.
+El EntityManager y su ciclo de vida
+
+El EntityManager es el objeto central de JPA que gestiona las entidades. Spring, a través de la anotación @PersistenceContext, inyecta un EntityManager con ámbito de transacción. En realidad inyecta un proxy que comparte el EntityManager real (que es de ámbito de transacción y no es thread-safe).
+```java
+@Repository
+public class ProductoDao {
+    @PersistenceContext
+    private EntityManager em;
+
+    public Producto findById(Long id) {
+        return em.find(Producto.class, id);
+    }
+}
+```
+
+### Entidades: anotaciones esenciales
+```java
+@Entity
+@Table(name = "productos")
+public class Producto {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 200)
+    private String nombre;
+
+    @Enumerated(EnumType.STRING)
+    private Categoria categoria;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fabricante_id")
+    private Fabricante fabricante;
+    // getters/setters
+}
+```
+
+Estrategias de generación de ID: AUTO, IDENTITY, SEQUENCE, TABLE. Lo más común es IDENTITY (autoincrement) o SEQUENCE en bases de datos que lo soportan (PostgreSQL, Oracle).
+Mapeo de relaciones
+
+    @OneToOne, @OneToMany, @ManyToOne, @ManyToMany.
+
+    Importante: FetchType.LAZY para evitar cargas innecesarias (el valor por defecto en @ManyToOne es EAGER, así que hay que cambiarlo).
+
+    Cuidado con @OneToMany sin mappedBy: por defecto crea tabla intermedia. Generalmente se define mappedBy en el lado no propietario.
+
+    LazyInitializationException: ocurre cuando se accede a una relación lazy fuera de la transacción. Para evitarlo: usar JOIN FETCH en consultas, mantener transacción abierta (con @Transactional sobre el método) o usar DTOs.
+
+### Hibernate como motor: propiedades clave
+properties
+
+### spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=validate  # none, update, create, create-drop
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.default_schema=public
+
+ddl-auto en producción debe ser validate o none. update puede generar cambios destructivos. Mejor usar Flyway o Liquibase.
+Contexto de persistencia y caché de primer nivel
+
+Dentro de una transacción, el EntityManager mantiene un contexto de persistencia (caché de primer nivel) que garantiza que una misma entidad por ID devuelva la misma instancia. Las modificaciones se detectan al hacer flush (antes del commit) mediante el mecanismo de dirty checking, comparando el estado actual con una instantánea del momento de carga. No es necesario llamar a update() explícito; si la entidad está managed y la transacción se completa, Hibernate sincroniza los cambios.
+Operaciones con EntityManager
+
+    persist(entity): guarda una nueva entidad.
+
+    merge(entity): actualiza una entidad detached (o crea si no existe).
+
+    remove(entity): elimina una entidad managed.
+
+    find(Class, id): busca por clave primaria.
+
+    createQuery(jpql): consultas JPQL.
+
+    createNativeQuery(sql): consultas nativas.
+
+    flush(): sincroniza con la base de datos sin hacer commit.
+
+Spring Data JPA encapsula todo esto, pero conocer el EntityManager es vital para casos complejos o cuando se requieren consultas dinámicas.
+Errores frecuentes
+
+    N+1 queries: al recorrer una colección de entidades que tienen una relación lazy y no se ha hecho fetch, se ejecuta una consulta adicional por cada entidad. Solución: JOIN FETCH en JPQL o @EntityGraph.
+
+    Entidades detachadas: si intentas persistir una entidad que ya tiene ID pero no está managed, puede lanzar PersistentObjectException.
+
+    Transaccionalidad: olvidar @Transactional en el servicio que orquesta múltiples operaciones.
+
+### 05_Acceso_Datos/Spring_Data_JPA.md
+El paradigma: repositorios sin implementación
+
+Spring Data JPA genera automáticamente la implementación de las interfaces de repositorio en tiempo de ejecución. Solo defines la interfaz y, mediante query derivation o consultas anotadas, obtienes el código necesario.
+```java
+public interface ProductoRepository extends JpaRepository<Producto, Long> {
+    List<Producto> findByNombreIgnoreCase(String nombre);
+    Optional<Producto> findByNombreAndFabricante(String nombre, Fabricante f);
+}
+```
+
+En tiempo de arranque, Spring crea un proxy que implementa ProductoRepository y todos los métodos de JpaRepository (CRUD básico, paginación, ordenación, batch).
+Query Methods (consulta derivada del nombre)
+
+El mecanismo clave: el nombre del método se analiza y se traduce a una consulta JPQL/Criteria.
+
+Palabras clave más comunes:
+Palabra	Ejemplo	JPQL equivalente
+find...By, read...By, get...By	findByNombre	where x.nombre = ?1
+...Containing / ...Contains	findByNombreContaining(String)	where x.nombre like %?1%
+...StartingWith	findByNombreStartingWith	like ?1%
+...Between	findByPrecioBetween	where x.precio between ?1 and ?2
+...In	findByCategoriaIn	where x.categoria in ?1
+...OrderBy	findByNombreOrderByPrecioDesc	order by x.precio desc
+...And, ...Or	findByNombreAndPrecio	where x.nombre = ?1 and x.precio = ?2
+...True / ...False	findByActivoTrue	where x.activo = true
+...First / ...Top	findFirst5ByNombre	limita resultados
+
+Se puede usar Pageable y Sort como parámetro adicional. Retornar Page, List, Stream, opcional con Optional.
+```java
+Page<Producto> findByPrecioGreaterThan(BigDecimal precio, Pageable pageable);
+
+@Query personalizada con JPQL
+```
+
+Cuando los nombres se vuelven muy largos o necesitas joins complejos:
+```java
+@Query("SELECT p FROM Producto p JOIN FETCH p.fabricante WHERE p.nombre LIKE %:nombre%")
+List<Producto> buscarPorNombreConFabricante(@Param("nombre") String nombre);
+```
+
+También se pueden hacer updates/delete:
+```java
+@Modifying
+@Transactional
+@Query("UPDATE Producto p SET p.precio = p.precio * :factor WHERE p.categoria = :cat")
+int actualizarPrecioPorCategoria(@Param("factor") BigDecimal factor, @Param("cat") Categoria cat);
+
+@Modifying indica que no es SELECT y necesita @Transactional.
+@EntityGraph para controlar carga EAGER/LAZY
+```
+
+Para evitar el problema N+1 sin escribir JPQL, se pueden definir @EntityGraph y referenciarlo en el método:
+```java
+@Entity
+@NamedEntityGraph(name = "Producto.fabricante",
+    attributeNodes = @NamedAttributeNode("fabricante"))
+public class Producto { ... }
+
+// En repositorio:
+@EntityGraph("Producto.fabricante")
+List<Producto> findAll();
+```
+
+También se puede definir de forma ad-hoc con @EntityGraph(attributePaths = {"fabricante"}).
+Auditoría y campos automáticos
+
+Spring Data JPA proporciona anotaciones para auditoría:
+
+    @CreatedDate, @LastModifiedDate (en java.time.Instant o LocalDateTime).
+
+    @CreatedBy, @LastModifiedBy (con Spring Security integrado).
+
+    Se habilita con @EnableJpaAuditing en alguna configuración.
+
+```java
+@EntityListeners(AuditingEntityListener.class)
+@Entity
+public class Producto {
+    @CreatedDate
+    private Instant fechaCreacion;
+    @LastModifiedDate
+    private Instant fechaModificacion;
+}
+```
+
+### Proyecciones y DTOs
+
+En lugar de devolver la entidad completa, se pueden definir interfaces de proyección:
+```java
+public interface ProductoResumen {
+    String getNombre();
+    BigDecimal getPrecio();
 }
 
-@test "listar archivos" {
-    touch "$TESTDIR/file1.txt"
-    touch "$TESTDIR/file2.txt"
-    run ls "$TESTDIR"
-    [ "$status" -eq 0 ]
-    [ "${#lines[@]}" -eq 2 ]
+// En repositorio:
+List<ProductoResumen> findByCategoria(Categoria cat);
+```
+
+Spring solo selecciona las columnas necesarias. También hay proyecciones de cierre abierto (expresiones SpEL) o basadas en DTOs con constructor.
+Especificaciones (Specification) y Query by Example
+
+Para consultas dinámicas, JpaSpecificationExecutor permite construir criterios con Specification:
+```java
+public interface ProductoRepository extends JpaRepository<Producto, Long>,
+        JpaSpecificationExecutor<Producto> {}
+
+java
+```
+
+### Specification<Producto> spec = (root, query, cb) -> cb.and(
+    cb.like(root.get("nombre"), "%" + nombre + "%"),
+    cb.greaterThan(root.get("precio"), 10)
+);
+List<Producto> productos = repo.findAll(spec);
+
+Query by Example permite consultar a partir de una instancia de la entidad con campos no nulos. Simple pero limitado a igualdades exactas.
+Paginación, ordenación y streaming
+
+    Page<T>: contiene el contenido, número de página, total páginas, etc.
+
+    Slice<T>: solo sabe si hay siguiente (más eficiente sin count).
+
+    Stream<T>: un stream de resultados que debe cerrarse dentro de una transacción (@Transactional). Bueno para procesar grandes volúmenes con Java 8 streams.
+
+### 05_Acceso_Datos/Transacciones_y_Transactional.md
+Modelo de transacciones de Spring
+
+Spring abstrae las transacciones con PlatformTransactionManager. Independientemente de que uses JDBC, JPA o JMS, el manejo declarativo es el mismo. La anotación @Transactional envuelve el método en un proxy AOP que crea/únete a una transacción según la configuración.
+@Transactional en profundidad
+```java
+@Transactional(
+    propagation = Propagation.REQUIRED,
+    isolation = Isolation.READ_COMMITTED,
+    timeout = 30,
+    readOnly = false,
+    rollbackFor = { RuntimeException.class },
+    noRollbackFor = { MiExcepcionControlada.class }
+)
+public void procesarPedido() { ... }
+```
+
+Propagación: define cómo se comporta el método si ya existe una transacción.
+Valor	Comportamiento
+REQUIRED (defecto)	Usa la transacción existente o crea una nueva.
+REQUIRES_NEW	Siempre crea una nueva transacción, suspendiendo la actual.
+MANDATORY	Debe existir una transacción; si no, lanza excepción.
+SUPPORTS	Ejecuta en transacción si existe, si no, no.
+NOT_SUPPORTED	Siempre ejecuta sin transacción, suspendiendo la existente.
+NEVER	No debe existir transacción; si hay, lanza excepción.
+NESTED	Ejecuta en un savepoint anidado (solo con JDBC).
+
+Isolation: nivel de aislamiento SQL (READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE). Normalmente READ_COMMITTED es suficiente.
+
+readOnly: optimiza el rendimiento indicando que solo hay lecturas (el EntityManager no necesita hacer dirty checking).
+
+rollbackFor / noRollbackFor: por defecto, solo se hace rollback con RuntimeException y Error. Si una excepción checked debe causar rollback, se especifica.
+El proxy transaccional: cómo funciona internamente
+
+    Spring crea un proxy alrededor del bean.
+
+    Cuando se invoca un método anotado con @Transactional desde fuera del bean, el proxy intercepta la llamada.
+
+    Antes de ejecutar el método, consulta al TransactionManager para comenzar o unirse a una transacción.
+
+    Ejecuta el método real.
+
+    Si el método lanza una excepción que cumple con rollbackFor, el TransactionManager hace rollback.
+
+    Si todo sale bien, hace commit.
+
+    Si la excepción es de las que no causan rollback, hace commit después de la excepción (poco común).
+
+El problema de la auto-invocación: si desde dentro del mismo bean se llama a this.metodoTransaccional(), no pasa por el proxy y la anotación se ignora. Soluciones: autowirearse uno mismo, usar AopContext.currentProxy(), o refactorizar a otro bean.
+@Transactional en repositorios y servicios
+
+La práctica recomendada es poner @Transactional a nivel de servicio o caso de uso. Los repositorios de Spring Data JPA ya heredan @Transactional(readOnly = true) en SimpleJpaRepository para métodos de consulta, y los métodos de modificación (save, delete) tienen @Transactional por defecto, pero usualmente se requiere una transacción que cubra todo el flujo de negocio.
+Transacciones y bases de datos distribuidas / JTA
+
+Con un solo DataSource, se usa DataSourceTransactionManager o JpaTransactionManager. Para múltiples recursos (dos bases de datos, JMS, etc.) se necesita un gestor de transacciones distribuidas (JTA), como Atomikos o Bitronix, o delegar en el servidor de aplicaciones. Spring Boot simplifica la configuración con spring-boot-starter-jta-atomikos.
+Manejo de transacciones largas y con patrones conversacionales
+
+Spring soporta transacciones largas usando @Transactional y sesiones extendidas, pero la tendencia es usar arquitecturas que eviten mantener la transacción abierta a través de múltiples peticiones HTTP. En su lugar, se usa @Transactional en cada petición y se trabaja con entidades detachadas, volviendo a fusionarlas (merge) si es necesario.
+Testing de transacciones
+
+En pruebas con @DataJpaTest o @SpringBootTest, se puede usar @Transactional para que las operaciones de un test se reviertan automáticamente al final. Sin embargo, cuando se usa TestRestTemplate en @SpringBootTest(webEnvironment = RANDOM_PORT), la petición HTTP corre en un hilo separado, por lo que no comparte la transacción del test. En ese caso, se debe limpiar manualmente o usar @Transactional(propagation = NOT_SUPPORTED) y luego borrar datos.
+05_Acceso_Datos/Consultas_Nativas_y_Procedure.md
+Cuándo usar consultas nativas
+
+Aunque JPQL cubre la mayoría de casos, a veces es necesario SQL nativo para:
+
+    Utilizar características específicas del motor (funciones de ventana, operadores espaciales, FOR UPDATE, hints de optimizador).
+
+    Invocar procedimientos almacenados complejos.
+
+    Realizar operaciones masivas de actualización con condiciones especiales.
+
+    Consultas con joins complejos donde JPQL no rinde o se vuelve ilegible.
+
+Spring Data JPA y JPA proveen mecanismos para ejecutar SQL nativo manteniendo el mapeo de resultados.
+@Query con nativeQuery = true
+```java
+public interface ProductoRepository extends JpaRepository<Producto, Long> {
+    @Query(value = "SELECT * FROM productos WHERE nombre ILIKE CONCAT('%', :nombre, '%')",
+           nativeQuery = true)
+    List<Producto> buscarPorNombreSimilar(@Param("nombre") String nombre);
+}
+```
+
+El resultado se mapea a la entidad Producto (o una proyección) si las columnas coinciden. También se puede retornar Object[] o List<Object[]> para casos sin mapeo.
+Proyecciones con consulta nativa
+
+Con una interfaz de proyección:
+```java
+public interface ProductoCantidad {
+    String getCategoria();
+    Long getCantidad();
 }
 
-shunit2
+@Query(value = "SELECT categoria, COUNT(*) as cantidad FROM productos GROUP BY categoria", nativeQuery = true)
+List<ProductoCantidad> contarPorCategoria();
+```
 
-shunit2 es otra librería (un script .sh que se descarga) que imita JUnit. Las funciones de prueba comienzan con test.
-bash
+Si el SQL devuelve columnas con nombres diferentes, se puede usar alias (SELECT cat as categoria).
+Mapeo a DTO con @SqlResultSetMapping
 
-#!/bin/bash
-source ./shunit2
+Cuando se necesita un DTO (clase concreta) en lugar de interfaz, se puede usar @SqlResultSetMapping:
+```java
+@SqlResultSetMapping(
+    name = "productoResumenMapping",
+    classes = @ConstructorResult(
+        targetClass = ProductoResumenDTO.class,
+        columns = {
+            @ColumnResult(name = "nombre", type = String.class),
+            @ColumnResult(name = "precio_medio", type = Double.class)
+        }
+    )
+)
+@Entity
+public class Producto { ... }
 
-testSuma() {
-    assertEquals 5 "$(( 2 + 3 ))"
+// Luego en el repositorio:
+@Query(value = "SELECT nombre, AVG(precio) as precio_medio FROM productos GROUP BY nombre", nativeQuery = true)
+@SqlResultSetMapping(name = "productoResumenMapping")  // redundante si ya se mapea en la entidad
+List<ProductoResumenDTO> resumenPrecios();
+```
+
+En la práctica, se prefiere @NamedNativeQuery declarado en la entidad y luego invocarlo con EntityManager.createNamedQuery.
+Ejecución dinámica de SQL nativo con EntityManager
+
+Cuando la consulta se construye en tiempo de ejecución (cuidado con SQL injection), se puede usar EntityManager.createNativeQuery directamente en el repositorio o un DAO.
+```java
+@Repository
+public class ProductoCustomRepository {
+    @PersistenceContext
+    private EntityManager em;
+
+    @SuppressWarnings("unchecked")
+    public List<Producto> buscarConFiltros(Map<String, Object> filtros) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM productos WHERE 1=1");
+        Map<String, Object> params = new HashMap<>();
+        if (filtros.containsKey("nombre")) {
+            sql.append(" AND nombre LIKE :nombre");
+            params.put("nombre", "%" + filtros.get("nombre") + "%");
+        }
+        Query query = em.createNativeQuery(sql.toString(), Producto.class);
+        params.forEach(query::setParameter);
+        return query.getResultList();
+    }
 }
-testCadena() {
-    str="hola"
-    assertContains "$str" "ol"
+```
+
+### Llamada a procedimientos almacenados con @Procedure
+
+Spring Data JPA permite invocar procedimientos almacenados mediante la anotación @Procedure en métodos del repositorio.
+```java
+@Procedure("nombre_procedimiento")
+void ejecutarProcedimiento(@Param("param1") String param1);
+```
+
+Si el procedimiento retorna un conjunto de resultados, se puede declarar el tipo de retorno List<T>. También se puede usar @Query con nativeQuery = true y CALL para procedimientos que no se adaptan a los parámetros.
+
+Alternativa vía EntityManager:
+```java
+StoredProcedureQuery sp = em.createStoredProcedureQuery("calcular_ventas");
+sp.registerStoredProcedureParameter("anio", Integer.class, ParameterMode.IN);
+sp.setParameter("anio", 2025);
+sp.execute();
+List<Object[]> resultados = sp.getResultList();
+```
+
+### Actualizaciones masivas con SQL nativo
+
+@Modifying también funciona con nativeQuery = true:
+```java
+@Modifying
+@Transactional
+@Query(value = "UPDATE productos SET precio = precio * 1.1 WHERE categoria = :cat", nativeQuery = true)
+int aplicarInflacion(@Param("cat") String categoria);
+```
+
+Ojo: al ser nativo, no se aplican las reglas de cascada JPA ni se actualizan entidades en memoria, por lo que debe ir seguido de una recarga si la sesión se mantiene.
+Consideraciones de seguridad y portabilidad
+
+    Las consultas nativas atan la aplicación a un dialecto de base de datos concreto.
+
+    Mayor riesgo de SQL injection si se concatenan parámetros. Siempre usar parámetros enlazados (setParameter).
+
+    No pasan por la caché de segundo nivel de Hibernate.
+
+    Las consultas nativas no son validadas en tiempo de arranque (salvo que se habilite spring.jpa.properties.hibernate.query.fail_on_pagination_over_collection_fetch), así que los errores sintácticos aparecen en tiempo de ejecución.
+
+### 06_Seguridad/Spring_Security_Arquitectura.md
+La cadena de filtros: el núcleo de Spring Security
+
+Spring Security se basa en una cadena de filtros del contenedor de servlets, anticipándose al DispatcherServlet. Un único punto de entrada, DelegatingFilterProxy, se registra en el web.xml (o automáticamente por Spring Boot) y delega todas las peticiones a un bean llamado springSecurityFilterChain, que es una FilterChainProxy. Esta FilterChainProxy contiene una lista de cadenas de seguridad (SecurityFilterChain) que pueden aplicar diferentes configuraciones según la URL (por ejemplo, una para APIs REST y otra para páginas web).
+Componentes principales del flujo de autenticación
+
+    SecurityContextHolder: donde Spring Security almacena los detalles del principal autenticado. Por defecto utiliza una estrategia ThreadLocal para mantener el contexto ligado al hilo de la petición.
+
+    SecurityContext: contiene un objeto Authentication.
+
+    Authentication: representa el token de autenticación. Puede ser el estado previo a la autenticación (con las credenciales) o posterior (con los permisos y el principal).
+
+        principal: normalmente un UserDetails.
+
+        credentials: la contraseña o token.
+
+        authorities: los roles/permisos (GrantedAuthority).
+
+    AuthenticationManager: interfaz central que recibe un Authentication no autenticado y devuelve uno completamente autenticado. Su implementación principal, ProviderManager, itera sobre una lista de AuthenticationProviders.
+
+    AuthenticationProvider: cada uno sabe autenticar un tipo específico de token (ej. DaoAuthenticationProvider para usuario/contraseña contra base de datos, JwtAuthenticationProvider para tokens JWT, LdapAuthenticationProvider, etc.).
+
+    UserDetailsService: colaborador de DaoAuthenticationProvider. Carga un UserDetails (usuario, contraseña, roles) desde cualquier fuente (base de datos, memoria, LDAP). Spring Security solo pide loadUserByUsername(String).
+
+### Flujo típico de autenticación por usuario/contraseña
+
+    El filtro UsernamePasswordAuthenticationFilter (por defecto en /login) intercepta una petición POST con username y password.
+
+    Crea un UsernamePasswordAuthenticationToken no autenticado.
+
+    Llama al AuthenticationManager (ProviderManager).
+
+    ProviderManager busca un AuthenticationProvider que soporte ese token. Encuentra DaoAuthenticationProvider.
+
+    DaoAuthenticationProvider llama a UserDetailsService.loadUserByUsername() para obtener el UserDetails.
+
+    El PasswordEncoder verifica la contraseña enviada contra la almacenada.
+
+    Si concuerda, se crea un nuevo UsernamePasswordAuthenticationToken con el principal, los GrantedAuthority y authenticated = true.
+
+    Se establece en el SecurityContext y se devuelve.
+
+    En peticiones subsiguientes, el SecurityContextPersistenceFilter (o en sesiones, el SecurityContextRepository) restaura el contexto a partir de la sesión HTTP.
+
+### Autorización: acceso a recursos
+
+La autorización ocurre después de la autenticación, mediante la configuración HttpSecurity y en tiempo de petición:
+
+    FilterSecurityInterceptor (o AuthorizationFilter en versiones recientes): es el último filtro de la cadena y lanza AccessDeniedException si el usuario no tiene los permisos requeridos.
+
+    La decisión se basa en los GrantedAuthority del Authentication y en las reglas expresadas en la configuración (.hasRole("ADMIN"), .authenticated(), etc.).
+
+### Tratamiento de excepciones
+
+    AuthenticationEntryPoint: se invoca cuando un usuario no autenticado intenta acceder a un recurso protegido. En una API REST devuelve HTTP 401, en una aplicación web redirige a la página de login.
+
+    AccessDeniedHandler: se ejecuta cuando un usuario autenticado no tiene permisos suficientes (HTTP 403).
+
+### Contexto para aplicaciones REST y stateless
+
+En REST no hay sesiones HTTP. La configuración se vuelve SessionCreationPolicy.STATELESS. Se reemplaza la autenticación basada en sesiones por tokens (JWT). Un filtro personalizado (por ejemplo, JwtAuthenticationFilter) extrae el token de la cabecera Authorization, lo valida y establece el SecurityContext para esa petición. Al ser sin sesión, el contexto no se persiste, y el filtro debe ejecutarse en cada petición.
+06_Seguridad/Configuracion_DSL.md
+De WebSecurityConfigurerAdapter a SecurityFilterChain
+
+Desde Spring Security 5.7, la forma moderna de configurar la seguridad es declarando beans de tipo SecurityFilterChain y usando la DSL fluida de HttpSecurity. Adiós a la herencia.
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutSuccessUrl("/")
+            )
+            .oauth2Login(Customizer.withDefaults());
+        return http.build();
+    }
 }
-setUp() { ... }
-tearDown() { ... }
-. shunit2
+```
 
-Elección: Bats tiene una sintaxis más moderna y es muy usado en entornos de CI. shunit2 es más veterano y ligero.
-Pruebas con aislamiento
+### authorizeHttpRequests y la nueva sintaxis
 
-    Crea directorios temporales con mktemp -d.
+A partir de Spring Security 6, se recomienda authorizeHttpRequests sobre authorizeRequests, usando AuthorizationManager internamente. La DSL es muy legible:
 
-    Al final de cada prueba, limpia en teardown.
+    requestMatchers("/url").permitAll(): acceso libre.
 
-    Si el script depende de comandos del sistema, puede ser necesario "mockearlos" redefiniendo funciones o usando PATH modificado.
+    .hasRole("ADMIN"): requiere rol (prefijo ROLE_ automático).
 
-    Para probar funciones sin llamar a otros scripts, estructura tu código en bibliotecas sourceables (ver 03-funciones/librerias).
+    .hasAuthority("SCOPE_read"): para authority exacta.
 
-Integración continua
+    .hasAnyRole("ADMIN", "USER"): múltiples roles.
 
-Ejecuta bats tests/*.bats en tu pipeline de CI; falla si alguna prueba no pasa. Acompaña con shellcheck para calidad total.
-Scripts de ejemplo
-scripts/instalador-ejemplo.sh
+    .authenticated(): solo requiere autenticado.
 
-Un instalador interactivo con whiptail (si disponible) o dialog, que usa getopts para opciones no interactivas, demuestra trampas, logging y preguntas de configuración.
-bash
+    Se pueden encadenar marcadores específicos como dispatcherTypeMatchers, etc.
 
-#!/usr/bin/env bash
-set -euo pipefail
-IFS=$'\n\t'
+Ejemplo de restricción por método HTTP y patrón:
+```java
+.requestMatchers(HttpMethod.POST, "/api/productos/**").hasRole("EDITOR")
+.requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+```
 
-# -------------------------------------------------------------------
-# instalador-ejemplo.sh - Instalador interactivo con diálogos
-# -------------------------------------------------------------------
+### Configuración de login y logout
 
-readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+    FormLogin: personaliza la página de login y las URLs de procesamiento. En REST puro, se suele deshabilitar con http.formLogin(AbstractHttpConfigurer::disable).
 
-# --- Configuración por defecto ---
-INSTALL_DIR="$HOME/.miapp"
-AUTO_MODE=0
-VERBOSE=0
+    HttpBasic: autenticación HTTP Basic. Útil para APIs internas o pruebas.
 
-# --- Funciones de utilidad y logging ---
-info()  { echo "[INFO]  $*"; }
-warn()  { echo "[WARN]  $*" >&2; }
-error() { echo "[ERROR] $*" >&2; }
+    OAuth2Login: configura el login delegado con Google, GitHub, etc., usando spring-boot-starter-oauth2-client.
 
-usage() {
-    cat <<EOF
-Instalador de MiApp.
-Uso: $SCRIPT_NAME [opciones]
+    Logout: define la URL de logout, invalidación de sesión, eliminación de cookies.
+
+### CORS y CSRF
+
+    CORS: Spring Security aplica una capa adicional a la configuración global de CORS de Spring MVC. Se puede personalizar con http.cors(cors -> cors.configurationSource(...)).
+
+    CSRF: protección por defecto para formularios. En REST stateless con JWT, normalmente se deshabilita: http.csrf(AbstractHttpConfigurer::disable). Pero antes de deshabilitarlo, considera la vulnerabilidad: si no usas cookies para autenticación, CSRF no aplica.
+
+### Configuración de múltiples SecurityFilterChain
+
+Cuando coexisten una API REST y una aplicación web MVC, se pueden definir dos SecurityFilterChain beans con diferentes prioridades (@Order). Por ejemplo, una cadena para /api/** sin estado y otra para el resto con login de formulario.
+```java
+@Bean
+@Order(1)
+public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+    http
+        .securityMatcher("/api/**")
+        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .csrf(AbstractHttpConfigurer::disable);
+    return http.build();
+}
+
+@Bean
+@Order(2)
+public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+    http
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/css/**", "/js/**").permitAll()
+            .anyRequest().authenticated()
+        )
+        .formLogin(Customizer.withDefaults());
+    return http.build();
+}
+```
+
+### Personalización del UserDetailsService y PasswordEncoder
+```java
+@Bean
+public UserDetailsService userDetailsService(UserRepository userRepo) {
+    return username -> userRepo.findByUsername(username)
+        .map(user -> User.withUsername(user.getUsername())
+                .password(user.getPassword())
+                .roles(user.getRoles().toArray(String[]::new))
+                .build())
+        .orElseThrow(() -> new UsernameNotFoundException(username));
+}
+
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+}
+```
+
+Spring Boot detecta un PasswordEncoder y lo inyecta automáticamente.
+Configuración de AuthenticationManager para casos complejos
+
+Si necesitas exponer el AuthenticationManager (por ejemplo, para autenticar programáticamente en un controlador), puedes definirlo como bean. Con Spring Boot, AuthenticationConfiguration lo expone:
+```java
+@Bean
+public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    return config.getAuthenticationManager();
+}
+```
+
+### 06_Seguridad/JWT_y_OAuth2.md
+OAuth2: roles y flujos
+
+OAuth2 es el estándar de facto para delegación de acceso. Sus protagonistas:
+
+    Resource Owner (el usuario).
+
+    Client (la aplicación que quiere acceder).
+
+    Authorization Server (emite tokens).
+
+    Resource Server (la API protegida).
+
+Flujos más usados:
+
+    Authorization Code (con PKCE): para aplicaciones web y móviles. El cliente redirige al servidor de autorización, el usuario autentica y consiente, se devuelve un código que el cliente canjea por un token.
+
+    Client Credentials: para comunicación máquina a máquina.
+
+    Refresh Token: para renovar access tokens sin molestar al usuario.
+
+### JSON Web Tokens (JWT)
+
+Un token JWT (JSON Web Token) es una cadena codificada en Base64 que contiene tres partes:
+header.payload.signature
+
+    Header: algoritmo de firma (HS256, RS256).
+
+    Payload: claims (sub, iss, exp, roles, scopes, etc.).
+
+    Signature: garantiza integridad y autenticidad.
+
+Ventajas: autocontenido, no requiere almacenamiento en el servidor, ideal para servicios distribuidos y stateless.
+Spring Security como Resource Server
+
+Con Spring Boot y el starter spring-boot-starter-oauth2-resource-server, configurar un resource server JWT es trivial:
+properties
+
+spring.security.oauth2.resourceserver.jwt.issuer-uri=https://auth-server.com/realms/mi-realm
+
+O manualmente:
+```java
+@Bean
+public SecurityFilterChain resourceServerFilter(HttpSecurity http) throws Exception {
+    http
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/public").permitAll()
+            .anyRequest().authenticated()
+        )
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(
+            jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
+        ));
+    return http.build();
+}
+```
+
+Spring Security valida automáticamente la firma, la expiración, el issuer, etc. usando las propiedades o un JwtDecoder.
+Conversión de JWT a Authentication
+
+Por defecto, el framework mapea los scopes del JWT a GrantedAuthority con prefijo SCOPE_. Si tu token tiene roles personalizados, puedes definir un JwtAuthenticationConverter:
+```java
+@Bean
+public JwtAuthenticationConverter jwtAuthenticationConverter() {
+    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+    grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+    grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+    return converter;
+}
+```
+
+### Authorization Server con Spring Authorization Server
+
+Para emitir tokens JWT, Spring proporciona el proyecto spring-authorization-server. Se configura con un RegisteredClientRepository y una AuthorizationServerSettings:
+```java
+@Bean
+public RegisteredClientRepository registeredClientRepository() {
+    RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
+        .clientId("mi-cliente")
+        .clientSecret("{noop}secret")
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+        .redirectUri("http://localhost:8080/login/oauth2/code/mi-cliente")
+        .scope("openid").scope("profile")
+        .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+        .build();
+    return new InMemoryRegisteredClientRepository(client);
+}
+```
+
+Pero para muchos escenarios, se usa Keycloak, Okta o Auth0 como servidores de autorización externos.
+Implementación completa de login con JWT en un cliente
+
+No siempre necesitas un authorization server propio. Si implementas autenticación local generando tus propios JWT:
+
+    AuthenticationController: recibe credenciales, valida con AuthenticationManager, genera un JWT (usando librería jjwt o nimbus-jose-jwt) y lo devuelve al cliente.
+
+    JwtAuthenticationFilter (heredado de OncePerRequestFilter): lee el token de la cabecera Authorization: Bearer ..., lo parsea, valida firma/expiración, carga el usuario (opcional) y establece el SecurityContext.
+
+    Configurar el filtro en la cadena antes de los filtros de autorización.
+
+Ejemplo de filtro simplificado:
+```java
+public class JwtTokenFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain chain) throws ServletException, IOException {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+            // validar token y extraer claims
+            String username = JwtUtils.getUsername(token);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // cargar UserDetails y crear Authentication
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+        }
+        chain.doFilter(request, response);
+    }
+}
+```
+
+Y en la configuración:
+```java
+http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+```
+
+### OAuth2 Client (login social)
+
+Con spring-boot-starter-oauth2-client y propiedades:
+properties
+
+spring.security.oauth2.client.registration.google.client-id=...
+spring.security.oauth2.client.registration.google.client-secret=...
+
+Spring Security expone automáticamente /oauth2/authorization/google y gestiona la redirección, el canje del código y la creación del OAuth2AuthenticationToken. Se puede personalizar el OAuth2UserService para mapear a tu propio modelo de usuario.
+06_Seguridad/Metodo_Security.md
+Habilitar la seguridad a nivel de método
+
+La seguridad a nivel de método proporciona una capa de defensa adicional, controlando la invocación de métodos de servicio en lugar de solo URLs. Se habilita añadiendo @EnableMethodSecurity (o @EnableGlobalMethodSecurity en versiones anteriores) en una clase de configuración.
+```java
+@Configuration
+@EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
+public class MethodSecurityConfig { }
+
+    securedEnabled permite @Secured.
+
+    prePostEnabled permite @PreAuthorize / @PostAuthorize.
+
+    jsr250Enabled para @RolesAllowed.
+
+@Secured y @RolesAllowed
+
+@Secured("ROLE_ADMIN") verifica que el usuario tenga el rol indicado. No permite expresiones; solo una lista de roles (usando lógica OR). @RolesAllowed es equivalente pero sigue el estándar JSR-250.
+java
+
+public interface ProductoService {
+    @Secured("ROLE_ADMIN")
+    void eliminarProducto(Long id);
+}
+
+@PreAuthorize y @PostAuthorize: la potencia de las expresiones
+```
+
+Permiten usar el Spring Security Expression Language (SpEL) para lógica compleja.
+
+    @PreAuthorize: antes de ejecutar el método. Evalúa la expresión y deniega el acceso si no se cumple.
+
+    @PostAuthorize: después de ejecutar el método. El método se ejecuta, y luego se evalúa la expresión sobre el objeto retornado (útil para permisos en base al resultado). Si falla, el resultado no se devuelve.
+
+Ejemplos:
+```java
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('PRODUCTO_ESCRITURA')")
+public Producto crear(Producto p) { ... }
+
+@PreAuthorize("#id != null and @productoService.esPropietario(#id, authentication.principal.username)")
+public Producto actualizarPrecio(Long id, BigDecimal precio) { ... }
+
+@PostAuthorize("returnObject.usuario == authentication.name")
+public Pedido obtenerPedido(Long id) { ... }
+
+@PreAuthorize("hasRole('USER') and #producto.precio < 1000")
+public void aplicarDescuento(Producto producto) { ... }
+```
+
+En las expresiones se puede acceder a:
+
+    Parámetros del método con #nombreParam.
+
+    El objeto retornado en @PostAuthorize con returnObject.
+
+    Beans de Spring con @nombreBean (p.ej. @seguridadService).
+
+    El principal actual con authentication.
+
+### @PreFilter y @PostFilter
+
+Filtran colecciones pasadas como argumentos o devueltas. Muy potentes pero con impacto en rendimiento si las colecciones son grandes.
+
+    @PreFilter: filtra elementos de una colección de entrada usando una expresión. El elemento actual se referencia con filterObject.
+
+    @PostFilter: filtra la colección de salida.
+
+```java
+@PreFilter("filterObject.propietario == authentication.name")
+public void guardarVarios(List<Documento> docs) { ... }
+
+@PostFilter("hasPermission(filterObject, 'READ')")
+public List<Documento> listarDocumentos() { ... }
+```
+
+### Seguridad en servicios y controladores
+
+A menudo se aplica en la capa de servicio, manteniendo los controladores ligeros. Así, si la lógica de negocio se reutiliza desde otros puntos (tareas programadas, mensajería), la seguridad se aplica igual. La anotación debe estar en la interfaz o en la implementación concreta; lo habitual es en la implementación.
+Manejo de excepciones de seguridad a nivel de método
+
+Cuando una expresión de seguridad falla, se lanza AuthorizationDeniedException. Se puede capturar globalmente con un @ControllerAdvice junto con @ExceptionHandler para convertirla en una respuesta HTTP adecuada (403 Forbidden).
+Consideraciones de proxy
+
+La seguridad a nivel de método se basa en AOP (proxies). Por tanto, aplican las mismas reglas: la anotación debe estar en un método público y la llamada debe provenir de fuera del bean (no por auto-invocación). Para casos de auto-invocación, se puede extraer a otro bean o usar @EnableAspectJAutoProxy(exposeProxy = true) y llamar a través de AopContext.currentProxy().
+
+### 07_Temas_Avanzados/Eventos_de_Aplicacion.md
+El sistema de eventos de Spring
+
+Spring proporciona un mecanismo de publicación/suscripción de eventos dentro del ApplicationContext. Permite que un componente publique un evento y que otros componentes reaccionen sin acoplamiento directo, una implementación más del principio de Inversión de Control.
+
+Piezas clave:
+
+    ApplicationEvent: clase base para definir eventos. Desde Spring 4.2 ya no es obligatorio extenderla; cualquier objeto puede ser un evento.
+
+    ApplicationEventPublisher: interfaz que posee el ApplicationContext (y cualquier bean que la implemente) para publicar eventos.
+
+    Listener / @EventListener: método que recibe el evento y reacciona. Puede anotarse directamente en un bean.
+
+### Publicación de eventos
+
+Inyectamos el publicador:
+```java
+@Component
+public class PedidoService {
+    private final ApplicationEventPublisher publisher;
+    // ...
+
+    public void procesarPedido(Pedido pedido) {
+        // lógica de negocio
+        publisher.publishEvent(new PedidoCreadoEvent(this, pedido));
+    }
+}
+```
+
+PedidoCreadoEvent es una clase simple que hereda de ApplicationEvent o, más moderno, simplemente un POJO (sin extender nada) y se puede publicar así desde Spring 4.2+:
+```java
+public class PedidoCreadoEvent {
+    private final Pedido pedido;
+    public PedidoCreadoEvent(Pedido pedido) { this.pedido = pedido; }
+    public Pedido getPedido() { return pedido; }
+}
+```
+
+Y la publicación sería publisher.publishEvent(new PedidoCreadoEvent(pedido)).
+Recepción de eventos con @EventListener
+
+Cualquier bean puede contener un método anotado con @EventListener. Spring lo registra automáticamente.
+```java
+@Component
+public class NotificacionListener {
+
+    @EventListener
+    public void manejarPedidoCreado(PedidoCreadoEvent event) {
+        // enviar email de confirmación
+        notificar(event.getPedido());
+    }
+}
+```
+
+Se pueden escuchar múltiples tipos de eventos con distintos métodos, o un mismo método puede escuchar varios usando la condición classes o genéricos.
+Eventos transaccionales
+
+Con @TransactionalEventListener, la escucha se vincula a las fases de una transacción:
+Fase	Descripción
+AFTER_COMMIT (defecto)	Se ejecuta si la transacción se completa exitosamente.
+AFTER_ROLLBACK	Se ejecuta si la transacción falla.
+AFTER_COMPLETION	Después de commit o rollback.
+BEFORE_COMMIT	Antes de que la transacción se confirme.
+```java
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+public void manejarPedidoCreadoCommit(PedidoCreadoEvent event) {
+    // solo se ejecuta si la transacción fue exitosa
+}
+```
+
+Importante: @TransactionalEventListener solo funciona si el evento se publicó dentro de una transacción activa y el listener está en el mismo ApplicationContext (o contexto con propagación de transacciones). Es una herramienta poderosa para evitar efectos secundarios si la transacción falla (ej. no enviar email si el pedido no se persistió).
+Eventos asíncronos
+
+Para no bloquear al publicador, se puede ejecutar el listener de forma asíncrona. Basta con añadir @Async al método listener y habilitar el soporte asíncrono con @EnableAsync.
+```java
+@Component
+@EnableAsync
+public class AsyncNotificacionListener {
+
+    @Async
+    @EventListener
+    public void manejarPedidoCreadoAsync(PedidoCreadoEvent event) {
+        // este código se ejecuta en un pool de hilos separado
+    }
+}
+```
+
+Precauciones:
+
+    La transacción del publicador no se propaga al hilo asíncrono.
+
+    Los eventos asíncronos pueden perderse si la aplicación se cae antes de que se procesen; para garantías de entrega se necesita un message broker.
+
+    No combinar @Async con @TransactionalEventListener en el mismo listener.
+
+### Programación reactiva con eventos
+
+También se pueden publicar eventos y escucharlos usando @EventListener en entornos reactivos, pero el sistema de eventos estándar es bloqueante. Para aplicaciones WebFlux, se recomienda usar ApplicationEventMulticaster configurable o la integración con Project Reactor mediante Sinks.Many.
+Orden y herencia
+
+Se puede controlar el orden de ejecución de varios listeners con @Order. Además, un listener para una superclase también recibe eventos de las subclases, gracias a la resolución de tipos.
+Eventos de contexto (built-in)
+
+Spring dispara varios eventos del ciclo de vida del contexto: ContextRefreshedEvent, ContextStartedEvent, ContextStoppedEvent, ContextClosedEvent, RequestHandledEvent. Podemos escucharlos para inicializar recursos o gracia al apagar.
+```java
+@Component
+public class StartupListener {
+    @EventListener(ContextRefreshedEvent.class)
+    public void onRefresh() {
+        // Cache warmup, etc.
+    }
+}
+```
+
+### 07_Temas_Avanzados/Cache.md
+Abstracción de caché de Spring
+
+Desde Spring 3.1, la capa de caché permite añadir comportamiento de almacenamiento temporal a métodos con anotaciones declarativas, sin acoplarse a una implementación concreta (EhCache, Caffeine, Redis, Hazelcast, etc.). Solo necesitas configurar un CacheManager y anotar los métodos.
+@Cacheable – El pilar del caché
+
+El resultado de un método se almacena en un caché (por nombre) usando la clave generada. En invocaciones posteriores con la misma clave, se devuelve el valor cacheado sin ejecutar el método.
+```java
+@Service
+public class ProductoService {
+    @Cacheable("productos")
+    public Producto findById(Long id) {
+        // consulta costosa a BD
+    }
+}
+
+    value / cacheNames: nombre(s) del caché donde almacenar.
+
+    key: expresión SpEL para personalizar la clave. Por defecto se genera considerando todos los parámetros.
+
+    keyGenerator: bean personalizado para generación de claves.
+
+    condition: expresión SpEL que debe cumplirse para que se almacene en caché (p.ej. #id > 10).
+
+    unless: expresión SpEL que si es verdadera excluye el almacenamiento (útil para no cachear resultados nulos: #result == null).
+
+    sync: si es true, bloquea el acceso concurrente al mismo método para evitar que múltiples hilos computen el mismo valor a la vez (requiere que el CacheManager soporte sincronización, p.ej. Caffeine).
+
+java
+
+@Cacheable(value = "productos", key = "#id", unless = "#result == null")
+public Producto findById(Long id) { ... }
+
+@CacheEvict – Eliminación de entradas
+```
+
+Elimina una o todas las entradas de un caché. Se ejecuta después de la invocación del método (o antes con beforeInvocation = true).
+```java
+@CacheEvict(value = "productos", key = "#id")
+public void actualizarProducto(Long id, ProductoDTO dto) { ... }
+
+@CacheEvict(value = "productos", allEntries = true)
+public void limpiarCacheProductos() { ... }
+
+@CachePut – Actualización sin omitir la ejecución
+```
+
+Similar a @Cacheable, pero siempre ejecuta el método y actualiza el caché con el resultado. Útil para refrescar entradas sin saltarse la lógica.
+```java
+@CachePut(value = "productos", key = "#producto.id")
+public Producto guardar(Producto producto) { return repo.save(producto); }
+
+@Caching – Agrupar múltiples operaciones
+```
+
+Permite combinar varias anotaciones de caché en un solo método:
+```java
+@Caching(
+    cacheable = @Cacheable("productos"),
+    evict = { @CacheEvict("catalogo", allEntries = true) }
+)
+public Producto crear(Producto p) { ... }
+```
+
+### Configuración del CacheManager
+
+Spring Boot autoconfigura un CacheManager según las dependencias:
+
+    Caffeine (recomendada para caché local) con spring-boot-starter-cache.
+
+    Redis con spring-boot-starter-data-redis.
+
+    EhCache 3, Hazelcast, etc.
+
+Con Caffeine, basta añadir la dependencia y configurar en application.properties:
+properties
+
+### spring.cache.type=caffeine
+spring.cache.caffeine.spec=maximumSize=500,expireAfterAccess=600s
+
+Si necesitas múltiples caches con configuraciones distintas, defines un CacheManager bean:
+```java
+@Bean
+public CacheManager cacheManager() {
+    CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+    cacheManager.setCaffeine(Caffeine.newBuilder()
+        .expireAfterWrite(30, TimeUnit.MINUTES)
+        .maximumSize(1000));
+    return cacheManager;
+}
+```
+
+Para caches con TTL diferentes, se puede crear un SimpleCacheManager con varios CaffeineCache.
+Configuración avanzada: KeyGenerator y CacheResolver
+
+    KeyGenerator: cuando la lógica de clave por defecto no es suficiente (parámetros complejos sin toString() específico). Se implementa la interfaz y se referencia con @Cacheable(keyGenerator = "miGenerador").
+
+    CacheResolver: determina el(los) caché(s) en tiempo de ejecución, perfecto para sistemas multi-tenant. Puede elegir el caché según el inquilino.
+
+### Cacheo a nivel de anotaciones personalizadas
+
+Puedes crear tu propia anotación estereotipada que agrupe las anotaciones de caché:
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Cacheable(value = "productos", key = "#id")
+public @interface CachearProducto { }
+```
+
+### Sincronización y concurrencia
+
+Con sync = true en @Cacheable, Spring delega en el Cache subyacente el bloqueo. Por ejemplo, Caffeine soporta ConcurrentMap con sincronización a nivel de entrada. Esto evita el efecto "cache stampede" cuando muchos hilos intentan computar la misma clave simultáneamente.
+Cache con Spring WebFlux (reactivo)
+
+En WebFlux no se puede usar el CacheManager bloqueante estándar. Reactor añade CacheMono y CacheFlux para operaciones reactivas, pero no hay integración directa con @Cacheable. El uso de caché en contexto reactivo suele ser manual o con Mono.cache().
+07_Temas_Avanzados/Programacion_Reactiva_WebFlux.md
+Fundamentos reactivos con Project Reactor
+
+Spring WebFlux es el módulo de Spring para construir aplicaciones web no bloqueantes usando el estándar Reactive Streams. Internamente se apoya en Project Reactor, que proporciona dos tipos principales:
+
+    Mono<T>: emite 0 o 1 elemento (como un Optional asíncrono).
+
+    Flux<T>: emite 0 a N elementos (como un Stream asíncrono).
+
+Estos tipos son perezosos: nada ocurre hasta que alguien se suscribe. La suscripción la realiza el framework cuando el servidor recibe una petición.
+WebFlux frente a Spring MVC
+Spring MVC	Spring WebFlux
+Modelo de hilos: un hilo por petición (bloqueante)	Modelo de hilos: pocos hilos en loop de eventos (no bloqueante)
+Basado en Servlet API (Tomcat, Jetty)	Basado en Netty, Undertow o Servlet 3.1+ (con soporte no bloqueante)
+Fácil de entender, ecosistema maduro	Mayor escalabilidad para cargas I/O intensivas
+Anotaciones @Controller iguales	Puede usar anotaciones o functional endpoints
+Controladores reactivos con anotaciones
+
+La programación es casi idéntica a MVC, pero los métodos retornan Mono<T> o Flux<T>.
+```java
+@RestController
+@RequestMapping("/api/productos")
+public class ProductoController {
+    private final ProductoRepository repo;
+
+    @GetMapping
+    public Flux<Producto> listar() {
+        return repo.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Mono<ResponseEntity<Producto>> obtener(@PathVariable Long id) {
+        return repo.findById(id)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<Producto> crear(@RequestBody Producto producto) {
+        return repo.save(producto);
+    }
+}
+```
+
+La validación con @Valid funciona y el framework se suscribe al flujo para enviar la respuesta sin bloquear el hilo.
+Repositorios reactivos
+
+Spring Data proporciona R2DBC (Reactive Relational Database Connectivity) para bases de datos SQL y reactive MongoDB, Redis, etc.
+
+R2DBC:
+```java
+public interface ProductoRepository extends ReactiveCrudRepository<Producto, Long> {
+    Flux<Producto> findByNombreContaining(String nombre);
+}
+```
+
+La conexión se configura mediante spring.r2dbc.* y requiere un driver R2DBC (por ejemplo, PostgreSQL). Internamente, usa DatabaseClient que se basa en Netty para comunicación no bloqueante.
+Functional Endpoints (RouterFunction & HandlerFunction)
+
+Alternativa a las anotaciones: configuración basada en funciones.
+```java
+@Configuration
+public class ProductoRouter {
+    @Bean
+    public RouterFunction<ServerResponse> route(ProductoHandler handler) {
+        return RouterFunctions
+            .route(GET("/api/productos"), handler::listar)
+            .andRoute(POST("/api/productos"), handler::crear);
+    }
+}
+
+java
+
+@Component
+public class ProductoHandler {
+    private final ProductoRepository repo;
+
+    public Mono<ServerResponse> listar(ServerRequest req) {
+        Flux<Producto> productos = repo.findAll();
+        return ServerResponse.ok().body(productos, Producto.class);
+    }
+
+    public Mono<ServerResponse> crear(ServerRequest req) {
+        return req.bodyToMono(Producto.class)
+                .flatMap(repo::save)
+                .flatMap(p -> ServerResponse.created(URI.create("/api/productos/" + p.getId())).build());
+    }
+}
+```
+
+Este estilo ofrece máxima transparencia y composición funcional.
+WebClient: el cliente HTTP reactivo
+
+Sustituto no bloqueante de RestTemplate. Es reactivo y devuelve Mono/Flux.
+```java
+WebClient client = WebClient.create("https://api.externa.com");
+Mono<Producto> producto = client.get()
+    .uri("/productos/{id}", id)
+    .retrieve()
+    .onStatus(HttpStatus::is4xxClientError, response -> Mono.error(new RecursoNoEncontrado()))
+    .bodyToMono(Producto.class);
+```
+
+Soporta programación funcional, filtros, intercambio de tokens, y balanceo de carga con Spring Cloud LoadBalancer.
+Modelo de concurrencia y backpressure
+
+WebFlux ejecuta en un pequeño pool de hilos (por defecto, número de núcleos de CPU) gracias al bucle de eventos de Netty. La escritura en bases de datos se hace con drivers reactivos que usan then, flatMap para encadenar operaciones sin bloquear. El concepto de backpressure (control de flujo) permite que el consumidor le indique al productor cuántos datos está listo para procesar, evitando sobrecargas de memoria.
+¿Cuándo usar WebFlux?
+
+    Altas concurrencias con muchas conexiones simultáneas (ej. API Gateway, streaming en tiempo real).
+
+    Operaciones I/O intensivas (llamadas a servicios externos).
+
+    No es más rápido por operación individual; brilla en throughput y escalabilidad bajo carga.
+
+### Errores comunes
+
+    Bloquear dentro de una cadena reactiva (ej. llamar a Thread.sleep() o a una API bloqueante). Esto secuestra el hilo del loop y degrada el rendimiento. Usar subscribeOn(Schedulers.boundedElastic()) para adaptar código bloqueante.
+
+    No suscribirse explícitamente; siempre devolver el Mono/Flux al framework.
+
+### 07_Temas_Avanzados/Batch_y_Tareas_Programadas.md
+Spring Batch: procesamiento de grandes volúmenes
+
+Spring Batch es un framework para el desarrollo de procesos batch robustos, con reinicio, trazabilidad, control de transacciones escalonado y estadísticas. Una tarea batch se define como un Job compuesto de uno o más Step.
+
+Conceptos básicos:
+
+    Job: una unidad de trabajo completa, compuesto de pasos.
+
+    Step: fase independiente (p.ej. leer, procesar, escribir).
+
+    ItemReader: lee elementos uno a uno de una fuente (BD, archivo plano, XML).
+
+    ItemProcessor: transforma un elemento leído.
+
+    ItemWriter: escribe un lote de elementos (BD, archivo).
+
+    Tasklet: alternativa al chunk para acciones simples (ej. mover archivos, enviar correos).
+
+    JobRepository: almacena metadatos del estado del job y pasos (en BD). Permite reanudar tras fallos.
+
+    JobLauncher: interfaz para lanzar jobs.
+
+### Configuración de un Job simple (lectura de CSV a BD)
+```java
+@Configuration
+@EnableBatchProcessing
+public class BatchConfig {
+
+    @Autowired JobBuilderFactory jobs;
+    @Autowired StepBuilderFactory steps;
+
+    @Bean
+    public FlatFileItemReader<Producto> reader() {
+        return new FlatFileItemReaderBuilder<Producto>()
+            .name("productoItemReader")
+            .resource(new ClassPathResource("productos.csv"))
+            .delimited()
+            .names(new String[]{"nombre", "precio"})
+            .fieldSetMapper(fieldSet -> {
+                Producto p = new Producto();
+                p.setNombre(fieldSet.readString("nombre"));
+                p.setPrecio(fieldSet.readBigDecimal("precio"));
+                return p;
+            })
+            .linesToSkip(1)
+            .build();
+    }
+
+    @Bean
+    public JdbcBatchItemWriter<Producto> writer(DataSource dataSource) {
+        return new JdbcBatchItemWriterBuilder<Producto>()
+            .dataSource(dataSource)
+            .sql("INSERT INTO productos (nombre, precio) VALUES (:nombre, :precio)")
+            .beanMapped()
+            .build();
+    }
+
+    @Bean
+    public Step importStep(FlatFileItemReader<Producto> reader, JdbcBatchItemWriter<Producto> writer) {
+        return steps.get("importStep")
+            .<Producto, Producto>chunk(10)  // chunk size
+            .reader(reader)
+            .processor(processor())
+            .writer(writer)
+            .build();
+    }
+
+    @Bean
+    public Job importJob(Step importStep, JobCompletionNotificationListener listener) {
+        return jobs.get("importJob")
+            .incrementer(new RunIdIncrementer())
+            .listener(listener)
+            .start(importStep)
+            .build();
+    }
+
+    @Bean
+    public ItemProcessor<Producto, Producto> processor() {
+        return p -> {
+            p.setNombre(p.getNombre().toUpperCase());
+            return p;
+        };
+    }
+}
+```
+
+### Chunk-oriented processing
+
+El Step de tipo chunk lee elementos uno a uno con el ItemReader, los acumula en un buffer del tamaño del chunk, los pasa al ItemProcessor (opcional) y luego escribe el chunk completo con el ItemWriter. Si falla, puede reintentar el chunk o marcar el step como fallido.
+Tasklets para pasos simples
+
+Cuando no hay necesidad de procesar elementos, se usa un Tasklet:
+```java
+@Bean
+public Step cleanupStep() {
+    return steps.get("cleanupStep")
+        .tasklet((contribution, chunkContext) -> {
+            // limpiar archivos temporales
+            return RepeatStatus.FINISHED;
+        })
+        .build();
+}
+```
+
+### Job scheduling: lanzamiento bajo demanda
+
+Spring Batch no incluye un planificador, pero se integra fácilmente con Spring @Scheduled o herramientas externas como Quartz. En una aplicación Boot, se puede lanzar con JobLauncher desde un controlador o una tarea programada.
+```java
+@RestController
+public class BatchController {
+    @Autowired JobLauncher jobLauncher;
+    @Autowired Job importJob;
+
+    @PostMapping("/batch/import")
+    public String lanzar() throws Exception {
+        JobExecution exec = jobLauncher.run(importJob, new JobParametersBuilder()
+            .addLong("time", System.currentTimeMillis())
+            .toJobParameters());
+        return "Batch lanzado: " + exec.getStatus();
+    }
+}
+```
+
+### Spring Boot y Batch
+
+El starter spring-boot-starter-batch autoconfigura JobLauncher, JobRepository (necesitarás una base de datos) y habilita @EnableBatchProcessing. Boot puede ejecutar jobs al arrancar si se configura spring.batch.job.enabled=true y se definen beans de Job.
+Tareas programadas con @Scheduled
+
+Spring proporciona un planificador ligero para ejecutar métodos periódicamente.
+
+Habilitar con @EnableScheduling en alguna configuración.
+```java
+@Configuration
+@EnableScheduling
+public class SchedulingConfig { }
+```
+
+Luego en cualquier bean:
+```java
+@Component
+public class ReporteProgramado {
+    @Scheduled(fixedDelay = 60000) // 60 seg después de que termine la ejecución anterior
+    public void generarReporte() { ... }
+
+    @Scheduled(fixedRate = 60000)  // cada 60 seg, independientemente del tiempo de ejecución
+    public void refrescarDatos() { ... }
+
+    @Scheduled(cron = "0 0 2 * * ?") // a las 2 AM diario
+    public void limpiarLogs() { ... }
+}
+```
 
 Opciones:
-  -d DIR    Directorio de instalación (por defecto: $INSTALL_DIR)
-  -y        Modo automático (sin preguntas)
-  -v        Verbose
-  -h        Ayuda
-EOF
+
+    fixedDelay: intervalo en ms entre el final de una ejecución y el inicio de la siguiente.
+
+    fixedRate: intervalo entre inicios de ejecución (puede solaparse si la tarea tarda más que el rate; evitar con @Async o manejo de concurrencia).
+
+    initialDelay: retardo antes de la primera ejecución.
+
+    cron: expresión cron (segundos, minutos, horas, día del mes, mes, día de la semana).
+
+    zone: zona horaria para cron.
+
+    timeUnit (a partir de Spring Boot 3.x): permite cambiar la unidad de tiempo.
+
+### Ejecución asíncrona de tareas programadas
+
+Por defecto, las tareas @Scheduled se ejecutan en un único hilo (el TaskScheduler). Si una tarea se bloquea, las demás esperan. Para paralelismo, se puede configurar un TaskScheduler con pool:
+```java
+@Bean
+public TaskScheduler taskScheduler() {
+    ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+    scheduler.setPoolSize(5);
+    return scheduler;
+}
+```
+
+O marcar la tarea con @Async y habilitar @EnableAsync.
+Consideraciones en tareas programadas
+
+    En entornos clusterizados, las tareas programadas en cada nodo se ejecutarán simultáneamente a menos que se use un ejecutor distribuido (como ShedLock, Quartz con JDBC). Para evitar duplicados, se puede usar @SchedulerLock de ShedLock.
+
+    Excepciones no capturadas detienen la ejecución futura de esa tarea con fixedDelay (si la instancia no está ya en ejecución). Es recomendable envolver la lógica en try/catch si se desea que continúe.
+
+    Spring Boot expone el endpoint /actuator/scheduledtasks (Actuator) para ver las tareas programadas y sus expresiones cron.
+
+### ## 08_Spring_Cloud/Service_Discovery_Eureka.md
+
+### ### El problema del descubrimiento de servicios
+
+En una arquitectura de microservicios, los servicios se despliegan en múltiples instancias, con direcciones IP y puertos dinámicos (contenedores, escalado automático). La configuración estática de endpoints se vuelve inviable. **Service Discovery** resuelve esto proporcionando un registro central donde los servicios se registran y consultan la ubicación de sus dependencias.
+
+### ### Spring Cloud Netflix Eureka
+
+Eureka es un componente del stack Netflix OSS integrado en Spring Cloud. Consta de:
+
+- **Eureka Server**: el registro central.
+- **Eureka Client**: cada microservicio que se registra y descubre otros.
+
+### ### Implementación del Eureka Server
+
+1. Añade `spring-cloud-starter-netflix-eureka-server`.
+2. Anota la aplicación con `@EnableEurekaServer`.
+
+### ```java
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaServerApplication.class, args);
+    }
 }
 
-# --- Limpieza ---
-cleanup() {
-    local exit_code=$?
-    [[ -n "${tmpfile:-}" && -f "$tmpfile" ]] && rm -f "$tmpfile"
-    if (( exit_code != 0 )); then
-        error "Instalación fallida."
-    fi
-    exit "$exit_code"
+    Configura application.yml:
+
+### yaml
+
+server:
+  port: 8761
+eureka:
+  client:
+    register-with-eureka: false   # no se registra a sí mismo
+    fetch-registry: false
+
+¡El servidor ya está listo! Se accede a un dashboard en http://localhost:8761.
+Eureka Client (microservicio)
+
+Añade spring-cloud-starter-netflix-eureka-client a cada microservicio. Con spring.application.name se asigna el nombre lógico del servicio.
+yaml
+
+spring:
+  application:
+    name: producto-service
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+Al iniciar, el cliente se registra. Opcional: eureka.instance.prefer-ip-address=true para registrar la IP en lugar del hostname (mejor en contenedores).
+Descubrimiento en el código: RestTemplate + @LoadBalanced
+
+Spring Cloud integra el descubrimiento con balanceo de carga del lado cliente usando Spring Cloud LoadBalancer (sucesor de Ribbon). Exponemos un RestTemplate con @LoadBalanced:
+```java
+@Bean
+@LoadBalanced
+public RestTemplate restTemplate() {
+    return new RestTemplate();
 }
-trap cleanup EXIT INT TERM
+```
 
-# --- Parseo de opciones ---
-while getopts "d:yvh" opt; do
-    case "$opt" in
-        d) INSTALL_DIR="$OPTARG" ;;
-        y) AUTO_MODE=1 ;;
-        v) VERBOSE=1 ;;
-        h) usage; exit 0 ;;
-        *) usage >&2; exit 1 ;;
-    esac
-done
-shift $((OPTIND-1))
+Ahora, en cualquier petición HTTP, usamos el nombre lógico del servicio:
+```java
+restTemplate.getForObject("http://producto-service/api/productos", List.class);
+```
 
-# --- Seleccionar herramienta de diálogo ---
-DIALOG=""
-if command -v dialog >/dev/null; then
-    DIALOG="dialog"
-elif command -v whiptail >/dev/null; then
-    DIALOG="whiptail"
-fi
+La librería intercepta la petición, consulta a Eureka por las instancias de producto-service, elige una (round-robin por defecto) y traduce el nombre lógico a http://IP:puerto.
+Alternativa moderna: WebClient reactivo con balanceo
+```java
+@Bean
+@LoadBalanced
+public WebClient.Builder loadBalancedWebClientBuilder() {
+    return WebClient.builder();
+}
+// Uso:
+WebClient client = loadBalancedWebClientBuilder().build();
+Mono<List<Producto>> productos = client.get()
+    .uri("http://producto-service/api/productos")
+    .retrieve()
+    .bodyToFlux(Producto.class).collectList();
+```
 
-# --- Funciones de interfaz ---
-ask_confirm() {
-    local msg="$1"
-    if [[ "$AUTO_MODE" -eq 1 ]]; then
-        return 0    # sí por defecto
-    fi
-    if [[ -n "$DIALOG" ]]; then
-        "$DIALOG" --title "Confirmación" --yesno "$msg" 8 50 2>/dev/null
-    else
-        read -r -p "$msg [S/n]: " resp
-        [[ "$resp" == "" || "$resp" == "s" || "$resp" == "S" || "$resp" == "y" || "$resp" == "Y" ]]
-    fi
+### Salud y autorenovación
+
+El Eureka client envía latidos (heartbeats) cada 30 segundos por defecto. Si el server no los recibe, la instancia se saca del registro. Se puede afinar con:
+yaml
+
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+### Zonas y alta disponibilidad
+
+Para tolerancia a fallos del servidor Eureka, se despliegan múltiples servidores peer-to-peer que replican el registro. Cada servidor es cliente de los demás.
+yaml
+
+### # server1
+eureka:
+  client:
+    service-url:
+      defaultZone: http://server2:8762/eureka,http://server3:8763/eureka
+
+Los clientes pueden apuntar a todos los servidores en la lista, y Spring Cloud selecciona uno disponible.
+Eureka vs. otras soluciones
+
+    Eureka: AP (disponibilidad y tolerancia a particiones) en el teorema CAP, ideal para consistencia eventual y alta disponibilidad del registro.
+
+    Consul: CP, con chequeos de salud más ricos y KV store.
+
+    Kubernetes Service Discovery: en Kubernetes, se puede prescindir de Eureka y usar DiscoveryClient para Kubernetes.
+
+Spring Cloud Commons abstrae el descubrimiento; cambiar de Eureka a Consul o Kubernetes solo requiere cambiar dependencias sin tocar el código de negocio.
+08_Spring_Cloud/Config_Server.md
+La necesidad de configuración externa centralizada
+
+Los microservicios tienen propiedades (URLs de bases de datos, secretos, parámetros de negocio) que varían por entorno y deben gestionarse sin recompilar. Spring Cloud Config Server centraliza esta configuración en un backend versionado (Git, SVN, Vault) y la sirve a los servicios.
+Config Server
+
+Añade spring-cloud-config-server y anota con @EnableConfigServer.
+```java
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+```
+
+Configuración application.yml:
+yaml
+
+server:
+  port: 8888
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/mi-organizacion/config-repo
+          default-label: main
+          clone-on-start: true
+
+El servidor clona el repositorio Git y sirve las propiedades bajo /{application}/{profile} (ej. /producto-service/dev). El cliente consulta esta URL al arrancar y fusiona las propiedades.
+Config Client
+
+Los microservicios añaden spring-cloud-starter-config y un archivo bootstrap.properties (o application.properties) con la ubicación:
+properties
+
+### spring.application.name=producto-service
+spring.config.import=optional:configserver:http://localhost:8888
+
+En el repositorio Git, un archivo producto-service-dev.yml contendrá las propiedades para ese perfil. El servidor las entrega, y el cliente las integra en su Environment antes de la inicialización de beans.
+Refresco de configuración en caliente
+
+Los cambios en Git no se propagan automáticamente a los clientes en ejecución. Spring Cloud ofrece:
+
+    Actuator /refresh: el cliente debe invocar POST /actuator/refresh para recargar propiedades anotadas con @RefreshScope. Solo se actualizan beans marcados con @RefreshScope (normalmente servicios que leen propiedades).
+
+```java
+@Service
+@RefreshScope
+public class ConfiguracionServicio {
+    @Value("${mi.propiedad}")
+    private String propiedad;
+}
+```
+
+Al llamar a /refresh, el bean se reinicializa con los nuevos valores sin reiniciar la aplicación.
+
+    Spring Cloud Bus: propaga eventos de refresco a todos los clientes mediante un broker de mensajería (RabbitMQ, Kafka). Con un solo POST /actuator/busrefresh en cualquier cliente, todos los demás reciben la notificación.
+
+### Cifrado y secretos
+
+El Config Server puede cifrar valores en reposo usando claves simétricas o asimétricas. Los valores en los archivos de configuración pueden estar prefijados con {cipher}:
+yaml
+
+spring:
+  datasource:
+    password: '{cipher}AQBt...'
+
+El servidor descifra antes de enviar a los clientes. La clave se configura con encrypt.key (simétrica). Para mayor seguridad, se puede integrar Vault como backend.
+Estrategias de repositorio y composición
+
+    Repositorio compuesto: múltiples fuentes de configuración (Git + Vault + base de datos).
+
+    Patrones de búsqueda: soporta {application}, {profile}, {label}. Permite configuración global con archivos application*.yml.
+
+    Sobrescritura local: las propiedades locales del cliente (application.yml) pueden anular las remotas según la prioridad.
+
+### Config Server en producción
+
+    Se integra con Eureka para alta disponibilidad (los clientes usan el nombre lógico config-server en lugar de la URL fija).
+
+    Autenticación HTTP básica con Spring Security.
+
+    Aplicaciones nativas de Spring Cloud: spring-cloud-config-server + spring-cloud-starter-netflix-eureka-client.
+
+### 08_Spring_Cloud/API_Gateway.md
+El patrón API Gateway
+
+En microservicios, un API Gateway es el punto de entrada único que encamina las peticiones a los servicios internos, aplica políticas de seguridad, límites, transformación de protocolo y agregación. Aísla al cliente de la complejidad interna.
+Spring Cloud Gateway
+
+Es el gateway oficial (reactivo, no bloqueante) construido sobre Spring WebFlux. Alternativa a Netflix Zuul (obsoleto). Se configura con spring-cloud-starter-gateway.
+yaml
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: producto-service
+          uri: lb://producto-service
+          predicates:
+            - Path=/api/productos/**
+          filters:
+            - StripPrefix=1
+        - id: pedido-service
+          uri: lb://pedido-service
+          predicates:
+            - Path=/api/pedidos/**
+          filters:
+            - StripPrefix=1
+
+El prefijo lb:// indica balanceo de carga a través del Service Discovery (Eureka). Los predicates determinan si la ruta aplica; los filters modifican la petición/respuesta.
+Predicados (predicates)
+
+Factores que determinan si una ruta coincide. Spring Cloud Gateway incluye muchos incorporados:
+
+### Path: /api/productos/**
+
+### Host: *.mitienda.com
+
+### Method: GET,POST
+
+### Header: X-Request-Id con expresión regular
+
+### Query param: foo=bar
+
+### Cookie: sessionId=regex
+
+### Before/After/Between: horarios
+
+### Weight: para distribución ponderada (canary releases)
+
+Ejemplo de combinación:
+yaml
+
+predicates:
+  - Path=/api/**
+  - Method=GET
+  - Header=X-Api-Version, v2
+
+### Filtros
+
+Los filtros permiten modificar la petición entrante y la respuesta saliente. Existen filtros predefinidos y se pueden crear filtros personalizados.
+
+Filtros comunes de Gateway:
+
+    AddRequestHeader / AddResponseHeader: añade encabezados.
+
+    AddRequestParameter: añade query params.
+
+    PrefixPath / StripPrefix: manipula la ruta.
+
+    RewritePath: reescribe la ruta con regex.
+
+    CircuitBreaker: integra Resilience4j (circuit breaker).
+
+    RequestRateLimiter: limitación de velocidad con Redis.
+
+    Retry: lógica de reintentos.
+
+    DedupeResponseHeader: elimina cabeceras duplicadas.
+
+Ejemplo con circuit breaker:
+yaml
+
+filters:
+  - CircuitBreaker=name=productoCB, fallbackUri=forward:/fallback/productos
+
+### Filtros personalizados
+
+Implementando GatewayFilterFactory:
+```java
+@Component
+public class LoggingGatewayFilterFactory extends AbstractGatewayFilterFactory<LoggingGatewayFilterFactory.Config> {
+
+    public LoggingGatewayFilterFactory() { super(Config.class); }
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            System.out.println("Request: " + exchange.getRequest().getURI());
+            return chain.filter(exchange).then(Mono.fromRunnable(() ->
+                System.out.println("Response: " + exchange.getResponse().getStatusCode())));
+        };
+    }
+
+    public static class Config { /* propiedades configurables */ }
+}
+```
+
+Luego se usa en las rutas con - Logging.
+Global Filters
+
+Afectan a todas las rutas. Se implementan con GlobalFilter. Por ejemplo, autenticación JWT global, métricas, logging global.
+Configuración programática
+
+En lugar de YAML, se pueden definir rutas con la API de Java:
+```java
+@Bean
+public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+    return builder.routes()
+        .route("producto-service", r -> r.path("/api/productos/**")
+            .filters(f -> f.stripPrefix(1))
+            .uri("lb://producto-service"))
+        .build();
+}
+```
+
+### Integración con Spring Security
+
+El Gateway puede integrar autenticación OAuth2, validando tokens JWT y propagando la identidad a los servicios posteriores. Con spring-boot-starter-oauth2-resource-server y configurando el gateway como resource server, se pueden proteger rutas de manera centralizada.
+Limitación de velocidad (Rate Limiting)
+
+Usa RequestRateLimiter con Redis. Se define un KeyResolver (por IP, por usuario, etc.):
+```java
+@Bean
+public KeyResolver userKeyResolver() {
+    return exchange -> Mono.just(exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+}
+```
+
+Configuración:
+yaml
+
+filters:
+  - name: RequestRateLimiter
+    args:
+      redis-rate-limiter.replenishRate: 10
+      redis-rate-limiter.burstCapacity: 20
+
+### Resiliencia y tolerancia a fallos
+
+El Gateway puede integrar Resilience4J (circuit breaker, retry, timeout) directamente en las rutas para fallos en los servicios backend, como veremos después.
+Comparativa con otras soluciones
+
+    Zuul 1.x: bloqueante, no recomendado para nuevas aplicaciones.
+
+    Spring Cloud Gateway: reactivo, más ligero.
+
+    Kong, Traefik, Nginx: soluciones externas; Spring Cloud Gateway es perfecto para ecosistema Spring Boot.
+
+### 08_Spring_Cloud/Circuit_Breaker.md
+El patrón Circuit Breaker
+
+En sistemas distribuidos, las llamadas a servicios remotos pueden fallar o volverse lentas. El Circuit Breaker detecta fallos acumulativos y "abre" el circuito, rechazando rápidamente las peticiones durante un tiempo, evitando saturar al servicio deteriorado y dando posibilidad de recuperación.
+
+Estados del circuito:
+
+    CLOSED: operación normal, se contabilizan éxitos/fallos.
+
+    OPEN: se superó el umbral de fallos, se rechazan todas las peticiones inmediatamente.
+
+    HALF-OPEN: tras un tiempo de espera, se permite un número limitado de peticiones de prueba. Si tienen éxito, vuelve a CLOSED; si fallan, vuelve a OPEN.
+
+### Spring Cloud Circuit Breaker con Resilience4j
+
+Spring Cloud proporciona una abstracción spring-cloud-circuitbreaker que admite múltiples implementaciones. La recomendada es Resilience4j, ligera y reactiva.
+
+Dependencias: spring-cloud-starter-circuitbreaker-resilience4j.
+Uso declarativo con anotaciones
+
+En un servicio, se anota el método:
+```java
+@Service
+public class ProductoService {
+
+    @CircuitBreaker(name = "productoCB", fallbackMethod = "fallbackListar")
+    public List<Producto> listar() {
+        // llamada a servicio externo (WebClient, RestTemplate)
+        return restTemplate.getForObject("http://producto-service/api/productos", List.class);
+    }
+
+    public List<Producto> fallbackListar(Throwable t) {
+        return List.of(new Producto("Producto por defecto"));
+    }
+}
+```
+
+Para habilitarlo, necesita una configuración application.yml:
+yaml
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      productoCB:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+
+Parámetros principales:
+
+    sliding-window-size: número de llamadas para evaluar la tasa de fallos.
+
+    failure-rate-threshold: porcentaje de fallos que abre el circuito.
+
+    wait-duration-in-open-state: tiempo de espera antes de pasar a half-open.
+
+    permitted-number-of-calls-in-half-open-state: llamadas de prueba.
+
+### Fallback y retry combinados
+
+Resilience4j también soporta @Retry, @TimeLimiter, @Bulkhead, @RateLimiter. Se pueden combinar con @CircuitBreaker:
+```java
+@CircuitBreaker(name = "productoCB", fallbackMethod = "fallback")
+@Retry(name = "productoRetry", fallbackMethod = "fallback")
+public List<Producto> listar() { ... }
+```
+
+Configuración del retry:
+yaml
+
+resilience4j:
+  retry:
+    instances:
+      productoRetry:
+        max-attempts: 3
+        wait-duration: 500ms
+
+### Circuit Breaker en el API Gateway
+
+Spring Cloud Gateway permite aplicar circuit breaker directamente en las rutas:
+yaml
+
+filters:
+  - name: CircuitBreaker
+    args:
+      name: productoCB
+      fallbackUri: forward:/fallback/productos
+
+El fallback puede ser un endpoint interno que devuelva una respuesta controlada.
+Eventos y métricas
+
+Resilience4j emite eventos (transiciones de estado, fallos, éxitos) a través de Micrometer. Con Spring Boot Actuator, las métricas se exponen en /actuator/metrics y se pueden exportar a Prometheus/Grafana.
+
+Para acceder a los eventos programáticamente:
+```java
+@Autowired
+private CircuitBreakerRegistry registry;
+...
+CircuitBreaker cb = registry.circuitBreaker("productoCB");
+cb.getEventPublisher().onSuccess(event -> log.info("Éxito"));
+```
+
+### Bulkhead (compartimentos estancos)
+
+Aísla partes del sistema para evitar que un fallo en una dependencia consuma todos los hilos del pool.
+yaml
+
+resilience4j:
+  bulkhead:
+    instances:
+      productoBulkhead:
+        max-concurrent-calls: 5
+        max-wait-duration: 100ms
+
+```java
+@Bulkhead(name = "productoBulkhead", fallbackMethod = "fallback")
+public List<Producto> listar() { ... }
+```
+
+Si se alcanza el límite de llamadas concurrentes, las nuevas esperan hasta max-wait-duration y luego fallan.
+TimeLimiter
+
+Limita el tiempo de ejecución de una operación (útil en métodos asíncronos o no bloqueantes).
+```java
+@TimeLimiter(name = "productoTimeLimiter")
+public CompletableFuture<List<Producto>> listarAsync() { ... }
+```
+
+Configuración:
+yaml
+
+resilience4j:
+  timelimiter:
+    instances:
+      productoTimeLimiter:
+        timeout-duration: 2s
+
+### Consideraciones importantes
+
+    Resilience4j está diseñado para usarse con funciones funcionales o CompletionStage/Mono/Flux. Para código bloqueante, asegúrate de configurar los hilos apropiadamente.
+
+    Los fallbacks deben ser simples y no depender de la misma dependencia que falló.
+
+    Monitorear los circuit breakers con Micrometer + Grafana te permite ajustar umbrales y detectar problemas de latencia.
+
+    El patrón no sustituye a la lógica de reintentos; se combina. Circuit Breaker evita llamadas cuando se sabe que el sistema está caído; Retry maneja fallas transitorias.
+
+### 09_Miscelaneos/Internacionalizacion_i18n.md
+El desafío de las aplicaciones multidioma
+
+Una aplicación global debe presentar mensajes, etiquetas, formatos de fecha/número y validaciones en el idioma y la región del usuario. Spring proporciona un soporte sólido para i18n (internacionalización) y l10n (localización) mediante la abstracción MessageSource y la resolución de Locale.
+MessageSource: la fábrica de mensajes
+
+MessageSource es una interfaz que permite obtener mensajes por código y Locale. Spring define tres implementaciones principales:
+
+    ResourceBundleMessageSource: carga bundles .properties desde el classpath. Sin caché configurable (lee cada vez por defecto, aunque internamente usa ResourceBundle con caché de la JVM).
+
+    ReloadableResourceBundleMessageSource: similar, pero soporta recarga en caliente sin reiniciar la aplicación. Ideal para desarrollo o cuando los bundles están externos.
+
+    StaticMessageSource: para mensajes programáticos, útil en tests.
+
+Spring Boot autoconfigura un MessageSource buscando archivos messages*.properties en la raíz del classpath. La configuración por defecto:
+properties
+
+### spring.messages.basename=messages
+spring.messages.encoding=UTF-8
+spring.messages.cache-duration=3600   # segundos, para producción
+
+Se pueden definir múltiples basenames: messages, errors.
+
+Los archivos se nombran con el sufijo del locale: messages_es.properties, messages_en.properties, messages_fr.properties. Si no encuentra el código en el locale exacto, busca en el idioma base y luego en el archivo sin sufijo.
+Resolución de mensajes en código Java
+
+Inyectamos MessageSource y solicitamos un mensaje con un Locale:
+```java
+@Autowired
+private MessageSource messageSource;
+
+public String saludo(Locale locale) {
+    return messageSource.getMessage("saludo.bienvenida", null, locale);
+}
+```
+
+Si el mensaje requiere parámetros:
+properties
+
+### # messages_es.properties
+pedido.confirmacion=Pedido {0} confirmado con total de {1,number,currency}
+
+```java
+String mensaje = messageSource.getMessage(
+    "pedido.confirmacion",
+    new Object[]{pedido.getId(), pedido.getTotal()},
+    locale);
+```
+
+Podemos manejar mensajes de error con argumentos y DefaultMessageSourceResolvable.
+Resolución del Locale
+
+Spring necesita determinar el Locale del usuario. El DispatcherServlet utiliza un LocaleResolver:
+
+    AcceptHeaderLocaleResolver (defecto): analiza el header Accept-Language de la petición HTTP. Stateless, ideal para APIs.
+
+    SessionLocaleResolver: almacena el locale en la sesión HTTP. Útil cuando el usuario puede cambiar de idioma manualmente.
+
+    CookieLocaleResolver: persiste el locale en una cookie, sobrevive entre sesiones.
+
+    FixedLocaleResolver: fuerza un locale fijo (por ejemplo, para un backend interno).
+
+Spring Boot, por defecto, usa AcceptHeaderLocaleResolver. Para permitir al usuario cambiar de idioma, se configura un SessionLocaleResolver junto con un LocaleChangeInterceptor:
+```java
+@Bean
+public LocaleResolver localeResolver() {
+    SessionLocaleResolver resolver = new SessionLocaleResolver();
+    resolver.setDefaultLocale(Locale.forLanguageTag("es"));
+    return resolver;
 }
 
-ask_directory() {
-    local prompt="$1" default="$2"
-    if [[ "$AUTO_MODE" -eq 1 ]]; then
-        echo "$default"
-        return
-    fi
-    if [[ -n "$DIALOG" ]]; then
-        "$DIALOG" --title "Directorio" --inputbox "$prompt" 8 60 "$default" 2>&1 >/dev/tty
-    else
-        read -r -p "$prompt [$default]: " entrada
-        echo "${entrada:-$default}"
-    fi
+@Bean
+public LocaleChangeInterceptor localeChangeInterceptor() {
+    LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
+    interceptor.setParamName("lang");
+    return interceptor;
 }
 
-simulate_progress() {
-    if [[ -n "$DIALOG" ]]; then
-        for p in $(seq 0 10 100); do
-            echo "$p"
-            sleep 0.1
-        done | "$DIALOG" --gauge "Instalando..." 6 50 0
-    else
-        info "Instalando..."
-        sleep 1
-    fi
+@Override
+public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(localeChangeInterceptor);
+}
+```
+
+Ahora, una petición GET /productos?lang=en cambia el locale para esa sesión.
+i18n en plantillas Thymeleaf
+
+Thymeleaf integra el MessageSource mediante la expresión #{…}:
+```html
+<h1 th:text="#{titulo.productos}">Productos</h1>
+<p th:text="#{pedido.confirmado(${pedido.id}, ${pedido.total})}">Pedido confirmado</p>
+```
+
+Para fechas y números, Thymeleaf usa #dates.format y #numbers.formatDecimal con el Locale del contexto automáticamente.
+i18n en REST y validación
+
+Las anotaciones de Bean Validation también se pueden internacionalizar. En los archivos de validación (messages_es.properties) definimos:
+properties
+
+### producto.nombre.obligatorio=El nombre del producto es obligatorio
+precio.positivo=El precio debe ser positivo
+
+Las anotaciones usan {producto.nombre.obligatorio} como valor de message. Spring MVC, al fallar la validación, resuelve esos mensajes usando el MessageSource y el Locale de la petición.
+
+En un @ControllerAdvice personalizado, también podemos inyectar MessageSource para construir mensajes de error localizados:
+```java
+@ExceptionHandler(RecursoNoEncontradoException.class)
+public ResponseEntity<ErrorDTO> manejarNoEncontrado(RecursoNoEncontradoException ex, Locale locale) {
+    String mensaje = messageSource.getMessage("error.recurso_no_encontrado", new Object[]{ex.getId()}, locale);
+    return ResponseEntity.status(404).body(new ErrorDTO(mensaje));
+}
+```
+
+### Internacionalización de valores en @ConfigurationProperties
+
+No directamente. Las propiedades de configuración no están pensadas para i18n. Usa mensajes en las vistas o respuestas API.
+Buenas prácticas
+
+    Centraliza los mensajes en archivos .properties con nombres descriptivos.
+
+    Usa ReloadableResourceBundleMessageSource en desarrollo.
+
+    Evita mensajes largos con lógica de negocio en las plantillas; mantenlos simples.
+
+    Para aplicaciones con muchos idiomas, considera servicios externos de traducción o un CMS.
+
+### 09_Miscelaneos/Websockets_y_STOMP.md
+WebSockets: comunicación full-duplex
+
+El protocolo WebSocket permite un canal de comunicación persistente y bidireccional entre el cliente (navegador) y el servidor, superando las limitaciones de HTTP (petición-respuesta). Es ideal para notificaciones en tiempo real, chats, dashboards en vivo.
+
+Spring proporciona soporte tanto para WebSockets crudos como para la capa de subprotocolo STOMP (Simple Text Oriented Messaging Protocol), que añade encaminamiento de mensajes mediante destinos (similar a tópicos y colas de mensajería).
+Habilitar WebSocket en Spring
+
+Dependencia: spring-boot-starter-websocket.
+
+Configuración básica con STOMP:
+```java
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/topic", "/queue"); // prefijos para destinos del broker
+        registry.setApplicationDestinationPrefixes("/app"); // prefijo para mensajes del cliente al servidor
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS(); // habilita fallback SockJS
+    }
 }
 
-# --- Proceso de instalación ---
-main() {
-    info "Iniciando instalación de MiApp (versión 1.0)"
+    Broker simple (/topic, /queue): es un broker en memoria que reenvía mensajes a los clientes suscritos.
 
-    # Preguntar directorio de instalación
-    INSTALL_DIR=$(ask_directory "Directorio de instalación:" "$INSTALL_DIR")
+    /app: prefijo para los destinos de los métodos @MessageMapping (mensajes que llegan del cliente).
+```
 
-    # Confirmar
-    if ! ask_confirm "Instalar en $INSTALL_DIR?"; then
-        warn "Instalación cancelada por el usuario."
-        exit 1
-    fi
+    SockJS: emula WebSocket en navegadores antiguos usando long polling.
 
-    # Simular instalación
-    mkdir -p "$INSTALL_DIR"
-    simulate_progress
+### Controlador de mensajes STOMP
 
-    # Crear archivo de configuración de ejemplo
-    cat > "$INSTALL_DIR/config.ini" <<EOF
-# Configuración de MiApp
-install_date=$(date)
-version=1.0
-EOF
-    info "Archivo de configuración creado en $INSTALL_DIR/config.ini"
+Similar a @Controller MVC pero con anotaciones propias:
+```java
+@Controller
+public class ChatController {
 
-    info "¡Instalación completada exitosamente!"
+    @MessageMapping("/chat.enviar")
+    @SendTo("/topic/mensajes")
+    public Mensaje enviar(Mensaje mensaje) {
+        // se puede persistir aquí
+        return mensaje; // se reenvía a todos los suscritos a /topic/mensajes
+    }
+
+    @MessageMapping("/chat.privado")
+    public void privado(Mensaje msg, Principal principal) {
+        // Enviar a un usuario específico (destino /queue/privado-{username})
+        simpMessagingTemplate.convertAndSendToUser(msg.getDestinatario(), "/queue/privado", msg);
+    }
 }
 
-main "$@"
+    @MessageMapping("/ruta"): escucha mensajes enviados por clientes a /app/ruta.
 
-scripts/pipe-comunicacion.sh
+    @SendTo: define a qué destino broker se envía el valor de retorno del método (broadcast).
+```
 
-Demuestra la comunicación entre dos procesos (padre e hijo) mediante una tubería con nombre (FIFO). El script padre lanza un "servidor" que calcula factoriales y el "cliente" envía números y recibe resultados.
-bash
+    Principal: disponible si la sesión está autenticada.
 
-#!/usr/bin/env bash
-set -euo pipefail
+### Envío de mensajes desde el servidor
 
-# -------------------------------------------------------------------
-# pipe-comunicacion.sh - Comunicación vía FIFO (servidor factorial)
-# -------------------------------------------------------------------
+Inyectamos SimpMessagingTemplate:
+```java
+@Autowired
+private SimpMessagingTemplate messagingTemplate;
 
-FIFO_SRV="/tmp/fifo_servidor_$$"
-FIFO_CLI="/tmp/fifo_cliente_$$"
-
-cleanup() {
-    rm -f "$FIFO_SRV" "$FIFO_CLI"
-    exit 0
-}
-trap cleanup EXIT INT TERM
-
-mkfifo "$FIFO_SRV"
-mkfifo "$FIFO_CLI"
-
-# Función factorial
-factorial() {
-    local n=$1 f=1
-    for ((i=2; i<=n; i++)); do f=$((f*i)); done
-    echo "$f"
+public void notificarCambio(Evento evento) {
+    messagingTemplate.convertAndSend("/topic/eventos", evento);
 }
 
-# Proceso servidor
-servidor() {
-    exec 3<> "$FIFO_SRV"   # lectura de peticiones
-    exec 4> "$FIFO_CLI"    # escritura de respuestas
-
-    echo "Servidor: esperando peticiones..." >&2
-    while true; do
-        if read -r num <&3; then
-            if [[ "$num" == "quit" ]]; then
-                echo "Servidor: terminando." >&2
-                exec 3>&-; exec 4>&-
-                break
-            fi
-            if [[ "$num" =~ ^[0-9]+$ ]]; then
-                resultado=$(factorial "$num")
-                echo "$resultado" >&4
-                echo "Servidor: factorial($num) = $resultado" >&2
-            else
-                echo "ERROR" >&4
-            fi
-        else
-            # EOF en pipe (cliente cerró)
-            break
-        fi
-    done
+public void notificarUsuario(String username, Notificacion notif) {
+    messagingTemplate.convertAndSendToUser(username, "/queue/notificaciones", notif);
 }
+```
 
-# Proceso cliente
-cliente() {
-    exec 3> "$FIFO_SRV"    # escritura de peticiones
-    exec 4<> "$FIFO_CLI"   # lectura de respuestas
+convertAndSendToUser envía a un destino único por usuario: internamente se resuelve a /user/{username}/queue/notificaciones. El cliente debe suscribirse a /user/queue/notificaciones.
+Autenticación y autorización en STOMP
 
-    # Enviar números
-    for num in 5 7 3 10; do
-        echo "$num" >&3
-        read -r respuesta <&4
-        echo "Cliente: factorial($num) = $respuesta"
-    done
-    echo "quit" >&3
-    exec 3>&-; exec 4>&-
+Spring Security se integra con WebSocket. Se puede interceptar el handshake HTTP para extraer credenciales y luego aplicar seguridad a los destinos:
+```java
+@Configuration
+public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer {
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    // autenticar vía token en headers
+                }
+                return message;
+            }
+        });
+    }
 }
+```
 
-# Ejecutar servidor en segundo plano
-servidor &
-server_pid=$!
+Y autorización con @PreAuthorize en métodos @MessageMapping.
+Broker externo: RabbitMQ o ActiveMQ
 
-sleep 0.1   # dar tiempo a que el servidor abra los pipes
+Para aplicaciones en cluster, el broker simple no es suficiente porque no replica mensajes entre instancias. Spring permite conectar un broker STOMP externo (RabbitMQ, ActiveMQ) que haga de relay:
+```java
+@Override
+public void configureMessageBroker(MessageBrokerRegistry registry) {
+    registry.enableStompBrokerRelay("/topic", "/queue")
+            .setRelayHost("localhost")
+            .setRelayPort(61613)
+            .setClientLogin("guest")
+            .setClientPasscode("guest");
+}
+```
 
-# Ejecutar cliente
-cliente
+Ahora el broker externo maneja las suscripciones y la distribución, mientras los controladores siguen funcionando igual.
+Cliente JavaScript (STOMP.js)
+javascript
 
-wait "$server_pid"
-echo "Comunicación finalizada."
+### const socket = new SockJS('/ws');
+const stompClient = Stomp.over(socket);
+stompClient.connect({}, function(frame) {
+    stompClient.subscribe('/topic/mensajes', function(mensaje) {
+        // JSON.parse(mensaje.body)
+    });
+    stompClient.send("/app/chat.enviar", {}, JSON.stringify({texto: "Hola"}));
+});
 
-¿Cómo funciona?
+### Serialización y mensajes
 
-    Se crean dos FIFOs: uno para enviar peticiones al servidor (FIFO_SRV), otro para recibir respuestas (FIFO_CLI).
+Spring usa un MessageConverter para convertir entre objetos Java y el cuerpo del mensaje STOMP. Por defecto, MappingJackson2MessageConverter con JSON, configurable.
+Consideraciones de escalabilidad y estado
 
-    El servidor abre descriptores y entra en bucle leyendo números, calcula factoriales y responde.
+    Los clientes mantienen una sesión con el servidor. En un cluster, el broker externo permite compartir suscripciones.
 
-    El cliente abre los descriptores, envía números, lee respuestas y finalmente envía "quit".
+    El fallback SockJS puede crear múltiples peticiones HTTP; hay que dimensionar el pool de hilos.
 
-    Ambos cierran descriptores y se limpian los FIFOs.
+    Cuida el envío masivo: para miles de usuarios, el broker externo es obligatorio.
 
-Este esquema puede extenderse a múltiples clientes, pero hay que gestionar el acceso concurrente.
+    Las sesiones WebSocket no comparten el HttpSession automáticamente; se puede configurar un HandshakeInterceptor para transferir el usuario autenticado.
+
+### 09_Miscelaneos/Integracion_JMS_y_Kafka.md
+Mensajería asíncrona en Spring
+
+Spring ofrece abstracciones para los dos estándares de mensajería más extendidos: JMS (Java Message Service) para brokers tradicionales como ActiveMQ o Artemis, y Apache Kafka para streaming de eventos de alto rendimiento.
+
+Aunque los detalles difieren, el patrón es similar: un Template para enviar mensajes y un Listener anotado para recibirlos.
+Integración JMS
+Configuración con Spring Boot
+
+Starter: spring-boot-starter-artemis (o -activemq). Boot autoconfigura una ConnectionFactory y un JmsTemplate a partir de las propiedades:
+properties
+
+### spring.artemis.mode=native
+spring.artemis.broker-url=tcp://localhost:61616
+spring.artemis.user=admin
+spring.artemis.password=admin
+
+O con ActiveMQ:
+properties
+
+### spring.activemq.broker-url=tcp://localhost:61616
+spring.activemq.user=admin
+spring.activemq.password=admin
+
+### Envío de mensajes con JmsTemplate
+```java
+@Autowired
+private JmsTemplate jmsTemplate;
+
+public void enviarPedido(Pedido pedido) {
+    jmsTemplate.convertAndSend("cola.pedidos", pedido);
+}
+```
+
+convertAndSend utiliza un MessageConverter (por defecto MappingJackson2MessageConverter si Jackson está presente) para serializar a JSON.
+
+Si necesitas control fino (headers, propiedades JMS), puedes crear un Message con JmsTemplate.send().
+Recepción con @JmsListener
+```java
+@Component
+public class PedidoListener {
+
+    @JmsListener(destination = "cola.pedidos")
+    public void recibirPedido(Pedido pedido) {
+        // procesar pedido
+    }
+}
+```
+
+Para lecturas transaccionales, añade @Transactional al método (si hay un JmsTransactionManager o JtaTransactionManager). También se puede configurar concurrency para paralelismo:
+```java
+@JmsListener(destination = "cola.pedidos", concurrency = "3-10")
+```
+
+### Configuración avanzada de JMS
+
+    Destinos dinámicos: usar "dynamicQueues/..." en Artemis.
+
+    Mensajes de texto plano: cambiar MessageConverter por SimpleMessageConverter.
+
+    Dead Letter Queue: configurar en el broker.
+
+    Pub/Sub con tópicos: jmsTemplate.setPubSubDomain(true) y destino tema.nombre.
+
+### Integración Apache Kafka
+Dependencias y configuración
+
+Starter: spring-kafka. Spring Boot autoconfigura KafkaTemplate y consumer factories.
+
+Propiedades base:
+properties
+
+### spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=pedidos-group
+spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.JsonDeserializer
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+
+### Productor con KafkaTemplate
+```java
+@Autowired
+private KafkaTemplate<String, Pedido> kafkaTemplate;
+
+public void enviarPedido(Pedido pedido) {
+    kafkaTemplate.send("topic-pedidos", pedido.getId().toString(), pedido)
+        .addCallback(
+            result -> log.info("Enviado: {}", result.getProducerRecord().value()),
+            ex -> log.error("Error", ex)
+        );
+}
+```
+
+Se envía con una clave para particionamiento. El serializador JSON maneja el objeto.
+Consumidor con @KafkaListener
+```java
+@Component
+public class PedidoConsumer {
+
+    @KafkaListener(topics = "topic-pedidos", groupId = "pedidos-group")
+    public void escuchar(Pedido pedido) {
+        // procesar pedido
+    }
+}
+```
+
+Spring gestiona el offset commit automáticamente (por defecto enable.auto.commit=true, se commit tras el procesamiento). Para control manual, usar Acknowledgment en el parámetro y spring.kafka.consumer.enable-auto-commit=false.
+Manejo de errores y reintentos
+
+Se puede configurar un ErrorHandler o SeekToCurrentErrorHandler para reintentos locales:
+```java
+@Bean
+public ConcurrentKafkaListenerContainerFactory<String, Pedido> kafkaListenerContainerFactory() {
+    ConcurrentKafkaListenerContainerFactory<String, Pedido> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+    factory.setCommonErrorHandler(new DefaultErrorHandler(
+            new FixedBackOff(1000L, 3))); // 3 reintentos, 1 seg entre ellos
+    return factory;
+}
+```
+
+Para dead-letter topics, con DeadLetterPublishingRecoverer se envían los mensajes fallidos a un topic de error.
+Procesamiento batch
+
+Se pueden consumir lotes configurando factory.setBatchListener(true) y el método del listener con List<Pedido>.
+Kafka Streams con Spring
+
+Spring también soporta escribir aplicaciones de streaming mediante KafkaStreams. Configurando un StreamsBuilder bean se definen topologías. Pero eso ya forma parte de un módulo más avanzado (Spring Cloud Stream con Kafka Streams).
+Spring Cloud Stream (abstracción de alto nivel)
+
+Para quienes prefieren una capa aún más alta, Spring Cloud Stream abstrae JMS, Kafka, RabbitMQ y otros bajo un modelo de canales (Source, Sink, Processor). No se cubre aquí en profundidad, pero es importante mencionarlo.
+¿Cuándo elegir JMS vs Kafka?
+
+    JMS: transacciones distribuidas tradicionales con garantías "exactly-once" mediante protocolo XA, integración con servidores de aplicaciones, colas y tópicos clásicos. Adecuado para integraciones empresariales clásicas y entornos donde ya existe un broker JMS.
+
+    Kafka: altísimo rendimiento, persistencia inmuttable, retroconsumo (reprocesar eventos), particionamiento, escalado horizontal nativo. Ideal para microservicios con CQRS, event sourcing y datos en tiempo real.
+
+Spring unifica la experiencia de desarrollo con anotaciones y templates similares, lo que facilita migrar o convivir con ambos.
