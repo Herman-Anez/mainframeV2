@@ -1,77 +1,73 @@
-# PRUEBAS CON JUNIT 5
-1. JUnit 5: la plataforma moderna de testing
+# Pruebas con JUnit 5
 
-JUnit 5 (Jupiter) es el estándar para pruebas unitarias y de integración en Java. Lanzado en 2017, ha ido mejorando cada versión y en Java 21 sigue evolucionando (versión 5.10+). Está compuesto por:
+## 1. JUnit 5: La Plataforma Moderna de Testing
 
-    JUnit Platform: base que permite ejecutar cualquier motor de tests (JUnit Vintage para JUnit 3/4, Jupiter, etc.).
+JUnit 5 (Jupiter) es el estándar para pruebas unitarias y de integración en Java. Lanzado en 2017, ha ido mejorando en cada versión y en Java 21 sigue evolucionando (versión 5.10+). Está compuesto por:
 
-    JUnit Jupiter: nuevo API de programación de tests.
+*   **JUnit Platform**: Base que permite ejecutar cualquier motor de tests (JUnit Vintage para JUnit 3/4, Jupiter, etc.).
+*   **JUnit Jupiter**: Nuevo API de programación de tests.
+*   **JUnit Vintage**: Retrocompatibilidad con JUnit 3/4.
 
-    JUnit Vintage: retrocompatibilidad con JUnit 3/4.
+## 2. Anotaciones y Estructura Básica de un Test
 
-2. Anotaciones y estructura básica de un test
 ```java
 import org.junit.jupiter.api.*;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CalculadoraTest {
-```
 
-### Calculadora calc;
+    Calculadora calc;
 
-### @BeforeAll
+    @BeforeAll
     void initAll() {
         System.out.println("Antes de todos los tests");
     }
 
-### @BeforeEach
+    @BeforeEach
     void init() {
         calc = new Calculadora();
     }
 
-### @Test
+    @Test
     @DisplayName("Suma de dos números positivos")
     void testSuma() {
         assertEquals(5, calc.sumar(2, 3), "2+3 debería ser 5");
     }
 
-### @Test
+    @Test
     @Disabled("Funcionalidad aún no implementada")
     void testResta() { }
 
-### @AfterEach
+    @AfterEach
     void tearDown() {
         calc = null;
     }
 
-### @AfterAll
+    @AfterAll
     static void cleanAll() {
         System.out.println("Después de todos los tests");
     }
 }
+```
 
-3. Aserciones principales
+## 3. Aserciones Principales
 
-### assertEquals(expected, actual)
+*   `assertEquals(expected, actual)`
+*   `assertTrue(condition)`, `assertFalse(condition)`
+*   `assertNull(obj)`, `assertNotNull(obj)`
+*   `assertSame`, `assertNotSame`
+*   `assertThrows(Exception.class, () -> { ... })`: Captura y verifica excepciones.
+*   `assertTimeout(Duration.ofMillis(100), () -> { ... })`
+*   `assertAll(...)`: Para agrupar varias aserciones y que se ejecuten todas aunque alguna falle.
 
-### assertTrue(condition), assertFalse(condition)
+> [!TIP]
+> Desde JUnit 5.8 se pueden usar aserciones con mensaje como `Supplier` (`() -> "mensaje costoso"`) para evaluación perezosa.
 
-### assertNull(obj), assertNotNull(obj)
-
-### assertSame, assertNotSame
-
-    assertThrows(Exception.class, () -> { ... }) → captura y verifica excepciones.
-
-### assertTimeout(Duration.ofMillis(100), () -> { ... })
-
-    assertAll(...) para agrupar varias aserciones y que se ejecuten todas aunque alguna falle.
-
-Desde JUnit 5.8 se pueden usar aserciones con mensaje como Supplier (() -> "mensaje costoso") para evaluación perezosa.
-4. Test parametrizados
+## 4. Tests Parametrizados
 
 Ejecutan un mismo test con múltiples conjuntos de datos.
+
 ```java
 @ParameterizedTest
 @ValueSource(ints = {1, 2, 3, 4, 5})
@@ -90,34 +86,37 @@ void testSuma(int a, int b, int resultado) {
 }
 ```
 
-Otras fuentes: @MethodSource, @EnumSource, @CsvFileSource, @ArgumentsSource.
-5. Ciclo de vida y extensión
+Otras fuentes: `@MethodSource`, `@EnumSource`, `@CsvFileSource`, `@ArgumentsSource`.
 
-El modelo de extensión permite hooks avanzados mediante @ExtendWith.
+## 5. Ciclo de Vida y Extensión
 
-    SpringExtension para integrar Spring TestContext Framework.
+El modelo de extensión permite hooks avanzados mediante `@ExtendWith`.
 
-    MockitoExtension para inicializar mocks de Mockito.
+*   **SpringExtension**: Para integrar Spring TestContext Framework.
+*   **MockitoExtension**: Para inicializar mocks de Mockito.
+*   **Extensiones propias**: Implementando `BeforeEachCallback`, `AfterEachCallback`, etc.
 
-    Extensiones propias implementando BeforeEachCallback, AfterEachCallback, etc.
+## 6. Testing de Hilos Virtuales y Concurrencia
 
-### 6. Testing de hilos virtuales y concurrencia
+Con JUnit 5 podemos probar código asíncrono con `assertTimeoutPreemptively` o utilizando `Thread.startVirtualThread` dentro de los tests. Para probar concurrencia estructurada, se puede ejecutar un `try (scope) { ... }` y verificar resultados con `assertAll`.
 
-Con JUnit 5 podemos probar código asíncrono con assertTimeoutPreemptively o utilizando Thread.startVirtualThread dentro de los tests. Para probar concurrencia estructurada, se puede ejecutar un try (scope) { ... } y verificar resultados con assertAll.
-7. Tests de integración con testcontainers
+## 7. Tests de Integración con Testcontainers
 
-Aunque no es parte de JUnit 5, se integra perfectamente. Testcontainers permite arrancar una base de datos real en un contenedor Docker dentro del test, ideal para pruebas de repositorio. La anotación @Testcontainers y el GenericContainer se combinan con JUnit Jupiter.
-8. Prácticas recomendadas
+Aunque no es parte de JUnit 5, se integra perfectamente. **Testcontainers** permite arrancar una base de datos real en un contenedor Docker dentro del test, ideal para pruebas de repositorio. La anotación `@Testcontainers` y el `GenericContainer` se combinan con JUnit Jupiter.
 
-    Nombre descriptivo de tests: usar @DisplayName o el método en estilo shouldReturnSum_whenGivenTwoNumbers.
+## 8. Prácticas Recomendadas
 
-    Seguir la estructura AAA: Arrange, Act, Assert.
+*   **Nombre descriptivo**: Usar `@DisplayName` o el método en estilo `shouldReturnSum_whenGivenTwoNumbers`.
+*   **Estructura AAA**: Arrange, Act, Assert.
+*   **Mocks**: No realizar I/O real en tests unitarios; usar mocks o stubs.
+*   **Limpieza**: Limpiar recursos compartidos en `@AfterEach`.
+*   **Aislamiento**: Los tests no deben depender del orden de ejecución.
+*   **Integración**: Ejecutar tests frecuentemente, integrados con Maven/Gradle.
 
-    No realizar I/O real en tests unitarios; usar mocks o stubs.
+---
 
-    Limpiar recursos compartidos en @AfterEach.
+| Anterior | Inicio | Siguiente |
+| :---: | :---: | :---: |
+| [Maven y Gradle](01-maven-gradle.md) | [Índice](../../README.md) | [Empaquetado JLink/JPackage](03-empaquetado-jlink-jpackage.md) |
 
-    Aislar tests: no deben depender del orden de ejecución.
-
-    Ejecutar tests frecuentemente, integrados con Maven/Gradle.
 

@@ -1,132 +1,166 @@
 
-# CLASES Y OBJETOS
-1. Definición de clase
+# Clases y Objetos
 
-Una clase es la plantilla que describe los atributos (campos) y comportamientos (métodos) que tendrán sus instancias. Se define con la palabra clave class:
+La Programación Orientada a Objetos (POO) en Java se fundamenta en el uso de clases como planos y objetos como instancias concretas de esos planos.
+
+---
+
+## Definición de Clase
+
+Una clase es la plantilla que describe los atributos (campos) y comportamientos (métodos) que tendrán sus instancias. Se define con la palabra clave `class`.
+
 ```java
 public class Persona {
-    // campos (variables de instancia)
+    // Campos (variables de instancia)
     private String nombre;
     private int edad;
 
-    // constructor
+    // Constructor
     public Persona(String nombre, int edad) {
         this.nombre = nombre;
         this.edad = edad;
     }
 
-    // métodos
+    // Métodos
     public void saludar() {
         System.out.println("Hola, soy " + nombre);
     }
 }
 ```
 
-2. Modificadores de clase
+---
 
-    public: visible desde cualquier otro paquete.
+## Modificadores de Clase
 
-    Sin modificador (package-private): visible solo dentro del mismo paquete.
+Determinan la visibilidad y el comportamiento de la clase en la jerarquía de herencia:
 
-    final: no se puede heredar.
+- **`public`**: Visible desde cualquier otro paquete.
+- **Sin modificador (`package-private`)**: Visible solo dentro del mismo paquete.
+- **`final`**: La clase no se puede heredar (ej: la clase `String`).
+- **`abstract`**: No se puede instanciar; sirve como base para otras clases y puede contener métodos abstractos.
+- **`sealed` (Java 17/21)**: Permite restringir qué subclases pueden heredar de ella mediante la cláusula `permits`.
 
-    abstract: no se puede instanciar, puede contener métodos abstractos.
+---
 
-    sealed (Java 17/21): permite listar explícitamente las subclases con permits (más adelante en Herencia).
+## Miembros de una Clase
 
-3. Miembros de una clase
+1. **Campos (*Fields*)**: Variables que almacenan el estado del objeto o de la clase (`static`).
+2. **Métodos**: Bloques de código que definen el comportamiento. Pueden ser de instancia o estáticos.
+3. **Constructores**: Métodos especiales para inicializar objetos. Pueden sobrecargarse y llamarse entre sí con `this(...)` o a la superclase con `super(...)`.
+4. **Bloques de inicialización**:
+   - **Inicializador de instancia**: `{ ... }` se ejecuta cada vez que se crea un objeto.
+   - **Inicializador estático**: `static { ... }` se ejecuta una sola vez al cargar la clase.
+5. **Clases internas**: Clases definidas dentro de otra clase (miembro, local o anónima).
 
-    Campos (fields): variables de instancia o de clase (static).
+---
 
-    Métodos: funciones que operan sobre los campos. Pueden ser de instancia o estáticos.
+## Creación de Objetos
 
-    Constructores: métodos especiales para inicializar objetos. Pueden sobrecargarse y llamarse entre sí con this(...) o a la superclase con super(...).
+Un objeto se instancia utilizando la palabra clave `new` seguida del constructor adecuado.
 
-    Bloques de inicialización: código que se ejecuta antes del constructor.
-
-        Inicializador de instancia: { ... } dentro de la clase.
-
-        Inicializador estático: static { ... }.
-
-    Clases internas: una clase definida dentro de otra (miembro, local, anónima).
-
-### 4. Creación de objetos
-
-Un objeto se instancia con new seguido del constructor adecuado:
 ```java
 Persona p = new Persona("Ana", 25);
 ```
 
-La referencia p se almacena en la pila, el objeto con sus campos en el heap.
-5. La palabra clave this
+> [!NOTE]
+> La referencia `p` se almacena en la **pila** (*stack*), mientras que el objeto real con todos sus campos se almacena en el **heap**.
 
-this se refiere a la instancia actual. Se usa para:
+---
 
-### Desambiguar entre parámetros y campos: this.nombre = nombre;
+## La palabra clave `this`
 
-### Llamar a otro constructor de la misma clase: this(nombre, 0);
+`this` hace referencia a la instancia actual del objeto. Se utiliza principalmente para:
 
-### Pasar la instancia actual como argumento: metodo(this);
+- **Desambiguar**: Diferenciar entre parámetros del método y campos de la clase (`this.nombre = nombre`).
+- **Encadenar constructores**: Llamar a otro constructor de la misma clase (`this(nombre, 0)`).
+- **Pasar la instancia**: Enviar el objeto actual como argumento a otro método (`metodo(this)`).
 
-No puede usarse en contextos estáticos.
-6. Miembros estáticos (static)
+> [!WARNING]
+> `this` **no puede** usarse dentro de contextos estáticos (`static`), ya que estos no pertenecen a ninguna instancia en particular.
 
-Pertenecen a la clase, no a las instancias. Se accede con NombreClase.metodo() o NombreClase.campo. Métodos estáticos no tienen acceso a this ni a campos de instancia directamente. Se utilizan para utilidades, constantes (static final), factories, etc.
-7. Sobrecarga de métodos y constructores
+---
 
-Varios métodos con el mismo nombre pero distinta firma (tipo y orden de parámetros). El tipo de retorno no basta para distinguir.
-8. Inferencia de tipo local (var)
+## Miembros Estáticos (`static`)
 
-Desde Java 10, se puede declarar una variable local sin especificar su tipo:
+Los miembros marcados como `static` pertenecen a la clase y no a las instancias.
+
+- Se accede a ellos mediante `NombreClase.metodo()` o `NombreClase.campo`.
+- Los métodos estáticos no tienen acceso a `this` ni a campos de instancia directamente.
+- Son útiles para utilidades generales, constantes (`static final`) o fábricas (*factories*).
+
+---
+
+## Sobrecarga de Métodos y Constructores
+
+Permite tener varios métodos con el mismo nombre pero diferente firma (distinto número, tipo o orden de parámetros).
+
+> [!IMPORTANT]
+> El tipo de retorno **no** es suficiente para distinguir entre métodos sobrecargados; la firma debe ser distinta en sus parámetros.
+
+---
+
+## Inferencia de Tipo Local (`var`)
+
+Desde Java 10, es posible declarar variables locales sin especificar su tipo explícitamente:
+
 ```java
 var p = new Persona("Luis", 30); // p es de tipo Persona
 var lista = new ArrayList<String>();  // ArrayList<String>
 ```
 
-No se puede usar en campos de clase ni en parámetros de método.
-9. El registro record (Java 16+ estable)
+> [!NOTE]
+> `var` **no** se puede usar en campos de clase ni en parámetros de método; su uso está restringido al ámbito local.
 
-Un tipo especial de clase inmutable y transparente para transportar datos. Define automáticamente:
+---
 
-    Campos private final por cada componente.
+## El Registro `record` (Java 16+)
 
-    Constructor canónico (asigna cada componente al campo del mismo nombre).
-
-    Métodos de acceso (getter) con el nombre del componente, sin get.
-
-    equals(), hashCode(), toString() basados en todos los componentes.
+Un `record` es un tipo especial de clase inmutable diseñada para transportar datos de forma transparente.
 
 ```java
 public record Persona(String nombre, int edad) {}
 ```
 
-Se pueden añadir métodos, validaciones en el constructor compacto (public Persona { ... }), e implementar interfaces (no puede heredar de otra clase porque implícitamente hereda java.lang.Record). Son finales (no se puede extender un registro) y no pueden ser abstractos. Perfectos para DTOs, mensajes y claves compuestas.
-10. Enumeraciones (enum)
+### Características automáticas:
+- Campos `private final` para cada componente.
+- Constructor canónico.
+- Métodos de acceso con el nombre del componente (sin el prefijo `get`).
+- Implementaciones de `equals()`, `hashCode()` y `toString()`.
 
-Son tipos especiales que definen un conjunto fijo de constantes. Son clases que heredan implícitamente de java.lang.Enum. Pueden tener campos, métodos y constructores privados.
+> [!TIP]
+> Los registros son ideales para DTOs y mensajes. Son finales por defecto y no pueden ser abstractos.
+
+---
+
+## Enumeraciones (`enum`)
+
+Definen un conjunto fijo de constantes. Son clases que heredan de `java.lang.Enum` y pueden tener campos, métodos y constructores privados.
+
 ```java
 public enum DiaSemana {
-    LUNES("L"), MARTES("M"), ...;
+    LUNES("L"), MARTES("M"), MIERCOLES("X");
     private String codigo;
     DiaSemana(String cod) { this.codigo = cod; }
 }
 ```
 
-Desde Java 21 su uso se potencia con el pattern matching exhaustivo en switch.
-11. Clases anónimas y lambdas
+---
 
-    Clase anónima: implementación local de una interfaz o extensión de una clase.
+## Clases Anónimas y Lambdas
 
+### Clase Anónima
+Implementación local de una interfaz o extensión de una clase:
 ```java
 Runnable r = new Runnable() {
-    @Override public void run() { System.out.println("Ejecutando"); }
+    @Override 
+    public void run() { 
+        System.out.println("Ejecutando..."); 
+    }
 };
-
-    Expresiones lambda (Java 8+): forma concisa para interfaces funcionales.
-
-java
 ```
 
-### Runnable r = () -> System.out.println("Ejecutando");
-
-Ambas crean objetos que se comportan según lo especificado, y son parte esencial del polimorfismo funcional.
+### Expresión Lambda (Java 8+)
+Forma concisa para implementar interfaces funcionales:
+```java
+Runnable r = () -> System.out.println("Ejecutando...");
+```

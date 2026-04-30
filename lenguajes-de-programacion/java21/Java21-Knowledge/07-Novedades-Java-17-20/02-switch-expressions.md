@@ -1,7 +1,11 @@
-# SWITCH EXPRESSIONS
+# 🔀 Switch Expressions
 
-Las Switch Expressions fueron introducidas como preview en Java 12 y se estandarizaron en Java 14. Permiten usar switch como una expresión que devuelve un valor, evitando la típica necesidad de variables temporales y break. Aportan un código más conciso y eliminan la fuente de bugs por olvido de break.
-Forma con flecha ->
+Las **Switch Expressions** fueron introducidas como preview en Java 12 y se estandarizaron en Java 14. Permiten usar `switch` como una expresión que devuelve un valor, evitando la típica necesidad de variables temporales y `break`. Aportan un código más conciso y eliminan la fuente de bugs por olvido de `break`.
+
+---
+
+## 🏹 Forma con flecha `->`
+
 ```java
 int diaSemana = 3;
 String nombreDia = switch (diaSemana) {
@@ -12,10 +16,14 @@ String nombreDia = switch (diaSemana) {
 };
 ```
 
-La flecha asocia directamente el caso con el valor devuelto o con una sentencia; no se requiere break y no hay fall‑through accidental (solo se ejecuta ese caso). Cada caso puede contener una única expresión o un bloque de código que debe finalizar con yield para devolver un valor.
-Bloque con yield
+La flecha asocia directamente el caso con el valor devuelto o con una sentencia; no se requiere `break` y no hay *fall-through* accidental (solo se ejecuta ese caso). Cada caso puede contener una única expresión o un bloque de código que debe finalizar con `yield` para devolver un valor.
 
-Si un caso requiere varias instrucciones antes de devolver el valor, se usa un bloque y la palabra clave yield:
+---
+
+## 🧱 Bloque con `yield`
+
+Si un caso requiere varias instrucciones antes de devolver el valor, se usa un bloque y la palabra clave `yield`:
+
 ```java
 String categoria = switch (diaSemana) {
     case 1, 7 -> {
@@ -30,28 +38,49 @@ String categoria = switch (diaSemana) {
 };
 ```
 
-yield tiene un ámbito léxico; no se puede usar fuera de un bloque de caso en una expresión switch.
-Múltiples etiquetas por caso
+> [!NOTE]
+> `yield` tiene un ámbito léxico; no se puede usar fuera de un bloque de caso en una expresión `switch`.
+
+---
+
+## 🔢 Múltiples etiquetas por caso
 
 Se pueden agrupar varios casos utilizando comas:
+
 ```java
 case 1, 2, 3 -> "Inicio de mes";
 ```
 
-### Exhaustividad
+---
 
-El compilador exige que una expresión switch cubra todos los posibles valores del tipo sobre el que se aplica. Es decir, debe ser exhaustiva. Para enum, hay que cubrir todos los literales o incluir default; para int, con default basta. Si no es exhaustiva, error de compilación.
+## ✅ Exhaustividad
 
-Diferencias con el switch tradicional (sentencia):
-Tradicional	Expresión (Java 14+)
-Cada case necesita break	Usa -> o yield
-No devuelve valor	Devuelve un valor
-Permite fall‑through	No hay fall‑through con ->
-No tiene requisito de exhaustividad	Requiere exhaustividad
-default opcional	default opcional pero puede ser necesario según el tipo
-Uso como sentencia con flecha
+El compilador exige que una expresión `switch` cubra todos los posibles valores del tipo sobre el que se aplica. Es decir, debe ser **exhaustiva**.
 
-También se puede usar la notación -> en un switch que actúa como sentencia (no devuelve valor):
+*   Para `enum`, hay que cubrir todos los literales o incluir `default`.
+*   Para `int`, con `default` basta.
+
+> [!IMPORTANT]
+> Si la expresión no es exhaustiva, se producirá un error de compilación.
+
+---
+
+## 📊 Comparativa: Tradicional vs Expresión
+
+| Característica | Switch Tradicional (Sentencia) | Switch Expresión (Java 14+) |
+| :--- | :--- | :--- |
+| **Control de flujo** | Cada `case` necesita `break` | Usa `->` o `yield` |
+| **Retorno** | No devuelve valor | Devuelve un valor |
+| **Fall-through** | Permitido (y común) | No hay *fall-through* con `->` |
+| **Exhaustividad** | No requerida | **Obligatoria** |
+| **Default** | Opcional | Opcional (pero suele ser necesario) |
+
+---
+
+## 📝 Uso como sentencia con flecha
+
+También se puede usar la notación `->` en un `switch` que actúa como sentencia (no devuelve valor):
+
 ```java
 switch (comando) {
     case "iniciar" -> System.out.println("Iniciando...");
@@ -61,6 +90,16 @@ switch (comando) {
 ```
 
 En este caso no se requiere exhaustividad, es una sentencia tradicional con sintaxis moderna.
-Combinación con Pattern Matching (Java 21)
 
-En Java 21, el switch se expande con pattern matching, convirtiéndose en una herramienta central para el polimorfismo. Las switch expressions con patrones permiten descomponer records y comprobar tipos de forma elegante, heredando toda la potencia de las expresiones descritas aquí.
+---
+
+## 🚀 Combinación con Pattern Matching (Java 21)
+
+En Java 21, el `switch` se expande con **Pattern Matching**, convirtiéndose en una herramienta central para el polimorfismo. Las switch expressions con patrones permiten descomponer `records` y comprobar tipos de forma elegante, heredando toda la potencia de las expresiones descritas aquí.
+
+---
+
+## 🔗 Recursos y Enlaces
+
+- [🏠 Inicio](../../../../README.md)
+- [☕ Java 21 Index](../../index.md)

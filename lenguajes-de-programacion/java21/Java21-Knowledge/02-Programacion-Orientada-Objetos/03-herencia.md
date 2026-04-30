@@ -1,10 +1,17 @@
-# HERENCIA
-1. Concepto de herencia
+# Herencia
 
-La herencia permite que una clase (subclase) reutilice los campos y métodos de otra (superclase). Se declara con la palabra clave extends:
+La herencia es un mecanismo fundamental de la POO que permite crear nuevas clases basadas en clases existentes, promoviendo la reutilización de código y la creación de jerarquías lógicas.
+
+---
+
+## Concepto de Herencia
+
+La herencia permite que una clase (subclase) reutilice los campos y métodos de otra (superclase). Se declara con la palabra clave `extends`:
+
 ```java
 public class Empleado extends Persona {
     private String empresa;
+
     public Empleado(String nombre, int edad, String empresa) {
         super(nombre, edad);
         this.empresa = empresa;
@@ -12,19 +19,28 @@ public class Empleado extends Persona {
 }
 ```
 
-En Java no existe herencia múltiple de clases; una clase solo puede tener una superclase directa. La herencia múltiple se simula mediante interfaces.
-2. La clase Object
+> [!IMPORTANT]
+> En Java **no existe herencia múltiple de clases**; una clase solo puede tener una superclase directa. La herencia múltiple se simula mediante el uso de interfaces.
 
-Todas las clases heredan implícitamente de java.lang.Object si no extienden otra clase. Object proporciona métodos como toString(), equals(), hashCode(), clone() y finalize() (obsoleto). Es la raíz de la jerarquía.
-3. Uso de super
+---
 
-    super() llama al constructor de la superclase. Debe ser la primera instrucción.
+## La Clase `Object`
 
-    super.metodo() invoca un método de la superclase, útil cuando se sobrescribe.
+Todas las clases heredan implícitamente de `java.lang.Object` si no extienden otra clase. `Object` es la raíz de la jerarquía y proporciona métodos fundamentales como `toString()`, `equals()`, `hashCode()`, `clone()` y `finalize()` (este último obsoleto).
 
-### 4. Sobrescritura de métodos y anotación @Override
+---
 
-Una subclase puede redefinir un método de la superclase con la misma firma y tipo de retorno compatible (covarianza). Se recomienda usar @Override para que el compilador verifique que realmente se está sobrescribiendo.
+## Uso de la palabra clave `super`
+
+- **`super()`**: Llama al constructor de la superclase. Debe ser obligatoriamente la primera instrucción del constructor.
+- **`super.metodo()`**: Invoca un método de la superclase, lo cual es útil cuando el método ha sido sobrescrito en la subclase.
+
+---
+
+## Sobrescritura de Métodos (`@Override`)
+
+Una subclase puede redefinir un método de la superclase con la misma firma y un tipo de retorno compatible (covarianza).
+
 ```java
 @Override
 public String toString() {
@@ -32,32 +48,35 @@ public String toString() {
 }
 ```
 
-### 5. Modificador final en métodos y clases
+> [!TIP]
+> Se recomienda usar siempre la anotación `@Override` para que el compilador verifique que realmente se está sobrescribiendo un método existente.
 
-    Método final: no puede ser sobrescrito por una subclase.
+---
 
-    Clase final: no puede ser extendida (p.ej. String, Integer, los record).
+## Modificador `final` en Herencia
 
-    Argumento final: la variable local no puede ser reasignada dentro del método.
+- **Método `final`**: No puede ser sobrescrito por ninguna subclase.
+- **Clase `final`**: No puede ser extendida (ejemplo: `String`, `Integer` y todos los `record`).
+- **Argumento `final`**: La variable local no puede ser reasignada dentro del método.
 
-### 6. Clases selladas (sealed / permits) – Java 17, estable en 21
+---
 
-Restringen explícitamente qué clases o interfaces pueden extender o implementar un tipo dado. Dan lugar a jerarquías controladas, ideales para la exhaustividad en el pattern matching.
+## Clases Selladas (`sealed` / `permits`)
+
+Introducidas en Java 17 y vigentes en Java 21, permiten restringir explícitamente qué clases o interfaces pueden extender o implementar un tipo dado.
+
 ```java
 public sealed class Figura permits Circulo, Rectangulo, Triangulo {
     // ...
 }
 ```
 
-Las subclases permitidas deben estar en el mismo módulo o paquete, y a su vez pueden ser:
+### Estados de las subclases permitidas:
+- **`final`**: No se puede extender más.
+- **`sealed`**: Sigue restringiendo sus propias subclases.
+- **`non-sealed`**: Permite la extensión libre (jerarquía abierta de nuevo).
 
-    final: no se puede extender más.
-
-    sealed: siguen restringiendo.
-
-    non-sealed: permiten extensión libre (de nuevo abierta).
-
-Ejemplo completo:
+### Ejemplo de jerarquía sellada:
 ```java
 sealed class Figura permits Circulo, Rectangulo, Triangulo {}
 final class Circulo extends Figura { ... }
@@ -66,15 +85,19 @@ sealed class Triangulo extends Figura permits TrianguloEquilatero {}
 final class TrianguloEquilatero extends Triangulo {}
 ```
 
-Los sealed combinados con records y el nuevo switch producen un polimorfismo por descomposición muy potente y seguro.
-7. Jerarquías con registros sellados (patrón algebraico)
+---
 
-Es frecuente usar interfaces selladas implementadas por registros:
+## Jerarquías con Registros Sellados
+
+Es un patrón muy potente (patrón algebraico) usar interfaces selladas implementadas por registros:
+
 ```java
 sealed interface Expr permits Num, Suma, Resta {}
+
 record Num(int valor) implements Expr {}
 record Suma(Expr izq, Expr der) implements Expr {}
 record Resta(Expr izq, Expr der) implements Expr {}
 ```
 
-Esta codificación, típica de lenguajes funcionales, es ahora directa en Java y explota al máximo el pattern matching.
+> [!NOTE]
+> Esta codificación facilita enormemente el **Pattern Matching**, permitiendo que el compilador verifique la exhaustividad de los casos en expresiones `switch`.

@@ -1,39 +1,57 @@
-# POLIMORFISMO
-1. Definición de polimorfismo
+# Polimorfismo
 
-Capacidad de una variable de un tipo base de referirse a objetos de distintas subclases y que la ejecución del método sobrescrito sea la correspondiente al objeto real (enlace dinámico o dynamic binding).
+El polimorfismo es la capacidad de una variable de un tipo base para referirse a objetos de distintas subclases, asegurando que se ejecute la implementación correcta del método en tiempo de ejecución.
+
+---
+
+## Definición y Enlace Dinámico
+
+Es la capacidad de una variable de un tipo base de referirse a objetos de distintas subclases y que la ejecución del método sobrescrito sea la correspondiente al objeto real. Este proceso se conoce como **enlace dinámico** (*dynamic binding*).
+
 ```java
 Figura f = new Circulo(5.0);
-double area = f.area(); // área del círculo, aunque el tipo de referencia sea Figura
+double area = f.area(); // Se calcula el área del círculo, aunque la referencia sea de tipo Figura
 ```
 
-2. Sobrescritura vs. Sobrecarga
+---
 
-    Sobrescritura (override): mismo método, misma firma, distinta implementación en subclase. Se resuelve en tiempo de ejecución.
+## Sobrescritura vs. Sobrecarga
 
-    Sobrecarga (overload): mismo nombre de método pero diferentes parámetros. Se resuelve en compilación.
+- **Sobrescritura (*Override*)**: Mismo método, misma firma, distinta implementación en la subclase. Se resuelve en **tiempo de ejecución**.
+- **Sobrecarga (*Overload*)**: Mismo nombre de método pero diferentes parámetros. Se resuelve en **tiempo de compilación**.
 
-3. Covarianza en el tipo de retorno
+---
 
-En una sobrescritura se puede devolver un subtipo del tipo de retorno original:
+## Covarianza en el Tipo de Retorno
+
+En una sobrescritura se puede devolver un subtipo del tipo de retorno original definido en la superclase:
+
 ```java
 @Override
-public Circulo copia() { ... } // si en Figura el método devuelve Figura
+public Circulo copia() { ... } // Si en Figura el método original devuelve Figura
 ```
 
-### 4. El operador instanceof con pattern matching (Java 16+)
+---
 
-Permite comprobar el tipo y vincular una variable en una sola operación:
+## El operador `instanceof` con Pattern Matching (Java 16+)
+
+Permite comprobar el tipo y vincular una variable directamente en una sola operación:
+
 ```java
 if (f instanceof Circulo c) {
     System.out.println("Radio: " + c.radio());
 }
 ```
 
-Elimina la necesidad de un casting posterior y reduce errores. Es una forma de polimorfismo condicional.
-5. Polimorfismo con switch y patrones (Java 21)
+> [!NOTE]
+> Esto elimina la necesidad de realizar un casting manual posterior y reduce significativamente los errores en tiempo de ejecución.
 
-El switch ahora acepta patrones de tipo, de registro y de array, y es exhaustivo con tipos sellados, convirtiéndolo en una potente herramienta de despacho múltiple.
+---
+
+## Polimorfismo con `switch` y Patrones (Java 21)
+
+El `switch` ahora acepta patrones de tipo, de registro y de array. Es especialmente potente cuando se utiliza con tipos sellados, ya que se vuelve exhaustivo.
+
 ```java
 public double area(Figura f) {
     return switch (f) {
@@ -44,15 +62,24 @@ public double area(Figura f) {
 }
 ```
 
-Aquí, el polimorfismo se expresa mediante descomposición en lugar de métodos virtuales, aunque ambos coexisten.
-6. Polimorfismo paramétrico (genéricos)
+> [!TIP]
+> En este escenario, el polimorfismo se expresa mediante **descomposición** en lugar de métodos virtuales, aunque ambos enfoques coexisten perfectamente.
 
-Los genéricos permiten escribir código que funciona con distintos tipos:
+---
+
+## Polimorfismo Paramétrico (Genéricos)
+
+Los genéricos permiten escribir código que funciona de manera segura con distintos tipos de datos:
+
 ```java
 List<String> nombres = new ArrayList<>();
 ```
 
-El compilador garantiza la seguridad de tipos en tiempo de compilación. Es otra forma de polimorfismo (universal).
-7. Métodos virtuales en Java
+---
 
-Todos los métodos de instancia no static ni private son virtuales por defecto, es decir, se resuelven dinámicamente. Únicamente los métodos static y private no participan en el enlace dinámico.
+## Métodos Virtuales en Java
+
+En Java, todos los métodos de instancia que **no** sean `static` ni `private` son virtuales por defecto. Esto significa que su resolución se realiza de forma dinámica en tiempo de ejecución.
+
+> [!IMPORTANT]
+> Los métodos `static` y `private` no participan en el enlace dinámico; su resolución es estática en tiempo de compilación.

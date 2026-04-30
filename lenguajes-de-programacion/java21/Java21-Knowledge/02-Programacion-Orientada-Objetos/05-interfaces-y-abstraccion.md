@@ -1,7 +1,13 @@
-# INTERFACES Y ABSTRACCIÓN
-1. Clases abstractas
+# Interfaces y Abstracción
 
-Una clase declarada abstract no puede instanciarse directamente. Puede contener métodos abstractos (sin implementación, obligando a las subclases concretas a implementarlos) y métodos concretos. Ejemplo:
+La abstracción es el proceso de ocultar los detalles de implementación y mostrar solo la funcionalidad esencial al usuario. En Java, esto se logra principalmente mediante clases abstractas e interfaces.
+
+---
+
+## Clases Abstractas
+
+Una clase declarada como `abstract` no puede instanciarse directamente. Puede contener métodos abstractos (sin implementación, obligando a las subclases a definirlos) y métodos concretos.
+
 ```java
 public abstract class Animal {
     public abstract String sonido();
@@ -11,70 +17,80 @@ public abstract class Animal {
 }
 ```
 
-2. Interfaces
+---
 
-Una interfaz es un contrato que define un conjunto de métodos (sin implementación por defecto, aunque ahora pueden tener métodos por defecto y estáticos). Una clase puede implementar múltiples interfaces:
+## Interfaces
+
+Una interfaz es un contrato que define un conjunto de métodos. A diferencia de las clases, una clase puede implementar múltiples interfaces:
+
 ```java
 public class Perro implements Mascota, Carnivoro { ... }
 ```
 
-Desde Java 8, las interfaces pueden incluir:
+### Capacidades modernas de las interfaces:
+- **Métodos `default` (Java 8+)**: Poseen implementación por defecto y pueden ser sobrescritos.
+- **Métodos `static` (Java 8+)**: Métodos de utilidad asociados a la interfaz.
+- **Métodos `private` (Java 9+)**: Permiten compartir código entre métodos `default` y `static`.
 
-    Métodos default: con implementación por defecto, que pueden ser sobrescritos.
+---
 
-    Métodos static: métodos de utilidad propios de la interfaz.
+## Evolución de las Interfaces (Resumen)
 
-    Desde Java 9: métodos private para compartir código entre métodos default/static.
+- **Java 8**: Introducción de métodos `default` y `static`.
+- **Java 9**: Introducción de métodos `private`.
+- **Java 17/21**: Interfaces selladas (`sealed interface`) y soporte para pattern matching.
 
-3. Evolución de las interfaces (resumen)
+---
 
-    Java 8: métodos default y static.
+## Interfaces Funcionales
 
-    Java 9: métodos private.
+Son interfaces con un único método abstracto (SAM - *Single Abstract Method*). Se anotan con `@FunctionalInterface`. Ejemplos típicos son `Runnable`, `Comparator` y `Predicate`. Son la base para el uso de lambdas.
 
-    Java 17/21: interfaces selladas (sealed interface) y el uso de patrones en switch sobre ellas.
+---
 
-### 4. Interfaces funcionales
+## Interfaces Selladas (`sealed interface`)
 
-Son interfaces con un único método abstracto (SAM). Se anotan con @FunctionalInterface. Por ejemplo, Runnable, Comparator, Predicate. Pueden ser implementadas mediante lambdas o referencias a métodos.
-5. Interfaces selladas (sealed interface)
+Al igual que las clases, una interfaz puede restringir quién tiene permiso para implementarla:
 
-Al igual que las clases, una interfaz puede restringir quién la implementa:
 ```java
 sealed interface Operacion permits Suma, Resta, Multiplicacion {}
 record Suma(int a, int b) implements Operacion {}
 ```
 
-Esto garantiza que, al analizar un objeto de tipo Operacion, el compilador conozca todas las posibles implementaciones y pueda exigir exhaustividad en el switch.
-6. Abstracción con clases abstractas vs. interfaces
-Característica	Clase Abstracta	Interfaz
-Herencia múltiple	Solo una (extends)	Múltiple (implements)
-Constructor	Sí	No
-Campos	De instancia y estáticos	Solo constantes (static final)
-Métodos	Abstractos y concretos	Abstractos, default, static, private
-Visibilidad	Cualquier modificador	Métodos son públicos por defecto
-Sellado (sealed)	Sí	Sí
+> [!NOTE]
+> Esto garantiza que el compilador conozca todas las posibles implementaciones, permitiendo la exhaustividad en expresiones `switch`.
 
-Normalmente se prefiere interfaz para definir contratos puros, y clase abstracta cuando se desea compartir estado (campos) o constructores.
-7. Herencia de tipo y herencia de implementación
+---
 
-    Las interfaces proporcionan herencia de tipo sin forzar una implementación concreta.
+## Abstracción: Clases Abstractas vs. Interfaces
 
-    Las clases abstractas permiten reutilizar código (herencia de implementación), pero en Java moderno se tiende a preferir composición sobre herencia profunda.
+| Característica | Clase Abstracta | Interfaz |
+| :--- | :--- | :--- |
+| **Herencia múltiple** | Solo una (`extends`) | Múltiple (`implements`) |
+| **Constructor** | Sí | No |
+| **Campos** | Instancia y estáticos | Solo constantes (`static final`) |
+| **Métodos** | Abstractos y concretos | Abstractos, `default`, `static`, `private` |
+| **Visibilidad** | Cualquier modificador | Públicos por defecto |
+| **Sellado (`sealed`)** | Sí | Sí |
 
-### 8. Nuevo paradigma con pattern matching
+> [!TIP]
+> Se prefiere una interfaz para definir contratos puros y una clase abstracta cuando se desea compartir estado (campos) o constructores comunes.
 
-La combinación de interfaces selladas, registros y el switch con patrones está cambiando la forma de modelar el polimorfismo. Anteriormente se escribía un método abstracto en la interfaz y se implementaba en cada clase; ahora se puede usar un método estático con un switch exhaustivo sobre el tipo sellado. Ambas aproximaciones son válidas y se complementan.
+---
 
-Ejemplo clásico (método polimórfico):
+## Paradigma de Pattern Matching
+
+La combinación de interfaces selladas, registros y el `switch` con patrones está cambiando el modelado del polimorfismo.
+
+### Enfoque Clásico (Método Polimórfico)
 ```java
 interface Figura {
     double area();
 }
-// cada implementación define area()
+// Cada implementación define su propio area()
 ```
 
-Ejemplo funcional (externo):
+### Enfoque Moderno (Funcional/Centralizado)
 ```java
 double area(Figura f) {
     return switch (f) {
@@ -84,5 +100,6 @@ double area(Figura f) {
 }
 ```
 
-La primera encapsula cada comportamiento en su clase; la segunda centraliza operaciones y puede aprovecharse mejor con registros y patrones.
+> [!IMPORTANT]
+> El enfoque clásico encapsula el comportamiento en la clase; el moderno centraliza las operaciones y aprovecha la potencia de los registros y patrones.
 

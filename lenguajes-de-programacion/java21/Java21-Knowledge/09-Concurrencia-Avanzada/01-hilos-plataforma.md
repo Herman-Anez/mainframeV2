@@ -1,90 +1,99 @@
 
-# HILOS DE PLATAFORMA (PLATFORM THREADS)
+# 🧵 Hilos de Plataforma (Platform Threads)
 
-NOTA CONCURRENCIA AVANZADA EN JAVA 21
+Esta sección está dedicada a la concurrencia clásica y moderna en Java. Aunque los hilos de plataforma y los Executors llevan años con nosotros, entenderlos a fondo es imprescindible para apreciar las innovaciones de Java 21 y para combinar ambas aproximaciones en aplicaciones reales.
 
-Esta sección está dedicada a la concurrencia clásica y moderna en Java. Aunque los hilos de plataforma y los Executors llevan años con nosotros, entenderlos a fondo es imprescindible para apreciar las innovaciones de Java 21 y para combinar ambas aproximaciones en aplicaciones reales. A continuación, se presentan los contenidos detallados para cada uno de los tres archivos.
+---
 
-1. Modelo de hilos tradicional
+> [!NOTE]
+> **Concurrencia Avanzada en Java 21:**
+> Esta serie de documentos explora desde el modelo tradicional hasta las potentes capacidades de los hilos virtuales y la concurrencia estructurada.
+
+---
+
+## 🏗️ Modelo de hilos tradicional
 
 Un hilo de plataforma es un hilo del sistema operativo envuelto por la JVM. Cada uno tiene su propia pila (típicamente ~1 MB) y es gestionado directamente por el SO. Crear miles de estos hilos consume una cantidad de memoria prohibitiva y el cambio de contexto puede degradar el rendimiento.
 
-En Java, la clase java.lang.Thread representa un hilo de plataforma (también llamado kernel thread). Aunque en Java 21 existe Thread.ofVirtual(), el constructor clásico new Thread(...) sigue creando un hilo de plataforma.
-2. Ciclo de vida de un hilo de plataforma
+En Java, la clase `java.lang.Thread` representa un hilo de plataforma (también llamado kernel thread). Aunque en Java 21 existe `Thread.ofVirtual()`, el constructor clásico `new Thread(...)` sigue creando un hilo de plataforma.
 
-Los estados definidos en Thread.State son:
+---
 
-    NEW: creado pero no iniciado (start() no llamado).
+## 🔄 Ciclo de vida de un hilo de plataforma
 
-    RUNNABLE: ejecutándose o listo para ejecutarse.
+Los estados definidos en `Thread.State` son:
 
-    BLOCKED: esperando adquirir un monitor (bloqueo intrínseco con synchronized).
+*   **NEW:** Creado pero no iniciado (`start()` no llamado).
+*   **RUNNABLE:** Ejecutándose o listo para ejecutarse.
+*   **BLOCKED:** Esperando adquirir un monitor (bloqueo intrínseco con `synchronized`).
+*   **WAITING:** Esperando indefinidamente a que otro hilo realice una acción (`Object.wait()`, `Thread.join()`, `LockSupport.park()`).
+*   **TIMED_WAITING:** Espera con tiempo límite (`sleep()`, `wait(timeout)`, `join(timeout)`, etc.).
+*   **TERMINATED:** El hilo ha finalizado su ejecución.
 
-    WAITING: esperando indefinidamente a que otro hilo realice una acción (Object.wait(), Thread.join(), LockSupport.park()).
+---
 
-    TIMED_WAITING: espera con tiempo límite (sleep(), wait(timeout), join(timeout), etc.).
+## 🛠️ Creación de hilos de plataforma
 
-    TERMINATED: el hilo ha finalizado su ejecución.
-
-3. Creación de hilos de plataforma
-Extendiendo Thread
+### Extendiendo `Thread`
 
 ```java
 class MiHilo extends Thread {
-    @Override public void run() {
+    @Override 
+    public void run() {
         System.out.println("Hilo ejecutándose: " + Thread.currentThread().getName());
     }
 }
+
 MiHilo h = new MiHilo();
 h.start(); // inicia el nuevo hilo
 ```
 
-### Implementando Runnable
+### Implementando `Runnable`
 
 ```java
 Runnable tarea = () -> System.out.println("Tarea en hilo: " + Thread.currentThread().getName());
 new Thread(tarea).start();
 ```
 
-Desde Java 8 podemos usar lambdas o referencias a métodos para definir el Runnable.
-4. Propiedades y métodos útiles
+> [!TIP]
+> Desde Java 8 podemos usar lambdas o referencias a métodos para definir el `Runnable`.
 
-    setName(String) / getName(): nombre del hilo.
+---
 
-    setDaemon(boolean): un hilo demonio termina cuando todos los hilos no demonio han finalizado.
+## ⚙️ Propiedades y métodos útiles
 
-    setPriority(int): prioridad (1..10), solo una sugerencia al SO.
+*   **`setName(String)` / `getName()`**: Nombre del hilo.
+*   **`setDaemon(boolean)`**: Un hilo demonio termina cuando todos los hilos no demonio han finalizado.
+*   **`setPriority(int)`**: Prioridad (1..10), solo una sugerencia al SO.
+*   **`join()`**: Espera a que el hilo termine.
+*   **`interrupt()`**: Envía una señal de interrupción. El hilo destino debe cooperar verificando `Thread.interrupted()` o manejando `InterruptedException`.
+*   **`Thread.sleep(long)`**: Suspende el hilo actual durante un tiempo; puede lanzar `InterruptedException`.
 
-    join(): espera a que el hilo termine.
+---
 
-    interrupt(): envía una señal de interrupción. El hilo destino debe cooperar verificando Thread.interrupted() o manejando InterruptedException.
+## 🔒 Sincronización básica
 
-    Thread.sleep(long): suspende el hilo actual durante un tiempo; puede lanzar InterruptedException.
-
-### 5. Sincronización básica
-
-synchronized
+### `synchronized`
 
 Mecanismo de bloqueo intrínseco sobre objetos.
 
-    Método sincronizado:
-
-```java
+*   **Método sincronizado:**
+    ```java
     public synchronized void incrementar() {
         contador++;
     }
-```
-
-    Bloque sincronizado:
-
-```java
+    ```
+*   **Bloque sincronizado:**
+    ```java
     synchronized (objetoBloqueo) {
         // sección crítica
     }
-```
+    ```
 
-wait(), notify(), notifyAll() deben llamarse dentro de un bloque synchronized y sobre el objeto de bloqueo.
-volatile
+> [!IMPORTANT]
+> `wait()`, `notify()`, `notifyAll()` deben llamarse dentro de un bloque `synchronized` y sobre el objeto de bloqueo.
+
+### `volatile`
 
 Garantiza visibilidad de los cambios en una variable entre hilos, pero no atómica.
 
@@ -93,22 +102,30 @@ private volatile boolean detenido = false;
 public void detener() { detenido = true; }
 ```
 
-### 6. Problemas clásicos
+---
 
-    Condiciones de carrera: múltiples hilos acceden desordenadamente a datos compartidos.
+## ⚠️ Problemas clásicos
 
-    Deadlock: dos o más hilos se bloquean mutuamente esperando cerrojos que nunca liberan.
+*   **Condiciones de carrera:** Múltiples hilos acceden desordenadamente a datos compartidos.
+*   **Deadlock:** Dos o más hilos se bloquean mutuamente esperando cerrojos que nunca liberan.
+*   **Starvation:** Un hilo nunca obtiene acceso a un recurso.
+*   **Inanición de hilos:** Mal uso de `notify()` en lugar de `notifyAll()`.
 
-    Starvation: un hilo nunca obtiene acceso a un recurso.
+---
 
-    Inanición de hilos: mal uso de notify() en lugar de notifyAll().
+## 📉 Limitaciones del modelo de plataforma
 
-### 7. Limitaciones del modelo de plataforma
+*   **Escalabilidad:** Un hilo por petición no escala a decenas de miles de conexiones simultáneas.
+*   **Consumo de recursos:** Memoria de pila y coste de creación.
+*   **Gestión explícita:** Hay que definir pools, sincronización, etc.
 
-    Escalabilidad: un hilo por petición no escala a decenas de miles de conexiones simultáneas.
+Estas limitaciones motivaron la evolución hacia los Executors y, en Java 21, hacia los hilos virtuales.
 
-    Consumo de recursos: memoria de pila y coste de creación.
+---
 
-    Gestión explícita: hay que definir pools, sincronización, etc.
+## 🔗 Recursos y Enlaces
 
-Estas limitaciones motivaron la evolución hacia los Executors (siguiente tema) y, en Java 21, hacia los hilos virtuales.
+- [🏠 Inicio](../../../../../README.md)
+- [☕ Java 21 Index](../../../index.md)
+- [➡️ Siguiente: Executors y Futures](./02-executors-futures.md)
+

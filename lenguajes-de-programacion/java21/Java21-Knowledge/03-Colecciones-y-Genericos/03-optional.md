@@ -1,117 +1,124 @@
-# OPTIONAL
-1. El problema del null
+# Optional
 
-null puede causar NullPointerException, es opaco en la API (no sabes si un método devuelve null) y obliga a comprobaciones manuales. java.util.Optional<T> es un contenedor inmutable que puede contener o no un valor no nulo, forzando al cliente a lidiar explícitamente con la ausencia.
-2. Creación de Optionals
+## 1. El problema del null
 
-    Optional.of(value): lanza NullPointerException si value es null.
+`null` puede causar `NullPointerException`, es opaco en la API (no indica si un método puede devolverlo) y obliga a realizar comprobaciones manuales repetitivas. 
 
-    Optional.ofNullable(value): devuelve Optional.empty() si value es null.
+`java.util.Optional<T>` es un contenedor inmutable que puede o no contener un valor no nulo, forzando al desarrollador a gestionar explícitamente la ausencia de un valor.
 
-    Optional.empty(): siempre vacío.
+---
+
+## 2. Creación de Optionals
+
+- **`Optional.of(value)`:** Lanza `NullPointerException` si `value` es `null`.
+- **`Optional.ofNullable(value)`:** Devuelve `Optional.empty()` si `value` es `null`.
+- **`Optional.empty()`:** Representa la ausencia de valor.
 
 ```java
-Optional<String> nombre = Optional.of("Ana");   // nunca pasar null
+Optional<String> nombre = Optional.of("Ana"); 
 Optional<String> posibleNombre = Optional.ofNullable(obtenerNombre());
 ```
 
-3. Recuperación y consulta
+---
 
-    get(): devuelve el valor si está presente, o lanza NoSuchElementException. No recomendado sin comprobación previa.
+## 3. Recuperación y consulta
 
-    isPresent(): booleano que indica si hay valor.
-
-    ifPresent(Consumer): ejecuta una acción si el valor está presente.
+- **`get()`:** Devuelve el valor si está presente, o lanza `NoSuchElementException`. No se recomienda sin comprobación previa.
+- **`isPresent()`:** Devuelve `true` si hay un valor presente.
+- **`ifPresent(Consumer)`:** Ejecuta una acción si el valor está presente.
+- **`ifPresentOrElse(Consumer, Runnable)` (Java 9+):** Ejecuta el consumidor si está presente, o el runnable si está vacío.
 
 ```java
 nombre.ifPresent(n -> System.out.println("Hola " + n));
 
-    ifPresentOrElse(Consumer, Runnable) (Java 9): ejecuta el Consumer si presente, o el Runnable en caso contrario.
-
-java
-```
-
-### nombre.ifPresentOrElse(
+nombre.ifPresentOrElse(
     n -> System.out.println("Encontrado: " + n),
     () -> System.out.println("Nombre no disponible")
 );
+```
 
-### 4. Valores por defecto
+---
 
-    orElse(T other): devuelve el valor si presente, si no, devuelve other. Cuidado: other se evalúa siempre aunque el Optional tenga valor.
+## 4. Valores por defecto
 
-    orElseGet(Supplier<? extends T>): como orElse pero el suplidor solo se invoca si el Optional está vacío. Útil cuando el valor por defecto es costoso de calcular.
-
-    orElseThrow() (Java 10+): lanza NoSuchElementException si está vacío, equivalente a get() pero más descriptivo. Existe la versión con proveedor de excepción: orElseThrow(Supplier<? extends X>) desde Java 8.
+- **`orElse(T other)`:** Devuelve el valor o `other`. **Cuidado:** `other` se evalúa siempre, incluso si el Optional tiene valor.
+- **`orElseGet(Supplier)`:** Como `orElse`, pero el suplidor solo se invoca si el Optional está vacío. Ideal para valores costosos.
+- **`orElseThrow()` (Java 10+):** Lanza `NoSuchElementException` si está vacío. Es la alternativa preferida a `get()`.
 
 ```java
 String nombre = Optional.ofNullable(obtenerDesdeCache())
                          .orElseGet(() -> cargarDesdeBD());
 ```
 
-### 5. Transformaciones funcionales
+---
 
-    map(Function<? super T, ? extends U>): si hay valor, aplica la función y envuelve el resultado en un Optional.
+## 5. Transformaciones funcionales
 
-    flatMap(Function<? super T, Optional<U>>): similar a map pero evita anidar Optional. Idóneo cuando la función ya devuelve Optional.
-
-    filter(Predicate<? super T>): si el valor está presente y cumple el predicado, devuelve el Optional; si no, Optional.empty().
+- **`map(Function)`:** Aplica una función al valor si está presente y envuelve el resultado en un nuevo `Optional`.
+- **`flatMap(Function)`:** Similar a `map`, pero evita anidar `Optional<Optional<T>>` cuando la función ya devuelve un `Optional`.
+- **`filter(Predicate)`:** Devuelve el `Optional` si el valor cumple el predicado; de lo contrario, devuelve `Optional.empty()`.
 
 ```java
-Optional<Usuario> usuario = usuarioRepository.findById(id);
 String ciudad = usuario.map(Usuario::getDireccion)
                        .map(Direccion::getCiudad)
                        .orElse("Desconocida");
+
+Optional<Cuenta> cuenta = usuario.flatMap(Usuario::getCuenta)
+                                 .filter(Cuenta::estaActiva);
 ```
 
-### Optional<Cuenta> cuenta = usuario.flatMap(Usuario::getCuenta)
-                                 .filter(Cuenta::estaActiva);
+---
 
-### 6. Integración con Streams (Java 9+)
+## 6. Integración con Streams (Java 9+)
 
-stream() devuelve un Stream<T> con 0 o 1 elementos. Permite encajar Optionals en operaciones de stream.
+El método `stream()` permite encadenar un `Optional` dentro de operaciones de stream de forma fluida.
+
 ```java
 List<Optional<String>> listaDeOptionals = List.of(Optional.of("A"), Optional.empty());
+
 List<String> valores = listaDeOptionals.stream()
                                        .flatMap(Optional::stream)
                                        .toList();
 ```
 
-### 7. Buenas prácticas y antipatrones
+---
 
-    Nunca declarar un campo Optional<T> en una clase (no es serializable, incrementa la complejidad). Las entidades no deben tener Optional como campo.
+## 7. Buenas prácticas y antipatrones
 
-    No usar Optional como parámetro de métodos; en su lugar, hacer sobrecargas o pasar el valor y luego envolver internamente si es necesario.
+> [!CAUTION]
+> **No declarar campos Optional:** No es serializable y aumenta la complejidad de los objetos. Úsalo solo para retornos de métodos.
 
-    No llamar a get() sin comprobación; siempre usar orElse* o ifPresent*.
+- **No usar como parámetros de métodos:** Es preferible usar sobrecarga de métodos o manejar nulos internamente.
+- **Evitar `get()` sin comprobación:** Usar siempre `orElse*` o `ifPresent*`.
+- **Rendimiento:** Aunque el coste es mínimo, evita `Optional` en bucles de rendimiento crítico si no es necesario.
 
-    Usar Optional como tipo de retorno para métodos que pueden no tener un resultado lógico (búsquedas, etc.).
+---
 
-    Evitar Optional en contextos de alto rendimiento si no es necesario; crear objetos Optional tiene un coste mínimo pero no nulo.
+## 8. Relación con records
 
-### 8. Relación con records y patrones
+Los records pueden exponer métodos que devuelvan `Optional` para campos que permitan nulos:
 
-Los records pueden tener métodos que devuelvan Optional en lugar de campos null:
 ```java
 public record Persona(String nombre, String direccionSecundaria) {
-    public Optional<String> direccionSecundaria() {
+    public Optional<String> direccionSecundariaOpt() {
         return Optional.ofNullable(direccionSecundaria);
     }
 }
 ```
 
-Sin embargo, el campo direccionSecundaria sigue siendo un String potencialmente nulo. La API presentada oculta ese detalle.
-9. Novedades en Java 21 para Optional
+---
 
-No se han añadido nuevos métodos en Java 21. Sin embargo, la combinación de Optional con el nuevo switch y pattern matching puede usarse indirectamente:
+## 9. Novedades en Java 21 para Optional
+
+Java 21 no introduce nuevos métodos, pero el uso de `Optional` se integra perfectamente con las nuevas expresiones `switch`:
+
 ```java
-Object resultado = obtenerAlgo(); // puede ser String, null, etc.
 Optional<String> optStr = switch (resultado) {
     case String s -> Optional.of(s);
-    case null -> Optional.empty();
-    default -> Optional.empty();
+    case null, default -> Optional.empty();
 };
 ```
 
-Se prefiere mantener la lógica de nulos dentro de Optional y usar sus métodos.
+---
 
+[Anterior](./02-genericos.md) | [Inicio](../../README.md)

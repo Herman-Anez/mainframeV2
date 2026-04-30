@@ -1,120 +1,116 @@
-# GARBAGE COLLECTION
-1. Principios básicos del GC
+# ♻️ Garbage Collection en Java 21
 
-El recolector de basura libera memoria ocupada por objetos que ya no son alcanzables desde las raíces (variables locales, estáticas, referencias activas de hilos, etc.). La JVM divide el heap en regiones (o generaciones) para aplicar distintos algoritmos según la longevidad de los objetos.
-2. Hipótesis generacional
+El recolector de basura (GC) es el componente de la JVM encargado de gestionar la memoria de forma automática, liberando el espacio ocupado por objetos que ya no son alcanzables desde las raíces del programa (*GC Roots*).
 
-    La mayoría de los objetos mueren jóvenes (weak generational hypothesis).
+---
 
-    Los objetos viejos que sobreviven tienden a persistir mucho tiempo.
-    Por ello, se divide en:
+## 1. Principios básicos del GC
 
-    Young Generation: objeto recién creado. Subdividida en Eden y dos espacios Survivor (S0, S1).
+La JVM identifica los objetos "vivos" recorriendo el grafo de referencias desde:
+*   Variables locales en las pilas de los hilos.
+*   Variables estáticas de las clases cargadas.
+*   Referencias JNI (nativas).
 
-    Old Generation (Tenured): objetos que han sobrevivido varios ciclos de GC menor.
+Los objetos no alcanzables son marcados como basura y su memoria es reclamada para futuras asignaciones.
 
-    Metaspace (fuera del heap): metadatos de clases.
+---
 
-3. Conceptos comunes
+## 2. Hipótesis generacional
 
-    GC menor (Minor GC): recolecta solo la generación joven. Rápido.
+La mayoría de los algoritmos de GC se basan en la **hipótesis generacional débil**:
+1.  La mayoría de los objetos "mueren" jóvenes.
+2.  Los objetos que sobreviven tienden a persistir por mucho tiempo.
 
-    GC mayor (Major GC) / Full GC: involucra la generación vieja y a menudo todo el heap. Pausas largas, intentar minimizarlas.
+Para optimizar esto, el heap se divide típicamente en:
+*   **Young Generation:** Donde se crean los objetos nuevos. Incluye el espacio **Eden** y dos espacios **Survivor (S0, S1)**.
+*   **Old Generation (Tenured):** Donde residen los objetos de larga vida tras sobrevivir a varios ciclos en la generación joven.
+*   **Metaspace:** Espacio de memoria nativa para metadatos de clases.
 
-    Stop-The-World (STW): todos los hilos de aplicación se detienen para que el GC realice su trabajo.
+---
 
-    Compactación: reorganiza objetos vivos para eliminar fragmentación.
+## 3. Conceptos fundamentales
 
-    Promoción: mover objetos supervivientes de la generación joven a la vieja.
+| Término | Definición |
+| :--- | :--- |
+| **Minor GC** | Recolecta solo la generación joven. Es frecuente y rápido. |
+| **Major / Full GC** | Involucra la generación vieja o todo el heap. Suele causar pausas mayores. |
+| **Stop-The-World (STW)** | Pausa total de los hilos de la aplicación para realizar tareas de limpieza. |
+| **Compactación** | Reorganización de objetos vivos para eliminar huecos de memoria (fragmentación). |
+| **Promoción** | Paso de un objeto de la generación joven a la vieja. |
 
-### 4. Recolectores disponibles en Java 21
-Serial GC ( -XX:+UseSerialGC )
+---
 
-    Un solo hilo para GC menor y mayor.
+## 4. Recolectores disponibles en Java 21
 
-    Adecuado para aplicaciones con heap pequeño (~<100 MB) o entornos embebidos.
+### Serial GC (`-XX:+UseSerialGC`)
+*   Utiliza un único hilo para todas las tareas de recolección.
+*   **Uso ideal:** Aplicaciones con heaps pequeños (<100MB) o entornos de un solo núcleo.
 
-    Pausas largas con heap grande.
+### Parallel GC (`-XX:+UseParallelGC`)
+*   Utiliza múltiples hilos para maximizar el *throughput* (rendimiento bruto).
+*   Causa pausas STW tanto en recolecciones jóvenes como viejas.
+*   **Uso ideal:** Procesamiento por lotes (*batch*) donde el rendimiento es prioridad sobre la latencia.
 
-### Parallel GC ( -XX:+UseParallelGC )
+### G1 GC (`-XX:+UseG1GC`)
+*   Recolector predeterminado desde Java 9. Divide el heap en regiones de tamaño fijo.
+*   Permite definir objetivos de pausa mediante `-XX:MaxGCPauseMillis`.
+*   **Mejoras en Java 21:** Optimización en la predicción de pausas y mejor gestión de objetos de gran tamaño (*humongous objects*).
 
-    Varios hilos para GC menor y mayor (stop-the-world en ambos).
+### ZGC (`-XX:+UseZGC`)
+*   Diseñado para latencia ultra baja (pausas constantes de <1ms) incluso en heaps de terabytes.
+*   Realiza casi todo el trabajo de forma concurrente con la aplicación.
 
-    Maximiza throughput (rendimiento).
+> [!IMPORTANT]
+> **Generational ZGC (Java 21+):** Se activa con `-XX:+ZGenerational`. Divide el trabajo en generaciones para recolectar objetos jóvenes con mayor frecuencia, mejorando drásticamente el rendimiento y reduciendo la carga de CPU comparado con el modo no generacional.
 
-    Buena opción para procesos batch que toleran pausas.
+### Shenandoah GC (`-XX:+UseShenandoahGC`)
+*   Similar a ZGC en latencia baja, pero utiliza barreras de lectura/escritura en lugar de punteros coloreados.
+*   Realiza compactación concurrente.
 
-### G1 GC ( -XX:+UseG1GC ) – Predeterminado desde Java 9
+### Epsilon GC (`-XX:+UseEpsilonGC`)
+*   Un "No-Op" GC: asigna memoria pero nunca la libera.
+*   **Uso ideal:** Pruebas de rendimiento, benchmarks o microservicios de vida extremadamente corta.
 
-    Divide el heap en regiones de tamaño fijo y recolecta preferentemente las regiones con más basura.
+---
 
-    Balance entre pausas y throughput.
+## 5. Criterios de selección
 
-    Pausas configurables con -XX:MaxGCPauseMillis (por defecto 200 ms).
+*   **Baja Latencia:** ZGC o Shenandoah.
+*   **Alto Rendimiento (Throughput):** Parallel GC.
+*   **Equilibrio General:** G1 GC.
+*   **Heaps Gigantes:** ZGC es la opción más escalable.
 
-    Realiza compactaciones parciales y ciclos de marcado concurrente (SATB).
+---
 
-    Mejoras en Java 21: refinamiento de la predicción de pausa, mejor manejo de regiones humongous.
+## 6. Parámetros de configuración comunes
 
-### ZGC ( -XX:+UseZGC )
+| Parámetro | Descripción |
+| :--- | :--- |
+| `-Xms` / `-Xmx` | Tamaño inicial y máximo del heap. |
+| `-XX:MaxGCPauseMillis` | Objetivo de pausa máxima (especialmente para G1). |
+| `-XX:+UseStringDeduplication` | Reduce el uso de memoria eliminando duplicados de Strings. |
+| `-Xlog:gc*` | Sistema unificado de logging para el GC. |
+| `-XX:MetaspaceSize` | Tamaño inicial del área de metadatos. |
+| `-XX:+ZGenerational` | Activa el modo generacional en ZGC (Recomendado en Java 21). |
 
-    Diseñado para pausas inferiores a 1 ms, incluso con heaps de terabytes.
+---
 
-    Concurrente en casi todas las fases (marcado, compactación, referencias).
+## 7. Diagnóstico y logs
 
-    A partir de Java 21, ZGC soporta generaciones (activando -XX:+ZGenerational). Separa objetos jóvenes de viejos para recolectar los jóvenes con mucha más frecuencia, reduciendo la presión de asignación.
+Para obtener un análisis detallado del comportamiento del GC, se recomienda el uso del flag `-Xlog`:
 
-    Sus algoritmos de “punteros coloreados” y “load barriers” permiten mover objetos sin detener los hilos de aplicación.
-
-    Muy recomendado para aplicaciones que requieren baja latencia.
-
-### Shenandoah GC ( -XX:+UseShenandoahGC )
-
-    También de latencia ultrabaja, con compactación concurrente mediante evacuación.
-
-    A diferencia de ZGC, no requiere punteros coloreados; usa barreras de lectura y escritura.
-
-    Soporta generaciones opcionales (modo generacional en desarrollo/preview).
-
-    Disponible en JDK builds que lo incluyan; en Oracle JDK está presente.
-
-### Epsilon GC ( -XX:+UseEpsilonGC )
-
-    No recolecta basura; solo asigna memoria hasta que se acaba.
-
-    Útil para pruebas de rendimiento, benchmarks, o aplicaciones de vida corta.
-
-### 5. Factores que afectan la elección del GC
-
-    Latencia máxima aceptable: ZGC / Shenandoah.
-
-    Throughput: Parallel GC.
-
-    Equilibrio: G1.
-
-    Tamaño del heap: ZGC escala mejor a heaps muy grandes.
-
-    Número de núcleos: Parallel GC y G1 se benefician de muchos cores; ZGC requiere algunos cores para concurrencia.
-
-### 6. Parámetros de ajuste comunes
-Parámetro	Descripción
--Xmx<size>	Tamaño máximo del heap (ej: -Xmx2g)
--Xms<size>	Tamaño inicial del heap
--XX:MaxGCPauseMillis	Objetivo de pausa máxima (G1)
--XX:+UseStringDeduplication	Elimina duplicados de String en el heap (G1, ZGC)
--XX:+PrintGCDetails	(obsoleto, usar -Xlog:gc*)
--Xlog:gc	Logging unificado del GC
--XX:MetaspaceSize	Tamaño inicial del metaspace
--XX:MaxMetaspaceSize	Tamaño máximo del metaspace
--XX:+UseZGC	Activa ZGC
--XX:+ZGenerational	Modo generacional en ZGC (Java 21+)
--XX:ConcGCThreads	Número de hilos para fases concurrentes
--XX:ParallelGCThreads	Número de hilos para fases STW
-7. Logs y análisis
-
-Con el sistema unificado de logging (-Xlog):
-```text
+```bash
 -Xlog:gc*=info:file=gc.log:time,uptimemillis:filecount=5,filesize=10M
 ```
 
-Herramientas como GCViewer, GCEasy, o JMC permiten visualizar los logs y ajustar parámetros.
+> [!TIP]
+> Herramientas como **GCViewer**, **GCEasy** o **Java Mission Control (JMC)** son esenciales para visualizar estos logs e identificar cuellos de botella.
+
+---
+
+## 🔗 Recursos y Enlaces
+
+- [🏠 Inicio](../../../../README.md)
+- [☕ Java 21 Index](../../index.md)
+- [⬅️ Anterior: Funcionamiento JVM](./01-funcionamiento-jvm.md)
+- [Siguiente: Optimización ➡️](./03-optimizacion.md)

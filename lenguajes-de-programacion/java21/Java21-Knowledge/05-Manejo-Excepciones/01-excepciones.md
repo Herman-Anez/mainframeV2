@@ -1,115 +1,102 @@
-# MANEJO DE EXCEPCIONES
+# Manejo de Excepciones
 
-El manejo de excepciones en Java es un mecanismo robusto para controlar situaciones anómalas que pueden ocurrir en tiempo de ejecución. Java 21 mantiene el modelo consolidado desde las primeras versiones, con pequeñas mejoras de calidad de vida introducidas en versiones anteriores que siguen plenamente vigentes.
-1. Jerarquía de excepciones
+El manejo de excepciones en Java es un mecanismo robusto para controlar situaciones anómalas en tiempo de ejecución. Java 21 mantiene el modelo consolidado, con mejoras de calidad de vida que facilitan la depuración y gestión de recursos.
 
-Todas las excepciones y errores heredan de la clase java.lang.Throwable. De ella derivan dos ramas principales:
+---
 
-    Error y sus subclases: representan problemas graves relacionados con la JVM (p.ej. OutOfMemoryError, StackOverflowError). Normalmente no se capturan ni se tratan, pues indican condiciones de las que una aplicación típica no puede recuperarse.
+## 1. Jerarquía de excepciones
 
-    Exception y sus subclases: condiciones que la aplicación podría querer capturar.
+Todas las excepciones y errores heredan de la clase `java.lang.Throwable`. De ella derivan dos ramas principales:
 
-        Excepciones comprobadas (checked): Todas las hijas de Exception que no son RuntimeException. El compilador obliga a manejarlas (con try-catch) o a declararlas en la firma del método (throws). Ejemplos: IOException, SQLException, ClassNotFoundException.
+### Error
 
-        Excepciones no comprobadas (unchecked): Las hijas de RuntimeException. No es obligatorio capturarlas ni declararlas. Suelen indicar errores de programación (p.ej. NullPointerException, IllegalArgumentException, IndexOutOfBoundsException).
+Representan problemas graves de la JVM (ej. `OutOfMemoryError`, `StackOverflowError`). Normalmente la aplicación no debe intentar capturarlos.
 
-```java
+### Exception
+
+Condiciones que la aplicación puede capturar y manejar:
+
+- **Excepciones comprobadas (Checked):** Hijas de `Exception` (excepto `RuntimeException`). El compilador obliga a manejarlas o declararlas con `throws`. Ej: `IOException`.
+- **Excepciones no comprobadas (Unchecked):** Hijas de `RuntimeException`. Indican errores de programación. No es obligatorio capturarlas. Ej: `NullPointerException`.
+
+```text
 Throwable
-├── Error
-│   ├── VirtualMachineError (OutOfMemoryError, StackOverflowError)
-│   └── ...
+├── Error (Irrecuperables)
 └── Exception
-    ├── IOException (checked)
-    ├── SQLException (checked)
-    └── RuntimeException (unchecked)
-        ├── NullPointerException
-        ├── IllegalArgumentException
-        ├── IndexOutOfBoundsException
-        └── ...
+    ├── Checked Exceptions (IOException, SQLException...)
+    └── RuntimeException (NullPointerException, IllegalArgumentException...)
 ```
 
-2. Captura de excepciones: try-catch-finally
+---
 
-La estructura básica para manejar excepciones es el bloque try-catch-finally.
-2.1. try con uno o varios catch
+## 2. Captura de excepciones: try-catch-finally
+
+### 2.1. Bloques try-catch
+
+Permite capturar excepciones específicas. El orden de los bloques `catch` importa: debe ir de la excepción más específica a la más genérica.
+
 ```java
 try {
-    // Código que puede lanzar una excepción
     Files.readAllLines(Path.of("archivo.txt"));
 } catch (IOException e) {
-    // Manejo específico para IOException
     System.err.println("Error de E/S: " + e.getMessage());
 } catch (Exception e) {
-    // Manejo genérico para cualquier otra excepción
     System.err.println("Error inesperado: " + e);
 }
 ```
 
-Los bloques catch se evalúan en orden. Se debe poner primero el tipo más específico, ya que si un catch de supertipo aparece antes, atrapará también las excepciones de subtipos y los bloques posteriores nunca se ejecutarían (error de compilación si son del mismo nivel).
-2.2. Multi-catch (Java 7+)
+### 2.2. Multi-catch (Java 7+)
 
-Se pueden capturar varios tipos de excepción en un solo bloque cuando el manejo es idéntico:
+Permite capturar varios tipos de excepción en un solo bloque si el manejo es idéntico.
+
 ```java
 try {
     // ...
-} catch (IOException | SQLException e) { // e es implícitamente final
+} catch (IOException | SQLException e) {
     System.err.println("Error de datos: " + e.getMessage());
 }
 ```
 
-La variable e es de tipo de la unión de los tipos listados, pero es final (no se puede reasignar dentro del bloque).
-2.3. finally
+### 2.3. Bloque finally
 
-El bloque finally se ejecuta siempre, ocurra o no una excepción, y aunque dentro del try o catch se realice un return. Se usa para liberar recursos que no implementan AutoCloseable.
-```java
-FileInputStream fis = null;
-try {
-    fis = new FileInputStream("archivo.txt");
-    // leer...
-} catch (IOException e) {
-    // manejar
-} finally {
-    if (fis != null) {
-        try { fis.close(); } catch (IOException ignorada) {}
-    }
-}
-```
+Se ejecuta **siempre**, haya o no excepción, incluso después de un `return`. Ideal para tareas de limpieza manual.
 
-3. Try-with-resources (Java 7+)
+---
 
-Simplifica la gestión de recursos que implementen AutoCloseable (o Closeable). Los recursos declarados en la cabecera del try se cierran automáticamente al finalizar el bloque, en orden inverso al de creación.
+## 3. Try-with-resources (Java 7+)
+
+Gestiona automáticamente el cierre de recursos que implementan `AutoCloseable` (streams, conexiones, etc.).
+
 ```java
 try (BufferedReader br = new BufferedReader(new FileReader("archivo.txt"))) {
     String linea = br.readLine();
-    // ...
-} // br.close() se llama automáticamente
+} // br.close() se llama automáticamente aquí
 ```
 
-Desde Java 9 se pueden usar variables efectivamente finales o ya declaradas:
-```java
-BufferedReader br = new BufferedReader(new FileReader("archivo.txt"));
-try (br) {   // br es un recurso pasado al try
-    // ...
-}
-```
+> [!TIP]
+> Desde Java 9, puedes pasar al bloque `try` variables que ya hayan sido declaradas, siempre que sean **efectivamente finales**.
 
-Si el bloque try lanza una excepción y el cierre también, la excepción del cierre se suprime y se añade como suprimida a la original, accesible con Throwable.getSuppressed().
-4. Declaración de excepciones: throws
+---
 
-Cuando un método no maneja una excepción comprobada, debe declararla en su firma:
+## 4. Declaración de excepciones: throws
+
+Si un método no maneja una excepción comprobada, debe delegarla a quien lo invoque mediante la palabra clave `throws`.
+
 ```java
 public String leerArchivo(String ruta) throws IOException {
     return Files.readString(Path.of(ruta));
 }
-
-    Sólo las excepciones comprobadas requieren declaración; las no comprobadas (RuntimeException y sus hijas) pueden declararse opcionalmente.
 ```
 
-    Sobrescribir un método: no se pueden añadir más excepciones comprobadas que las declaradas por el método original, aunque sí se pueden reducir o declarar subtipos.
+> [!NOTE]
+> Al sobrescribir un método, no puedes declarar excepciones comprobadas más generales o nuevas que las del método original.
 
-### 5. Creación de excepciones propias
+---
 
-Se pueden definir excepciones personalizadas extendiendo Exception (checked), RuntimeException (unchecked) o Throwable. Es recomendable proporcionar al menos constructores que acepten mensaje y causa.
+## 5. Creación de excepciones propias
+
+Puedes crear tus propias excepciones extendiendo `Exception` o `RuntimeException`.
+
 ```java
 public class CuentaException extends Exception {
     public CuentaException(String mensaje) {
@@ -121,33 +108,44 @@ public class CuentaException extends Exception {
 }
 ```
 
-### 6. Buenas prácticas y pautas
+---
 
-    Captura específica: evitar catch (Exception e) genérico salvo en puntos de entrada (p.ej., un main o un hilo raíz). Capturar lo que realmente se puede manejar.
+## 6. Buenas prácticas
 
-    No tragar excepciones: nunca dejar un bloque catch vacío. Al menos registrar el error.
+ **Captura específica:** evitar catch (Exception e) genérico salvo en puntos de entrada (p.ej., un main o un hilo raíz). Capturar lo que realmente se puede manejar.
 
-    Envolver excepciones: si se quiere añadir contexto, usar excepción personalizada o new RuntimeException(mensaje, e) para mantener la causa original.
+ **No tragar excepciones:** nunca dejar un bloque catch vacío. Al menos registrar el error.
 
-    Usar finally o try-with-resources para liberar recursos, incluso si no hay excepción.
+ **Envolver excepciones:** si se quiere añadir contexto, usar excepción personalizada o new RuntimeException(mensaje, e) para mantener la causa original.
 
-    Documentar con @throws en Javadoc todas las excepciones comprobadas y las no comprobadas relevantes.
+- *Usar finally o try-with-resources para liberar recursos, incluso si no hay excepción.
 
-    En streams/lambdas: las interfaces funcionales no permiten lanzar excepciones comprobadas directamente. Soluciones:
+- *Documentar con @throws en Javadoc todas las excepciones comprobadas y las no comprobadas relevantes.
+
+ **En streams/lambdas:** las interfaces funcionales no permiten lanzar excepciones comprobadas directamente. Soluciones:
 
         Capturar dentro y convertir a unchecked.
 
         Usar bibliotecas como vavr o crear interfaces funcionales propias que permitan lanzar.
 
-    Optional evita el uso de null y reduce la necesidad de NullPointerException, pero no reemplaza el manejo de excepciones para casos de error irrecuperables.
+ **Optional evita el uso de null y reduce la necesidad de NullPointerException, pero no reemplaza el manejo de excepciones para casos de error irrecuperables.
 
-### 7. Novedades en mensajes de excepción (Java 14+)
+- **Captura específica:** Evita `catch (Exception e)` si puedes capturar excepciones más concretas.
+- **No silencies excepciones:** Nunca dejes un bloque `catch` vacío. Al menos registra el error en un log.
+- **Mantén la causa:** Al relanzar una excepción, pasa la excepción original al constructor para no perder el stack trace (`new RuntimeException(msg, e)`).
+- **Try-with-resources:** Es preferible a cerrar recursos manualmente en un bloque `finally`.
 
-Aunque no es una característica del lenguaje, desde Java 14 se mejoraron los mensajes de NullPointerException con información de qué variable era nula en la línea exacta, activando la opción de JVM -XX:+ShowCodeDetailsInExceptionMessages (habilitada por defecto en muchas distribuciones).
+---
+
+## 7. Mensajes de NPE mejorados (Java 14+)
+
+Desde Java 14, la JVM proporciona mensajes de `NullPointerException` mucho más detallados, indicando exactamente qué variable o método devolvió `null`.
+
 ```java
-a.b.c = 5; // NPE dirá "Cannot read field 'c' because 'a.b' is null"
+a.b.c = 5; 
+// Mensaje: "Cannot read field 'c' because 'a.b' is null"
 ```
 
-Esto está disponible y es útil en Java 21.
+---
 
-Con esto, el archivo 01-excepciones.md queda detallado y actualizado para Java 21.
+[Anterior](../04-Programacion-Funcional/03-method-references.md) | [Siguiente](../06-Modulos-JPMS/01-modulos.md)

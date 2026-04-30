@@ -1,100 +1,137 @@
-# OPERADORES
-3.1. Operadores aritméticos
+# Operadores
 
-+, -, *, /, % (módulo). Funcionan sobre tipos numéricos. División entera trunca. Precedencia: *, /, % antes que +, -.
-3.2. Operadores unarios
+Los operadores en Java permiten manipular datos, realizar cálculos matemáticos, comparaciones lógicas y operaciones a nivel de bits.
 
-### + (positivo), - (negación)
+---
 
-    ++ (incremento), -- (decremento), prefijo y sufijo.
+## Operadores aritméticos
 
-### ! (negación lógica), ~ (complemento bit a bit)
+Se utilizan para realizar operaciones matemáticas básicas sobre tipos numéricos.
 
-3.3. Operadores relacionales y de igualdad
+| Operador | Descripción | Ejemplo |
+| :--- | :--- | :--- |
+| `+` | Suma | `a + b` |
+| `-` | Resta | `a - b` |
+| `*` | Multiplicación | `a * b` |
+| `/` | División | `a / b` |
+| `%` | Módulo (resto) | `a % b` |
 
-<, <=, >, >=, ==, !=. Devuelven boolean.
+> [!WARNING]
+> **División entera:** En Java, la división entre dos enteros trunca el resultado (ej: `5 / 2` es `2`). Para obtener decimales, al menos uno de los operandos debe ser de punto flotante.
 
-    == en tipos referencia compara identidad de objeto (direcciones), no contenido. Para igualdad de contenido se usa equals().
+---
 
-    Cuidado con autoboxing: Integer a = 200; Integer b = 200; a == b puede ser falso por el cache (el pool de enteros solo cubre -128 a 127).
+## Operadores unarios
 
-3.4. Operadores lógicos
+Requieren un solo operando y realizan tareas diversas como incrementar valores o negar expresiones.
 
-    Cortocircuito: && (AND), || (OR) – solo evalúan el segundo operando si es necesario.
+- **`+` (positivo)** y **`-` (negación)** numérica.
+- **`++` (incremento)** y **`--` (decremento)**: Pueden usarse como prefijo (`++x`) o sufijo (`x++`).
+- **`!` (negación lógica)**: Invierte el valor de un booleano.
+- **`~` (complemento bit a bit)**: Invierte los bits de un operando.
 
-    No cortocircuito: &, | (evalúan ambos operandos, también usados a nivel bit).
+---
 
-    ^ (XOR lógico o bit a bit según el contexto).
+## Operadores relacionales y de igualdad
 
-3.5. Operadores a nivel de bits
+Comparan dos valores y devuelven un resultado de tipo `boolean`.
 
-&, |, ^, ~, << (desplazamiento izquierda), >> (desplazamiento derecha con signo), >>> (desplazamiento derecha sin signo).
-3.6. Operador de asignación y combinados
+- `<`, `<=`, `>`, `>=`: Menor, menor o igual, mayor, mayor o igual.
+- `==`, `!=`: Igualdad y desigualdad.
 
-=, +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=, >>>=.
+> [!IMPORTANT]
+> **Comparación de objetos:** El operador `==` compara la **identidad** (dirección de memoria) en tipos de referencia. Para comparar el **contenido**, se debe usar el método `.equals()`.
+
+> [!CAUTION]
+> **Autoboxing e Integer Cache:** La comparación `Integer a = 200; Integer b = 200; a == b` puede devolver `false` porque el pool de enteros de la JVM solo cubre el rango de `-128` a `127`.
+
+---
+
+## Operadores lógicos
+
+Se utilizan para combinar múltiples expresiones booleanas.
+
+- **`&&` (AND)** y **`||` (OR)**: Operadores de **cortocircuito**. Solo evalúan el segundo operando si es necesario.
+- **`&`**, **`|`**: Operadores lógicos que **siempre** evalúan ambos operandos (también usados a nivel de bits).
+- **`^`**: XOR lógico o bit a bit según el contexto.
+
+---
+
+## Operadores a nivel de bits
+
+Realizan operaciones directamente sobre la representación binaria de los datos.
+
+- `&` (AND), `|` (OR), `^` (XOR), `~` (NOT).
+- `<<`: Desplazamiento a la izquierda.
+- `>>`: Desplazamiento a la derecha con signo.
+- `>>>`: Desplazamiento a la derecha sin signo.
+
+---
+
+## Operadores de asignación y combinados
+
+- **Simple**: `=`.
+- **Compuestos**: `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `>>>=`.
+
 ```java
 int x = 10;
-x += 5;  // x = x + 5
+x += 5;  // Equivalente a x = x + 5
 ```
 
-3.7. Operador ternario
+---
 
-### condicion ? valorSiVerdadero : valorSiFalso
+## Operador ternario
+
+Es una forma compacta de representar una estructura `if-else` que devuelve un valor.
+
+**Sintaxis:** `condicion ? valorSiVerdadero : valorSiFalso`
+
 ```java
 String estado = (edad >= 18) ? "Adulto" : "Menor";
 ```
 
-3.8. Operador instanceof y Pattern Matching
+---
 
-instanceof comprueba si un objeto es instancia de una clase/interface.
-Desde Java 16 (estable), se puede realizar pattern matching para vincular una variable directamente:
+## Operador `instanceof` y Pattern Matching
+
+Comprueba si un objeto es instancia de una clase o interfaz específica.
+
+### Pattern Matching (Java 16+)
+Permite realizar la comprobación y la vinculación de una variable en un solo paso:
+
 ```java
 if (objeto instanceof String s) {
-    System.out.println(s.toUpperCase());
+    System.out.println(s.toUpperCase()); // 's' ya está casteada a String
 }
 ```
 
-La variable de patrón s existe únicamente si la comprobación es true. Además, se puede combinar con condiciones adicionales usando &&:
-```java
-if (objeto instanceof String s && s.length() > 5) { ... }
-```
+> [!NOTE]
+> La variable de patrón `s` existe únicamente si la comprobación es `true`. Se puede combinar con condiciones adicionales usando `&&`.
 
-3.9. Operador de referencia a método ::
+---
 
-Permite referenciar métodos como lambdas: System.out::println, String::length, MiClase::new.
-3.10. Operador -> (flecha)
+## Operadores modernos
 
-Usado en lambdas y en switch expressions (que veremos en control de flujo). En lambdas: (a, b) -> a + b.
-3.11. Precedencia de operadores
+- **Referencia a método (`::`)**: Permite referenciar métodos como lambdas (ej: `System.out::println`, `String::length`, `MiClase::new`).
+- **Flecha (`->`)**: Usado en lambdas y en `switch expressions`. En lambdas: `(a, b) -> a + b`.
 
-La tabla de precedencia ordena la evaluación. Lo más relevante:
+---
 
-### Postfijos (++ --)
+## Precedencia de operadores
 
-### Unarios (+ - ! ~ ++ -- prefijos)
+La tabla de precedencia ordena la evaluación de mayor a menor prioridad:
 
-### Multiplicativos (* / %)
+1. **Postfijos**: `++`, `--`
+2. **Unarios**: `+`, `-`, `!`, `~`, `++`, `--` (prefijos)
+3. **Multiplicativos**: `*`, `/`, `%`
+4. **Aditivos**: `+`, `-`
+5. **Desplazamiento**: `<<`, `>>`, `>>>`
+6. **Relacionales**: `<`, `>`, `<=`, `>=`, `instanceof`
+7. **Igualdad**: `==`, `!=`
+8. **Operadores Bit a Bit**: `&`, `^`, `|`
+9. **Lógicos**: `&&`, `||`
+10. **Ternario**: `?:`
+11. **Asignación**: `=`, `+=`, `-=`, etc.
 
-### Aditivos (+ -)
-
-### Desplazamiento (<< >> >>>)
-
-### Relacionales (< > <= >= instanceof)
-
-### Igualdad (== !=)
-
-### AND bit a bit (&)
-
-### XOR bit a bit (^)
-
-### OR bit a bit (|)
-
-### AND lógico (&&)
-
-### OR lógico (||)
-
-### Ternario (?:)
-
-### Asignación (= += ...)
-
-Ante la duda, usar paréntesis.
+> [!TIP]
+> Ante la duda sobre el orden de evaluación, el uso de **paréntesis** garantiza la claridad y el comportamiento deseado del código.

@@ -1,112 +1,121 @@
-# OPTIMIZACIÓN DE RENDIMIENTO
+# 🚀 Optimización de Rendimiento en Java 21
 
-Optimizar una aplicación Java implica un proceso iterativo de medición, análisis y ajuste tanto del código como de la JVM.
-1. Métricas clave
+La optimización en Java es un proceso iterativo que combina la medición precisa, el análisis de cuellos de botella y el ajuste fino tanto del código fuente como de los parámetros de la Máquina Virtual.
 
-    Throughput: cantidad de trabajo por unidad de tiempo.
+---
 
-    Latencia: tiempo de respuesta a una petición.
+## 1. Métricas clave
 
-    Footprint: memoria ocupada (heap + nativa).
+Para evaluar el rendimiento, debemos centrarnos en cinco pilares:
 
-    Tiempo de arranque: desde inicio hasta que la aplicación está lista.
+*   **Throughput (Caudal):** Cantidad de trabajo completado por unidad de tiempo (ej. transacciones/segundo).
+*   **Latencia:** Tiempo de respuesta individual a una petición (p95, p99).
+*   **Footprint (Huella de memoria):** Memoria total consumida (Heap + Memoria Nativa).
+*   **Startup Time:** Tiempo desde que se lanza el proceso hasta que la aplicación está lista.
+*   **Warmup Time:** Tiempo necesario para que el compilador JIT optimice las rutas críticas de ejecución.
 
-    Tiempo de calentamiento (warmup): hasta que el JIT ha optimizado los caminos calientes.
+---
 
-2. Herramientas de profiling y diagnóstico
+## 2. Herramientas de profiling y diagnóstico
 
-    Java Flight Recorder (JFR) + Java Mission Control (JMC): recopilación de eventos de la JVM con bajo overhead. Permite analizar asignación de memoria, GC, bloqueos, actividad de hilos, etc.
+| Herramienta | Descripción |
+| :--- | :--- |
+| **JFR + JMC** | *Java Flight Recorder* y *Mission Control*. Recopilación de eventos con bajísimo impacto (<1%). |
+| **Async Profiler** | Ideal para generar *Flame Graphs* de CPU y memoria sin los sesgos de herramientas tradicionales. |
+| **VisualVM** | Interfaz gráfica "todo en uno" para monitoreo en tiempo real y análisis de *heap dumps*. |
+| **JMH** | *Java Microbenchmark Harness*. La herramienta estándar para realizar microbenchmarks fiables. |
 
-    Async Profiler: genera flamegraphs de CPU y memoria utilizando perf sin instrumentación costosa.
+---
 
-    VisualVM: herramienta gráfica para monitoreo y profiling.
+## 3. Estrategias de optimización de memoria
 
-    JMH (Java Microbenchmark Harness): imprescindible para microbenchmarks precisos, evitando la interferencia del JIT (ej: @BenchmarkMode, @Warmup).
+1.  **Dimensionamiento:** Establecer `-Xms` igual a `-Xmx` para evitar la sobrecarga de redimensionar el heap durante la ejecución.
+2.  **Reducción de Asignaciones:** Evitar el autoboxing innecesario y el uso excesivo de objetos temporales en bucles críticos.
+3.  **Colecciones Eficientes:** Utilizar `List.of()` o `Map.of()` para colecciones inmutables y `records` para estructuras de datos compactas.
+4.  **Gestión de Recursos:** Implementar `try-with-resources` para garantizar la liberación inmediata de memoria nativa y descriptores de archivo.
 
-3. Estrategias de optimización de memoria
+> [!CAUTION]
+> Evita el uso de `finalize()`. Está obsoleto y degrada severamente el rendimiento del GC. Usa `java.lang.ref.Cleaner` si necesitas limpieza de recursos no Java.
 
-    Dimensionar correctamente el heap: establecer -Xms igual a -Xmx para evitar redimensionamientos.
+---
 
-    Elegir el GC adecuado y afinarlo con pausas objetivo.
+## 4. Optimización de CPU
 
-    Reducir el uso de objetos temporales en bucles calientes (autoboxing, Strings concatenados → usar StringBuilder o text blocks en tiempo de compilación).
+*   **Confiar en el JIT:** Evitar micro-optimizaciones manuales que dificulten el trabajo del compilador (como desenrollar bucles manualmente).
+*   **Análisis de Escape:** El JIT puede realizar "asignación en pila" si detecta que un objeto no escapa del hilo actual.
+*   **Streams vs Bucles:** Los Streams son excelentes para legibilidad, pero en secciones de rendimiento crítico, un bucle tradicional puede ser más eficiente al evitar objetos intermedios.
 
-    Aprovechar colecciones inmutables (List.of) y records para evitar mutabilidad innecesaria.
+---
 
-    Uso de Optional sin abusar; no para campos de entidades.
+## 5. Optimización del arranque y despliegue
 
-    Liberar recursos explícitamente (try-with-resources).
+Para entornos de microservicios y *serverless*, el arranque es crítico:
 
-    Evitar finalize() (obsoleto y costoso). Usar Cleaner si es imprescindible.
+*   **AppCDS (Class Data Sharing):** Permite compartir metadatos de clases entre ejecuciones, reduciendo drásticamente el tiempo de carga y el uso de memoria.
+*   **jlink:** Crea un JRE personalizado que solo contiene los módulos necesarios, reduciendo el tamaño del binario final.
+*   **GraalVM Native Image:** Compila la aplicación a un binario nativo para un arranque instantáneo (sacrificando algo de *peak throughput*).
 
-### 4. Optimización de CPU
+---
 
-    Dejar que el JIT trabaje: evite micro-optimizaciones prematuras; el JIT inlinea métodos y elimina código muerto.
+## 6. Técnicas avanzadas en Java 21
 
-    Perfiles de compilación: el JIT aprovecha perfiles de tipos para devirtualizar llamadas a métodos. Cuanto más estable sea el flujo de tipos, mejor.
+> [!TIP]
+> Java 21 introduce herramientas revolucionarias para la escalabilidad:
 
-    Conversión escalar y eliminación de autoboxing: los análisis de escape permiten eliminar objetos si no escapan del hilo.
+*   **Virtual Threads:** Permiten manejar miles de conexiones concurrentes sin el overhead de los hilos de plataforma.
+*   **Scoped Values:** Una alternativa moderna y eficiente a `ThreadLocal`, optimizada para hilos virtuales.
+*   **Structured Concurrency:** Mejora la gestión de tareas paralelas, facilitando la propagación de errores y cancelaciones.
+*   **Generational ZGC:** Permite mantener pausas de milisegundos incluso bajo cargas de trabajo pesadas.
 
-    Usar Streams con criterio: para operaciones sencillas pueden generar objetos intermedios; para cálculos críticos medir si conviene un bucle tradicional.
+---
 
-    Concurrencia virtual: sustituir pools de hilos de plataforma por hilos virtuales y concurrencia estructurada para reducir latencia y mejorar throughput en aplicaciones I/O-bound.
+## 7. Metodología de optimización
 
-### 5. Optimización del arranque y despliegue
+1.  **Definir Objetivos:** Establecer metas claras (ej: "latencia p99 < 50ms").
+2.  **Medir:** Obtener una línea base usando JFR o JMH.
+3.  **Identificar:** Localizar el cuello de botella (¿CPU? ¿GC? ¿Bloqueos de hilos?).
+4.  **Aplicar Cambios:** Realizar una sola modificación a la vez.
+5.  **Validar:** Volver a medir para confirmar la mejora y asegurar que no hay regresiones.
 
-    CDS (Class Data Sharing): -Xshare:on y creación de archivo compartido (-XX:ArchiveClassesAtExit / -XX:SharedArchiveFile) para reducir tiempo de carga.
+---
 
-    AOT con GraalVM Native Image si el tiempo de arranque es crítico (microservicios ephemeral), sacrificando algunas optimizaciones de pico.
+## 8. Flags de la JVM para afinamiento
 
-    AppCDS permite incluir clases de la aplicación en el archivo compartido.
+| Flag | Propósito |
+| :--- | :--- |
+| `-XX:+AlwaysPreTouch` | Inicializa toda la memoria del heap al arrancar (evita fallos de página). |
+| `-XX:+UseStringDeduplication` | Elimina duplicados de Strings en el heap para ahorrar memoria. |
+| `-XX:+UseTransparentHugePages` | Optimiza el acceso a memoria usando páginas grandes del SO. |
+| `-XX:MaxInlineLevel=15` | Ajusta la agresividad del inlining del compilador JIT. |
 
-    Usar módulos y jlink para generar una JRE personalizada y ligera.
+---
 
-### 6. Técnicas avanzadas en Java 21
+## 9. Ejemplo de configuración: Microservicio con ZGC
 
-    Hilos virtuales para I/O intensiva: migrar servidores y procesos batch que antes requerían pools enormes.
+Configuración recomendada para una aplicación de baja latencia en Java 21:
 
-    Scoped Values en lugar de ThreadLocal: menor consumo de memoria, herencia automática sin coste en hilos virtuales.
-
-    Structured Concurrency: evita la pérdida de hilos, mejora la cancelación y la observabilidad.
-
-    Pattern matching y records: reducen el código propenso a errores y la creación de clases intermedias, mejorando el uso de caché de instrucciones.
-
-### 7. Pasos prácticos de optimización
-
-    Definir objetivos de rendimiento (ej: p95 < 10ms, 1000 req/s).
-
-    Establecer un entorno de pruebas reproducible.
-
-    Perfilar con JFR/Async Profiler para identificar cuellos de botella (CPU, asignación, bloqueos).
-
-    Analizar logs de GC y ajustar tamaño de heap o cambiar de GC si es necesario.
-
-    Aplicar mejoras de código (evitar antipatrones, reducir asignaciones).
-
-    Medir nuevamente para validar la mejora.
-
-    Automatizar pruebas de rendimiento en el CI/CD para detectar regresiones.
-
-### 8. Flags de JVM útiles para afinamiento
-Flag	Propósito
--server	Selecciona el compilador servidor (suele ser por defecto en 64 bits)
--XX:+AggressiveOpts	Habilita optimizaciones experimentales (no necesario hoy)
--XX:TieredStopAtLevel=1	Solo compila con C1; reduce calentamiento a costa de máximo rendimiento
--XX:+AlwaysPreTouch	Toca toda la memoria del heap al inicio (evita page faults)
--XX:+UseStringDeduplication	Deduplicación de Strings (G1, ZGC)
--XX:+UseTransparentHugePages	Mejora rendimiento con páginas grandes de memoria
--XX:MaxInlineLevel=15	Ajusta la profundidad máxima de inlining
-9. Ejemplo: ajuste para un microservicio con ZGC generacional
-```text
-java -Xmx2g -Xms2g -XX:+UseZGC -XX:+ZGenerational \
-     -Xlog:gc*:file=gc.log:time,uptimemillis:filecount=5,filesize=20M \
+```bash
+java -Xmx2g -Xms2g \
+     -XX:+UseZGC -XX:+ZGenerational \
      -XX:+AlwaysPreTouch \
-     -jar aplicacion.jar
+     -Xlog:gc*:file=gc.log:time,uptimemillis:filecount=5,filesize=20M \
+     -jar mi-aplicacion.jar
 ```
 
-Se logra latencia de GC < 1ms y buen rendimiento incluso bajo cargas altas.
+---
 
+## ⏭️ Próximos pasos: Ecosistema
 
-# ECOSISTEMA DE CONSTRUCCIÓN, PRUEBAS Y EMPAQUETADO
+El rendimiento es solo una parte del éxito. El ecosistema moderno de Java proporciona herramientas para automatizar la construcción, pruebas y despliegue:
 
-El ecosistema moderno de Java gira en torno a herramientas que automatizan la construcción, las pruebas y la distribución de aplicaciones. Esta sección profundiza en Maven y Gradle como gestores de proyectos, JUnit 5 como plataforma de pruebas y jlink / jpackage para crear distribuciones nativas y ligeras. Todas las explicaciones están actualizadas para Java 21.
+*   **Maven y Gradle:** Gestión de dependencias y ciclos de vida.
+*   **JUnit 5:** Pruebas unitarias y de integración.
+*   **jlink / jpackage:** Distribución de aplicaciones ligeras.
+
+---
+
+## 🔗 Recursos y Enlaces
+
+- [🏠 Inicio](../../../../README.md)
+- [☕ Java 21 Index](../../index.md)
+- [⬅️ Anterior: Garbage Collection](./02-garbage-collection.md)

@@ -1,56 +1,56 @@
-# COLECCIONES
-1. El Java Collections Framework (JCF)
+# Colecciones
+
+## 1. El Java Collections Framework (JCF)
 
 El JCF es una arquitectura unificada para representar y manipular grupos de objetos. Proporciona:
 
-### Interfaces (tipos abstractos de datos)
+- **Interfaces:** Tipos abstractos de datos que representan colecciones.
+- **Implementaciones concretas:** Versiones usables de las interfaces.
+- **Algoritmos:** Métodos para realizar operaciones como ordenación y búsqueda.
 
-### Implementaciones concretas
+La raíz de la jerarquía es la interfaz `Collection<E>`, de la que derivan `List<E>`, `Set<E>` y `Queue<E>`. `Map<K,V>` no extiende `Collection` pero es parte fundamental del framework.
 
-### Algoritmos (ordenación, búsqueda, etc.)
+---
 
-La raíz de la jerarquía es la interfaz Collection<E>, de la que derivan List<E>, Set<E> y Queue<E>. Map<K,V> no extiende Collection pero es parte del framework.
-2. Interfaces principales y sus contratos
-Interfaz	Característica principal	Implementaciones típicas
-Collection	Grupo de elementos	(no se implementa directamente)
-List	Ordenada por índice, permite duplicados	ArrayList, LinkedList, Vector(legacy)
-Set	No duplicados, sin orden definido por posición	HashSet (sin orden), LinkedHashSet (orden inserción), TreeSet (orden natural/comparator)
-Queue	Diseñada para contener elementos antes de procesarlos	ArrayDeque, PriorityQueue, LinkedList
-Deque	Cola de doble extremo (hereda de Queue)	ArrayDeque, LinkedList
-Map	Asociación clave-valor, sin claves duplicadas	HashMap (sin orden), LinkedHashMap (orden inserción/acceso), TreeMap (orden natural/comparator)
-3. Implementaciones clave
+## 2. Interfaces principales y sus contratos
 
-    ArrayList: array redimensionable, acceso rápido por índice O(1), inserción/eliminación lenta al inicio o en medio O(n). Ideal para lectura intensiva y recorrido.
+| Interfaz | Característica principal | Implementaciones típicas |
+| :--- | :--- | :--- |
+| **Collection** | Raíz de la jerarquía. | (No se implementa directamente) |
+| **List** | Ordenada por índice, permite duplicados. | `ArrayList`, `LinkedList`, `Vector` (legacy) |
+| **Set** | No permite duplicados, sin orden posicional definido. | `HashSet`, `LinkedHashSet`, `TreeSet` |
+| **Queue** | Diseñada para procesar elementos en orden (FIFO). | `ArrayDeque`, `PriorityQueue`, `LinkedList` |
+| **Deque** | Cola de doble extremo (Double Ended Queue). | `ArrayDeque`, `LinkedList` |
+| **Map** | Asociación clave-valor, sin claves duplicadas. | `HashMap`, `LinkedHashMap`, `TreeMap` |
 
-    LinkedList: lista doblemente enlazada, inserciones/eliminaciones O(1) en extremos y con iterador, acceso por índice O(n). Útil cuando se necesita añadir/quitar frecuentemente en cualquier posición.
+---
 
-    HashSet: implementación de Set basada en HashMap. No garantiza orden. O(1) para add, remove, contains.
+## 3. Implementaciones clave
 
-    LinkedHashSet: mantiene el orden de inserción, ligera penalización de rendimiento.
+- **ArrayList:** Array redimensionable. Acceso rápido por índice $O(1)$. Inserción/eliminación lenta en posiciones intermedias $O(n)$. Ideal para lectura intensiva.
+- **LinkedList:** Lista doblemente enlazada. Inserciones/eliminaciones $O(1)$ en los extremos. Acceso por índice lento $O(n)$.
+- **HashSet:** Basada en tabla hash. No garantiza orden. Operaciones básicas en $O(1)$ promedio.
+- **LinkedHashSet:** Mantiene el orden de inserción mediante una lista enlazada interna.
+- **TreeSet:** Almacena elementos en un árbol rojo-negro. Mantiene orden natural o definido por un `Comparator`. Operaciones en $O(\log n)$.
+- **ArrayDeque:** Implementación de `Deque` más eficiente que `Stack` o `LinkedList`. No permite `null`.
+- **PriorityQueue:** Cola con prioridad basada en un montículo (heap).
+- **HashMap:** Tabla hash para pares clave-valor. $O(1)$ promedio. Permite `null`.
+- **LinkedHashMap:** Mantiene el orden de inserción o de acceso.
+- **TreeMap:** Almacena claves en un árbol para mantenerlas ordenadas.
 
-    TreeSet: SortedSet basado en árbol rojo-negro. Ordena los elementos según su orden natural (Comparable) o un Comparator. O(log n).
+---
 
-    ArrayDeque: implementación de Deque más eficiente que Stack y LinkedList para uso como cola o pila. No permite elementos null.
+## 4. Sequenced Collections (Java 21)
 
-    PriorityQueue: cola que ordena los elementos según su orden natural o comparator. El elemento más prioritario es el de menor valor según ese orden.
+Java 21 introduce interfaces que definen un orden de encuentro explícito con operaciones sobre el primer y último elemento.
 
-    HashMap: tabla hash. O(1) promedio. Permite claves null y valores null. Poco adecuado para ordenación.
+> [!NOTE]
+> Estas interfaces son implementadas retroactivamente por las colecciones existentes que ya tenían un orden definido.
 
-    LinkedHashMap: HashMap que mantiene lista doblemente enlazada conservando el orden de inserción o de acceso.
-
-    TreeMap: SortedMap basado en árbol rojo‑negro. Ordena las claves.
-
-### 4. Sequenced Collections (novedad estable en Java 21)
-
-Java 21 introduce tres nuevas interfaces que definen un orden de encuentro explícito con operaciones sobre el primer y último elemento, y acceso a una vista invertida:
-
-### SequencedCollection<E> (hereda de Collection)
-
-### SequencedSet<E> (hereda de Set y SequencedCollection)
-
-### SequencedMap<K,V> (hereda de Map)
-
-Estas interfaces son implementadas retroactivamente por las colecciones existentes que ya tenían un orden definido (por inserción, natural, etc.).
+### Interfaces y Métodos
+- **SequencedCollection<E>:** `addFirst()`, `addLast()`, `getFirst()`, `getLast()`, `removeFirst()`, `removeLast()`, `reversed()`.
+- **SequencedSet<E>:** Hereda de `Set` y `SequencedCollection`.
+- **SequencedMap<K,V>:** `putFirst()`, `putLast()`, `firstEntry()`, `lastEntry()`, `reversed()`, etc.
 
 Métodos principales:
 ```java
@@ -87,91 +87,85 @@ SequencedSet<Entry<K,V>> sequencedEntrySet()
 
 ### SortedMap (TreeMap) y LinkedHashMap → SequencedMap
 
-Ejemplos prácticos:
+### Ejemplo de uso
+
 ```java
 SequencedCollection<String> lista = new ArrayList<>();
 lista.add("A"); lista.add("B"); lista.add("C");
+
 System.out.println(lista.getFirst());  // A
 System.out.println(lista.getLast());   // C
+
 lista.addFirst("Inicio");
 lista.addLast("Fin");
 System.out.println(lista);             // [Inicio, A, B, C, Fin]
-```
 
-### SequencedCollection<String> invertida = lista.reversed();
+// Vista invertida
+SequencedCollection<String> invertida = lista.reversed();
 System.out.println(invertida.getFirst()); // Fin
-invertida.addFirst("Nuevo"); // afecta a la vista, pero modifica la colección original al final
-System.out.println(lista.getLast()); // Nuevo
-
-Con SequencedMap:
-```java
-SequencedMap<Integer, String> map = new LinkedHashMap<>();
-map.put(1, "Uno"); map.put(2, "Dos"); map.put(3, "Tres");
-System.out.println(map.firstEntry());  // 1=Uno
-map.pollLastEntry();                   // elimina y devuelve 3=Tres
-for (var entry : map.reversed().entrySet()) {
-    System.out.println(entry.getKey());
-}
 ```
 
-Estas adiciones simplifican enormemente el código que antes requería iteradores o casteos a implementaciones concretas.
-5. Iteración y recorrido
+---
 
-### Bucle for‑each: for (String s : collection)
+## 5. Iteración y recorrido
 
-    Iterador explícito: Iterator<E>, permite eliminar durante el recorrido con remove().
+1. **Bucle for-each:**
+   ```java
+   for (String s : collection) { ... }
+   ```
+2. **Iterador explícito:** `Iterator<E>`, permite eliminar elementos durante el recorrido.
+3. **forEach (Java 8+):**
+   ```java
+   lista.forEach(System.out::println);
+   ```
+4. **Streams:** Procesamiento declarativo y funcional.
 
-### forEach(Consumer) (Java 8): lista.forEach(System.out::println)
+---
 
-    Spliterator para paralelismo y streams.
+## 6. Ordenación
 
-    Streams (Java 8+): lista.stream().filter(...).collect(toList()) (explicado en programación funcional).
+- **Comparable<T>:** La propia clase define su "orden natural" implementando `compareTo()`.
+- **Comparator<T>:** Interfaz externa para definir múltiples criterios de ordenación.
+- **Collections.sort():** Método de utilidad para ordenar listas.
 
-### 6. Ordenación
+---
 
-    Comparable<T>: la clase implementa compareTo(T o). Define el orden natural.
+## 7. Colecciones inmutables (Java 9+)
 
-    Comparator<T>: interfaz externa con compare(T o1, T o2). Multitud de métodos default (reversed(), thenComparing(), comparingInt(), etc.)
+> [!TIP]
+> Las colecciones inmutables son más seguras en entornos concurrentes y consumen menos memoria.
 
-    Métodos útiles en Collections: sort(), reverseOrder().
+- **Fábricas:** `List.of()`, `Set.of()`, `Map.of()`.
+- **Copias:** `List.copyOf()`, `Set.copyOf()`, `Map.copyOf()`.
 
-    SortedSet/SortedMap requieren Comparator o elementos Comparable.
+---
 
-### 7. Colecciones inmutables (Java 9+)
+## 8. Colecciones concurrentes
 
-    Fábricas: List.of(...), Set.of(...), Map.of(key,value,...), Map.ofEntries(...). Devuelven colecciones inmutables (no se pueden modificar, ni siquiera con iterador.remove). Lanzan UnsupportedOperationException si se intenta modificar.
+- **ConcurrentHashMap:** Mapa seguro para hilos de alto rendimiento.
+- **CopyOnWriteArrayList:** Ideal para listas con muchas lecturas y pocas escrituras.
+- **BlockingQueue:** Utilizada en patrones productor-consumidor.
 
-    Copias inmutables: List.copyOf(collection), Set.copyOf(), Map.copyOf() (Java 10+). Si la colección de origen ya es inmutable, la devuelve sin copiar.
+---
 
-    Colecciones no modificables tradicionales: Collections.unmodifiableList(...) envuelven una colección mutable pero impiden modificaciones a través de la vista. La colección subyacente puede cambiar si se modifica directamente.
+## 9. Clases legacy (Evitar)
 
-### 8. Colecciones concurrentes
+- **Vector:** Sustituir por `ArrayList`.
+- **Stack:** Sustituir por `Deque` (`ArrayDeque`).
+- **Hashtable:** Sustituir por `HashMap` o `ConcurrentHashMap`.
 
-    ConcurrentHashMap: mapa thread‑safe de alto rendimiento.
+---
 
-    CopyOnWriteArrayList/CopyOnWriteArraySet: útiles cuando las lecturas dominan sobre las escrituras.
+## 10. Ejemplo integrador (Java 21)
 
-    BlockingQueue (ArrayBlockingQueue, LinkedBlockingQueue) para productores/consumidores.
-
-    ConcurrentSkipListMap/Set: implementaciones concurrentes de SortedMap/SortedSet.
-
-### 9. Clases legacy y obsoletas
-
-    Vector → sustituir por ArrayList (y sincronizar externamente si es necesario).
-
-    Stack → Deque (con ArrayDeque), métodos push/pop.
-
-    Hashtable → HashMap o ConcurrentHashMap.
-
-    Enumeration → Iterator.
-
-### 10. Ejemplo integrador con secuencias (Java 21)
 ```java
 public void procesarPedidos(SequencedCollection<Pedido> pedidos) {
-    Pedido urgente = pedidos.getFirst();  // antes: pedidos.get(0)
-    // despachar urgente...
-    var reverso = pedidos.reversed();     // vista invertida
+    Pedido urgente = pedidos.getFirst(); 
+    var reverso = pedidos.reversed();     
     reverso.forEach(p -> p.archivar());
 }
 ```
 
+---
+
+[Anterior](../02-Programacion-Orientada-Objetos/README.md) | [Siguiente](./02-genericos.md)
