@@ -1,5 +1,5 @@
 
-/1//////////////////////////////////////////////
+/0//////////////////////////////////////////////
 00 - ¿Qué es Spring? La filosofía y el ecosistema
 
 Spring no es simplemente un conjunto de utilidades. Es un marco de trabajo completo que redefine cómo se construye software empresarial en Java. Para entenderlo a fondo hay que responder a tres preguntas: ¿por qué surgió?, ¿qué problema resuelve realmente? y ¿cómo está diseñado?
@@ -442,7 +442,7 @@ Este processor envuelve el bean en un proxy JDK justo después de la inicializac
 
 //////////////////////////////////////////////////////////////
 
-/2//////////////////////////////////////////////
+/1//////////////////////////////////////////////
 01_Spring_Core/Scopes_y_Proxies.md
 El concepto de Scope (ámbito) en Spring
 
@@ -927,6 +927,505 @@ Buenas prácticas y precauciones
     Compatibilidad: en application.properties, no se puede usar SpEL para definir propiedades (solo @Value al inyectarlas).
 
 //////////////////////////////////////////////////////////////
+
+/2//////////////////////////////////////////////
+02_AOP/Conceptos_JoinPoint_Pointcut_Advice.md
+¿Qué es AOP? El problema que resuelve
+
+En una aplicación OOP, hay preocupaciones que atraviesan múltiples capas: registro de auditoría, manejo de transacciones, seguridad, control de caché, medición de rendimiento. Si no se tratan con cuidado, el mismo código se repite por todas partes (código cross-cutting). AOP permite encapsular ese comportamiento en módulos llamados aspectos y aplicarlo de forma declarativa, sin modificar la lógica de negocio.
+
+Spring AOP se basa en proxies para interceptar ejecuciones de métodos y añadir comportamiento antes, después o alrededor de dichas invocaciones.
+Terminología fundamental
+
+    Join point: Un punto durante la ejecución del programa donde se puede insertar un aspecto. En Spring AOP, un join point siempre es la ejecución de un método (nunca acceso a campos o inicialización de clases, como en AspectJ completo).
+
+    Pointcut (punto de corte): Un predicado o expresión que selecciona uno o varios join points. Define en qué métodos debe aplicarse el consejo. Ej: execution(* com.empresa..servicio.*.*(..)).
+
+    Advice (consejo): El código que se ejecuta en un join point. Define qué hacer y cuándo (antes, después, alrededor, etc.). Es la implementación real de la preocupación transversal.
+
+    Aspect (aspecto): La combinación de un pointcut y un advice. En Spring se modela con una clase anotada con @Aspect que contiene métodos de pointcut y métodos de advice.
+
+    Weaving (tejido): Proceso de aplicar los aspectos a los objetos objetivo para crear objetos proxy. En Spring AOP ocurre en tiempo de ejecución mediante proxies dinámicos.
+
+    Target object: El objeto original que será interceptado por el consejo.
+
+    Proxy: El objeto creado por Spring AOP que envuelve al target e implementa las interceptaciones.
+
+    Introduction: Posibilidad de añadir nuevos métodos o interfaces a un objeto existente. En Spring AOP se logra mediante @DeclareParents.
+
+Tipos de Advice en detalle
+
+Un advice puede aplicarse en distintos momentos del ciclo de ejecución del método:
+Tipo	Anotación	Momento de ejecución
+Before	@Before	Antes de la ejecución del método.
+AfterReturning	@AfterReturning	Después de que el método retorne exitosamente (sin excepción).
+AfterThrowing	@AfterThrowing	Después de que el método lance una excepción.
+After (finally)	@After	Siempre, sin importar si hubo éxito o excepción.
+Around	@Around	Rodea completamente el método, tiene control sobre cuándo y si se ejecuta, y puede modificar argumentos y valor de retorno.
+@Before
+
+El consejo se invoca antes de la ejecución del método objetivo. No puede evitar que el método se ejecute, salvo que lance una excepción.
+java
+
+@Aspect
+@Component
+public class LoggingAspect {
+    @Before("execution(* com.empresa..*Service.*(..))")
+    public void logBefore(JoinPoint joinPoint) {
+        System.out.println("Llamando a: " + joinPoint.getSignature().toShortString());
+    }
+}
+
+Se puede acceder a los parámetros del join point a través del objeto JoinPoint.
+@AfterReturning
+
+Se ejecuta después de un retorno normal. Puede obtener el valor retornado mediante el atributo returning.
+java
+
+@AfterReturning(
+    pointcut = "execution(* com.empresa..*Repository.save(..))",
+    returning = "result"
+)
+public void logAfterReturning(JoinPoint joinPoint, Object result) {
+    System.out.println(joinPoint.getSignature().getName() + " retornó " + result);
+}
+
+El nombre de la variable en el argumento del método debe coincidir con el atributo returning.
+@AfterThrowing
+
+Interviene cuando el método lanza una excepción. Puede capturar la excepción lanzada con throwing.
+java
+
+@AfterThrowing(
+    pointcut = "execution(* com.empresa..*Service.*(..))",
+    throwing = "ex"
+)
+public void logAfterThrowing(JoinPoint joinPoint, Exception ex) {
+    System.err.println("Error en " + joinPoint.getSignature() + ": " + ex.getMessage());
+}
+
+@After (finally)
+
+Se ejecuta en cualquier terminación, como un bloque finally. Ideal para liberar recursos o registrar el fin de la operación.
+java
+
+@After("execution(* com.empresa..*Service.procesar(..))")
+public void logAfter(JoinPoint joinPoint) {
+    System.out.println("Finalizó: " + joinPoint.getSignature());
+}
+
+@Around (el más poderoso y complejo)
+
+Tiene el control total: puede modificar argumentos, decidir si invoca o no proceed(), alterar el valor de retorno, medir el tiempo y manejar excepciones.
+java
+
+@Around("execution(* com.empresa..*Service.calcular*(..))")
+public Object medirTiempo(ProceedingJoinPoint pjp) throws Throwable {
+    long inicio = System.nanoTime();
+    Object resultado = pjp.proceed(); // ejecuta el método original
+    long tiempo = System.nanoTime() - inicio;
+    System.out.println(pjp.getSignature() + " tardó " + tiempo + " ns");
+    return resultado;
+}
+
+Precaución: si no se llama a proceed() se omite la ejecución original, y si no se retorna su resultado, se silencia el valor de retorno real. Además, ProceedingJoinPoint es una subinterfaz de JoinPoint que añade proceed().
+Pointcut: el arte de seleccionar join points
+
+Las expresiones de pointcut se basan en un lenguaje propio. Los designadores más importantes son:
+
+    execution: el más común. Define la firma del método a interceptar.
+
+        Patrón: execution(modificadores? tipo-retorno nombre-clase.nombre-metodo(parametros) throws-excepcion?)
+
+        Ejemplos:
+
+            execution(* com.empresa.servicio.*.*(..)) : cualquier método de cualquier clase en ese paquete.
+
+            execution(public String com.empresa..*.*(Long,..)) : métodos públicos que retornan String, comienzan con un Long y luego cualquier número de parámetros.
+
+            execution(* *..*Service.*(..)) : métodos de cualquier clase cuyo nombre termina en "Service".
+
+    within: limita a métodos dentro de ciertos tipos o paquetes.
+
+        within(com.empresa.servicio.*) : todos los métodos de las clases en ese paquete.
+
+        within(com.empresa..*) : paquete y subpaquetes.
+
+    this y target: this(com.empresa.Interface) hace referencia al objeto proxy; target al objeto objetivo. Útiles cuando se necesita que el objeto sea de un tipo específico.
+
+    args: selecciona según los tipos de parámetros en tiempo de ejecución.
+
+        args(java.io.Serializable) : métodos con un parámetro serializable.
+
+    @annotation: intercepta métodos anotados con una anotación determinada.
+
+        @annotation(com.empresa.Auditable) : excelente para preocupaciones transversales basadas en anotaciones.
+
+    @within: clase anotada con una anotación específica.
+
+    @args: la anotación está en los argumentos en tiempo de ejecución.
+
+    bean (Spring AOP): permite referenciar beans por nombre con comodines: bean(*Service).
+
+Se pueden combinar con &&, || y !:
+java
+
+@Pointcut("execution(public * *(..)) && within(com.empresa..*)")
+public void metodosPublicos() {}
+
+Escribiendo un aspecto completo
+java
+
+@Aspect
+@Component
+public class AuditoriaAspect {
+
+    // Pointcut reusable
+    @Pointcut("execution(* com.empresa..*Service.*(..))")
+    public void capaServicio() {}
+
+    @Pointcut("@annotation(com.empresa.anotaciones.Auditable)")
+    public void metodosAuditables() {}
+
+    @Before("capaServicio() && metodosAuditables()")
+    public void auditar(JoinPoint jp) {
+        // Acceso a parámetros
+        Object[] args = jp.getArgs();
+        String usuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        System.out.println(usuario + " ejecuta " + jp.getSignature() + " con " + Arrays.toString(args));
+    }
+}
+
+Ordenación de aspectos
+
+Cuando varios aspectos aplican al mismo join point, se puede controlar el orden con @Order (número más bajo = mayor prioridad) o implementando Ordered. En el caso de @Before, el de menor orden se ejecuta primero; en @After y @Around, el último en ejecutarse es el de menor orden (como capas de cebolla).
+02_AOP/Aspectos_personalizados.md
+
+Aquí mostramos cómo crear aspectos desde cero, incluyendo técnicas avanzadas para resolver problemas concretos.
+Estructura básica de un aspecto personalizado
+
+Todo aspecto requiere:
+
+    @Aspect en la clase.
+
+    @Component (u otra forma de registro) para que Spring lo detecte.
+
+    Uno o varios métodos anotados con @Pointcut (opcional, pero buena práctica).
+
+    Métodos de advice anotados con @Before, @Around, etc.
+
+Ejemplo: Sistema de caché declarativa con @Around y anotación personalizada
+
+Creemos una anotación @CacheableResult que almacene el resultado de un método en un ConcurrentHashMap durante un tiempo.
+
+Anotación:
+java
+
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CacheableResult {
+    long ttlMillis() default 30000;
+    String key() default "";
+}
+
+Aspecto:
+java
+
+@Aspect
+@Component
+public class CacheAspect {
+    private final ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<>();
+
+    @Around("@annotation(cacheable)")
+    public Object cacheMethod(ProceedingJoinPoint pjp, CacheableResult cacheable) throws Throwable {
+        String key = buildKey(pjp, cacheable);
+        CacheEntry entry = cache.get(key);
+        if (entry != null && (System.currentTimeMillis() - entry.timestamp) < cacheable.ttlMillis()) {
+            return entry.value;
+        }
+        Object result = pjp.proceed();
+        cache.put(key, new CacheEntry(result, System.currentTimeMillis()));
+        return result;
+    }
+
+    private String buildKey(ProceedingJoinPoint pjp, CacheableResult cacheable) {
+        String customKey = cacheable.key();
+        if (!customKey.isEmpty()) return customKey;
+        // Genera clave por clase + método + argumentos
+        return pjp.getTarget().getClass().getSimpleName() + "." 
+               + pjp.getSignature().getName() + ":" 
+               + Arrays.toString(pjp.getArgs());
+    }
+
+    private static class CacheEntry {
+        final Object value;
+        final long timestamp;
+        CacheEntry(Object value, long timestamp) { this.value = value; this.timestamp = timestamp; }
+    }
+}
+
+Uso en un servicio:
+java
+
+@Service
+public class DatosExternosService {
+    @CacheableResult(ttlMillis = 60000, key = "ultimo-precio")
+    public BigDecimal obtenerPrecioActual() {
+        // Operación costosa (API externa)
+        return new BigDecimal("100.5");
+    }
+}
+
+Pasando parámetros del método al advice
+
+Se puede ligar un parámetro del pointcut al advice mediante args y nombre de parámetro. Ejemplo para validar una restricción de acceso:
+java
+
+@Before("execution(* com.empresa..*Service.*(Long,..)) && args(id)")
+public void validarId(Long id) {
+    if (id == null || id <= 0) {
+        throw new IllegalArgumentException("ID inválido: " + id);
+    }
+}
+
+O usando JoinPoint para obtener argumentos dinámicamente.
+Aspectos con lógica condicional (combinando con contexto)
+
+Puedes exponer el proxy actual con AopContext.currentProxy() (requiere @EnableAspectJAutoProxy(exposeProxy = true)) para solucionar el problema de auto-invocación, o combinar chequeos de perfiles:
+java
+
+@Around("execution(* com.empresa..*Controller.*(..))")
+public Object medirSoloEnDev(ProceedingJoinPoint pjp) throws Throwable {
+    if (EnvironmentUtils.esDev()) {
+        long t0 = System.currentTimeMillis();
+        Object result = pjp.proceed();
+        System.out.println("DEV: " + (System.currentTimeMillis() - t0) + "ms");
+        return result;
+    }
+    return pjp.proceed(); // en otros entornos no mide
+}
+
+Registro de eventos de negocio con @AfterReturning y publicación de eventos Spring
+
+Podemos acoplar AOP con el modelo de eventos de Spring para desacoplar aún más.
+java
+
+@Aspect
+@Component
+public class EventPublisherAspect {
+    private final ApplicationEventPublisher publisher;
+
+    public EventPublisherAspect(ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
+    }
+
+    @AfterReturning(
+        pointcut = "@annotation(com.empresa.evento.PublicarEvento)",
+        returning = "result"
+    )
+    public void publicar(JoinPoint jp, Object result) {
+        PublicarEvento anotacion = obtenerAnotacion(jp); // helper con reflexión
+        publisher.publishEvent(new NegocioEvento(anotacion.tipo(), result));
+    }
+}
+
+Buenas prácticas en aspectos personalizados
+
+    Un aspecto, una responsabilidad: no mezcles medición de tiempos con seguridad. Mantenlos pequeños y enfocados.
+
+    Usa @Pointcut para centralizar expresiones: facilita el mantenimiento.
+
+    Prefiere @Around solo cuando realmente necesitas el control total; los otros consejos son más semánticos y seguros.
+
+    Evita lógica pesada o transaccional dentro del advice; no invoques servicios que a su vez puedan ser interceptados (cuidado con dependencias circulares indirectas).
+
+    Considera la trazabilidad: un advice no debe causar pérdida de información de excepciones ni alterar la semántica del método a menos que así lo hayas diseñado.
+
+02_AOP/Proxies_JDK_vs_CGLIB.md
+Spring AOP es proxy-based AOP
+
+Spring AOP no modifica bytecode como AspectJ (weaving en compilación o carga). En su lugar, en tiempo de ejecución, el contenedor crea un objeto proxy que envuelve al bean objetivo. Las llamadas externas al bean pasan por el proxy, que aplica los interceptores (aspectos). Toda la magia de @Transactional, @Cacheable, @Secured, etc., ocurre a través de estos proxies.
+JDK Dynamic Proxy
+
+Si el bean objetivo implementa al menos una interfaz, Spring utilizará por defecto un proxy dinámico de JDK.
+
+Cómo funciona internamente:
+
+    Se llama a java.lang.reflect.Proxy.newProxyInstance(ClassLoader, interfaces, InvocationHandler).
+
+    Se crea una clase proxy en tiempo de ejecución que implementa las mismas interfaces que el target.
+
+    Cualquier invocación de un método de esas interfaces es redirigida al InvocationHandler, que puede ejecutar los advisors, consejos y delegar al target mediante reflexión (Method.invoke(target, args)).
+
+Ejemplo simplificado:
+java
+
+MiServicio target = new MiServicioImpl();
+MiServicio proxy = (MiServicio) Proxy.newProxyInstance(
+    MiServicio.class.getClassLoader(),
+    new Class[]{MiServicio.class},
+    (proxyObj, method, args) -> {
+        System.out.println("Antes del método " + method.getName());
+        Object result = method.invoke(target, args);
+        System.out.println("Después");
+        return result;
+    }
+);
+proxy.hacerAlgo(); // pasa por el handler
+
+Ventajas:
+
+    Más liviano que CGLIB, forma parte del JDK.
+
+    Permite que el proxy solo prometa la interfaz, más desacoplado.
+
+Limitaciones:
+
+    Solo puede interceptar métodos definidos en la interfaz.
+
+    El target debe implementar interfaces; no funciona con clases concretas sin interfaz.
+
+    this.invocacionInterna() dentro del target no es interceptada porque this es el target, no el proxy.
+
+CGLIB Proxy
+
+Si el bean no implementa interfaces, Spring crea un proxy generando una subclase con la librería CGLIB (Code Generation Library).
+
+Mecanismo:
+
+    CGLIB utiliza Enhancer para generar una subclase del bean target en tiempo de ejecución.
+
+    Sobrescribe los métodos públicos no finales para delegar en un MethodInterceptor.
+
+    Cuando se llama a un método, se invoca al interceptor, que ejecuta los consejos y luego llama al método de la superclase (super.metodo()) o directamente al target si está configurado como callback.
+
+Ejemplo conceptual:
+java
+
+Enhancer enhancer = new Enhancer();
+enhancer.setSuperclass(MiServicioConcreto.class);
+enhancer.setCallback((MethodInterceptor) (obj, method, args, proxy) -> {
+    System.out.println("Antes");
+    Object result = proxy.invokeSuper(obj, args); // llama al método real
+    System.out.println("Después");
+    return result;
+});
+MiServicioConcreto proxy = (MiServicioConcreto) enhancer.create();
+proxy.hacerAlgo(); // interceptado
+
+Ventajas:
+
+    No requiere que el bean implemente interfaces.
+
+    Puede interceptar todos los métodos públicos de la clase (si no son final).
+
+Limitaciones:
+
+    No puede interceptar métodos final ni clases final (CGLIB no puede subclasear).
+
+    Los constructores se ejecutan dos veces: una para el target (CGLIB suele crear una instancia del target usando Objenesis que no llama al constructor completo, solo asigna memoria) y otra para la subclase proxy? Realmente CGLIB crea una instancia de la subclase, que inicializa su estado. Para delegar, puede usar un target interno. En Spring, el proxy CGLIB por defecto crea un objeto interceptor sin llamar al constructor real del target (a través de Objenesis) para evitar efectos secundarios, y luego utiliza un callback que delega en el bean real gestionado por el contenedor.
+
+    Aumenta ligeramente el tiempo de creación y el uso de memoria.
+
+    this dentro del target sigue siendo el target, no el proxy, por lo que las llamadas internas no pasan por el proxy.
+
+¿Cuándo usa Spring cada uno?
+
+La decisión se toma en el DefaultAopProxyFactory. La lógica es:
+
+    Si proxyTargetClass es true (configurado con @EnableAspectJAutoProxy(proxyTargetClass = true) o en Boot spring.aop.proxy-target-class=true), fuerza CGLIB incluso si hay interfaces.
+
+    Si proxyTargetClass es false (por defecto), se evalúa:
+
+        Si el bean implementa al menos una interfaz, usa JDK dynamic proxy.
+
+        Si no, usa CGLIB.
+
+    En Spring Boot, por defecto spring.aop.proxy-target-class=true, por lo que se usa CGLIB a menos que se cambie explícitamente. En Spring MVC tradicional, el valor depende de la configuración.
+
+Ojo con el casteo: si tu código espera un objeto de tipo concreto y Spring te entrega un proxy JDK que solo implementa la interfaz, obtendrás ClassCastException. Por eso se prefiere programar contra interfaz o forzar CGLIB.
+Configuración explícita
+java
+
+@Configuration
+@EnableAspectJAutoProxy(proxyTargetClass = true) // fuerza CGLIB
+public class AppConfig { }
+
+El problema de la auto-invocación (self-invocation)
+
+Este es el punto más importante y malinterpretado. Como el proxy envuelve al target, cuando desde fuera se llama a bean.metodoA(), la llamada va al proxy, que aplica los aspectos. Pero si metodoA() internamente llama a this.metodoB(), this es el target, no el proxy, por lo que metodoB() no pasa por los aspectos. Así, anotaciones como @Transactional en metodoB no tienen efecto si se llama desde metodoA dentro del mismo bean.
+
+Demostración:
+java
+
+@Service
+public class TransaccionalService {
+    @Transactional
+    public void metodoBatch() {
+        for (Item i : items) {
+            this.procesarItem(i); // ¡problema! this es el target
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void procesarItem(Item i) {
+        // ... debería ejecutarse en transacción separada, pero no lo hará
+    }
+}
+
+Soluciones:
+
+    Reestructurar: mover procesarItem a otro bean e inyectarlo.
+    java
+
+    @Service
+    public class ProcesadorItemService {
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        public void procesarItem(Item i) { ... }
+    }
+    // en el batch:
+    @Autowired private ProcesadorItemService procesador;
+    public void metodoBatch() {
+        for (Item i : items) procesador.procesarItem(i); // ahora sí es proxy
+    }
+
+    Obtener el proxy mediante AopContext.currentProxy():
+
+        Habilitar exposeProxy = true: @EnableAspectJAutoProxy(exposeProxy = true).
+
+        Luego en el código: ((TransaccionalService) AopContext.currentProxy()).procesarItem(i);
+
+    Inyectarse a sí mismo (con @Autowired o @Resource):
+    java
+
+    @Autowired
+    private TransaccionalService self;
+    public void metodoBatch() {
+        self.procesarItem(i); // self es el proxy
+    }
+
+        Ojo: crea una dependencia circular que Spring maneja, pero puede confundir.
+
+Diferencias internas y de rendimiento
+
+    Arranque: JDK proxy es más rápido de crear porque es una función del JDK. CGLIB genera una nueva clase en memoria, lo que implica más trabajo.
+
+    Invocación: En JDK proxy, cada llamada usa reflexión (Method.invoke). CGLIB puede generar bytecode que evita reflexión después de la primera invocación (usa índices de método), siendo marginalmente más rápido en llamadas repetitivas. En la práctica, la diferencia es ínfima.
+
+    Compatibilidad: Si usas Java moderno (17+) y necesitas características como records o sealed classes, CGLIB puede tener problemas. Spring ya se ha adaptado, pero es un punto a considerar.
+
+Tip de depuración: identificación del proxy
+
+Si en tiempo de ejecución necesitas saber si un bean es un proxy, puedes inspeccionar su clase:
+java
+
+if (bean instanceof SpringProxy) {
+    System.out.println("Es un proxy de Spring");
+}
+
+SpringProxy es una interfaz marcadora implementada por todos los proxies de Spring AOP.
+
+//////////////////////////////
 
 /3//////////////////////////////////////////////
 03_Spring_MVC/DispatcherServlet_y_Flujo.md
@@ -4318,4 +4817,3 @@ Spring unifica la experiencia de desarrollo con anotaciones y templates similare
 
 //////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////
