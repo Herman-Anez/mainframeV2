@@ -1,12 +1,12 @@
-# Spring_Cloud/Config_Server.md
-La necesidad de configuración externa centralizada
+# Spring Cloud Config Server
 
-Los microservicios tienen propiedades (URLs de bases de datos, secretos, parámetros de negocio) que varían por entorno y deben gestionarse sin recompilar. Spring Cloud Config Server centraliza esta configuración en un backend versionado (Git, SVN, Vault) y la sirve a los servicios.
-Config Server
+En una arquitectura de microservicios, las propiedades (URLs de bases de datos, secretos, parámetros de negocio, etc.) varían según el entorno y deben gestionarse sin necesidad de recompilar el código. **Spring Cloud Config Server** centraliza esta configuración en un backend versionado (Git, SVN, Vault) y la sirve a los servicios de forma dinámica.
 
-Añade spring-cloud-config-server y anota con @EnableConfigServer.
-java
+## Config Server
 
+Para implementar el servidor, se añade la dependencia `spring-cloud-config-server` y se anota la clase principal con `@EnableConfigServer`.
+
+```java
 @SpringBootApplication
 @EnableConfigServer
 public class ConfigServerApplication {
@@ -14,10 +14,11 @@ public class ConfigServerApplication {
         SpringApplication.run(ConfigServerApplication.class, args);
     }
 }
+```
 
-Configuración application.yml:
-yaml
+### Configuración en application.yml
 
+```yaml
 server:
   port: 8888
 spring:
@@ -28,59 +29,73 @@ spring:
           uri: https://github.com/mi-organizacion/config-repo
           default-label: main
           clone-on-start: true
+```
 
-El servidor clona el repositorio Git y sirve las propiedades bajo /{application}/{profile} (ej. /producto-service/dev). El cliente consulta esta URL al arrancar y fusiona las propiedades.
-Config Client
+> [!NOTE]
+> El servidor clona el repositorio Git y sirve las propiedades bajo la ruta `/{application}/{profile}` (ej. `/producto-service/dev`). El cliente consulta esta URL al arrancar y fusiona las propiedades obtenidas.
 
-Los microservicios añaden spring-cloud-starter-config y un archivo bootstrap.properties (o application.properties) con la ubicación:
-properties
+## Config Client
 
+Los microservicios (clientes) deben añadir la dependencia `spring-cloud-starter-config` y configurar la importación en su `application.properties` o `bootstrap.properties`:
+
+```properties
 spring.application.name=producto-service
 spring.config.import=optional:configserver:http://localhost:8888
+```
 
-En el repositorio Git, un archivo producto-service-dev.yml contendrá las propiedades para ese perfil. El servidor las entrega, y el cliente las integra en su Environment antes de la inicialización de beans.
-Refresco de configuración en caliente
+En el repositorio Git, un archivo llamado `producto-service-dev.yml` contendrá las propiedades específicas para ese perfil. El servidor las entrega y el cliente las integra en su `Environment` antes de inicializar los beans.
 
-Los cambios en Git no se propagan automáticamente a los clientes en ejecución. Spring Cloud ofrece:
+## Refresco de Configuración en Caliente
 
-    Actuator /refresh: el cliente debe invocar POST /actuator/refresh para recargar propiedades anotadas con @RefreshScope. Solo se actualizan beans marcados con @RefreshScope (normalmente servicios que leen propiedades).
+Los cambios en el repositorio Git no se propagan automáticamente a los clientes que ya están en ejecución. Spring Cloud ofrece dos mecanismos:
 
-java
+### 1. Actuator /refresh
 
+El cliente debe invocar un endpoint `POST /actuator/refresh` para recargar las propiedades. Solo se actualizan los beans marcados con la anotación `@RefreshScope`.
+
+```java
 @Service
 @RefreshScope
 public class ConfiguracionServicio {
     @Value("${mi.propiedad}")
     private String propiedad;
 }
+```
 
-Al llamar a /refresh, el bean se reinicializa con los nuevos valores sin reiniciar la aplicación.
+Al llamar a `/refresh`, el bean se reinicializa con los nuevos valores sin necesidad de reiniciar la aplicación completa.
 
-    Spring Cloud Bus: propaga eventos de refresco a todos los clientes mediante un broker de mensajería (RabbitMQ, Kafka). Con un solo POST /actuator/busrefresh en cualquier cliente, todos los demás reciben la notificación.
+### 2. Spring Cloud Bus
 
-Cifrado y secretos
+Propaga eventos de refresco a todos los clientes mediante un broker de mensajería (RabbitMQ, Kafka). Con un solo `POST /actuator/busrefresh` en cualquier cliente, todos los demás reciben la notificación y se actualizan automáticamente.
 
-El Config Server puede cifrar valores en reposo usando claves simétricas o asimétricas. Los valores en los archivos de configuración pueden estar prefijados con {cipher}:
-yaml
+## Cifrado y Secretos
 
+El Config Server permite cifrar valores sensibles en reposo. Los valores en los archivos de configuración pueden estar prefijados con `{cipher}`:
+
+```yaml
 spring:
   datasource:
     password: '{cipher}AQBt...'
+```
 
-El servidor descifra antes de enviar a los clientes. La clave se configura con encrypt.key (simétrica). Para mayor seguridad, se puede integrar Vault como backend.
-Estrategias de repositorio y composición
+El servidor descifra estos valores antes de enviarlos a los clientes. La clave se configura mediante `encrypt.key`. Para entornos de alta seguridad, se recomienda integrar **HashiCorp Vault**.
 
-    Repositorio compuesto: múltiples fuentes de configuración (Git + Vault + base de datos).
+## Estrategias de Repositorio y Composición
 
-    Patrones de búsqueda: soporta {application}, {profile}, {label}. Permite configuración global con archivos application*.yml.
+*   **Repositorio Compuesto**: Permite usar múltiples fuentes de configuración simultáneamente (Git + Vault + Base de Datos).
+*   **Patrones de Búsqueda**: Soporta marcadores de posición como `{application}`, `{profile}` y `{label}`. Permite configuración global mediante archivos `application*.yml`.
+*   **Sobrescritura Local**: Las propiedades definidas localmente en el cliente pueden tener prioridad sobre las remotas según se configure.
 
-    Sobrescritura local: las propiedades locales del cliente (application.yml) pueden anular las remotas según la prioridad.
+## Config Server en Producción
 
-Config Server en producción
+*   **Alta Disponibilidad**: Se integra con Eureka para que los clientes localicen el `config-server` por su nombre lógico.
+*   **Seguridad**: Se debe proteger con autenticación (ej. HTTP Basic con Spring Security).
+*   **Nativo**: Es compatible con perfiles de ejecución nativos para despliegues optimizados.
 
-    Se integra con Eureka para alta disponibilidad (los clientes usan el nombre lógico config-server en lugar de la URL fija).
+---
 
-    Autenticación HTTP básica con Spring Security.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Circuit Breaker](Circuit_Breaker.md) | [Índice](../../README.md) | [Service Discovery](Service_Discovery_Eureka.md) |
 
-    Aplicaciones nativas de Spring Cloud: spring-cloud-config-server + spring-cloud-starter-netflix-eureka-client.
 

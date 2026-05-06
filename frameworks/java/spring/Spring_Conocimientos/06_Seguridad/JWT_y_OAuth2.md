@@ -1,47 +1,53 @@
+# JWT y OAuth2 en Spring Security
 
-# Seguridad/JWT_y_OAuth2.md
-OAuth2: roles y flujos
+OAuth2 es el estándar de facto para la delegación de acceso, permitiendo que las aplicaciones obtengan acceso limitado a las cuentas de usuario en un servicio HTTP.
 
-OAuth2 es el estándar de facto para delegación de acceso. Sus protagonistas:
+## OAuth2: Roles y Flujos
 
-    Resource Owner (el usuario).
+En el ecosistema de OAuth2, existen cuatro protagonistas principales:
 
-    Client (la aplicación que quiere acceder).
+*   **Resource Owner**: El usuario final.
+*   **Client**: La aplicación que desea acceder a los recursos del usuario.
+*   **Authorization Server**: El servidor que emite los tokens tras validar la identidad del usuario.
+*   **Resource Server**: La API que protege los recursos y acepta tokens válidos.
 
-    Authorization Server (emite tokens).
+### Flujos (Grants) más Comunes
 
-    Resource Server (la API protegida).
+1.  **Authorization Code (con PKCE)**: El flujo recomendado para aplicaciones web y móviles. Incluye redirección, consentimiento del usuario y canje de un código por un token.
+2.  **Client Credentials**: Utilizado para la comunicación directa entre servicios (máquina a máquina).
+3.  **Refresh Token**: Permite obtener nuevos access tokens sin que el usuario deba volver a autenticarse.
 
-Flujos más usados:
+---
 
-    Authorization Code (con PKCE): para aplicaciones web y móviles. El cliente redirige al servidor de autorización, el usuario autentica y consiente, se devuelve un código que el cliente canjea por un token.
+## JSON Web Tokens (JWT)
 
-    Client Credentials: para comunicación máquina a máquina.
+Un JWT es un estándar abierto (RFC 7519) que define una forma compacta y autónoma de transmitir información entre partes como un objeto JSON.
 
-    Refresh Token: para renovar access tokens sin molestar al usuario.
+### Estructura de un JWT
+Se compone de tres partes codificadas en Base64 y separadas por puntos (`header.payload.signature`):
 
-JSON Web Tokens (JWT)
+*   **Header**: Contiene el tipo de token y el algoritmo de firma (ej. HS256, RS256).
+*   **Payload**: Contiene los *claims* (datos del usuario, fecha de expiración, roles, scopes).
+*   **Signature**: Utilizada para verificar que el remitente del JWT es quien dice ser y para asegurar que el mensaje no fue alterado.
 
-Un token JWT (JSON Web Token) es una cadena codificada en Base64 que contiene tres partes:
-header.payload.signature
+> [!NOTE]
+> Los JWT son ideales para arquitecturas distribuidas y stateless, ya que el servidor no necesita almacenar el estado de la sesión.
 
-    Header: algoritmo de firma (HS256, RS256).
+---
 
-    Payload: claims (sub, iss, exp, roles, scopes, etc.).
+## Spring Security como Resource Server
 
-    Signature: garantiza integridad y autenticidad.
+Configurar un Resource Server para validar tokens JWT es directo con `spring-boot-starter-oauth2-resource-server`.
 
-Ventajas: autocontenido, no requiere almacenamiento en el servidor, ideal para servicios distribuidos y stateless.
-Spring Security como Resource Server
+### Configuración vía Propiedades
 
-Con Spring Boot y el starter spring-boot-starter-oauth2-resource-server, configurar un resource server JWT es trivial:
-properties
-
+```properties
 spring.security.oauth2.resourceserver.jwt.issuer-uri=https://auth-server.com/realms/mi-realm
+```
 
-O manualmente:
-java
+### Configuración Programática
 
+```java
 @Bean
 public SecurityFilterChain resourceServerFilter(HttpSecurity http) throws Exception {
     http
@@ -54,28 +60,31 @@ public SecurityFilterChain resourceServerFilter(HttpSecurity http) throws Except
         ));
     return http.build();
 }
+```
 
-Spring Security valida automáticamente la firma, la expiración, el issuer, etc. usando las propiedades o un JwtDecoder.
-Conversión de JWT a Authentication
+### Conversión de JWT a Authentication
+Por defecto, Spring mapea los *scopes* a autoridades con el prefijo `SCOPE_`. Para usar roles personalizados:
 
-Por defecto, el framework mapea los scopes del JWT a GrantedAuthority con prefijo SCOPE_. Si tu token tiene roles personalizados, puedes definir un JwtAuthenticationConverter:
-java
-
+```java
 @Bean
 public JwtAuthenticationConverter jwtAuthenticationConverter() {
     JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
     grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
     grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+    
     JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
     converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
     return converter;
 }
+```
 
-Authorization Server con Spring Authorization Server
+---
 
-Para emitir tokens JWT, Spring proporciona el proyecto spring-authorization-server. Se configura con un RegisteredClientRepository y una AuthorizationServerSettings:
-java
+## Authorization Server
 
+Para emitir tokens propios, se utiliza el proyecto **Spring Authorization Server**.
+
+```java
 @Bean
 public RegisteredClientRepository registeredClientRepository() {
     RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -89,21 +98,23 @@ public RegisteredClientRepository registeredClientRepository() {
         .build();
     return new InMemoryRegisteredClientRepository(client);
 }
+```
 
-Pero para muchos escenarios, se usa Keycloak, Okta o Auth0 como servidores de autorización externos.
-Implementación completa de login con JWT en un cliente
+> [!TIP]
+> En entornos de producción, es común delegar esta responsabilidad a soluciones como Keycloak, Auth0 o Okta.
 
-No siempre necesitas un authorization server propio. Si implementas autenticación local generando tus propios JWT:
+---
 
-    AuthenticationController: recibe credenciales, valida con AuthenticationManager, genera un JWT (usando librería jjwt o nimbus-jose-jwt) y lo devuelve al cliente.
+## Implementación de Autenticación Local con JWT
 
-    JwtAuthenticationFilter (heredado de OncePerRequestFilter): lee el token de la cabecera Authorization: Bearer ..., lo parsea, valida firma/expiración, carga el usuario (opcional) y establece el SecurityContext.
+Si decides generar tus propios tokens sin un Authorization Server completo:
 
-    Configurar el filtro en la cadena antes de los filtros de autorización.
+1.  **AuthenticationController**: Valida credenciales y devuelve el JWT generado.
+2.  **JwtAuthenticationFilter**: Un filtro que extiende de `OncePerRequestFilter` para procesar el token en cada petición.
 
-Ejemplo de filtro simplificado:
-java
+### Ejemplo de Filtro JWT
 
+```java
 public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -111,10 +122,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            // validar token y extraer claims
             String username = JwtUtils.getUsername(token);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // cargar UserDetails y crear Authentication
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -125,18 +134,28 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 }
+```
 
-Y en la configuración:
-java
+### Registro del Filtro
 
+```java
 http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+```
 
-OAuth2 Client (login social)
+---
 
-Con spring-boot-starter-oauth2-client y propiedades:
-properties
+## OAuth2 Client (Login Social)
 
-spring.security.oauth2.client.registration.google.client-id=...
-spring.security.oauth2.client.registration.google.client-secret=...
+Para habilitar login con Google o GitHub basta con añadir el starter `spring-boot-starter-oauth2-client` y configurar las credenciales:
 
-Spring Security expone automáticamente /oauth2/authorization/google y gestiona la redirección, el canje del código y la creación del OAuth2AuthenticationToken. Se puede personalizar el OAuth2UserService para mapear a tu propio modelo de usuario.
+```properties
+spring.security.oauth2.client.registration.google.client-id=TU_CLIENT_ID
+spring.security.oauth2.client.registration.google.client-secret=TU_CLIENT_SECRET
+```
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Seguridad a Nivel de Método](Metodo_Security.md) | [Índice](../../README.md) | [Temas Avanzados](../07_Temas_Avanzados/README.md) |
+

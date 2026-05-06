@@ -1,16 +1,18 @@
-# Miscelaneos/Websockets_y_STOMP.md
-WebSockets: comunicación full-duplex
+# WebSockets y STOMP: Comunicación Full-Duplex
 
-El protocolo WebSocket permite un canal de comunicación persistente y bidireccional entre el cliente (navegador) y el servidor, superando las limitaciones de HTTP (petición-respuesta). Es ideal para notificaciones en tiempo real, chats, dashboards en vivo.
+El protocolo **WebSocket** permite un canal de comunicación persistente y bidireccional entre el cliente (navegador) y el servidor, superando las limitaciones de HTTP (petición-respuesta). Es ideal para notificaciones en tiempo real, chats y dashboards en vivo.
 
-Spring proporciona soporte tanto para WebSockets crudos como para la capa de subprotocolo STOMP (Simple Text Oriented Messaging Protocol), que añade encaminamiento de mensajes mediante destinos (similar a tópicos y colas de mensajería).
-Habilitar WebSocket en Spring
+Spring proporciona soporte tanto para WebSockets "crudos" como para la capa de subprotocolo **STOMP** (Simple Text Oriented Messaging Protocol), que añade encaminamiento de mensajes mediante destinos (similar a tópicos y colas de mensajería).
 
-Dependencia: spring-boot-starter-websocket.
+---
 
-Configuración básica con STOMP:
-java
+## Habilitar WebSocket en Spring
 
+Dependencia: `spring-boot-starter-websocket`.
+
+### Configuración básica con STOMP
+
+```java
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
@@ -28,18 +30,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .withSockJS(); // habilita fallback SockJS
     }
 }
+```
 
-    Broker simple (/topic, /queue): es un broker en memoria que reenvía mensajes a los clientes suscritos.
+*   **Broker simple (`/topic`, `/queue`):** Es un broker en memoria que reenvía mensajes a los clientes suscritos.
+*   **`/app`:** Prefijo para los destinos de los métodos `@MessageMapping` (mensajes que llegan del cliente).
+*   **SockJS:** Emula WebSocket en navegadores antiguos usando *long polling*.
 
-    /app: prefijo para los destinos de los métodos @MessageMapping (mensajes que llegan del cliente).
+---
 
-    SockJS: emula WebSocket en navegadores antiguos usando long polling.
+## Controlador de mensajes STOMP
 
-Controlador de mensajes STOMP
+Similar a `@Controller` MVC pero con anotaciones propias:
 
-Similar a @Controller MVC pero con anotaciones propias:
-java
-
+```java
 @Controller
 public class ChatController {
 
@@ -56,18 +59,20 @@ public class ChatController {
         simpMessagingTemplate.convertAndSendToUser(msg.getDestinatario(), "/queue/privado", msg);
     }
 }
+```
 
-    @MessageMapping("/ruta"): escucha mensajes enviados por clientes a /app/ruta.
+> [!NOTE]
+> *   **`@MessageMapping("/ruta")`:** Escucha mensajes enviados por clientes a `/app/ruta`.
+> *   **`@SendTo`:** Define a qué destino broker se envía el valor de retorno del método (broadcast).
+> *   **`Principal`:** Disponible si la sesión está autenticada.
 
-    @SendTo: define a qué destino broker se envía el valor de retorno del método (broadcast).
+---
 
-    Principal: disponible si la sesión está autenticada.
+## Envío de mensajes desde el servidor
 
-Envío de mensajes desde el servidor
+Inyectamos `SimpMessagingTemplate`:
 
-Inyectamos SimpMessagingTemplate:
-java
-
+```java
 @Autowired
 private SimpMessagingTemplate messagingTemplate;
 
@@ -78,13 +83,18 @@ public void notificarCambio(Evento evento) {
 public void notificarUsuario(String username, Notificacion notif) {
     messagingTemplate.convertAndSendToUser(username, "/queue/notificaciones", notif);
 }
+```
 
-convertAndSendToUser envía a un destino único por usuario: internamente se resuelve a /user/{username}/queue/notificaciones. El cliente debe suscribirse a /user/queue/notificaciones.
-Autenticación y autorización en STOMP
+> [!IMPORTANT]
+> `convertAndSendToUser` envía a un destino único por usuario: internamente se resuelve a `/user/{username}/queue/notificaciones`. El cliente debe suscribirse a `/user/queue/notificaciones`.
 
-Spring Security se integra con WebSocket. Se puede interceptar el handshake HTTP para extraer credenciales y luego aplicar seguridad a los destinos:
-java
+---
 
+## Autenticación y autorización en STOMP
+
+Spring Security se integra con WebSocket. Se puede interceptar el *handshake* HTTP para extraer credenciales y luego aplicar seguridad a los destinos:
+
+```java
 @Configuration
 public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer {
     @Override
@@ -101,13 +111,18 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
         });
     }
 }
+```
 
-Y autorización con @PreAuthorize en métodos @MessageMapping.
-Broker externo: RabbitMQ o ActiveMQ
+> [!TIP]
+> También se puede usar autorización con `@PreAuthorize` directamente en los métodos `@MessageMapping`.
+
+---
+
+## Broker externo: RabbitMQ o ActiveMQ
 
 Para aplicaciones en cluster, el broker simple no es suficiente porque no replica mensajes entre instancias. Spring permite conectar un broker STOMP externo (RabbitMQ, ActiveMQ) que haga de relay:
-java
 
+```java
 @Override
 public void configureMessageBroker(MessageBrokerRegistry registry) {
     registry.enableStompBrokerRelay("/topic", "/queue")
@@ -116,11 +131,16 @@ public void configureMessageBroker(MessageBrokerRegistry registry) {
             .setClientLogin("guest")
             .setClientPasscode("guest");
 }
+```
 
-Ahora el broker externo maneja las suscripciones y la distribución, mientras los controladores siguen funcionando igual.
-Cliente JavaScript (STOMP.js)
-javascript
+> [!NOTE]
+> Ahora el broker externo maneja las suscripciones y la distribución, mientras los controladores siguen funcionando igual.
 
+---
+
+## Cliente JavaScript (STOMP.js)
+
+```javascript
 const socket = new SockJS('/ws');
 const stompClient = Stomp.over(socket);
 stompClient.connect({}, function(frame) {
@@ -129,16 +149,26 @@ stompClient.connect({}, function(frame) {
     });
     stompClient.send("/app/chat.enviar", {}, JSON.stringify({texto: "Hola"}));
 });
+```
 
-Serialización y mensajes
+---
 
-Spring usa un MessageConverter para convertir entre objetos Java y el cuerpo del mensaje STOMP. Por defecto, MappingJackson2MessageConverter con JSON, configurable.
-Consideraciones de escalabilidad y estado
+## Serialización y mensajes
 
-    Los clientes mantienen una sesión con el servidor. En un cluster, el broker externo permite compartir suscripciones.
+Spring usa un `MessageConverter` para convertir entre objetos Java y el cuerpo del mensaje STOMP. Por defecto, se utiliza `MappingJackson2MessageConverter` para JSON.
 
-    El fallback SockJS puede crear múltiples peticiones HTTP; hay que dimensionar el pool de hilos.
+---
 
-    Cuida el envío masivo: para miles de usuarios, el broker externo es obligatorio.
+## Consideraciones de escalabilidad y estado
 
-    Las sesiones WebSocket no comparten el HttpSession automáticamente; se puede configurar un HandshakeInterceptor para transferir el usuario autenticado.
+*   **Sesiones:** Los clientes mantienen una sesión con el servidor. En un cluster, el broker externo permite compartir suscripciones.
+*   **Fallback:** El fallback SockJS puede crear múltiples peticiones HTTP; es necesario dimensionar correctamente el pool de hilos.
+*   **Carga:** Para miles de usuarios concurrentes, el uso de un broker externo es obligatorio.
+*   **Seguridad:** Las sesiones WebSocket no comparten el `HttpSession` automáticamente; se puede configurar un `HandshakeInterceptor` para transferir el usuario autenticado.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Internacionalización i18n](./Internacionalizacion_i18n.md) | [Índice](../../README.md) | [Módulo Siguiente](../10_JVM_Rendimiento/README.md) |
+

@@ -1,12 +1,14 @@
-# Spring_Cloud/API_Gateway.md
-El patrón API Gateway
+# API Gateway en Spring Cloud
 
-En microservicios, un API Gateway es el punto de entrada único que encamina las peticiones a los servicios internos, aplica políticas de seguridad, límites, transformación de protocolo y agregación. Aísla al cliente de la complejidad interna.
-Spring Cloud Gateway
+En microservicios, un **API Gateway** es el punto de entrada único que encamina las peticiones a los servicios internos, aplica políticas de seguridad, límites, transformación de protocolo y agregación. Aísla al cliente de la complejidad interna.
 
-Es el gateway oficial (reactivo, no bloqueante) construido sobre Spring WebFlux. Alternativa a Netflix Zuul (obsoleto). Se configura con spring-cloud-starter-gateway.
-yaml
+## Spring Cloud Gateway
 
+Es el gateway oficial (reactivo, no bloqueante) construido sobre Spring WebFlux. Es la alternativa recomendada a Netflix Zuul (obsoleto). Se configura con la dependencia `spring-cloud-starter-gateway`.
+
+### Configuración vía YAML
+
+```yaml
 spring:
   cloud:
     gateway:
@@ -23,69 +25,60 @@ spring:
             - Path=/api/pedidos/**
           filters:
             - StripPrefix=1
+```
 
-El prefijo lb:// indica balanceo de carga a través del Service Discovery (Eureka). Los predicates determinan si la ruta aplica; los filters modifican la petición/respuesta.
-Predicados (predicates)
+> [!NOTE]
+> El prefijo `lb://` indica balanceo de carga a través del **Service Discovery** (Eureka). Los *predicates* determinan si la ruta aplica; los *filters* modifican la petición o respuesta.
 
-Factores que determinan si una ruta coincide. Spring Cloud Gateway incluye muchos incorporados:
+## Predicados (Predicates)
 
-    Path: /api/productos/**
+Son los factores que determinan si una ruta coincide. Spring Cloud Gateway incluye muchos incorporados:
 
-    Host: *.mitienda.com
+*   **Path**: `/api/productos/**`
+*   **Host**: `*.mitienda.com`
+*   **Method**: `GET, POST`
+*   **Header**: `X-Request-Id` con expresión regular.
+*   **Query param**: `foo=bar`
+*   **Cookie**: `sessionId=regex`
+*   **Before/After/Between**: horarios específicos.
+*   **Weight**: para distribución ponderada (*canary releases*).
 
-    Method: GET,POST
+### Ejemplo de combinación
 
-    Header: X-Request-Id con expresión regular
-
-    Query param: foo=bar
-
-    Cookie: sessionId=regex
-
-    Before/After/Between: horarios
-
-    Weight: para distribución ponderada (canary releases)
-
-Ejemplo de combinación:
-yaml
-
+```yaml
 predicates:
   - Path=/api/**
   - Method=GET
   - Header=X-Api-Version, v2
+```
 
-Filtros
+## Filtros
 
 Los filtros permiten modificar la petición entrante y la respuesta saliente. Existen filtros predefinidos y se pueden crear filtros personalizados.
 
-Filtros comunes de Gateway:
+### Filtros comunes de Gateway
 
-    AddRequestHeader / AddResponseHeader: añade encabezados.
+*   **AddRequestHeader / AddResponseHeader**: añade encabezados.
+*   **AddRequestParameter**: añade query params.
+*   **PrefixPath / StripPrefix**: manipula la ruta.
+*   **RewritePath**: reescribe la ruta con regex.
+*   **CircuitBreaker**: integra Resilience4j.
+*   **RequestRateLimiter**: limitación de velocidad con Redis.
+*   **Retry**: lógica de reintentos.
+*   **DedupeResponseHeader**: elimina cabeceras duplicadas.
 
-    AddRequestParameter: añade query params.
+### Ejemplo con Circuit Breaker
 
-    PrefixPath / StripPrefix: manipula la ruta.
-
-    RewritePath: reescribe la ruta con regex.
-
-    CircuitBreaker: integra Resilience4j (circuit breaker).
-
-    RequestRateLimiter: limitación de velocidad con Redis.
-
-    Retry: lógica de reintentos.
-
-    DedupeResponseHeader: elimina cabeceras duplicadas.
-
-Ejemplo con circuit breaker:
-yaml
-
+```yaml
 filters:
   - CircuitBreaker=name=productoCB, fallbackUri=forward:/fallback/productos
+```
 
-Filtros personalizados
+## Filtros Personalizados
 
-Implementando GatewayFilterFactory:
-java
+Para crear un filtro propio, se implementa `GatewayFilterFactory`:
 
+```java
 @Component
 public class LoggingGatewayFilterFactory extends AbstractGatewayFilterFactory<LoggingGatewayFilterFactory.Config> {
     
@@ -102,16 +95,22 @@ public class LoggingGatewayFilterFactory extends AbstractGatewayFilterFactory<Lo
 
     public static class Config { /* propiedades configurables */ }
 }
+```
 
-Luego se usa en las rutas con - Logging.
-Global Filters
+Luego se usa en las rutas con `- Logging`.
 
-Afectan a todas las rutas. Se implementan con GlobalFilter. Por ejemplo, autenticación JWT global, métricas, logging global.
-Configuración programática
+### Global Filters
 
-En lugar de YAML, se pueden definir rutas con la API de Java:
-java
+Afectan a todas las rutas de manera automática. Se implementan mediante la interfaz `GlobalFilter`. Son ideales para:
+*   Autenticación JWT global.
+*   Recolección de métricas.
+*   Logging centralizado.
 
+## Configuración Programática
+
+En lugar de YAML, se pueden definir rutas mediante la API de Java:
+
+```java
 @Bean
 public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
     return builder.routes()
@@ -120,37 +119,47 @@ public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
             .uri("lb://producto-service"))
         .build();
 }
+```
 
-Integración con Spring Security
+## Integración con Spring Security
 
-El Gateway puede integrar autenticación OAuth2, validando tokens JWT y propagando la identidad a los servicios posteriores. Con spring-boot-starter-oauth2-resource-server y configurando el gateway como resource server, se pueden proteger rutas de manera centralizada.
-Limitación de velocidad (Rate Limiting)
+El Gateway puede integrar autenticación OAuth2, validando tokens JWT y propagando la identidad a los servicios posteriores. Con `spring-boot-starter-oauth2-resource-server` y configurando el gateway como resource server, se pueden proteger rutas de manera centralizada.
 
-Usa RequestRateLimiter con Redis. Se define un KeyResolver (por IP, por usuario, etc.):
-java
+## Limitación de Velocidad (Rate Limiting)
 
+Utiliza `RequestRateLimiter` con Redis. Se debe definir un `KeyResolver` (por IP, por usuario, etc.):
+
+```java
 @Bean
 public KeyResolver userKeyResolver() {
     return exchange -> Mono.just(exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
 }
+```
 
-Configuración:
-yaml
+### Configuración en YAML
 
+```yaml
 filters:
   - name: RequestRateLimiter
     args:
       redis-rate-limiter.replenishRate: 10
       redis-rate-limiter.burstCapacity: 20
+```
 
-Resiliencia y tolerancia a fallos
+## Resiliencia y Tolerancia a Fallos
 
-El Gateway puede integrar Resilience4J (circuit breaker, retry, timeout) directamente en las rutas para fallos en los servicios backend, como veremos después.
-Comparativa con otras soluciones
+El Gateway puede integrar **Resilience4J** (circuit breaker, retry, timeout) directamente en las rutas para gestionar fallos en los servicios backend.
 
-    Zuul 1.x: bloqueante, no recomendado para nuevas aplicaciones.
+## Comparativa con otras soluciones
 
-    Spring Cloud Gateway: reactivo, más ligero.
+*   **Zuul 1.x**: bloqueante, no recomendado para nuevas aplicaciones.
+*   **Spring Cloud Gateway**: reactivo, más moderno y ligero.
+*   **Kong, Traefik, NGINX**: soluciones externas; Spring Cloud Gateway es la opción nativa ideal para el ecosistema Spring Boot.
 
-    Kong, Traefik, Nginx: soluciones externas; Spring Cloud Gateway es perfecto para ecosistema Spring Boot.
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Temas Avanzados](../07_Temas_Avanzados/Programacion_Reactiva_WebFlux.md) | [Índice](../../README.md) | [Circuit Breaker](Circuit_Breaker.md) |
+
 

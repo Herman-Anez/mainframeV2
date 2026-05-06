@@ -1,9 +1,10 @@
-# Seguridad/Configuracion_DSL.md
-De WebSecurityConfigurerAdapter a SecurityFilterChain
+# Configuración DSL y HttpSecurity
 
-Desde Spring Security 5.7, la forma moderna de configurar la seguridad es declarando beans de tipo SecurityFilterChain y usando la DSL fluida de HttpSecurity. Adiós a la herencia.
-java
+Desde Spring Security 5.7, la forma moderna de configurar la seguridad es declarando beans de tipo `SecurityFilterChain` y usando la DSL fluida de `HttpSecurity`. Se ha abandonado el uso de la herencia (`WebSecurityConfigurerAdapter`).
 
+## De WebSecurityConfigurerAdapter a SecurityFilterChain
+
+```java
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -27,50 +28,48 @@ public class SecurityConfig {
         return http.build();
     }
 }
+```
 
-authorizeHttpRequests y la nueva sintaxis
+## authorizeHttpRequests y la Nueva Sintaxis
 
-A partir de Spring Security 6, se recomienda authorizeHttpRequests sobre authorizeRequests, usando AuthorizationManager internamente. La DSL es muy legible:
+A partir de Spring Security 6, se recomienda `authorizeHttpRequests` sobre `authorizeRequests`, usando `AuthorizationManager` internamente. La DSL es altamente legible:
 
-    requestMatchers("/url").permitAll(): acceso libre.
+*   **`requestMatchers("/url").permitAll()`**: Acceso libre a la URL especificada.
+*   **`.hasRole("ADMIN")`**: Requiere un rol específico (el prefijo `ROLE_` se añade automáticamente).
+*   **`.hasAuthority("SCOPE_read")`**: Para una autoridad exacta sin prefijos automáticos.
+*   **`.hasAnyRole("ADMIN", "USER")`**: Permite múltiples roles.
+*   **`.authenticated()`**: Requiere que el usuario esté autenticado, sin importar el rol.
 
-    .hasRole("ADMIN"): requiere rol (prefijo ROLE_ automático).
+> [!TIP]
+> Se pueden encadenar marcadores específicos como `dispatcherTypeMatchers` para controlar el flujo interno de los servlets.
 
-    .hasAuthority("SCOPE_read"): para authority exacta.
+### Restricción por Método HTTP
 
-    .hasAnyRole("ADMIN", "USER"): múltiples roles.
-
-    .authenticated(): solo requiere autenticado.
-
-    Se pueden encadenar marcadores específicos como dispatcherTypeMatchers, etc.
-
-Ejemplo de restricción por método HTTP y patrón:
-java
-
+```java
 .requestMatchers(HttpMethod.POST, "/api/productos/**").hasRole("EDITOR")
 .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+```
 
-Configuración de login y logout
+## Configuración de Login y Logout
 
-    FormLogin: personaliza la página de login y las URLs de procesamiento. En REST puro, se suele deshabilitar con http.formLogin(AbstractHttpConfigurer::disable).
+*   **FormLogin**: Personaliza la página de login y las URLs de procesamiento. En REST puro, se suele deshabilitar con `http.formLogin(AbstractHttpConfigurer::disable)`.
+*   **HttpBasic**: Autenticación HTTP Basic. Útil para APIs internas o pruebas rápidas.
+*   **OAuth2Login**: Configura el login delegado con proveedores externos (Google, GitHub, etc.), usando `spring-boot-starter-oauth2-client`.
+*   **Logout**: Define la URL de logout, invalidación de sesión y eliminación de cookies.
 
-    HttpBasic: autenticación HTTP Basic. Útil para APIs internas o pruebas.
+## CORS y CSRF
 
-    OAuth2Login: configura el login delegado con Google, GitHub, etc., usando spring-boot-starter-oauth2-client.
+*   **CORS**: Spring Security aplica una capa adicional a la configuración global de CORS de Spring MVC. Se puede personalizar con `http.cors(cors -> cors.configurationSource(...))`.
+*   **CSRF**: Protección por defecto para formularios. En REST stateless con JWT, normalmente se deshabilita: `http.csrf(AbstractHttpConfigurer::disable)`. 
 
-    Logout: define la URL de logout, invalidación de sesión, eliminación de cookies.
+> [!WARNING]
+> Antes de deshabilitar CSRF, considera la vulnerabilidad: si no usas cookies para autenticación, CSRF no aplica; de lo contrario, debe permanecer activo.
 
-CORS y CSRF
+## Configuración de Múltiples SecurityFilterChain
 
-    CORS: Spring Security aplica una capa adicional a la configuración global de CORS de Spring MVC. Se puede personalizar con http.cors(cors -> cors.configurationSource(...)).
+Cuando coexisten una API REST y una aplicación web MVC, se pueden definir dos beans `SecurityFilterChain` con diferentes prioridades (`@Order`).
 
-    CSRF: protección por defecto para formularios. En REST stateless con JWT, normalmente se deshabilita: http.csrf(AbstractHttpConfigurer::disable). Pero antes de deshabilitarlo, considera la vulnerabilidad: si no usas cookies para autenticación, CSRF no aplica.
-
-Configuración de múltiples SecurityFilterChain
-
-Cuando coexisten una API REST y una aplicación web MVC, se pueden definir dos SecurityFilterChain beans con diferentes prioridades (@Order). Por ejemplo, una cadena para /api/** sin estado y otra para el resto con login de formulario.
-java
-
+```java
 @Bean
 @Order(1)
 public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
@@ -94,10 +93,13 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
         .formLogin(Customizer.withDefaults());
     return http.build();
 }
+```
 
-Personalización del UserDetailsService y PasswordEncoder
-java
+## Personalización de Beans de Seguridad
 
+### UserDetailsService y PasswordEncoder
+
+```java
 @Bean
 public UserDetailsService userDetailsService(UserRepository userRepo) {
     return username -> userRepo.findByUsername(username)
@@ -112,14 +114,24 @@ public UserDetailsService userDetailsService(UserRepository userRepo) {
 public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
 }
+```
 
-Spring Boot detecta un PasswordEncoder y lo inyecta automáticamente.
-Configuración de AuthenticationManager para casos complejos
+Spring Boot detecta automáticamente un `PasswordEncoder` declarado como bean y lo inyecta en el flujo de autenticación.
 
-Si necesitas exponer el AuthenticationManager (por ejemplo, para autenticar programáticamente en un controlador), puedes definirlo como bean. Con Spring Boot, AuthenticationConfiguration lo expone:
-java
+### AuthenticationManager para Casos Complejos
 
+Si necesitas exponer el `AuthenticationManager` para realizar autenticación programática en un controlador, puedes obtenerlo de la `AuthenticationConfiguration`.
+
+```java
 @Bean
 public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
     return config.getAuthenticationManager();
 }
+```
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Arquitectura de Spring Security](Spring_Security_Arquitectura.md) | [Índice](../../README.md) | [Seguridad a Nivel de Método](Metodo_Security.md) |
+
