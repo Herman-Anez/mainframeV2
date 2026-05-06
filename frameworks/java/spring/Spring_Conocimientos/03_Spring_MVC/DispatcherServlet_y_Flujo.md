@@ -1,94 +1,109 @@
-# Spring_MVC/DispatcherServlet_y_Flujo.md
-El corazón de Spring MVC: DispatcherServlet
+# DispatcherServlet y el Flujo de Petición
 
-DispatcherServlet es el Front Controller del patrón MVC. Recibe todas las peticiones HTTP, las distribuye a los controladores adecuados y gestiona todo el ciclo de vida de la respuesta. Sus responsabilidades principales:
+El **DispatcherServlet** es el componente central de Spring MVC. Actúa como el *Front Controller*, recibiendo todas las peticiones HTTP, distribuyéndolas a los controladores adecuados y gestionando el ciclo de vida completo de la respuesta.
 
-    Recibir la petición.
+## Funciones Principales
 
-    Determinar qué controlador y método manejan la solicitud (handler mapping).
+Las responsabilidades principales del `DispatcherServlet` incluyen:
 
-    Ejecutar el handler (controlador).
+1. **Recibir la petición:** Actúa como único punto de entrada.
+2. **Handler Mapping:** Determinar qué controlador y método deben manejar la solicitud.
+3. **Ejecutar el handler:** Invocar el controlador correspondiente.
+4. **Resolución de vista/respuesta:** Resolver la vista lógica o generar la respuesta REST directamente.
+5. **Manejo de excepciones:** Capturar y procesar errores durante el flujo.
+6. **Aplicar interceptores:** Ejecutar lógica antes y después del procesamiento del controlador.
 
-    Resolver la vista lógica o generar la respuesta REST.
+> [!NOTE]
+> Spring Boot registra y configura automáticamente un `DispatcherServlet` cuando detecta el starter `spring-boot-starter-web`. En entornos tradicionales, se configuraba en el `web.xml` o mediante `WebApplicationInitializer`.
 
-    Manejar excepciones.
+---
 
-    Aplicar interceptores.
+## Beans Estratégicos en Spring MVC
 
-Spring Boot registra y configura automáticamente un DispatcherServlet cuando detecta el starter spring-boot-starter-web. En un entorno tradicional, se configura en el web.xml o mediante la interfaz WebApplicationInitializer.
-Roles de los beans estratégicos en Spring MVC
+El `DispatcherServlet` delega tareas a una serie de beans especializados definidos en el `WebApplicationContext`.
 
-El DispatcherServlet utiliza una serie de beans especializados para delegar las tareas. Estos se definen en el contexto de la aplicación web (el WebApplicationContext, hijo del contexto raíz).
+### 1. HandlerMapping
+Mapea una petición entrante a un *handler* (típicamente un método de controlador).
+- **RequestMappingHandlerMapping:** La implementación principal que maneja `@RequestMapping`, `@GetMapping`, etc. Está habilitada por defecto.
+- **BeanNameUrlHandlerMapping:** Mapea por nombre de bean si coincide con un patrón de URL (en desuso).
+- **SimpleUrlHandlerMapping:** Permite configuraciones explícitas de URLs a beans.
 
-    HandlerMapping: Mapea una petición entrante a un handler (típicamente un método de controlador). Varias implementaciones:
+> [!TIP]
+> El proceso de búsqueda es secuencial: se recorre la lista de `HandlerMapping` registrados en orden hasta que uno devuelve un handler no nulo.
 
-        RequestMappingHandlerMapping: maneja las anotaciones @RequestMapping, @GetMapping, etc. Es la principal y está habilitada por defecto en Spring Boot.
+### 2. HandlerAdapter
+Es el encargado de ejecutar el handler encontrado. Como existen distintos tipos de handlers, el adapter sabe cómo invocar cada uno.
+- **RequestMappingHandlerAdapter:** Invoca métodos anotados. Maneja la conversión de parámetros, `@ResponseBody`, binding y validación.
+- **HttpRequestHandlerAdapter / SimpleControllerHandlerAdapter:** Para otros tipos de controladores.
 
-        BeanNameUrlHandlerMapping: mapea por nombre de bean si coincide con un patrón de URL (casi en desuso).
+### 3. HandlerExceptionResolver
+Maneja excepciones no capturadas que se propagan desde los handlers.
 
-        SimpleUrlHandlerMapping: configuraciones explícitas de URLs a beans.
+### 4. ViewResolver
+Traduce el nombre lógico de una vista (String devuelto por el controlador) a un objeto `View` real (JSP, Thymeleaf, etc.).
+> [!IMPORTANT]
+> En servicios REST no se utiliza `ViewResolver`, ya que los métodos están anotados con `@ResponseBody` y los datos se escriben directamente en el cuerpo de la respuesta.
 
-    El proceso de búsqueda es secuencial: se recorre la lista de HandlerMapping en orden hasta que uno devuelve un handler no nulo.
+### 5. Otros Beans
+- **LocaleResolver:** Para internacionalización (i18n).
+- **ThemeResolver:** Para gestión de temas visuales.
+- **FlashMapManager:** Para manejar atributos *flash* en redirecciones.
 
-    HandlerAdapter: Ejecuta el handler encontrado. Como los handlers pueden ser de distintos tipos (métodos anotados, controladores que implementan Controller, etc.), el HandlerAdapter sabe cómo invocarlos.
+---
 
-        RequestMappingHandlerAdapter: invoca métodos anotados con @RequestMapping. Se encarga de la conversión de parámetros, manejo de @ResponseBody, binding, validación, etc.
+## Ciclo de Vida de una Petición
 
-        HttpRequestHandlerAdapter, SimpleControllerHandlerAdapter para otros tipos.
+Imagine una petición `GET /usuarios/5` con el encabezado `Accept: text/html`:
 
-    HandlerExceptionResolver: Maneja excepciones no capturadas que se propagan desde los handlers. Se verá en detalle más adelante.
+1. **Filtros previos (Filter chain):** La petición pasa por la cadena de filtros del contenedor (Spring Security, filtros personalizados). Finalmente llega al `service()` del `DispatcherServlet`.
+2. **Búsqueda del handler:** El `DispatcherServlet` consulta los `HandlerMapping`. El `RequestMappingHandlerMapping` encuentra el método `getUsuario(Long id)` en `UsuarioController`. Retorna un `HandlerExecutionChain` con el handler y los interceptores aplicables.
+3. **Ejecución de interceptores (preHandle):** Se ejecutan en orden. Si alguno devuelve `false`, se detiene el flujo.
+4. **Determinación del HandlerAdapter:** Se selecciona `RequestMappingHandlerAdapter`.
+5. **Ejecución del HandlerAdapter:**
+    - **Resolución de argumentos:** Mediante `HandlerMethodArgumentResolvers`, se convierten los datos de la petición (e.g., `@PathVariable`).
+    - **Llamada al controlador:** Se invoca el método de negocio.
+    - **Procesamiento del retorno:** Mediante `HandlerMethodReturnValueHandler`. Si hay `@ResponseBody`, se usa un `HttpMessageConverter`. Si no, se interpreta como nombre de vista.
+6. **Post-ejecución de interceptores (postHandle):** Se ejecuta tras el controlador pero antes del renderizado.
+7. **Resolución de vista:** El `ViewResolver` (ej. `ThymeleafViewResolver`) localiza la plantilla (e.g., `/templates/usuario/detalle.html`).
+8. **Renderizado:** Se fusiona el modelo con la vista y se escribe la respuesta en el `HttpServletResponse`.
+9. **Finalización (afterCompletion):** Se llama a los interceptores incluso si hubo una excepción (limpieza de recursos).
 
-    ViewResolver: Traduce el nombre lógico de una vista (String devuelto por el controlador) a un objeto View (JSP, Thymeleaf, etc.). En REST no se usa, porque el método está anotado con @ResponseBody.
+---
 
-    LocaleResolver, ThemeResolver, FlashMapManager: Para internacionalización, temas y atributos flash (redirecciones).
+## Interceptores vs Filtros
 
-Ciclo de vida detallado de una petición
+- **Filtros:** Pertenecen al contenedor Servlet. Ideales para tareas de bajo nivel como logging global, compresión, CORS o seguridad previa.
+- **Interceptores (HandlerInterceptor):** Propios de Spring MVC. Tienen acceso al handler, modelo y vista. Ideales para lógica de negocio web como verificar permisos tras el binding o añadir atributos comunes al modelo.
 
-Suponiendo una petición GET /usuarios/5 con header Accept: text/html.
+---
 
-    Filtros previos (Filter chain) : Antes de llegar al DispatcherServlet, la petición pasa por los filtros de la cadena estándar (Spring Security, filtros personalizados, etc.). El DispatcherServlet se registra como un servlet y se invoca su service().
-
-    Búsqueda del handler: DispatcherServlet consulta cada HandlerMapping registrado. RequestMappingHandlerMapping encuentra que el método getUsuario(Long id) en UsuarioController mapea con GET /usuarios/{id}. Retorna un HandlerExecutionChain que contiene el handler (un HandlerMethod que encapsula el controlador y método) y una lista de interceptores aplicables.
-
-    Ejecución de interceptores (preHandle) : Si la cadena tiene interceptores, se ejecuta preHandle de cada uno en orden. Si alguno devuelve false, se corta la petición y se puede enviar una respuesta temprana.
-
-    Determinación del HandlerAdapter: Se busca un HandlerAdapter que soporte el handler. RequestMappingHandlerAdapter es el adecuado.
-
-    Ejecución del HandlerAdapter:
-
-        Resolución de argumentos: mediante HandlerMethodArgumentResolvers, convierte los parámetros de la petición en los argumentos del método. Por ejemplo, @PathVariable("id") Long id, @RequestParam, @RequestBody, etc. Hay decenas de resolvers predefinidos.
-
-        Llamada al método del controlador: se invoca usuarioController.getUsuario(5L).
-
-        Procesamiento del retorno: mediante HandlerMethodReturnValueHandler. Si el método devuelve un String ("usuario/detalle") y la clase NO tiene @ResponseBody, se interpreta como nombre de vista. Si tiene @ResponseBody, se convierte el objeto a JSON mediante HttpMessageConverter.
-
-    Post-ejecución de interceptores (postHandle) : Después de que el handler se ejecutó pero antes de renderizar la vista, se llama a postHandle. Permite modificar el modelo.
-
-    Resolución de vista (si es necesario) : Si el handler devuelve un nombre de vista lógico, el ViewResolver seleccionado (ej. ThymeleafViewResolver) lo resuelve a una plantilla concreta (/templates/usuario/detalle.html). Se crea el objeto View.
-
-    Renderizado de la vista: La vista se fusiona con el modelo (el ModelAndView o los atributos añadidos) y se escribe la respuesta en el HttpServletResponse.
-
-    Finalización (afterCompletion) : Se llama a afterCompletion de los interceptores, incluso si hubo excepción, similar a un finally. Perfecto para limpiar recursos.
-
-Interceptores vs Filtros
-
-    Filtros: son parte del contenedor Servlet, no conocen detalles de Spring MVC. Útiles para logging, compresión, CORS, seguridad pre-triaje.
-
-    Interceptores (HandlerInterceptor): tienen acceso al handler, modelo y vista, y se ejecutan dentro del contexto del DispatcherServlet. Ideal para añadir atributos comunes al modelo, verificar permisos tras el binding, medir tiempos, etc.
-
-Configuración en Spring Boot
+## Configuración en Spring Boot
 
 Boot autoconfigura DispatcherServlet, RequestMappingHandlerMapping, RequestMappingHandlerAdapter, ViewResolvers (si hay Thymeleaf, el resolver correspondiente), HandlerExceptionResolver, etc. Se puede personalizar implementando WebMvcConfigurer (sin anular @EnableWebMvc):
-java
 
+Boot autoconfigura la mayoría de los componentes. Para personalizar el comportamiento sin anular la configuración automática, se implementa `WebMvcConfigurer`:
+
+```java
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new MiInterceptor()).addPathPatterns("/api/**");
+        registry.addInterceptor(new MiInterceptor())
+                .addPathPatterns("/api/**");
     }
+
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.add(new MappingJackson2HttpMessageConverter());
     }
 }
+```
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Proxies en Spring AOP](../02_AOP/Proxies_JDK_vs_CGLIB.md) | [Índice](../../README.md) | [Controladores REST](./Controladores_REST.md) |
+
+

@@ -1,9 +1,14 @@
-# Spring_Boot/Estructura_Proyecto_Spring_Boot.md
-Estructura recomendada de directorios
+# Estructura de un Proyecto Spring Boot
 
-Spring Boot no fuerza una estructura, pero hay una ampliamente aceptada que sigue el estándar Maven/Gradle:
-text
+Spring Boot no fuerza una estructura rígida de directorios, pero existe una convención ampliamente aceptada que sigue el estándar de Maven o Gradle. Seguir estas convenciones facilita la mantenibilidad y permite que Spring Boot realice la configuración automática de manera eficiente.
 
+---
+
+## Estructura Recomendada de Directorios
+
+La siguiente estructura es la base de la mayoría de los proyectos Spring Boot profesionales:
+
+```text
 mi-proyecto/
 ├── src/
 │   ├── main/
@@ -11,7 +16,7 @@ mi-proyecto/
 │   │   │   └── com/
 │   │   │       └── empresa/
 │   │   │           └── miapp/
-│   │   │               ├── MiAppApplication.java   (clase principal)
+│   │   │               ├── MiAppApplication.java   (Clase principal)
 │   │   │               ├── controlador/
 │   │   │               ├── servicio/
 │   │   │               ├── repositorio/
@@ -20,10 +25,10 @@ mi-proyecto/
 │   │   │               ├── configuracion/
 │   │   │               └── excepcion/
 │   │   └── resources/
-│   │       ├── static/                 (contenido estático: css, js, imágenes)
-│   │       ├── templates/              (plantillas Thymeleaf, Freemarker)
-│   │       ├── application.properties  (o application.yml)
-│   │       └── data.sql / schema.sql   (opcional, para inicializar BD)
+│   │       ├── static/                 (Contenido estático: CSS, JS, imágenes)
+│   │       ├── templates/              (Plantillas Thymeleaf, Freemarker)
+│   │       ├── application.properties  (Configuración centralizada)
+│   │       └── data.sql / schema.sql   (Scripts de inicialización de BD)
 │   └── test/
 │       ├── java/
 │       │   └── com/empresa/miapp/
@@ -34,48 +39,85 @@ mi-proyecto/
 │           └── application-test.properties
 ├── pom.xml (o build.gradle)
 └── README.md
+```
 
-    static/: servido directamente por Spring Boot (recursos estáticos). Ruta raíz /.
+### Descripción de Directorios Clave
 
-    templates/: plantillas del motor de vistas (Thymeleaf, etc.). No accesibles directamente.
+- **`static/`**: Servido directamente por Spring Boot. Ideal para recursos front-end que no requieren procesamiento. La ruta raíz es `/`.
+- **`templates/`**: Contiene las plantillas del motor de vistas. No son accesibles directamente desde el navegador, lo que mejora la seguridad.
+- **`application.properties` / `.yml`**: Archivo de configuración por defecto. Permite definir comportamientos de la aplicación y puede segmentarse por perfiles.
+- **`data.sql` y `schema.sql`**: Scripts que Spring Boot ejecuta automáticamente al iniciar si detecta una base de datos embebida (comportamiento personalizable).
 
-    application.properties o .yml: configuración por defecto. Se puede dividir por perfiles.
+---
 
-    data.sql y schema.sql: si existen, Spring Boot los ejecuta al iniciar la base de datos embebida, a menos que se desactive.
+## La Clase Principal y SpringApplication
 
-La clase principal y SpringApplication
-java
+La clase principal actúa como el punto de entrada de la aplicación. Está anotada con `@SpringBootApplication`, que combina `@Configuration`, `@EnableAutoConfiguration` y `@ComponentScan`.
 
+```java
 @SpringBootApplication
 public class MiAppApplication {
     public static void main(String[] args) {
         SpringApplication.run(MiAppApplication.class, args);
     }
 }
+```
 
-SpringApplication.run() arranca el contexto de Spring, el servidor embebido (si es web) y todo lo demás. Se puede personalizar mediante SpringApplication builder:
-java
+> [!NOTE]
+> `SpringApplication.run()` no solo arranca el contexto de Spring, sino que también inicializa el servidor embebido (Tomcat por defecto) y procesa los argumentos de línea de comandos.
 
+### Personalización del Arranque
+
+Si necesitas un control más fino sobre el inicio, puedes usar el `SpringApplicationBuilder`:
+
+```java
 new SpringApplicationBuilder(MiAppApplication.class)
     .bannerMode(Banner.Mode.OFF)
     .profiles("dev")
     .run(args);
+```
 
-Empaquetado y ejecución
+---
 
-Spring Boot ofrece el plugin spring-boot-maven-plugin que genera un fat jar (JAR autocontenido con todas las dependencias, el servidor embebido y un cargador de clases especial). Se ejecuta con:
-bash
+## Empaquetado y Ejecución
 
-mvn clean package
-java -jar target/mi-app.jar
+Spring Boot utiliza el plugin `spring-boot-maven-plugin` (o su equivalente en Gradle) para generar un **fat jar**: un archivo JAR único que contiene todas las dependencias y el servidor embebido.
 
-El plugin también permite ejecutar directamente con mvn spring-boot:run para desarrollo ágil.
-Convenciones en el package scanning
+### Comandos Comunes
+- **Compilar y empaquetar**:
+  ```bash
+  mvn clean package
+  ```
+- **Ejecutar el artefacto**:
+  ```bash
+  java -jar target/mi-app.jar
+  ```
+- **Ejecución en desarrollo**:
+  ```bash
+  mvn spring-boot:run
+  ```
 
-El @ComponentScan implícito en @SpringBootApplication escanea el paquete donde reside la clase principal y todos sus subpaquetes. Por eso se recomienda ubicar la aplicación en el paquete raíz (com.empresa.miapp). Si necesitas escanear otros paquetes, puedes usar scanBasePackages en la anotación.
-Recursos estáticos y caché
+---
 
-Por defecto, Spring Boot sirve recursos estáticos desde classpath:/static/, classpath:/public/, classpath:/resources/, classpath:/META-INF/resources/. Puedes personalizar con spring.web.resources.static-locations. El mapeo de URL raíz es /. Para control de caché: spring.web.resources.cache.cachecontrol.max-age.
-El servidor embebido
+## Convenciones y Configuración del Servidor
 
-Spring Boot incluye Tomcat por defecto en spring-boot-starter-web. Pero puedes cambiarlo a Jetty o Undertow excluyendo Tomcat y añadiendo el starter correspondiente. La configuración del servidor se realiza mediante propiedades server.* (puerto, SSL, compression, etc.). El servidor se inicia desde ServletWebServerApplicationContext.
+### Package Scanning
+El `@ComponentScan` implícito escanea el paquete de la clase principal y sus subpaquetes. 
+
+> [!IMPORTANT]
+> Se recomienda ubicar la aplicación en un paquete raíz (ej. `com.empresa.miapp`) para asegurar que todos los componentes sean detectados sin configuración adicional.
+
+### Recursos Estáticos y Caché
+Por defecto, Spring Boot busca en `/static`, `/public`, `/resources` y `/META-INF/resources`. Puedes personalizar estas rutas y el control de caché mediante:
+- `spring.web.resources.static-locations`
+- `spring.web.resources.cache.cachecontrol.max-age`
+
+### El Servidor Embebido
+Aunque Tomcat es el predeterminado, puedes cambiarlo a **Jetty** o **Undertow** excluyendo la dependencia de Tomcat en el starter web. La configuración del servidor se centraliza en las propiedades `server.*` (puerto, SSL, compresión).
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Vistas y Templates](../03_Spring_MVC/Vistas_y_Templates.md) | [Índice](../../README.md) | [Autoconfiguración y Starters](./Autoconfiguracion_y_Starters.md) |
+

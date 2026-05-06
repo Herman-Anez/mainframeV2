@@ -1,66 +1,88 @@
-# Spring_MVC/Vistas_y_Templates.md
-El concepto de ViewResolver y View
+# Vistas y Templates
 
-Cuando un método controlador retorna un String sin @ResponseBody, ese string es el nombre lógico de la vista. El DispatcherServlet consulta a los ViewResolvers registrados para convertir ese nombre en un objeto View real (JSP, HTML con Thymeleaf, Freemarker, etc.).
-ViewResolvers más comunes
+En Spring MVC, una "Vista" es el componente encargado de renderizar la respuesta final al usuario (generalmente HTML).
 
-    InternalResourceViewResolver: para JSP. Prefijo y sufijo configurables (/WEB-INF/views/ y .jsp). Si la vista lógica es "usuarios/lista", busca /WEB-INF/views/usuarios/lista.jsp.
+## Concepto de ViewResolver y View
 
-    ThymeleafViewResolver: si Thymeleaf está presente. Resuelve nombres de plantilla como "usuarios/lista" a templates/usuarios/lista.html. Soporta Spring Expression Language (SpEL) dentro del HTML.
+Cuando un método controlador retorna un `String` (y no tiene `@ResponseBody`), ese string es el **nombre lógico** de la vista. El `DispatcherServlet` consulta a los `ViewResolvers` para convertir ese nombre en un objeto `View` real.
 
-    FreeMarkerViewResolver, MustacheViewResolver, etc.
+### ViewResolvers Comunes
 
-En una aplicación Spring Boot, si usas spring-boot-starter-thymeleaf, no necesitas configurar nada; el ThymeleafViewResolver se registra automáticamente y espera las plantillas en src/main/resources/templates/.
-Paso de datos del controlador a la vista
+- **InternalResourceViewResolver:** Utilizado para JSPs. Permite configurar prefijos y sufijos (e.g., `/WEB-INF/views/` y `.jsp`).
+- **ThymeleafViewResolver:** Utilizado cuando Thymeleaf está presente. Resuelve nombres a plantillas `.html` dentro de `templates/`. Soporta *Spring Expression Language* (SpEL).
+- **FreeMarkerViewResolver / MustacheViewResolver:** Para otros motores de plantillas.
 
-El controlador añade atributos al modelo. Esto se hace de varias formas:
+> [!NOTE]
+> En aplicaciones Spring Boot con `spring-boot-starter-thymeleaf`, no es necesaria la configuración manual; el motor se registra automáticamente y busca las plantillas en `src/main/resources/templates/`.
 
-    Model como parámetro: public String listar(Model model) { model.addAttribute("productos", lista); return "productos/lista"; }
+---
 
-    ModelAndView como retorno.
+## Paso de Datos a la Vista
 
-    @ModelAttribute a nivel de método en el controlador (se añade automáticamente a todos los métodos del controlador). Útil para datos de formularios o menús.
+El controlador comunica datos a la vista mediante el **Modelo**. Existen varias formas de hacerlo:
 
-    model.addAttribute sin nombre (se deduce del tipo).
+1. **`Model` como parámetro:**
+   ```java
+   public String listar(Model model) { 
+       model.addAttribute("productos", lista); 
+       return "productos/lista"; 
+   }
+   ```
+2. **`ModelAndView` como retorno:** Combina el nombre de la vista y el modelo en un solo objeto.
+3. **`@ModelAttribute`:** A nivel de método, permite añadir datos que estarán disponibles en todos los métodos del controlador (e.g., para menús o listas de selección).
 
-En la vista, con Thymeleaf accedes así: ${productos} o iteraciones th:each="p : ${productos}". Con JSP, mediante Expression Language ${productos}.
-Thymeleaf como motor de plantillas estándar
+> [!TIP]
+> En la vista (Thymeleaf), accedes a los datos usando `${nombreAtributo}`. Ejemplo: `${productos}`.
 
-Thymeleaf es el motor recomendado en Spring Boot por su sintaxis natural y su integración con Spring Security, i18n, etc. Características destacadas:
+---
 
-    Plantillas prototípicas: se pueden abrir en navegador sin servidor porque usan atributos en lugar de etiquetas JSP.
+## Thymeleaf: El Estándar Moderno
 
-    Expression utilitarias: #strings, #dates, #numbers.
+Thymeleaf es el motor recomendado por su sintaxis natural y su profunda integración con Spring.
 
-    Formularios: th:object, th:field, th:errors ligados al binding de Spring para mostrar errores de validación.
+### Características Principales
 
-    Fragmentos y layouts: mediante th:fragment y th:replace se crean layouts reutilizables.
+- **Plantillas Prototípicas:** Los archivos `.html` se pueden abrir directamente en un navegador sin servidor, ya que usan atributos (`th:`) que el navegador ignora.
+- **Expresiones Utilitarias:** Soporte para `#strings`, `#dates`, `#numbers`, etc.
+- **Formularios:** Integración con `th:object`, `th:field` y `th:errors` para binding y validación.
+- **Layouts y Fragmentos:** Reutilización de código mediante `th:fragment` y `th:replace`.
+- **Seguridad:** Integración con Spring Security mediante el dialecto `sec:authorize`.
 
-    Soporte de SpEL para seguridad: sec:authorize de Spring Security integrado.
+---
 
-Redirecciones y flash attributes
+## Redirecciones y Flash Attributes
 
-El patrón POST-redirect-GET es común para evitar el doble envío de formularios.
+Para evitar el reenvío de formularios al refrescar la página (patrón **POST-redirect-GET**):
 
-    El controlador retorna "redirect:/productos". Spring lo interpreta como una redirección y se invoca RedirectView.
+1. **Redirección:** El controlador retorna `"redirect:/ruta"`.
+2. **Flash Attributes:** Se usa `RedirectAttributes` para pasar datos que sobrevivan a la redirección (e.g., mensajes de éxito) y se borren inmediatamente después.
 
-    Para pasar datos a la siguiente petición, como mensajes de éxito, se usan flash attributes: RedirectAttributes.addFlashAttribute("mensaje", "Creado exitosamente"). Estos sobreviven a la redirección y se borran tras mostrarse.
-
-java
-
+```java
 @PostMapping
 public String crear(@Valid Producto p, BindingResult result, RedirectAttributes ra) {
     if (result.hasErrors()) return "productos/formulario";
     service.save(p);
-    ra.addFlashAttribute("success", "Producto creado");
+    ra.addFlashAttribute("success", "Producto creado exitosamente");
     return "redirect:/productos";
 }
+```
 
-REST y ¿vistas?
+---
 
-En servicios REST puros no se devuelven vistas. Sin embargo, puede haber endpoints híbridos que devuelvan HTML para documentación (Swagger UI) o que sirvan una SPA. Spring Boot maneja recursos estáticos desde static/, public/, META-INF/resources/. La configuración de vistas no interfiere.
-Resolución de vistas y negociación de contenido en REST
+## REST y Vistas Híbridas
 
-Si un método devuelve un objeto y no tiene @ResponseBody, pero la petición tiene encabezados que indican que acepta JSON, el HttpMessageConverter puede tomar el control. En la práctica, si el controlador tiene @RestController todo es @ResponseBody. En un @Controller puro, para que el valor retornado se interprete como JSON debe estar anotado con @ResponseBody en el método.
+En servicios REST puros no se devuelven vistas, pero puede haber **endpoints híbridos**. 
+
+- Si un controlador tiene `@RestController`, todo es `@ResponseBody`.
+- En un `@Controller` estándar, si un método no tiene `@ResponseBody`, Spring intentará resolverlo como una vista.
+- Spring Boot sirve automáticamente recursos estáticos desde `/static`, `/public` o `/META-INF/resources`.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Validación y Binding](./Validacion_y_BindingResult.md) | [Índice](../../README.md) | [Spring Boot: Autoconfiguración](../04_Spring_Boot/Autoconfiguracion_y_Starters.md) |
+
+
 
 

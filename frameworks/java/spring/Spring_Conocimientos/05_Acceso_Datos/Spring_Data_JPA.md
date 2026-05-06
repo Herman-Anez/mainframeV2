@@ -1,126 +1,145 @@
 
-# Acceso_Datos/Spring_Data_JPA.md
-El paradigma: repositorios sin implementación
+# Spring Data JPA
 
-Spring Data JPA genera automáticamente la implementación de las interfaces de repositorio en tiempo de ejecución. Solo defines la interfaz y, mediante query derivation o consultas anotadas, obtienes el código necesario.
-java
+Spring Data JPA simplifica drásticamente el acceso a datos al generar automáticamente las implementaciones de las interfaces de repositorio en tiempo de ejecución. Solo necesitas definir la interfaz y, mediante derivación de consultas o consultas anotadas, obtienes toda la funcionalidad necesaria.
 
+---
+
+## 1. El Paradigma de Repositorios
+
+Al extender de `JpaRepository`, Spring crea automáticamente un proxy que implementa los métodos CRUD básicos, paginación, ordenación y operaciones en lote.
+
+```java
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
     List<Producto> findByNombreIgnoreCase(String nombre);
     Optional<Producto> findByNombreAndFabricante(String nombre, Fabricante f);
 }
+```
 
-En tiempo de arranque, Spring crea un proxy que implementa ProductoRepository y todos los métodos de JpaRepository (CRUD básico, paginación, ordenación, batch).
-Query Methods (consulta derivada del nombre)
+> [!TIP]
+> `JpaRepository` hereda de `PagingAndSortingRepository` y `CrudRepository`, proporcionando una API muy rica para gestionar el ciclo de vida de tus entidades.
 
-El mecanismo clave: el nombre del método se analiza y se traduce a una consulta JPQL/Criteria.
+---
 
-Palabras clave más comunes:
-Palabra	Ejemplo	JPQL equivalente
-find...By, read...By, get...By	findByNombre	where x.nombre = ?1
-...Containing / ...Contains	findByNombreContaining(String)	where x.nombre like %?1%
-...StartingWith	findByNombreStartingWith	like ?1%
-...Between	findByPrecioBetween	where x.precio between ?1 and ?2
-...In	findByCategoriaIn	where x.categoria in ?1
-...OrderBy	findByNombreOrderByPrecioDesc	order by x.precio desc
-...And, ...Or	findByNombreAndPrecio	where x.nombre = ?1 and x.precio = ?2
-...True / ...False	findByActivoTrue	where x.activo = true
-...First / ...Top	findFirst5ByNombre	limita resultados
+## 2. Query Methods: Consultas Derivadas
 
-Se puede usar Pageable y Sort como parámetro adicional. Retornar Page, List, Stream, opcional con Optional.
-java
+El mecanismo más potente de Spring Data es la traducción automática del nombre del método a una consulta JPQL.
 
-Page<Producto> findByPrecioGreaterThan(BigDecimal precio, Pageable pageable);
+### Palabras Clave Comunes
+| Palabra Clave | Ejemplo | JPQL Equivalente |
+| :--- | :--- | :--- |
+| `find...By`, `read...By` | `findByNombre` | `WHERE x.nombre = ?1` |
+| `Containing`, `Contains` | `findByNombreContaining` | `WHERE x.nombre LIKE %?1%` |
+| `StartingWith` | `findByNombreStartingWith` | `LIKE ?1%` |
+| `Between` | `findByPrecioBetween` | `WHERE x.precio BETWEEN ?1 AND ?2` |
+| `In` | `findByCategoriaIn` | `WHERE x.categoria IN ?1` |
+| `OrderBy` | `findByNombreOrderByPrecioDesc` | `ORDER BY x.precio DESC` |
+| `True`, `False` | `findByActivoTrue` | `WHERE x.activo = true` |
+| `First`, `Top` | `findFirst5ByNombre` | Limita los resultados a los primeros 5 |
 
-@Query personalizada con JPQL
+> [!NOTE]
+> Puedes usar `Pageable` y `Sort` como parámetros adicionales en cualquier consulta derivada para gestionar resultados paginados u ordenados dinámicamente.
 
-Cuando los nombres se vuelven muy largos o necesitas joins complejos:
-java
+---
 
+## 3. Consultas Personalizadas con @Query
+
+Para consultas complejas que no pueden expresarse mediante nombres de métodos o cuando necesitas optimizaciones como `FETCH JOIN`:
+
+```java
 @Query("SELECT p FROM Producto p JOIN FETCH p.fabricante WHERE p.nombre LIKE %:nombre%")
 List<Producto> buscarPorNombreConFabricante(@Param("nombre") String nombre);
+```
 
-También se pueden hacer updates/delete:
-java
+### Operaciones de Modificación
+Para realizar `UPDATE` o `DELETE` masivos:
 
+```java
 @Modifying
 @Transactional
 @Query("UPDATE Producto p SET p.precio = p.precio * :factor WHERE p.categoria = :cat")
 int actualizarPrecioPorCategoria(@Param("factor") BigDecimal factor, @Param("cat") Categoria cat);
+```
 
-@Modifying indica que no es SELECT y necesita @Transactional.
-@EntityGraph para controlar carga EAGER/LAZY
+> [!IMPORTANT]
+> La anotación `@Modifying` indica que la consulta no es un `SELECT` y requiere ser ejecutada dentro de una transacción activa (vía `@Transactional`).
 
-Para evitar el problema N+1 sin escribir JPQL, se pueden definir @EntityGraph y referenciarlo en el método:
-java
+---
 
-@Entity
-@NamedEntityGraph(name = "Producto.fabricante", 
-    attributeNodes = @NamedAttributeNode("fabricante"))
-public class Producto { ... }
+## 4. @EntityGraph: Control de Carga EAGER/LAZY
 
-// En repositorio:
-@EntityGraph("Producto.fabricante")
+Para resolver el problema de las **N+1 consultas** sin escribir JPQL manualmente, puedes usar `@EntityGraph`:
+
+```java
+// Definición ad-hoc en el repositorio
+@EntityGraph(attributePaths = {"fabricante"})
 List<Producto> findAll();
+```
 
-También se puede definir de forma ad-hoc con @EntityGraph(attributePaths = {"fabricante"}).
-Auditoría y campos automáticos
+---
 
-Spring Data JPA proporciona anotaciones para auditoría:
+## 5. Auditoría Automática
 
-    @CreatedDate, @LastModifiedDate (en java.time.Instant o LocalDateTime).
+Spring Data JPA puede gestionar automáticamente campos de auditoría (quién y cuándo creó/modificó un registro).
 
-    @CreatedBy, @LastModifiedBy (con Spring Security integrado).
-
-    Se habilita con @EnableJpaAuditing en alguna configuración.
-
-java
-
+```java
 @EntityListeners(AuditingEntityListener.class)
 @Entity
 public class Producto {
     @CreatedDate
     private Instant fechaCreacion;
+
     @LastModifiedDate
     private Instant fechaModificacion;
 }
+```
 
-Proyecciones y DTOs
+> [!NOTE]
+> Para activar esta funcionalidad, debes añadir `@EnableJpaAuditing` en una de tus clases de configuración.
 
-En lugar de devolver la entidad completa, se pueden definir interfaces de proyección:
-java
+---
 
+## 6. Proyecciones y DTOs
+
+No siempre es eficiente devolver la entidad completa. Las proyecciones basadas en interfaces permiten seleccionar solo las columnas necesarias:
+
+```java
 public interface ProductoResumen {
     String getNombre();
     BigDecimal getPrecio();
 }
 
-// En repositorio:
+// En el repositorio:
 List<ProductoResumen> findByCategoria(Categoria cat);
+```
 
-Spring solo selecciona las columnas necesarias. También hay proyecciones de cierre abierto (expresiones SpEL) o basadas en DTOs con constructor.
-Especificaciones (Specification) y Query by Example
+---
 
-Para consultas dinámicas, JpaSpecificationExecutor permite construir criterios con Specification:
-java
+## 7. Consultas Dinámicas: Specifications
 
-public interface ProductoRepository extends JpaRepository<Producto, Long>, 
-        JpaSpecificationExecutor<Producto> {}
+Cuando necesitas construir filtros de búsqueda dinámicos basados en múltiples criterios, se utiliza `JpaSpecificationExecutor`:
 
-java
-
+```java
 Specification<Producto> spec = (root, query, cb) -> cb.and(
     cb.like(root.get("nombre"), "%" + nombre + "%"),
     cb.greaterThan(root.get("precio"), 10)
 );
+
 List<Producto> productos = repo.findAll(spec);
+```
 
-Query by Example permite consultar a partir de una instancia de la entidad con campos no nulos. Simple pero limitado a igualdades exactas.
-Paginación, ordenación y streaming
+---
 
-    Page<T>: contiene el contenido, número de página, total páginas, etc.
+## 8. Paginación y Streaming
 
-    Slice<T>: solo sabe si hay siguiente (más eficiente sin count).
+- **`Page<T>`**: Retorna una lista junto con metadatos (total de registros, páginas totales). Ejecuta una consulta `count` adicional.
+- **`Slice<T>`**: Indica solo si hay una página siguiente disponible. Más eficiente que `Page` al evitar el `count`.
+- **`Stream<T>`**: Permite procesar grandes volúmenes de datos usando Java 8 Streams de forma eficiente. Debe ejecutarse dentro de una transacción.
 
-    Stream<T>: un stream de resultados que debe cerrarse dentro de una transacción (@Transactional). Bueno para procesar grandes volúmenes con Java 8 streams.
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | :--- |
+| [← Integración de JPA y Hibernate](JPA_y_Hibernate_Integracion.md) | [Índice](../../README.md) | [Consultas Nativas y Procedimientos →](Consultas_Nativas_y_Procedure.md) |
+
 

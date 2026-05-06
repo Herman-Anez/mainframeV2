@@ -1,46 +1,61 @@
-# Acceso_Datos/Consultas_Nativas_y_Procedure.md
-Cuándo usar consultas nativas
+# Consultas Nativas y Procedimientos Almacenados
 
-Aunque JPQL cubre la mayoría de casos, a veces es necesario SQL nativo para:
+Aunque JPQL cubre la mayoría de los casos de uso, a veces es necesario recurrir al SQL nativo para aprovechar toda la potencia del motor de base de datos específico.
 
-    Utilizar características específicas del motor (funciones de ventana, operadores espaciales, FOR UPDATE, hints de optimizador).
+---
 
-    Invocar procedimientos almacenados complejos.
+## 1. ¿Cuándo usar Consultas Nativas?
 
-    Realizar operaciones masivas de actualización con condiciones especiales.
+El SQL nativo es la opción adecuada en los siguientes escenarios:
+- Utilizar características específicas del motor (funciones de ventana, operadores espaciales, `FOR UPDATE`, hints del optimizador).
+- Invocar procedimientos almacenados complejos.
+- Realizar operaciones masivas de actualización con condiciones que JPQL no soporta.
+- Consultas con joins extremadamente complejos donde JPQL pierde legibilidad o rendimiento.
 
-    Consultas con joins complejos donde JPQL no rinde o se vuelve ilegible.
+---
 
-Spring Data JPA y JPA proveen mecanismos para ejecutar SQL nativo manteniendo el mapeo de resultados.
-@Query con nativeQuery = true
-java
+## 2. @Query con Native Query
 
+Spring Data JPA permite ejecutar SQL nativo simplemente activando el flag `nativeQuery = true` en la anotación `@Query`.
+
+```java
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
     @Query(value = "SELECT * FROM productos WHERE nombre ILIKE CONCAT('%', :nombre, '%')", 
            nativeQuery = true)
     List<Producto> buscarPorNombreSimilar(@Param("nombre") String nombre);
 }
+```
 
-El resultado se mapea a la entidad Producto (o una proyección) si las columnas coinciden. También se puede retornar Object[] o List<Object[]> para casos sin mapeo.
-Proyecciones con consulta nativa
+> [!NOTE]
+> El resultado se mapea automáticamente a la entidad (o a una proyección) si los nombres de las columnas devueltas coinciden con los atributos de la clase Java.
 
-Con una interfaz de proyección:
-java
+---
 
+## 3. Proyecciones en Consultas Nativas
+
+Puedes usar interfaces de proyección para capturar resultados de funciones de agregación o consultas parciales:
+
+```java
 public interface ProductoCantidad {
     String getCategoria();
     Long getCantidad();
 }
 
-@Query(value = "SELECT categoria, COUNT(*) as cantidad FROM productos GROUP BY categoria", nativeQuery = true)
+@Query(value = "SELECT categoria, COUNT(*) as cantidad FROM productos GROUP BY categoria", 
+       nativeQuery = true)
 List<ProductoCantidad> contarPorCategoria();
+```
 
-Si el SQL devuelve columnas con nombres diferentes, se puede usar alias (SELECT cat as categoria).
-Mapeo a DTO con @SqlResultSetMapping
+> [!TIP]
+> Si el SQL devuelve nombres de columna diferentes, utiliza alias en el SQL (`SELECT cat AS categoria`) para que coincidan con los métodos `get` de tu interfaz.
 
-Cuando se necesita un DTO (clase concreta) en lugar de interfaz, se puede usar @SqlResultSetMapping:
-java
+---
 
+## 4. Mapeo a DTOs complejos
+
+Para casos donde necesitas un DTO (clase concreta) y no una interfaz, se utiliza `@SqlResultSetMapping`:
+
+```java
 @SqlResultSetMapping(
     name = "productoResumenMapping",
     classes = @ConstructorResult(
@@ -53,77 +68,66 @@ java
 )
 @Entity
 public class Producto { ... }
+```
 
-// Luego en el repositorio:
-@Query(value = "SELECT nombre, AVG(precio) as precio_medio FROM productos GROUP BY nombre", nativeQuery = true)
-@SqlResultSetMapping(name = "productoResumenMapping")  // redundante si ya se mapea en la entidad
-List<ProductoResumenDTO> resumenPrecios();
+---
 
-En la práctica, se prefiere @NamedNativeQuery declarado en la entidad y luego invocarlo con EntityManager.createNamedQuery.
-Ejecución dinámica de SQL nativo con EntityManager
+## 5. Ejecución Dinámica con EntityManager
 
-Cuando la consulta se construye en tiempo de ejecución (cuidado con SQL injection), se puede usar EntityManager.createNativeQuery directamente en el repositorio o un DAO.
-java
+Cuando la consulta se construye dinámicamente en tiempo de ejecución, puedes usar el `EntityManager` directamente:
 
+```java
 @Repository
 public class ProductoCustomRepository {
     @PersistenceContext
     private EntityManager em;
 
-    @SuppressWarnings("unchecked")
     public List<Producto> buscarConFiltros(Map<String, Object> filtros) {
         StringBuilder sql = new StringBuilder("SELECT * FROM productos WHERE 1=1");
-        Map<String, Object> params = new HashMap<>();
-        if (filtros.containsKey("nombre")) {
-            sql.append(" AND nombre LIKE :nombre");
-            params.put("nombre", "%" + filtros.get("nombre") + "%");
-        }
+        // ... construcción dinámica del string SQL ...
         Query query = em.createNativeQuery(sql.toString(), Producto.class);
-        params.forEach(query::setParameter);
         return query.getResultList();
     }
 }
+```
 
-Llamada a procedimientos almacenados con @Procedure
+> [!CAUTION]
+> Ten mucho cuidado con la concatenación de strings para evitar ataques de **SQL Injection**. Usa siempre parámetros enlazados (`setParameter`).
 
-Spring Data JPA permite invocar procedimientos almacenados mediante la anotación @Procedure en métodos del repositorio.
-java
+---
 
+## 6. Procedimientos Almacenados
+
+Spring Data JPA facilita la llamada a procedimientos mediante la anotación `@Procedure`:
+
+```java
 @Procedure("nombre_procedimiento")
 void ejecutarProcedimiento(@Param("param1") String param1);
+```
 
-Si el procedimiento retorna un conjunto de resultados, se puede declarar el tipo de retorno List<T>. También se puede usar @Query con nativeQuery = true y CALL para procedimientos que no se adaptan a los parámetros.
+### Alternativa vía EntityManager
+Si necesitas un control más fino sobre los parámetros de entrada y salida:
 
-Alternativa vía EntityManager:
-java
-
+```java
 StoredProcedureQuery sp = em.createStoredProcedureQuery("calcular_ventas");
 sp.registerStoredProcedureParameter("anio", Integer.class, ParameterMode.IN);
 sp.setParameter("anio", 2025);
 sp.execute();
 List<Object[]> resultados = sp.getResultList();
+```
 
-Actualizaciones masivas con SQL nativo
+---
 
-@Modifying también funciona con nativeQuery = true:
-java
+## 7. Consideraciones de Seguridad y Portabilidad
 
-@Modifying
-@Transactional
-@Query(value = "UPDATE productos SET precio = precio * 1.1 WHERE categoria = :cat", nativeQuery = true)
-int aplicarInflacion(@Param("cat") String categoria);
+> [!IMPORTANT]
+> - **Portabilidad**: Las consultas nativas atan tu código a un motor de base de datos específico (ej. Dialecto PostgreSQL vs MySQL).
+> - **Caché**: Estas consultas **no pasan por la Caché de Segundo Nivel** de Hibernate.
+> - **Validación**: Los errores sintácticos en SQL nativo solo se detectan en tiempo de ejecución, a diferencia de JPQL que suele validarse al arrancar la aplicación.
 
-Ojo: al ser nativo, no se aplican las reglas de cascada JPA ni se actualizan entidades en memoria, por lo que debe ir seguido de una recarga si la sesión se mantiene.
-Consideraciones de seguridad y portabilidad
+---
 
-    Las consultas nativas atan la aplicación a un dialecto de base de datos concreto.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | :--- |
+| [← Spring Data JPA](Spring_Data_JPA.md) | [Índice](../../README.md) | [Gestión de Transacciones →](Transacciones_y_Transactional.md) |
 
-    Mayor riesgo de SQL injection si se concatenan parámetros. Siempre usar parámetros enlazados (setParameter).
-
-    No pasan por la caché de segundo nivel de Hibernate.
-
-    Las consultas nativas no son validadas en tiempo de arranque (salvo que se habilite spring.jpa.properties.hibernate.query.fail_on_pagination_over_collection_fetch), así que los errores sintácticos aparecen en tiempo de ejecución.
-
-
-
-//////////////////////////////////////////////////////////////

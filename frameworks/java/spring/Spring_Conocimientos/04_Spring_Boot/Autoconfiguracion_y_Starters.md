@@ -1,82 +1,94 @@
-# Spring_Boot/Autoconfiguracion_y_Starters.md
-El problema que resolvió Spring Boot
+# Autoconfiguración y Starters
 
-Spring tradicional daba una flexibilidad enorme, pero configurar una aplicación sencilla requería decenas de líneas de XML o Java Config para beans de infraestructura: DataSource, EntityManagerFactory, TransactionManager, ViewResolver, MessageConverter, etc. Spring Boot introdujo dos conceptos rompedores:
+Spring Boot revolucionó el ecosistema Java al resolver la complejidad de la configuración manual. Mientras que Spring tradicional requería extensos archivos XML o clases de configuración Java para beans de infraestructura (DataSource, EntityManagerFactory, etc.), Spring Boot introdujo un enfoque basado en la opinión y la convención.
 
-    Starters: dependencias agrupadoras que traen todo el classpath necesario y autoconfiguración preparada.
+---
 
-    Autoconfiguración (@EnableAutoConfiguration): basada en lo que hay en el classpath, la aplicación decide qué beans crear y cómo configurarlos, siguiendo el principio "convención sobre configuración".
+## Conceptos Fundamentales
 
-La anotación @SpringBootApplication
+Spring Boot se apoya en dos pilares para simplificar el desarrollo:
 
-Es un atajo que combina tres anotaciones:
-java
+1.  **Starters**: Dependencias agrupadoras que proporcionan todo el classpath necesario y autoconfiguración preconfigurada para una funcionalidad específica.
+2.  **Autoconfiguración (`@EnableAutoConfiguration`)**: Un mecanismo inteligente que, basándose en las librerías presentes en el classpath, decide qué beans crear y cómo configurarlos.
 
-@SpringBootConfiguration  // = @Configuration en contexto Boot
-@EnableAutoConfiguration  // La magia de la autoconfiguración
-@ComponentScan(            // Escanea el paquete actual y subpaquetes
-    excludeFilters = { @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class) }
-)
-public @interface SpringBootApplication {
+### La Anotación `@SpringBootApplication`
 
-Así que en una sola línea activas la configuración Java, el escaneo de componentes y la autoconfiguración.
-Funcionamiento interno de la autoconfiguración
+Esta anotación es el punto de entrada más común y actúa como un atajo para tres funcionalidades críticas:
 
-    @EnableAutoConfiguration importa AutoConfigurationImportSelector.
+```java
+@SpringBootConfiguration  // Variante de @Configuration para el contexto Boot
+@EnableAutoConfiguration  // Activa el mecanismo de autoconfiguración
+@ComponentScan            // Escanea el paquete raíz y subpaquetes
+public @interface SpringBootApplication { ... }
+```
 
-    Este selector carga todas las clases listadas en el archivo META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports (en Spring Boot 3+) o en spring.factories (versiones anteriores) del classpath.
+---
 
-    Cada una de esas clases es una configuración (anotada con @AutoConfiguration o @Configuration) con anotaciones condicionales.
+## Funcionamiento Interno de la Autoconfiguración
 
-    Anotaciones condicionales (@ConditionalOnClass, @ConditionalOnMissingBean, @ConditionalOnProperty, etc.) deciden si la configuración se aplica o no.
+El proceso de autoconfiguración sigue un flujo lógico riguroso:
 
-    Si se aplica, se definen los beans óptimos para la aplicación.
+1.  **Activación**: `@EnableAutoConfiguration` importa el `AutoConfigurationImportSelector`.
+2.  **Descubrimiento**: El selector carga las clases listadas en:
+    - `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` (Spring Boot 3.x).
+    - `spring.factories` (Versiones anteriores).
+3.  **Filtrado Condicional**: Cada clase de autoconfiguración utiliza anotaciones condicionales para determinar si debe ejecutarse.
+4.  **Ejecución**: Si las condiciones se cumplen, los beans de infraestructura se registran en el contexto.
 
-Ejemplo simplificado de lo que hace DataSourceAutoConfiguration:
+### Ejemplo: `DataSourceAutoConfiguration`
+- **Condición de Clase**: Se activa solo si `DataSource.class` está presente.
+- **Condición de Bean**: Se ejecuta solo si el usuario **no** ha definido su propio bean de `DataSource` (`@ConditionalOnMissingBean`).
+- **Resultado**: Crea un pool de conexiones (HikariCP por defecto) usando las propiedades `spring.datasource.*`.
 
-    @ConditionalOnClass({ DataSource.class, EmbeddedDatabaseType.class }) → solo si hay clases JDBC en el classpath.
+---
 
-    @ConditionalOnMissingBean(DataSource.class) → solo si el usuario no ha definido ya un DataSource.
+## Catálogo de Anotaciones Condicionales
 
-    Si se cumple, crea un DataSource usando las propiedades spring.datasource.*. Si no hay propiedades de conexión, Boot intenta crear una base de datos embebida (H2, Derby) si encuentra esas dependencias.
+| Anotación | Condición de Activación |
+| :--- | :--- |
+| `@ConditionalOnClass` | Si una clase específica está presente en el classpath. |
+| `@ConditionalOnMissingBean` | Si NO existe un bean de ese tipo ya definido. |
+| `@ConditionalOnProperty` | Si una propiedad tiene un valor específico en el entorno. |
+| `@ConditionalOnWebApplication` | Si la aplicación es de tipo web (Servlet o Reactive). |
+| `@ConditionalOnResource` | Si existe un recurso específico (ej. un archivo config). |
+| `@ConditionalOnExpression` | Basada en una expresión SpEL compleja. |
 
-Anotaciones condicionales más poderosas
-Anotación	Condición
-@ConditionalOnClass	Si una clase específica está en el classpath.
-@ConditionalOnMissingClass	Si una clase NO está.
-@ConditionalOnBean	Si existe un bean de ese tipo.
-@ConditionalOnMissingBean	Si NO existe un bean.
-@ConditionalOnProperty	Si una propiedad tiene un valor determinado.
-@ConditionalOnResource	Si existe un recurso (archivo).
-@ConditionalOnWebApplication	Si es una aplicación web.
-@ConditionalOnNotWebApplication	No web.
-@ConditionalOnExpression	Expresión SpEL evaluada a true.
+---
 
-Estas anotaciones se pueden combinar en una misma clase de autoconfiguración para afinar la activación.
-Starters: la navaja suiza del classpath
+## Starters: La Navaja Suiza del Classpath
 
-Un starter es un POM (Maven) o módulo (Gradle) que agrupa varias dependencias relacionadas entre sí, evitando que tengas que añadirlas una a una y garantizando compatibilidad de versiones. La convención de nombres es spring-boot-starter-*. Ejemplos esenciales:
-Starter	Proporciona
-spring-boot-starter-web	Spring MVC, Tomcat embebido, Jackson, validación.
-spring-boot-starter-data-jpa	Hibernate, Spring Data JPA, Spring ORM, pool HikariCP.
-spring-boot-starter-security	Spring Security, autenticación básica por defecto.
-spring-boot-starter-test	JUnit Jupiter, Mockito, AssertJ, Hamcrest, Spring Test.
-spring-boot-starter-actuator	Endpoints de monitoreo (health, metrics).
-spring-boot-starter-thymeleaf	Thymeleaf, Spring Web.
-spring-boot-starter-oauth2-client	OAuth2 client support.
-spring-boot-starter-webflux	Programación reactiva con Netty.
+Los starters garantizan la compatibilidad de versiones y reducen la verbosidad del `pom.xml` o `build.gradle`. Siguen el patrón de nombres `spring-boot-starter-*`.
 
-Cada starter trae también la autoconfiguración correspondiente (en spring-boot-autoconfigure).
-Cómo crear un starter personalizado
+| Starter | Propósito Principal |
+| :--- | :--- |
+| `spring-boot-starter-web` | Spring MVC, Tomcat, Jackson y Validación. |
+| `spring-boot-starter-data-jpa` | Hibernate, Spring Data JPA y pool de conexiones Hikari. |
+| `spring-boot-starter-security` | Seguridad, autenticación y autorización. |
+| `spring-boot-starter-test` | JUnit 5, Mockito, AssertJ y herramientas de testeo. |
+| `spring-boot-starter-actuator` | Endpoints de monitoreo y métricas en producción. |
 
-    Crea un módulo Maven con dos submódulos: auto-configuracion y starter.
+---
 
-    En auto-configuration: clase @AutoConfiguration con @ConditionalOn... y @Bean. Debe registrar la configuración en META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports.
+## Creación de Starters Personalizados
 
-    En starter: POM vacío (solo dependencias) que trae el módulo de autoconfiguración y las librerías necesarias.
+Para encapsular lógica reutilizable entre proyectos, se pueden crear starters propios siguiendo estos pasos:
 
-    Opcional: spring-boot-configuration-processor para generar metadatos de propiedades y ayudar al IDE con el autocompletado.
+1.  **Módulo de Autoconfiguración**: Contiene las clases `@AutoConfiguration` con sus respectivas condiciones.
+2.  **Registro**: Registrar las clases en el archivo de importaciones de Spring Boot.
+3.  **Módulo Starter**: Un POM vacío que depende del módulo de autoconfiguración y de las librerías necesarias.
 
-Orden de las autoconfiguraciones
+> [!TIP]
+> Utiliza `spring-boot-configuration-processor` en tus starters personalizados para generar metadatos que permitan al IDE ofrecer autocompletado en los archivos de propiedades.
 
-Las configuraciones pueden anotarse con @AutoConfigureOrder, @AutoConfigureBefore o @AutoConfigureAfter para controlar la secuencia. Esto es vital porque, por ejemplo, la configuración de Hibernate debe aplicarse después de la del DataSource.
+### Orden de Ejecución
+Las autoconfiguraciones pueden ordenarse para evitar conflictos de dependencia:
+- `@AutoConfigureOrder`
+- `@AutoConfigureBefore`
+- `@AutoConfigureAfter` (Ej. Configurar Hibernate después de DataSource).
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Estructura del Proyecto](./Estructura_Proyecto_Spring_Boot.md) | [Índice](../../README.md) | [Perfiles y Propiedades](./Perfiles_y_Propiedades.md) |
+

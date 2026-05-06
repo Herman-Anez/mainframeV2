@@ -1,12 +1,14 @@
-# Acceso_Datos/JPA_y_Hibernate_Integracion.md
-JPA: estándar, Hibernate: implementación
+# Integración de JPA y Hibernate
 
-JPA (Jakarta Persistence API) es la especificación estándar para ORM en Java. Hibernate es la implementación más popular. Spring Boot elige Hibernate automáticamente si está en el classpath (starter spring-boot-starter-data-jpa).
-Configuración sin Spring Boot
+JPA (**Jakarta Persistence API**) es la especificación estándar para el Mapeo Objeto-Relacional (ORM) en Java. **Hibernate** es la implementación más popular y completa de este estándar. Spring Boot selecciona y configura Hibernate automáticamente si detecta el starter `spring-boot-starter-data-jpa` en el proyecto.
 
-En Spring puro, configurar JPA implica:
-java
+---
 
+## 1. Configuración de JPA en Spring
+
+En una aplicación Spring sin las facilidades de autoconfiguración de Boot, la configuración manual requiere definir el `EntityManagerFactory` y el gestor de transacciones:
+
+```java
 @Bean
 public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource ds) {
     LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
@@ -21,13 +23,18 @@ public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource ds
 public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
     return new JpaTransactionManager(emf);
 }
+```
 
-Spring Boot autoconfigura todo esto con un simple spring.jpa.* en las propiedades.
-El EntityManager y su ciclo de vida
+> [!NOTE]
+> Spring Boot simplifica esto drásticamente permitiendo configurar todo mediante propiedades `spring.jpa.*` en el archivo `application.properties`.
 
-El EntityManager es el objeto central de JPA que gestiona las entidades. Spring, a través de la anotación @PersistenceContext, inyecta un EntityManager con ámbito de transacción. En realidad inyecta un proxy que comparte el EntityManager real (que es de ámbito de transacción y no es thread-safe).
-java
+---
 
+## 2. El EntityManager y su Ciclo de Vida
+
+El **`EntityManager`** es el objeto central de JPA que gestiona el ciclo de vida de las entidades. Spring, a través de la anotación `@PersistenceContext`, inyecta un proxy del `EntityManager` que está vinculado al ámbito de la transacción actual.
+
+```java
 @Repository
 public class ProductoDao {
     @PersistenceContext
@@ -37,10 +44,18 @@ public class ProductoDao {
         return em.find(Producto.class, id);
     }
 }
+```
 
-Entidades: anotaciones esenciales
-java
+> [!IMPORTANT]
+> El `EntityManager` real no es thread-safe. Por eso, Spring inyecta un proxy inteligente que delega en la instancia correcta según la transacción activa en el hilo de ejecución.
 
+---
+
+## 3. Entidades: Anotaciones Esenciales
+
+Las clases Java se convierten en entidades de base de datos mediante anotaciones:
+
+```java
 @Entity
 @Table(name = "productos")
 public class Producto {
@@ -57,54 +72,77 @@ public class Producto {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fabricante_id")
     private Fabricante fabricante;
-    // getters/setters
+    
+    // Getters y Setters
 }
+```
 
-Estrategias de generación de ID: AUTO, IDENTITY, SEQUENCE, TABLE. Lo más común es IDENTITY (autoincrement) o SEQUENCE en bases de datos que lo soportan (PostgreSQL, Oracle).
-Mapeo de relaciones
+### Estrategias de Generación de ID
+- **`IDENTITY`**: Delega el incremento a la base de datos (común en MySQL).
+- **`SEQUENCE`**: Usa una secuencia de base de datos (común en PostgreSQL y Oracle).
+- **`AUTO`**: Deja que Hibernate elija la estrategia según el dialecto.
 
-    @OneToOne, @OneToMany, @ManyToOne, @ManyToMany.
+---
 
-    Importante: FetchType.LAZY para evitar cargas innecesarias (el valor por defecto en @ManyToOne es EAGER, así que hay que cambiarlo).
+## 4. Mapeo de Relaciones
 
-    Cuidado con @OneToMany sin mappedBy: por defecto crea tabla intermedia. Generalmente se define mappedBy en el lado no propietario.
+JPA soporta las relaciones estándar de bases de datos:
+- **`@OneToOne`**, **`@OneToMany`**, **`@ManyToOne`**, **`@ManyToMany`**.
 
-    LazyInitializationException: ocurre cuando se accede a una relación lazy fuera de la transacción. Para evitarlo: usar JOIN FETCH en consultas, mantener transacción abierta (con @Transactional sobre el método) o usar DTOs.
+### Conceptos Críticos
+- **Fetch Type**: Por defecto, `@ManyToOne` es `EAGER` (carga inmediata). Se recomienda encarecidamente cambiarlo a `LAZY` para evitar cargar grafos de objetos innecesarios.
+- **MappedBy**: Se utiliza en el lado "no propietario" de una relación bidireccional para indicar qué atributo en la otra entidad define la relación, evitando la creación de tablas intermedias innecesarias.
+- **`LazyInitializationException`**: Ocurre al acceder a una relación `LAZY` fuera de una transacción. Se soluciona manteniendo la transacción abierta (con `@Transactional`) o usando consultas con `JOIN FETCH`.
 
-Hibernate como motor: propiedades clave
-properties
+---
 
+## 5. Hibernate como Motor: Propiedades Clave
+
+Puedes personalizar el comportamiento de Hibernate en `application.properties`:
+
+```properties
 spring.jpa.show-sql=true
-spring.jpa.hibernate.ddl-auto=validate  # none, update, create, create-drop
+spring.jpa.hibernate.ddl-auto=validate  # validate, update, create, create-drop
 spring.jpa.properties.hibernate.format_sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-spring.jpa.properties.hibernate.default_schema=public
+```
 
-ddl-auto en producción debe ser validate o none. update puede generar cambios destructivos. Mejor usar Flyway o Liquibase.
-Contexto de persistencia y caché de primer nivel
+> [!WARNING]
+> En entornos de producción, `ddl-auto` debe ser siempre `validate` o `none`. Usar `update` puede causar cambios estructurales destructivos accidentales. Es mejor usar herramientas de migración como **Flyway** o **Liquibase**.
 
-Dentro de una transacción, el EntityManager mantiene un contexto de persistencia (caché de primer nivel) que garantiza que una misma entidad por ID devuelva la misma instancia. Las modificaciones se detectan al hacer flush (antes del commit) mediante el mecanismo de dirty checking, comparando el estado actual con una instantánea del momento de carga. No es necesario llamar a update() explícito; si la entidad está managed y la transacción se completa, Hibernate sincroniza los cambios.
-Operaciones con EntityManager
+---
 
-    persist(entity): guarda una nueva entidad.
+## 6. Contexto de Persistencia y Dirty Checking
 
-    merge(entity): actualiza una entidad detached (o crea si no existe).
+Dentro de una transacción, el `EntityManager` mantiene una **Caché de Primer Nivel**. Esto garantiza que si pides la misma entidad varias veces, recibirás la misma instancia en memoria.
 
-    remove(entity): elimina una entidad managed.
+### Dirty Checking
+Hibernate monitoriza los cambios en las entidades gestionadas. Al finalizar la transacción (o al hacer `flush`), compara el estado actual con la instantánea original y sincroniza los cambios automáticamente. **No es necesario llamar a un método "update"** si la entidad está en estado *managed*.
 
-    find(Class, id): busca por clave primaria.
+---
 
-    createQuery(jpql): consultas JPQL.
+## 7. Operaciones con EntityManager
 
-    createNativeQuery(sql): consultas nativas.
+- **`persist(entity)`**: Inserta una nueva entidad.
+- **`merge(entity)`**: Sincroniza el estado de una entidad *detached* con el contexto actual.
+- **`remove(entity)`**: Elimina una entidad del contexto y de la base de datos.
+- **`find(Class, id)`**: Busca por clave primaria.
+- **`createQuery(jpql)`**: Ejecuta consultas orientadas a objetos.
+- **`flush()`**: Sincroniza los cambios pendientes con la base de datos antes del commit.
 
-    flush(): sincroniza con la base de datos sin hacer commit.
+---
 
-Spring Data JPA encapsula todo esto, pero conocer el EntityManager es vital para casos complejos o cuando se requieren consultas dinámicas.
-Errores frecuentes
+## 8. Errores Frecuentes y Soluciones
 
-    N+1 queries: al recorrer una colección de entidades que tienen una relación lazy y no se ha hecho fetch, se ejecuta una consulta adicional por cada entidad. Solución: JOIN FETCH en JPQL o @EntityGraph.
+1. **Problema N+1**: Al recorrer una lista de entidades y acceder a una relación lazy, se ejecuta una consulta extra por cada elemento.
+   - **Solución**: Usar `JOIN FETCH` en JPQL o `@EntityGraph`.
+2. **Entidades Detachadas**: Intentar operar sobre una entidad que ya no está vinculada al `EntityManager`.
+   - **Solución**: Usar `merge()` para volver a vincularla.
+3. **Falta de Transaccionalidad**: Olvidar `@Transactional` en la capa de servicios, lo que impide que Hibernate sincronice los cambios o gestione correctamente las sesiones.
 
-    Entidades detachadas: si intentas persistir una entidad que ya tiene ID pero no está managed, puede lanzar PersistentObjectException.
+---
 
-    Transaccionalidad: olvidar @Transactional en el servicio que orquesta múltiples operaciones.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | :--- |
+| [← JDBC Template](JDBC_Template.md) | [Índice](../../README.md) | [Spring Data JPA →](Spring_Data_JPA.md) |
+

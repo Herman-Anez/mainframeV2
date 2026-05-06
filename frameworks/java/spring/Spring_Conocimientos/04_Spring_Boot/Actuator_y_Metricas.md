@@ -1,104 +1,131 @@
-# Spring_Boot/Actuator_y_Metricas.md
-¿Qué es Actuator?
+# Spring Boot Actuator y Métricas
 
-Spring Boot Actuator expone una serie de endpoints HTTP y JMX que permiten monitorizar y gestionar una aplicación en producción: estado de salud, métricas, variables de entorno, configuración, trazas, mapeos de peticiones, etc. Para habilitarlo se añade el starter spring-boot-starter-actuator.
-Endpoints más relevantes
-Endpoint	Descripción
-health	Estado de la aplicación y sus dependencias (DB, disco, etc.).
-info	Información arbitraria (versión, descripción).
-metrics	Métricas como uso de memoria, peticiones HTTP, tiempo de respuesta.
-env	Propiedades del Environment.
-loggers	Configuración de niveles de logs en tiempo real.
-heapdump	Vuelca la memoria del heap (requiere JVM HotSpot).
-threaddump	Vuelca los hilos.
-mappings	Todos los endpoints de Spring MVC.
-beans	Lista todos los beans del contexto.
-conditions	Evaluación de autoconfiguraciones (positivos y negativos).
+**Spring Boot Actuator** es un subproyecto que proporciona funcionalidades listas para producción que nos permiten monitorizar y gestionar nuestra aplicación. A través de endpoints HTTP o JMX, podemos obtener información sobre el estado de salud, métricas, tráfico, configuración y más.
 
-Por defecto, solo health está expuesto vía HTTP; los demás se pueden habilitar configurando management.endpoints.web.exposure.include=* (o una lista específica) para desarrollo, pero en producción se debe ser restrictivo y combinar con seguridad.
-Configuración de actuadores
-properties
+---
 
+## ¿Qué es Actuator?
+
+Para habilitarlo en un proyecto, basta con añadir el starter correspondiente:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+```
+
+### Endpoints Más Relevantes
+
+| Endpoint | Descripción |
+| :--- | :--- |
+| `health` | Muestra el estado de salud de la aplicación y sus dependencias (BD, disco, etc.). |
+| `info` | Expone información personalizada (versión, descripción de la app). |
+| `metrics` | Métricas detalladas (uso de memoria, CPU, peticiones HTTP). |
+| `env` | Expone las propiedades del `Environment` de Spring. |
+| `loggers` | Permite consultar y modificar niveles de log en tiempo real. |
+| `beans` | Lista completa de todos los beans registrados en el contexto. |
+| `mappings` | Lista de todas las rutas `@RequestMapping` y sus controladores. |
+
+> [!WARNING]
+> Por motivos de seguridad, por defecto solo el endpoint `/health` está expuesto vía HTTP. Para habilitar otros en desarrollo, usa: `management.endpoints.web.exposure.include=*`.
+
+---
+
+## Configuración de Actuadores
+
+La configuración se realiza habitualmente en el archivo `application.properties`:
+
+```properties
+# Exponer endpoints específicos
 management.endpoints.web.exposure.include=health,info,metrics
+
+# Mostrar detalles de salud solo a usuarios autorizados
 management.endpoint.health.show-details=when-authorized
-management.endpoint.health.probes.enabled=true   # Para Kubernetes probes
-management.server.port=8081                       # Puerto separado para gestión
 
-Los endpoints pueden ser accedidos mediante /actuator/health, etc. (prefijo configurable).
-Health indicators
+# Habilitar liveness y readiness probes (ideal para Kubernetes)
+management.endpoint.health.probes.enabled=true
 
-El endpoint health agrega el estado de múltiples HealthIndicator. Spring Boot proporciona indicadores automáticos para: DataSource, Redis, MongoDB, DiskSpace, RabbitMQ, etc. Cada uno reporta UP, DOWN, o UNKNOWN. Puedes crear indicadores personalizados:
-java
+# Cambiar el puerto de gestión para separar el tráfico de negocio del de monitoreo
+management.server.port=8081
+```
 
+---
+
+## Health Indicators
+
+El endpoint `/health` agrega el estado de múltiples `HealthIndicator`. Spring Boot autodetecta y configura indicadores para: **DataSource, Redis, MongoDB, RabbitMQ, DiskSpace**, etc.
+
+### Creación de un Indicador Personalizado
+
+Si necesitas monitorizar un servicio externo o una condición de negocio específica:
+
+```java
 @Component
 public class ServicioExternoHealth implements HealthIndicator {
     @Override
     public Health health() {
-        // lógica para comprobar un servicio externo
-        boolean disponible = check();
+        boolean disponible = checkServicio();
         if (disponible) {
-            return Health.up().withDetail("latencia", 120).build();
+            return Health.up()
+                .withDetail("latencia", 120)
+                .build();
         }
-        return Health.down().withDetail("error", "timeout").build();
+        return Health.down()
+            .withDetail("error", "timeout")
+            .build();
     }
 }
+```
 
-Métricas con Micrometer
+---
 
-Actuator usa Micrometer como fachada de métricas. Se pueden exportar a múltiples sistemas: Prometheus, Datadog, Graphite, New Relic, etc. Basta añadir el registro adecuado (micrometer-registry-prometheus) y las métricas se publican en el formato correspondiente.
+## Métricas con Micrometer
 
-Métricas automáticas incluyen:
+Actuator utiliza **Micrometer**, una fachada de métricas que permite exportar datos a diversos sistemas de monitorización como **Prometheus, Datadog, New Relic o Graphite**.
 
-    JVM (memoria, GC, threads).
+### Métricas Automáticas
+Spring Boot recolecta automáticamente:
+- **JVM**: Memoria, recolección de basura (GC), hilos.
+- **Sistema**: Uso de CPU, carga media.
+- **HTTP**: Peticiones totales, tiempos de respuesta, códigos de estado.
+- **DataSource**: Conexiones activas, hilos en espera.
 
-    Sistema (CPU, load average).
+### Métricas Personalizadas
+Puedes inyectar un `MeterRegistry` para registrar tus propios contadores o timers:
 
-    Peticiones HTTP (http.server.requests con tag uri, status).
-
-    Tiempos de ejecución de métodos @Timed.
-
-    Conexiones de base de datos.
-
-Métricas personalizadas
-
-Puedes inyectar MeterRegistry y registrar contadores, timers, gauges.
-java
-
+```java
 @RestController
 public class PedidoController {
     private final Counter pedidosCreados;
 
     public PedidoController(MeterRegistry registry) {
-        pedidosCreados = registry.counter("pedidos.creados.total");
+        this.pedidosCreados = registry.counter("pedidos.creados.total");
     }
 
     @PostMapping("/pedidos")
-    public Pedido crear() {
-        Pedido p = /* ... */;
+    public void crear() {
+        // ... lógica
         pedidosCreados.increment();
-        return p;
     }
 }
+```
 
-También se puede utilizar @Timed en métodos (requiere @EnableAspectJAutoProxy y un TimedAspect bean) para medir tiempos y contar invocaciones.
-Info endpoint
+> [!TIP]
+> Utiliza la anotación `@Timed` en métodos de controladores o servicios para medir automáticamente el tiempo de ejecución y la frecuencia de invocación.
 
-Se puede crear un InfoContributor para añadir información personalizada, o simplemente definir propiedades:
-properties
+---
 
-info.app.name=MiApp
-info.app.version=1.0.0
+## Seguridad en Actuator
 
-java
+Dado que Actuator expone información sensible sobre la infraestructura, es crítico proteger sus endpoints.
 
-@Component
-public class BuildInfoContributor implements InfoContributor {
-    @Override
-    public void contribute(Info.Builder builder) {
-        builder.withDetail("buildTime", Instant.now());
-    }
-}
+- **Con Spring Security**: Se deben restringir las rutas `/actuator/**` para que solo usuarios con un rol específico (ej. `ROLE_ACTUATOR`) puedan acceder.
+- **Separación de Puertos**: Configurar `management.server.port` en un puerto distinto al de la aplicación permite aplicar reglas de firewall a nivel de red.
 
-Seguridad en Actuator
+---
 
-Combinado con Spring Security, se pueden restringir los endpoints. Lo típico es que /actuator/health esté sin autenticación (para probes de k8s) y el resto requiera un rol ACTUATOR.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Gestión de Perfiles](./Perfiles_y_Propiedades.md) | [Índice](../../README.md) | [Testing en Spring Boot](./Testing.md) |
+

@@ -1,10 +1,16 @@
-# Acceso_Datos/Transacciones_y_Transactional.md
-Modelo de transacciones de Spring
+# Gestión de Transacciones con @Transactional
 
-Spring abstrae las transacciones con PlatformTransactionManager. Independientemente de que uses JDBC, JPA o JMS, el manejo declarativo es el mismo. La anotación @Transactional envuelve el método en un proxy AOP que crea/únete a una transacción según la configuración.
-@Transactional en profundidad
-java
+Spring abstrae el manejo de transacciones a través de la interfaz **`PlatformTransactionManager`**. Independientemente de si utilizas JDBC, JPA, Hibernate o incluso JMS, el modelo de programación declarativa sigue siendo el mismo.
 
+---
+
+## 1. El Modelo de Transacciones de Spring
+
+La anotación `@Transactional` envuelve la ejecución de un método dentro de un proxy de Programación Orientada a Aspectos (AOP). Este proxy se encarga de abrir, unir, confirmar o revertir la transacción según sea necesario.
+
+### Configuración Avanzada de @Transactional
+
+```java
 @Transactional(
     propagation = Propagation.REQUIRED,
     isolation = Isolation.READ_COMMITTED,
@@ -13,49 +19,68 @@ java
     rollbackFor = { RuntimeException.class },
     noRollbackFor = { MiExcepcionControlada.class }
 )
-public void procesarPedido() { ... }
+public void procesarPedido() {
+    // Lógica de negocio...
+}
+```
 
-Propagación: define cómo se comporta el método si ya existe una transacción.
-Valor	Comportamiento
-REQUIRED (defecto)	Usa la transacción existente o crea una nueva.
-REQUIRES_NEW	Siempre crea una nueva transacción, suspendiendo la actual.
-MANDATORY	Debe existir una transacción; si no, lanza excepción.
-SUPPORTS	Ejecuta en transacción si existe, si no, no.
-NOT_SUPPORTED	Siempre ejecuta sin transacción, suspendiendo la existente.
-NEVER	No debe existir transacción; si hay, lanza excepción.
-NESTED	Ejecuta en un savepoint anidado (solo con JDBC).
+---
 
-Isolation: nivel de aislamiento SQL (READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE). Normalmente READ_COMMITTED es suficiente.
+## 2. Propagación de Transacciones
 
-readOnly: optimiza el rendimiento indicando que solo hay lecturas (el EntityManager no necesita hacer dirty checking).
+Define cómo se comporta el método si ya existe una transacción en curso.
 
-rollbackFor / noRollbackFor: por defecto, solo se hace rollback con RuntimeException y Error. Si una excepción checked debe causar rollback, se especifica.
-El proxy transaccional: cómo funciona internamente
+| Valor | Comportamiento |
+| :--- | :--- |
+| **`REQUIRED`** (defecto) | Se une a la transacción existente o crea una nueva si no hay ninguna. |
+| **`REQUIRES_NEW`** | Siempre crea una transacción nueva, suspendiendo la actual si existe. |
+| **`MANDATORY`** | Exige una transacción previa; si no existe, lanza una excepción. |
+| **`SUPPORTS`** | Si existe una transacción, se une; si no, ejecuta de forma no transaccional. |
+| **`NOT_SUPPORTED`** | Siempre ejecuta sin transacción, suspendiendo la actual. |
+| **`NEVER`** | Lanza excepción si se invoca dentro de una transacción. |
+| **`NESTED`** | Crea un punto de guardado (savepoint) anidado (solo compatible con JDBC). |
 
-    Spring crea un proxy alrededor del bean.
+---
 
-    Cuando se invoca un método anotado con @Transactional desde fuera del bean, el proxy intercepta la llamada.
+## 3. Aislamiento y Reversión (Rollback)
 
-    Antes de ejecutar el método, consulta al TransactionManager para comenzar o unirse a una transacción.
+- **Isolation**: Define el nivel de visibilidad de los datos entre transacciones concurrentes (ej. `READ_COMMITTED`, `REPEATABLE_READ`).
+- **Rollback For**: Por defecto, Spring solo realiza rollback ante excepciones de tipo **`RuntimeException`** o **`Error`**. Las excepciones comprobadas (*checked exceptions*) no provocan rollback a menos que se especifique explícitamente con `rollbackFor`.
 
-    Ejecuta el método real.
+---
 
-    Si el método lanza una excepción que cumple con rollbackFor, el TransactionManager hace rollback.
+## 4. El Proxy Transaccional y la Auto-Invocación
 
-    Si todo sale bien, hace commit.
+> [!CAUTION]
+> **El problema de la auto-invocación**: Si un método dentro de una clase llama a otro método `@Transactional` de la misma clase usando `this.metodo()`, el proxy AOP es ignorado y la transacción **no se iniciará**.
+> 
+> **Solución**: Refactorizar el método a un bean diferente o inyectar el propio bean (auto-inyección).
 
-    Si la excepción es de las que no causan rollback, hace commit después de la excepción (poco común).
+---
 
-El problema de la auto-invocación: si desde dentro del mismo bean se llama a this.metodoTransaccional(), no pasa por el proxy y la anotación se ignora. Soluciones: autowirearse uno mismo, usar AopContext.currentProxy(), o refactorizar a otro bean.
-@Transactional en repositorios y servicios
+## 5. Transacciones en Servicios vs Repositorios
 
-La práctica recomendada es poner @Transactional a nivel de servicio o caso de uso. Los repositorios de Spring Data JPA ya heredan @Transactional(readOnly = true) en SimpleJpaRepository para métodos de consulta, y los métodos de modificación (save, delete) tienen @Transactional por defecto, pero usualmente se requiere una transacción que cubra todo el flujo de negocio.
-Transacciones y bases de datos distribuidas / JTA
+- **Repositorios**: Spring Data JPA ya incluye transaccionalidad por defecto (ej. `readOnly = true` para consultas).
+- **Servicios**: Es la ubicación recomendada para `@Transactional`, ya que un método de servicio suele orquestar múltiples llamadas a repositorios que deben ejecutarse como una única unidad atómica de trabajo.
 
-Con un solo DataSource, se usa DataSourceTransactionManager o JpaTransactionManager. Para múltiples recursos (dos bases de datos, JMS, etc.) se necesita un gestor de transacciones distribuidas (JTA), como Atomikos o Bitronix, o delegar en el servidor de aplicaciones. Spring Boot simplifica la configuración con spring-boot-starter-jta-atomikos.
-Manejo de transacciones largas y con patrones conversacionales
+---
 
-Spring soporta transacciones largas usando @Transactional y sesiones extendidas, pero la tendencia es usar arquitecturas que eviten mantener la transacción abierta a través de múltiples peticiones HTTP. En su lugar, se usa @Transactional en cada petición y se trabaja con entidades detachadas, volviendo a fusionarlas (merge) si es necesario.
-Testing de transacciones
+## 6. Transacciones Distribuidas (JTA)
 
-En pruebas con @DataJpaTest o @SpringBootTest, se puede usar @Transactional para que las operaciones de un test se reviertan automáticamente al final. Sin embargo, cuando se usa TestRestTemplate en @SpringBootTest(webEnvironment = RANDOM_PORT), la petición HTTP corre en un hilo separado, por lo que no comparte la transacción del test. En ese caso, se debe limpiar manualmente o usar @Transactional(propagation = NOT_SUPPORTED) y luego borrar datos.
+Cuando tu aplicación necesita coordinar cambios en múltiples recursos (ej. dos bases de datos diferentes o una base de datos y una cola de mensajes JMS), se requiere un gestor de **Java Transaction API (JTA)**. Spring Boot facilita la integración con implementaciones como **Atomikos**.
+
+---
+
+## 7. Testing de Transacciones
+
+En pruebas de integración con `@SpringBootTest` o `@DataJpaTest`, marcar el método de prueba con `@Transactional` hará que cada test realice un rollback automático al finalizar, manteniendo la base de datos limpia.
+
+> [!IMPORTANT]
+> Si el test usa un cliente HTTP (como `TestRestTemplate`), la petición corre en un hilo separado del hilo del test y **no compartirá** la transacción, por lo que los cambios persistirán.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | :--- |
+| [← Consultas Nativas](Consultas_Nativas_y_Procedure.md) | [Índice](../../README.md) | [Arquitectura de Seguridad →](../06_Seguridad/Spring_Security_Arquitectura.md) |
+

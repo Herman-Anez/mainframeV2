@@ -1,9 +1,14 @@
-# Spring_MVC/Manejo_de_Excepciones.md
-Gestión centralizada de excepciones en @ControllerAdvice
+# Manejo de Excepciones en Spring MVC
 
-En lugar de esparcir try/catch en cada controlador, Spring permite definir clases globales con @ControllerAdvice (o @RestControllerAdvice, que es @ControllerAdvice + @ResponseBody). Los métodos anotados con @ExceptionHandler capturan excepciones específicas.
-java
+Spring MVC ofrece mecanismos potentes para centralizar el manejo de errores, evitando el uso repetitivo de bloques `try/catch` en los controladores.
 
+## Gestión Centralizada con @ControllerAdvice
+
+La anotación `@ControllerAdvice` (o `@RestControllerAdvice` para APIs REST) permite definir una clase global que captura excepciones lanzadas por cualquier controlador.
+
+Los métodos anotados con `@ExceptionHandler` se encargan de procesar excepciones específicas.
+
+```java
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -24,51 +29,73 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorDTO manejarGeneral(Exception ex) {
-        // logging del stacktrace real
+        // Log del stacktrace real
         logger.error("Error no esperado", ex);
         return new ErrorDTO(500, "Error interno del servidor");
     }
 }
+```
 
-Jerarquía de manejo de excepciones
+---
 
-Spring busca el manejador más específico:
+## Jerarquía de Manejo de Excepciones
 
-    @ExceptionHandler dentro del propio controlador (mayor prioridad).
+Spring busca el manejador más específico siguiendo este orden de prioridad:
 
-    @ExceptionHandler en clases con @ControllerAdvice aplicables (pueden ser globales, por paquete, o por anotación).
+1. **`@ExceptionHandler` local:** Dentro del propio controlador donde ocurrió el error.
+2. **`@ExceptionHandler` global:** En clases anotadas con `@ControllerAdvice`.
+3. **`HandlerExceptionResolver`:** Implementaciones globales de bajo nivel.
+4. **Contenedor Servlet:** Si nadie captura la excepción, se propaga al servidor (e.g., Tomcat), que muestra una página de error por defecto.
 
-    Implementaciones de HandlerExceptionResolver (resolvers globales).
+---
 
-    Si no se captura, se propaga al contenedor servlet, que responde con una página de error predeterminada (o se puede personalizar con ErrorController).
+## HandlerExceptionResolver
 
-HandlerExceptionResolver y sus implementaciones
+Es la interfaz de bajo nivel que utiliza el `DispatcherServlet` para resolver excepciones. Implementaciones por defecto:
 
-HandlerExceptionResolver es la interfaz de bajo nivel. La resolución ocurre en el DispatcherServlet antes de llegar a los filtros de error. Implementaciones por defecto:
+- **ExceptionHandlerExceptionResolver:** Es el más potente. Procesa las anotaciones `@ExceptionHandler`.
+- **ResponseStatusExceptionResolver:** Busca la anotación `@ResponseStatus` en las clases de excepción personalizadas.
+- **DefaultHandlerExceptionResolver:** Convierte excepciones estándar de Spring MVC (como `NoHandlerFoundException`) en códigos HTTP adecuados.
+- **SimpleMappingExceptionResolver:** Mapea nombres de excepción a nombres de vista (útil en aplicaciones MVC tradicionales, no REST).
 
-    ExceptionHandlerExceptionResolver: invoca los métodos @ExceptionHandler de @ControllerAdvice y controladores. Es el más potente y se configura automáticamente al detectar anotaciones.
+> [!TIP]
+> Se pueden agregar resolvers personalizados o ajustar su orden de ejecución mediante `WebMvcConfigurer.configureHandlerExceptionResolvers`.
 
-    ResponseStatusExceptionResolver: busca la anotación @ResponseStatus en la excepción y establece el código de estado.
+---
 
-    DefaultHandlerExceptionResolver: convierte excepciones estándar de Spring MVC (NoHandlerFoundException, HttpMediaTypeNotSupportedException, etc.) a códigos HTTP.
+## Uso de ResponseStatusException
 
-    SimpleMappingExceptionResolver: mapea nombres de excepción a vistas de error (configuración XML/Java), para MVC no REST.
+Spring permite lanzar excepciones rápidas sin necesidad de crear clases personalizadas mediante `ResponseStatusException`:
 
-Se pueden agregar resolvers personalizados o ajustar el orden con WebMvcConfigurer.configureHandlerExceptionResolvers.
-Lanzar excepciones con ResponseStatusException
-
-Para evitar crear clases de excepción personalizadas, Spring ofrece ResponseStatusException, que se puede lanzar directamente y será capturada por ResponseStatusExceptionResolver:
-java
-
+```java
 @GetMapping("/{id}")
 public Producto obtener(@PathVariable Long id) {
     throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
 }
+```
 
-El cuerpo por defecto contendrá el mensaje y el status. Para un formato más rico, es mejor usar un @ControllerAdvice con DTO.
-Errores en filtros y antes del DispatcherServlet
+> [!IMPORTANT]
+> Aunque es útil para casos simples, para APIs profesionales se recomienda usar `@ControllerAdvice` con un DTO de error estructurado para mantener la consistencia en las respuestas.
 
-Las excepciones que ocurren en los filtros (fuera del alcance del DispatcherServlet) no son manejadas por los mecanismos anteriores. Para capturarlas y devolver una respuesta JSON consistente, se puede usar un ErrorController implementando ErrorController (Spring Boot provee BasicErrorController). Personalizarlo permite tener respuestas de error uniformes aunque la petición nunca llegue al controlador.
-Response con detalles en errores de validación
+---
 
-Volviendo al ejemplo de MethodArgumentNotValidException: el BindingResult contiene todos los errores de campo (rechazos de @NotNull, @Size, etc.), que podemos serializar en una lista de errores estructurados. Es una práctica recomendada devolver una respuesta legible por el cliente frontend.
+## Errores en Filtros y Pre-Dispatcher
+
+Las excepciones que ocurren en los **filtros** (fuera del alcance de Spring MVC) no son capturadas por `@ControllerAdvice`. 
+
+Para estos casos, Spring Boot provee un `BasicErrorController`. Si necesitas personalizar la respuesta para errores de bajo nivel (como un error de autenticación en un filtro de seguridad), puedes implementar tu propio `ErrorController`.
+
+---
+
+## Detalles en Errores de Validación
+
+Cuando falla una validación (e.g., `@NotNull`, `@Size`), se lanza una `MethodArgumentNotValidException`. Esta excepción contiene un objeto `BindingResult` con todos los errores de campo. 
+
+Es una buena práctica extraer estos errores y devolverlos en una lista legible para que el cliente (frontend) pueda informar al usuario exactamente qué falló.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Controladores REST](./Controladores_REST.md) | [Índice](../../README.md) | [Validación y Binding](./Validacion_y_BindingResult.md) |
+

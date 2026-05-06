@@ -1,18 +1,32 @@
-# Spring_Boot/Testing.md
-Enfoque de testing en Spring Boot
+# Testing en Spring Boot
 
-Spring Boot facilita tanto pruebas unitarias (aisladas, sin contexto) como pruebas de integración (con contexto de Spring y/o bases de datos reales). Su starter spring-boot-starter-test trae: JUnit Jupiter, Mockito, AssertJ, Hamcrest, Spring Test, y más.
-Pruebas unitarias con Mockito
+Spring Boot proporciona un ecosistema robusto para el testing, facilitando tanto las pruebas unitarias (aisladas de la infraestructura) como las pruebas de integración (que validan la colaboración entre componentes y el contexto de Spring).
 
-No se levanta el contexto Spring; se mockean dependencias.
-java
+---
 
+## El Starter de Testing
+
+El `spring-boot-starter-test` es la dependencia central que agrupa las mejores librerías del ecosistema:
+- **JUnit 5**: El motor estándar de ejecución de pruebas.
+- **Mockito**: Para la creación y gestión de dobles de prueba (mocks).
+- **AssertJ**: Para aserciones fluidas y legibles.
+- **Hamcrest**: Librería de matchers.
+- **Spring Test**: Soporte específico para el contexto de Spring.
+
+---
+
+## Pruebas Unitarias con Mockito
+
+En este enfoque no se levanta el contexto de Spring, lo que resulta en una ejecución extremadamente rápida. Se utilizan anotaciones de Mockito para gestionar las dependencias.
+
+```java
 @ExtendWith(MockitoExtension.class)
 class ProductoServiceTest {
     @Mock
-    ProductoRepository repo;
+    private ProductoRepository repo;
+
     @InjectMocks
-    ProductoService service;
+    private ProductoService service;
 
     @Test
     void buscarPorId_debeRetornarProducto() {
@@ -20,75 +34,95 @@ class ProductoServiceTest {
         when(repo.findById(1L)).thenReturn(Optional.of(esperado));
 
         Producto resultado = service.buscarPorId(1L);
+
         assertThat(resultado.getNombre()).isEqualTo("Teclado");
+        verify(repo).findById(1L);
     }
 }
+```
 
-Pruebas de integración con @SpringBootTest
+---
 
-@SpringBootTest levanta el contexto completo (o parcial). Por defecto, busca la clase @SpringBootApplication hacia arriba en el paquete. Útil para pruebas end-to-end de capas completas. Se puede arrancar un servidor real en un puerto aleatorio con webEnvironment = DEFINED_PORT / RANDOM_PORT.
-java
+## Pruebas de Integración con `@SpringBootTest`
 
+`@SpringBootTest` arranca el contexto completo de la aplicación. Es ideal para pruebas end-to-end o cuando se necesita validar la interacción real entre capas.
+
+```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class MiApiIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
     @Test
-    void obtenerProductos() {
+    void obtenerProductos_debeRetornarOk() {
         ResponseEntity<String> response = restTemplate.getForEntity("/api/productos", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 }
+```
 
-Slices de contexto (testing ligero de capas)
+> [!NOTE]
+> `webEnvironment = RANDOM_PORT` evita conflictos de puertos al ejecutar pruebas en paralelo o en servidores de CI/CD.
 
-Para no levantar todo el contexto y acelerar las pruebas, Boot ofrece anotaciones de "slice":
-Anotación	Carga solo	Típico use case
-@WebMvcTest	Capa web (controladores), sin servicios ni repos. Mock de dependencias con @MockBean.	Probar controladores REST.
-@DataJpaTest	Entidades, repositorios, DataSource embebido. Transaccional y rollback por defecto.	Probar repositorios y queries.
-@JsonTest	Solo Jackson (serialización).	Probar DTOs JSON.
-@RestClientTest	RestTemplate y componentes de llamada REST.	Probar clientes REST.
-@JdbcTest	Solo JDBC (sin JPA).	Probar consultas directas.
+---
 
-Ejemplo @WebMvcTest:
-java
+## Slices de Contexto (Testing Ligero)
 
+Para acelerar las pruebas sin perder la potencia del contexto, Spring Boot ofrece "slices" que cargan solo los componentes necesarios para una capa específica.
+
+| Anotación | Carga Solo... | Caso de Uso Típico |
+| :--- | :--- | :--- |
+| `@WebMvcTest` | Capa Web (Controladores, Filtros). | Validar rutas REST y serialización JSON. |
+| `@DataJpaTest` | Capa de Datos (Entidades, Repositorios). | Validar consultas JPQL/SQL. |
+| `@JsonTest` | Serialización/Deserialización Jackson. | Validar el mapeo de DTOs a JSON. |
+| `@RestClientTest` | Clientes REST (RestTemplate). | Probar integraciones con APIs externas. |
+
+### Ejemplo: `@WebMvcTest`
+Permite probar controladores mockeando los servicios mediante `@MockBean`.
+
+```java
 @WebMvcTest(ProductoController.class)
 class ProductoControllerTest {
     @Autowired
     private MockMvc mvc;
+
     @MockBean
     private ProductoService service;
 
     @Test
     void listarDebeRetornarOk() throws Exception {
         when(service.listar()).thenReturn(List.of(new Producto()));
+
         mvc.perform(get("/api/productos"))
            .andExpect(status().isOk())
            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 }
+```
 
-Nota: @WebMvcTest desactiva la autoconfiguración completa de datos y seguridad, aunque puedes incluir filtros concretos.
-Mocking y sobrescritura de beans en tests
+---
 
-    @MockBean: reemplaza un bean en el contexto por un mock de Mockito. Útil para simular dependencias externas.
+## Gestión de Datos y Bases de Datos
 
-    @SpyBean: envuelve el bean real con un spy, permitiendo verificar llamadas.
+### Bases de Datos en Memoria
+`@DataJpaTest` configura automáticamente una base de datos embebida (como H2). Por defecto, todas las pruebas son **transaccionales** y realizan rollback al finalizar, manteniendo la BD limpia para el siguiente test.
 
-    @TestConfiguration + @Bean: define beans adicionales o sustituye beans para ese test específico (dentro de la clase de test o en una inner class).
+### Testcontainers
+Para pruebas de integración contra bases de datos reales (PostgreSQL, MySQL), el estándar actual es **Testcontainers**, que levanta contenedores Docker efímeramente para la ejecución de la suite.
 
-    @SpringBootTest(classes = ...) o @Import para cargar solo configuraciones específicas.
+---
 
-Base de datos en pruebas
+## Configuración y Perfiles de Test
 
-@DataJpaTest configura automáticamente una base de datos embebida en memoria (H2). Las transacciones se revierten al final de cada test. Puedes usar el parámetro @AutoConfigureTestDatabase(replace = Replace.NONE) para conectar a una base de datos real (p.ej. PostgreSQL en un contenedor).
+Es una buena práctica separar la configuración de pruebas de la de producción.
 
-Para pruebas de integración con una base de datos real, el enfoque moderno es Testcontainers: levanta una instancia Docker de PostgreSQL, MySQL, etc., y la inyecta mediante configuraciones dinámicas (@DynamicPropertySource) o usando el módulo Spring Boot de Testcontainers.
-Pruebas con @SpringBootTest y control transaccional
+- **`@ActiveProfiles("test")`**: Activa el archivo `application-test.yml`.
+- **`@TestPropertySource`**: Permite inyectar o sobrescribir propiedades específicas solo para una clase de test.
+- **`@TestConfiguration`**: Permite definir beans adicionales o sustituir beans existentes dentro de un test.
 
-Por defecto, @SpringBootTest no es transaccional (a diferencia de @DataJpaTest). Para pruebas que usan HTTP (TestRestTemplate), ejecutan en hilos separados, por lo que la transacción no se comparte. En esos casos hay que limpiar manualmente o usar @Transactional (solo si las peticiones no cruzan hilos).
-Pruebas con configuración externa
+---
 
-Puedes usar @ActiveProfiles("test") y un archivo application-test.properties para definir propiedades específicas. También @TestPropertySource para añadir propiedades en línea.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Actuator y Métricas](./Actuator_y_Metricas.md) | [Índice](../../README.md) | [Acceso a Datos](../05_Acceso_Datos/README.md) |
+
