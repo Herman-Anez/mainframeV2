@@ -96,6 +96,4 @@ El servidor descifra estos valores antes de enviarlos a los clientes. La clave s
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Circuit Breaker](Circuit_Breaker.md) | [Índice](../../README.md) | [Service Discovery](Service_Discovery_Eureka.md) |
-
-
+| [Programación Reactiva (WebFlux)](../07_Temas_Avanzados/Programacion_Reactiva_WebFlux.md) | [Índice](../../index.md) | [Service Discovery (Eureka)](./Service_Discovery_Eureka.md) |

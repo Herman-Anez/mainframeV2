@@ -177,5 +177,5 @@ Spring unifica la experiencia de desarrollo con anotaciones y templates similare
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Manejo de Errores y Excepciones](../03_Spring_MVC/Manejo_de_Excepciones.md) | [Índice](../../README.md) | [Internacionalización i18n](./Internacionalizacion_i18n.md) |
+| [WebSockets y STOMP](./Websockets_y_STOMP.md) | [Índice](../../index.md) | Fin |
 

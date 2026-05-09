@@ -131,5 +131,4 @@ public class ApiController { ... }
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [DispatcherServlet](./DispatcherServlet_y_Flujo.md) | [Índice](../../README.md) | [Manejo de Excepciones](./Manejo_de_Excepciones.md) |
-a la suscripción. Cambia el paradigma a no bloqueante.
+| [DispatcherServlet y Flujo](./DispatcherServlet_y_Flujo.md) | [Índice](../../index.md) | [Manejo de Excepciones](./Manejo_de_Excepciones.md) |

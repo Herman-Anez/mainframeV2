@@ -163,6 +163,6 @@ Deberías considerar `JdbcTemplate` en los siguientes escenarios:
 ---
 
 | Anterior | Inicio | Siguiente |
-| :--- | :---: | :--- |
-| [← Testing en Spring Boot](../04_Spring_Boot/Testing.md) | [Índice](../../README.md) | [Integración de JPA y Hibernate →](JPA_y_Hibernate_Integracion.md) |
+| :--- | :---: | ---: |
+| [Testing](../04_Spring_Boot/Testing.md) | [Índice](../../index.md) | [JPA y Hibernate Integración](./JPA_y_Hibernate_Integracion.md) |
 

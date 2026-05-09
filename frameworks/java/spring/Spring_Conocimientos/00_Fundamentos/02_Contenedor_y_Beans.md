@@ -85,4 +85,6 @@ La interfaz `ResourceLoader` del contexto permite cargar archivos con prefijos: 
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [IoC y DI](./01_IoC_y_DI.md) | [Índice](../../index.md) | [Configuración Java vs XML](./03_Configuracion_Java_vs_XML.md) |

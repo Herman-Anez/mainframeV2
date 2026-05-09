@@ -91,4 +91,6 @@ Y a la inversa, desde XML se puede incluir una clase de configuración con `<bea
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Contenedor y Beans](./02_Contenedor_y_Beans.md) | [Índice](../../index.md) | [Ciclo de Vida del Bean](./04_Ciclo_de_vida_Bean.md) |

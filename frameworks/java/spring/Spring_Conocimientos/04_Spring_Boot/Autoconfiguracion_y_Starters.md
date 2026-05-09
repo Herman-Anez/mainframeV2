@@ -90,5 +90,5 @@ Las autoconfiguraciones pueden ordenarse para evitar conflictos de dependencia:
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Estructura del Proyecto](./Estructura_Proyecto_Spring_Boot.md) | [Índice](../../README.md) | [Perfiles y Propiedades](./Perfiles_y_Propiedades.md) |
+| [Estructura del Proyecto](./Estructura_Proyecto_Spring_Boot.md) | [Índice](../../index.md) | [Perfiles y Propiedades](./Perfiles_y_Propiedades.md) |
 

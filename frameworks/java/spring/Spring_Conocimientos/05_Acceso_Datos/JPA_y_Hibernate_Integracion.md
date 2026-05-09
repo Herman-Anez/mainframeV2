@@ -143,6 +143,6 @@ Hibernate monitoriza los cambios en las entidades gestionadas. Al finalizar la t
 ---
 
 | Anterior | Inicio | Siguiente |
-| :--- | :---: | :--- |
-| [← JDBC Template](JDBC_Template.md) | [Índice](../../README.md) | [Spring Data JPA →](Spring_Data_JPA.md) |
+| :--- | :---: | ---: |
+| [JDBC Template](./JDBC_Template.md) | [Índice](../../index.md) | [Spring Data JPA](./Spring_Data_JPA.md) |
 

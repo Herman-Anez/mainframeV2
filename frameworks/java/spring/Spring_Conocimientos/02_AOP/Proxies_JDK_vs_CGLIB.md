@@ -175,4 +175,6 @@ if (bean instanceof SpringProxy) {
 
 ---
 
-[⬅️ Anterior: Aspectos Personalizados](./Aspectos_personalizados.md) | [Volver al índice](../README.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Aspectos Personalizados](./Aspectos_personalizados.md) | [Índice](../../index.md) | [DispatcherServlet y Flujo](../03_Spring_MVC/DispatcherServlet_y_Flujo.md) |

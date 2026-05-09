@@ -1,4 +1,4 @@
-# Configuración DSL y HttpSecurity
+g# Configuración DSL y HttpSecurity
 
 Desde Spring Security 5.7, la forma moderna de configurar la seguridad es declarando beans de tipo `SecurityFilterChain` y usando la DSL fluida de `HttpSecurity`. Se ha abandonado el uso de la herencia (`WebSecurityConfigurerAdapter`).
 
@@ -133,5 +133,5 @@ public AuthenticationManager authenticationManager(AuthenticationConfiguration c
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Arquitectura de Spring Security](Spring_Security_Arquitectura.md) | [Índice](../../README.md) | [Seguridad a Nivel de Método](Metodo_Security.md) |
+| [Arquitectura de Seguridad](./Spring_Security_Arquitectura.md) | [Índice](../../index.md) | [Seguridad a Nivel de Método](./Metodo_Security.md) |
 

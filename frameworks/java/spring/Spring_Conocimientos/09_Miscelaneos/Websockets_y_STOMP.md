@@ -170,5 +170,5 @@ Spring usa un `MessageConverter` para convertir entre objetos Java y el cuerpo d
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Internacionalización i18n](./Internacionalizacion_i18n.md) | [Índice](../../README.md) | [Módulo Siguiente](../10_JVM_Rendimiento/README.md) |
+| [Internacionalización (i18n)](./Internacionalizacion_i18n.md) | [Índice](../../index.md) | [Integración JMS y Kafka](./Integracion_JMS_y_Kafka.md) |
 

@@ -150,4 +150,6 @@ El proxy vive tanto como el bean donde fue inyectado (por ejemplo, toda la vida 
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [BeanPostProcessor y Aware](./BeanPostProcessor_y_Aware_Interfaces.md) | [Índice](../../index.md) | [Perfiles](./Profiles.md) |

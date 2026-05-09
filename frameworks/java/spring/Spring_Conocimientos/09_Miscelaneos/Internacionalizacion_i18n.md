@@ -195,7 +195,6 @@ public ResponseEntity<ErrorDTO> manejarNoEncontrado(RecursoNoEncontradoException
 
 > [!NOTE]
 > Esta sección contiene una revisión de los conceptos clave para asegurar la comprensión completa de la implementación.
-
 ### Mensajes de Confirmación (Ejemplo)
 
 ```properties
@@ -294,9 +293,8 @@ Buenas prácticas
 
 
 ---
-
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Mensajería Asíncrona](./Integracion_JMS_y_Kafka.md) | [Índice](../../README.md) | [WebSockets y STOMP](./Websockets_y_STOMP.md) |
+| [Circuit Breaker](../08_Spring_Cloud/Circuit_Breaker.md) | [Índice](../../index.md) | [WebSockets y STOMP](./Websockets_y_STOMP.md) |
 
 

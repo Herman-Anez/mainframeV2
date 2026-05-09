@@ -103,4 +103,6 @@ Spring también ofrece Eventos y Listeners como variante de IoC: un componente p
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [¿Qué es Spring?](./00_Que_es_Spring.md) | [Índice](../../index.md) | [Contenedor y Beans](./02_Contenedor_y_Beans.md) |

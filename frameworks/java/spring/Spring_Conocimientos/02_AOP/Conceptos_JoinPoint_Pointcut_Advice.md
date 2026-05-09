@@ -167,4 +167,6 @@ Cuando varios aspectos aplican al mismo join point, se puede controlar el orden 
 
 ---
 
-[⬅️ Volver al índice](../README.md) | [Siguiente: Aspectos Personalizados ➡️](./Aspectos_personalizados.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [SpEL](../01_Spring_Core/SpEL.md) | [Índice](../../index.md) | [Aspectos Personalizados](./Aspectos_personalizados.md) |

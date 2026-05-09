@@ -173,5 +173,5 @@ public String crear(@Valid Producto p, BindingResult result, RedirectAttributes 
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Manejo de Excepciones](./Manejo_de_Excepciones.md) | [Índice](../../README.md) | [Vistas y Templates](./Vistas_y_Templates.md) |
+| [Manejo de Excepciones](./Manejo_de_Excepciones.md) | [Índice](../../index.md) | [Vistas y Templates](./Vistas_y_Templates.md) |
 

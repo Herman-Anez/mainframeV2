@@ -36,4 +36,6 @@ Sobre estos bloques se construye el ecosistema Spring Boot (que empaqueta y auto
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Índice](../../index.md) | [Índice](../../index.md) | [IoC y DI](./01_IoC_y_DI.md) |

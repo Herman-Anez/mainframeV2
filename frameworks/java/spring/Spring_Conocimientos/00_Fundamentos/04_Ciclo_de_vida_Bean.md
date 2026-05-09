@@ -107,4 +107,6 @@ Este processor envuelve el bean en un proxy JDK justo después de la inicializac
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Configuración Java vs XML](./03_Configuracion_Java_vs_XML.md) | [Índice](../../index.md) | [BeanPostProcessor y Aware](../01_Spring_Core/BeanPostProcessor_y_Aware_Interfaces.md) |

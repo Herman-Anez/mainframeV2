@@ -81,7 +81,7 @@ En servicios REST puros no se devuelven vistas, pero puede haber **endpoints hí
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Validación y Binding](./Validacion_y_BindingResult.md) | [Índice](../../README.md) | [Spring Boot: Autoconfiguración](../04_Spring_Boot/Autoconfiguracion_y_Starters.md) |
+| [Validación y Binding](./Validacion_y_BindingResult.md) | [Índice](../../index.md) | [Estructura del Proyecto](../04_Spring_Boot/Estructura_Proyecto_Spring_Boot.md) |
 
 
 

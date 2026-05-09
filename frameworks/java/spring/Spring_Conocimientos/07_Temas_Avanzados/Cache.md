@@ -126,5 +126,5 @@ public @interface CachearProducto { }
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Batch y Tareas Programadas](./Batch_y_Tareas_Programadas.md) | [Índice General](../../README.md) | [Eventos de Aplicación](./Eventos_de_Aplicacion.md) |
+| [Batch y Tareas Programadas](./Batch_y_Tareas_Programadas.md) | [Índice](../../index.md) | [Eventos de Aplicación](./Eventos_de_Aplicacion.md) |
 

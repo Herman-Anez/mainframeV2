@@ -112,5 +112,5 @@ Para arquitecturas de microservicios, se utiliza **Spring Cloud Config Server** 
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Autoconfiguración y Starters](./Autoconfiguracion_y_Starters.md) | [Índice](../../README.md) | [Actuator y Métricas](./Actuator_y_Metricas.md) |
+| [Autoconfiguración y Starters](./Autoconfiguracion_y_Starters.md) | [Índice](../../index.md) | [Actuator y Métricas](./Actuator_y_Metricas.md) |
 

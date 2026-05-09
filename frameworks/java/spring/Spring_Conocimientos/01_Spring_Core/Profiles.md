@@ -122,4 +122,6 @@ Así se cargará `application-test.properties` y los beans anotados con `@Profil
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Scopes y Proxies](./Scopes_y_Proxies.md) | [Índice](../../index.md) | [SpEL](./SpEL.md) |

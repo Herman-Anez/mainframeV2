@@ -127,5 +127,5 @@ Dado que Actuator expone información sensible sobre la infraestructura, es crí
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Gestión de Perfiles](./Perfiles_y_Propiedades.md) | [Índice](../../README.md) | [Testing en Spring Boot](./Testing.md) |
+| [Perfiles y Propiedades](./Perfiles_y_Propiedades.md) | [Índice](../../index.md) | [Testing](./Testing.md) |
 

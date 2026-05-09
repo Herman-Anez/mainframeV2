@@ -92,4 +92,4 @@ La seguridad de método se basa en Spring AOP (proxies). Por lo tanto:
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Configuración DSL y HttpSecurity](Configuracion_DSL.md) | [Índice](../../README.md) | [JWT y OAuth2 en Spring Security](JWT_y_OAuth2.md) |
+| [Configuración DSL](./Configuracion_DSL.md) | [Índice](../../index.md) | [JWT y OAuth2](./JWT_y_OAuth2.md) |

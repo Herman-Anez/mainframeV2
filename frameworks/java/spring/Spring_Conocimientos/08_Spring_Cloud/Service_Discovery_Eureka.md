@@ -131,5 +131,5 @@ Los clientes pueden apuntar a todos los servidores en la lista, y Spring Cloud s
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Config Server](Config_Server.md) | [Índice](../../README.md) | [Pruebas Unitarias](../../README.md) |
+| [Config Server](./Config_Server.md) | [Índice](../../index.md) | [API Gateway](./API_Gateway.md) |
 

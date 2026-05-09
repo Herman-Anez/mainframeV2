@@ -154,5 +154,5 @@ resilience4j:
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [API Gateway](API_Gateway.md) | [Índice](../../README.md) | [Config Server](Config_Server.md) |
+| [API Gateway](./API_Gateway.md) | [Índice](../../index.md) | [Internacionalización (i18n)](../09_Miscelaneos/Internacionalizacion_i18n.md) |
 

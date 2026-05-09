@@ -160,6 +160,6 @@ El Gateway puede integrar **Resilience4J** (circuit breaker, retry, timeout) dir
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Temas Avanzados](../07_Temas_Avanzados/Programacion_Reactiva_WebFlux.md) | [Índice](../../README.md) | [Circuit Breaker](Circuit_Breaker.md) |
+| [Service Discovery (Eureka)](./Service_Discovery_Eureka.md) | [Índice](../../index.md) | [Circuit Breaker](./Circuit_Breaker.md) |
 
 

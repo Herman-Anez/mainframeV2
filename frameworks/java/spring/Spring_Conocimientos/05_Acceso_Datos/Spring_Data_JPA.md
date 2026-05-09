@@ -139,7 +139,7 @@ List<Producto> productos = repo.findAll(spec);
 ---
 
 | Anterior | Inicio | Siguiente |
-| :--- | :---: | :--- |
-| [← Integración de JPA y Hibernate](JPA_y_Hibernate_Integracion.md) | [Índice](../../README.md) | [Consultas Nativas y Procedimientos →](Consultas_Nativas_y_Procedure.md) |
+| :--- | :---: | ---: |
+| [JPA y Hibernate Integración](./JPA_y_Hibernate_Integracion.md) | [Índice](../../index.md) | [Consultas Nativas y Procedure](./Consultas_Nativas_y_Procedure.md) |
 
 

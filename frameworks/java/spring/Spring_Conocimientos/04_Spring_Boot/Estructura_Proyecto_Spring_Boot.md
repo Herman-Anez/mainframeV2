@@ -119,5 +119,5 @@ Aunque Tomcat es el predeterminado, puedes cambiarlo a **Jetty** o **Undertow** 
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Vistas y Templates](../03_Spring_MVC/Vistas_y_Templates.md) | [Índice](../../README.md) | [Autoconfiguración y Starters](./Autoconfiguracion_y_Starters.md) |
+| [Vistas y Templates](../03_Spring_MVC/Vistas_y_Templates.md) | [Índice](../../index.md) | [Autoconfiguración y Starters](./Autoconfiguracion_y_Starters.md) |
 

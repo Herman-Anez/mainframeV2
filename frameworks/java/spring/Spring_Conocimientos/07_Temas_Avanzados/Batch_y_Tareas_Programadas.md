@@ -189,7 +189,7 @@ public TaskScheduler taskScheduler() {
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Seguridad](../06_Seguridad/README.md) | [Índice General](../../README.md) | [Cache](./Cache.md) |
+| [JWT y OAuth2](../06_Seguridad/JWT_y_OAuth2.md) | [Índice](../../index.md) | [Gestión de Caché](./Cache.md) |
 
 
 

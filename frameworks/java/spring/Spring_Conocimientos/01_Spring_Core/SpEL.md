@@ -82,4 +82,6 @@ El contexto se puede nutrir con variables, funciones y root objects.
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Perfiles](./Profiles.md) | [Índice](../../index.md) | [Conceptos de AOP](../02_AOP/Conceptos_JoinPoint_Pointcut_Advice.md) |

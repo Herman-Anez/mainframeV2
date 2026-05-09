@@ -58,5 +58,5 @@ En REST no hay sesiones HTTP. La configuración se vuelve `SessionCreationPolicy
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Transacciones y @Transactional](../05_Acceso_Datos/Transacciones_y_Transactional.md) | [Índice](../../README.md) | [Configuración DSL y HttpSecurity](Configuracion_DSL.md) |
+| [Transacciones y @Transactional](../05_Acceso_Datos/Transacciones_y_Transactional.md) | [Índice](../../index.md) | [Configuración DSL](./Configuracion_DSL.md) |
 

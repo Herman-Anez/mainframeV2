@@ -104,6 +104,6 @@ public class WebConfig implements WebMvcConfigurer {
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Proxies en Spring AOP](../02_AOP/Proxies_JDK_vs_CGLIB.md) | [Índice](../../README.md) | [Controladores REST](./Controladores_REST.md) |
+| [Proxies JDK vs CGLIB](../02_AOP/Proxies_JDK_vs_CGLIB.md) | [Índice](../../index.md) | [Controladores REST](./Controladores_REST.md) |
 
 

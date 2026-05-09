@@ -81,6 +81,6 @@ En pruebas de integración con `@SpringBootTest` o `@DataJpaTest`, marcar el mé
 ---
 
 | Anterior | Inicio | Siguiente |
-| :--- | :---: | :--- |
-| [← Consultas Nativas](Consultas_Nativas_y_Procedure.md) | [Índice](../../README.md) | [Arquitectura de Seguridad →](../06_Seguridad/Spring_Security_Arquitectura.md) |
+| :--- | :---: | ---: |
+| [Consultas Nativas y Procedure](./Consultas_Nativas_y_Procedure.md) | [Índice](../../index.md) | [Arquitectura de Seguridad](../06_Seguridad/Spring_Security_Arquitectura.md) |
 

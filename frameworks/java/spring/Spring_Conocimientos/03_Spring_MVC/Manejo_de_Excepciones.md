@@ -97,5 +97,5 @@ Es una buena práctica extraer estos errores y devolverlos en una lista legible 
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Controladores REST](./Controladores_REST.md) | [Índice](../../README.md) | [Validación y Binding](./Validacion_y_BindingResult.md) |
+| [Controladores REST](./Controladores_REST.md) | [Índice](../../index.md) | [Validación y Binding](./Validacion_y_BindingResult.md) |
 

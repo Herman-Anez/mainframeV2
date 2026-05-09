@@ -128,6 +128,6 @@ List<Object[]> resultados = sp.getResultList();
 ---
 
 | Anterior | Inicio | Siguiente |
-| :--- | :---: | :--- |
-| [← Spring Data JPA](Spring_Data_JPA.md) | [Índice](../../README.md) | [Gestión de Transacciones →](Transacciones_y_Transactional.md) |
+| :--- | :---: | ---: |
+| [Spring Data JPA](./Spring_Data_JPA.md) | [Índice](../../index.md) | [Transacciones y @Transactional](./Transacciones_y_Transactional.md) |
 

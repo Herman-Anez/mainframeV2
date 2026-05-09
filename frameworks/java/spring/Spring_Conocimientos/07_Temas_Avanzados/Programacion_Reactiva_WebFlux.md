@@ -142,5 +142,5 @@ WebFlux ejecuta en un pequeño pool de hilos (por defecto, número de núcleos d
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Eventos de Aplicación](./Eventos_de_Aplicacion.md) | [Índice General](../../README.md) | [Spring Cloud](../08_Spring_Cloud/README.md) |
+| [Eventos de Aplicación](./Eventos_de_Aplicacion.md) | [Índice](../../index.md) | [Config Server](../08_Spring_Cloud/Config_Server.md) |
 

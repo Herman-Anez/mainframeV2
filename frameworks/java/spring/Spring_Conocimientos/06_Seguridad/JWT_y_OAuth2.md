@@ -157,5 +157,5 @@ spring.security.oauth2.client.registration.google.client-secret=TU_CLIENT_SECRET
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [Seguridad a Nivel de Método](Metodo_Security.md) | [Índice](../../README.md) | [Temas Avanzados](../07_Temas_Avanzados/README.md) |
+| [Seguridad a Nivel de Método](./Metodo_Security.md) | [Índice](../../index.md) | [Batch y Tareas Programadas](../07_Temas_Avanzados/Batch_y_Tareas_Programadas.md) |
 

@@ -143,4 +143,6 @@ public class EventPublisherAspect {
 
 ---
 
-[⬅️ Anterior: Conceptos JoinPoint, Pointcut, Advice](./Conceptos_JoinPoint_Pointcut_Advice.md) | [Siguiente: Proxies JDK vs CGLIB ➡️](./Proxies_JDK_vs_CGLIB.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Conceptos de AOP](./Conceptos_JoinPoint_Pointcut_Advice.md) | [Índice](../../index.md) | [Proxies JDK vs CGLIB](./Proxies_JDK_vs_CGLIB.md) |

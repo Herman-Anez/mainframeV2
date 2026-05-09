@@ -133,4 +133,6 @@ Conocer este orden te permite depurar problemas de inyección, proxies o valores
 
 ---
 
-[⬅️ Volver al Índice](../../index.md)
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Ciclo de Vida del Bean](../00_Fundamentos/04_Ciclo_de_vida_Bean.md) | [Índice](../../index.md) | [Scopes y Proxies](./Scopes_y_Proxies.md) |
