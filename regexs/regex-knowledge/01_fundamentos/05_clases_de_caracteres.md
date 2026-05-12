@@ -1,68 +1,83 @@
-# clases_de_caracteres.md
-Definición
+# 📁 Fundamentos: Clases de Caracteres
 
-Una clase de caracteres es una construcción entre corchetes [...] que define un conjunto de caracteres. Coincide con un único carácter que pertenezca a ese conjunto.
-Sintaxis básica
-regex
+## 📌 Definición
 
+Una **clase de caracteres** es una construcción entre corchetes `[...]` que define un conjunto de caracteres. Coincide con un único carácter que pertenezca a ese conjunto.
+
+## 📌 Sintaxis básica
+
+```regex
 [abc]  → a, b o c
 [a-z]  → cualquier letra minúscula del alfabeto inglés
 [0-9]  → cualquier dígito
 [A-Za-z] → cualquier letra
+```
 
 Se pueden combinar múltiples rangos y caracteres sueltos:
-regex
 
+```regex
 [a-zA-Z0-9_] → carácter de palabra inglés (igual que \w)
+```
 
-Carácter especial dentro de corchetes
-- (guion)
+## 📌 Carácter especial dentro de corchetes
 
-    Si se coloca entre dos caracteres que pueden formar un rango según el orden de la tabla ASCII/Unicode, define un rango.
+### 🔹 `-` (guion)
 
-    Para tratarlo como literal debe ir al principio, al final, justo después de ^ (en clase negada) o escapado \-.
+- Si se coloca entre dos caracteres que pueden formar un rango según el orden de la tabla ASCII/Unicode, define un **rango**.
+- Para tratarlo como **literal** debe ir al principio, al final, justo después de `^` (en clase negada) o escapado `\-`.
 
-Ejemplo de rango inverso no permitido: [z-a] no es válido. En algunos motores es ignorado o error.
-^
+> [!WARNING]
+> Ejemplo de rango inverso no permitido: `[z-a]` no es válido. En algunos motores es ignorado o genera un error.
 
-Si se escribe inmediatamente después del corchete de apertura, niega la clase: [^...] coincide con cualquier carácter que NO esté en la lista.
-regex
+### 🔹 `^` (circunflejo)
 
+Si se escribe inmediatamente después del corchete de apertura, **niega** la clase: `[^...]` coincide con cualquier carácter que NO esté en la lista.
+
+```regex
 [^aeiou] → cualquier carácter que no sea vocal minúscula.
+```
 
-Si ^ aparece en otra posición (no al inicio), es un literal ^.
-]
+> [!NOTE]
+> Si `^` aparece en otra posición (no al inicio), se trata como un literal `^`.
 
-El corchete de cierre debe escaparse \] o colocarse como primer carácter de la clase (después de ^ si la hay) para que se tome literal.
-regex
+### 🔹 `]` (corchete de cierre)
 
+El corchete de cierre debe escaparse `\]` o colocarse como primer carácter de la clase (después de `^` si la hay) para que se tome como literal.
+
+```regex
 []]   → clase que contiene ']' (válido: ']' como primer carácter).
 []abc] → ']', 'a', 'b', 'c'.
 [^]]  → cualquier carácter excepto ']'.
+```
 
-\
+### 🔹 `\` (barra invertida)
 
-La barra invertida mantiene su función de escape, por lo que \d, \w, \s y cualquier escape funcionan dentro de corchetes. \\ es la barra literal.
-Clases predefinidas (shorthands)
+La barra invertida mantiene su función de escape, por lo que `\d`, `\w`, `\s` y cualquier escape funcionan dentro de corchetes. `\\` es la barra literal.
+
+## 📌 Clases predefinidas (shorthands)
 
 Estas secuencias se pueden usar dentro o fuera de corchetes y representan clases comunes.
-Secuencia	Equivalencia ASCII (sin unicode)	Significado
-\d	[0-9]	Dígito
-\D	[^0-9]	No dígito
-\w	[a-zA-Z0-9_]	Carácter de palabra
-\W	[^a-zA-Z0-9_]	No palabra
-\s	[ \t\n\r\f\v] (varía)	Espacio en blanco
-\S	[^ \t\n\r\f\v]	No espacio
-\h	Espacio horizontal (sólo algunos motores)	[ \t]
-\v	Espacio vertical	[\n\r] (cuidado: en PCRE \v es tab vertical)
-\R	Salto de línea universal (PCRE, Java, .NET)	\r\n|\n|\r
 
-Con el flag unicode activado (/u en JS, re.UNICODE en Python), \w, \d, etc. pueden ampliarse para incluir letras y dígitos de otros alfabetos. Por ejemplo \w con unicode incluye ñ, ü, caracteres cirílicos, etc. Depende del motor.
-Clases POSIX
+| Secuencia | Equivalencia ASCII | Significado |
+| :--- | :--- | :--- |
+| `\d` | `[0-9]` | Dígito |
+| `\D` | `[^0-9]` | No dígito |
+| `\w` | `[a-zA-Z0-9_]` | Carácter de palabra |
+| `\W` | `[^a-zA-Z0-9_]` | No palabra |
+| `\s` | `[ \t\n\r\f\v]` | Espacio en blanco |
+| `\S` | `[^ \t\n\r\f\v]` | No espacio |
+| `\h` | `[ \t]` | Espacio horizontal |
+| `\v` | `[\n\r]` | Espacio vertical (varía según motor) |
+| `\R` | `\r\n\|\n\|\r` | Salto de línea universal |
 
-Son clases nombradas, encerradas entre dobles corchetes y dos puntos. Aparecen en motores como PCRE, Perl, Python (módulo regex), y algunos sabores de Unix.
-regex
+> [!IMPORTANT]
+> Con el flag unicode activado, `\w`, `\d`, etc. pueden ampliarse para incluir letras y dígitos de otros alfabetos (ñ, ü, cirílicos, etc.).
 
+## 📌 Clases POSIX
+
+Son clases nombradas, encerradas entre dobles corchetes y dos puntos. Aparecen en motores como PCRE, Perl, Python (módulo regex) y algunos sabores de Unix.
+
+```regex
 [[:alnum:]]  → [a-zA-Z0-9]
 [[:alpha:]]  → letras
 [[:digit:]]  → [0-9]
@@ -71,38 +86,51 @@ regex
 [[:punct:]]  → signos de puntuación
 [[:space:]]  → espacios (incluye \n, \t)
 [[:xdigit:]] → dígitos hexadecimales
+```
 
-Estas clases se pueden combinar en una misma clase: [[:upper:][:digit:]].
-Propiedades Unicode (\p{...})
+> [!TIP]
+> Estas clases se pueden combinar en una misma clase: `[[:upper:][:digit:]]`.
 
-Con soporte unicode (flag u en JS, por defecto en Python 3), podemos usar propiedades generales o específicas.
-regex
+## 📌 Propiedades Unicode (`\p{...}`)
 
-\p{L}   → cualquier letra (Letter)
-\p{Ll}  → letra minúscula (Letter, lowercase)
-\p{Lu}  → letra mayúscula
-\p{N}   → cualquier número (Number)
-\p{Nd}  → dígito decimal
-\p{P}   → puntuación
-\p{S}   → símbolo
-\p{Sc}  → símbolo de moneda
-\p{Han} → caracteres Han
-\p{Greek} → letras griegas
-\p{IsLatin} → bloque Latin (en Java, \p{IsLatin})
+Con soporte unicode (flag `u` en JS, por defecto en Python 3), podemos usar propiedades generales o específicas.
 
-Negación: \P{...} (mayúscula P). Ejemplo: \P{L} no letra.
+| Propiedad | Significado |
+| :--- | :--- |
+| `\p{L}` | Cualquier letra (Letter) |
+| `\p{Ll}` | Letra minúscula (lowercase) |
+| `\p{Lu}` | Letra mayúscula |
+| `\p{N}` | Cualquier número (Number) |
+| `\p{Nd}` | Dígito decimal |
+| `\p{P}` | Puntuación |
+| `\p{S}` | Símbolo |
+| `\p{Sc}` | Símbolo de moneda |
+| `\p{Han}` | Caracteres Han |
+| `\p{Greek}` | Letras griegas |
 
-Se pueden usar dentro de corchetes: [\p{L}\d].
-Clases avanzadas: sustracción e intersección (.NET, Java, Python regex)
+> [!NOTE]
+> La negación se hace con `\P{...}` (P mayúscula). Ejemplo: `\P{L}` (no letra).
 
-    Intersección: [a-z&&[^aeiou]] en Java → consonantes. En .NET: [a-z-[aeiou]] es sustracción directa.
+## 📌 Clases avanzadas: sustracción e intersección
 
-    Python regex permite [a-z--[aeiou]] para diferencia.
+Soportado en motores como .NET, Java y el módulo `regex` de Python.
 
-En otros motores, no hay soporte directo y hay que usar lookaheads.
-Cuidados con rangos
+- **Intersección:** `[a-z&&[^aeiou]]` en Java (consonantes).
+- **Sustracción:** `[a-z-[aeiou]]` en .NET o `[a-z--[aeiou]]` en Python `regex`.
 
-Un rango como [A-z] incluye caracteres entre 'A' (65) y 'z' (122), que en ASCII contiene [\]^_\`` porque en el medio están esos símbolos. Mejor usar [A-Za-z]`. Los rangos dependen del orden numérico de los puntos de código, no del alfabeto humano.
-Uso de clases en expresiones
+## 📌 Cuidados con rangos
 
-Las clases siempre casan un solo carácter. Para múltiples debemos usar cuantificadores: [0-9]+ para uno o más dígitos. La clase vacía [] es inválida (error).
+Un rango como `[A-z]` incluye caracteres entre 'A' (65) y 'z' (122), que en ASCII contiene `[`, `\`, `]`, `^`, `_`, `` ` ``.
+
+> [!TIP]
+> Es mejor usar `[A-Za-z]` para evitar caracteres intermedios no deseados. Los rangos dependen del orden numérico de los puntos de código, no del alfabeto humano.
+
+## 📌 Uso de clases en expresiones
+
+Las clases siempre casan **un solo carácter**. Para múltiples caracteres debemos usar cuantificadores: `[0-9]+` para uno o más dígitos.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Anclas y Límites](04_anclas_y_limites.md) | [Índice](../README.md) | ➖ |
