@@ -31,6 +31,6 @@ Estrategias para implementar observabilidad real: logs estructurados, métricas 
 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
-| [⬅️ Bases de Datos](../06-Bases-Datos/index.md) | [🏠 Inicio](../../index.md) | [Herramientas Complementarias ➡️](../08-Herramientas-Complementarias/Swagger-OpenAPI.md) |
+| [⬅️ Bases de Datos](../06-Bases-Datos/index.md) | [🏠 Inicio](../../index.md) | [Herramientas Complementarias ➡️](../08-Herramientas-Complementarias/index.md) |
 
 
