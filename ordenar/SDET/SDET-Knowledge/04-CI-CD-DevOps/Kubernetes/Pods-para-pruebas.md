@@ -1,17 +1,18 @@
-Pods para pruebas
+# Pods y Jobs para pruebas
 
-En K8s, la unidad mínima es el Pod (uno o más contenedores). Para ejecutar pruebas de automatización, se despliegan Jobs o Pods efímeros.
+En Kubernetes, la unidad mínima es el **Pod**. Para la automatización de pruebas, lo más común es desplegar **Jobs** o Pods efímeros que nacen, ejecutan la suite y mueren, liberando recursos.
 
-Job de Kubernetes para pruebas:
-Un Job crea uno o varios Pods que se ejecutan hasta completar exitosamente (o fallar) un número de veces. Es ideal para suites de test que deben correr hasta el final y luego terminar.
-yaml
+## Job de Kubernetes para Pruebas
 
+Un `Job` crea uno o varios Pods que se ejecutan hasta completar exitosamente (o fallar) la tarea encomendada. Es el recurso ideal para suites de regresión.
+
+```yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: api-test-run-{{ .Release.Name }}
+  name: api-test-run
 spec:
-  backoffLimit: 2  # reintentos en caso de fallo
+  backoffLimit: 2  # Número de reintentos en caso de fallo
   template:
     spec:
       containers:
@@ -36,38 +37,34 @@ spec:
       volumes:
         - name: results
           emptyDir: {}
-  ttlSecondsAfterFinished: 86400  # autoeliminar tras 24h
+  ttlSecondsAfterFinished: 86400  # Eliminación automática tras 24h
+```
 
-Ventajas:
+## Ventajas del enfoque K8s
 
-    Paralelismo: Se puede lanzar un Job por cada suite (API, UI) e incluso usar parallelism > 1 para que se ejecuten múltiples pods del mismo Job (p.ej., 10 pods para pruebas UI con un parámetro que distribuya los casos usando índices).
+*   **Paralelismo**: Se puede lanzar un Job por cada suite (API, UI) e incluso usar el parámetro `parallelism > 1` para distribuir casos entre múltiples pods del mismo Job.
+*   **Aislamiento Total**: Cada prueba corre en su propio Pod, eliminando cualquier riesgo de contaminación de estado entre ejecuciones concurrentes.
+*   **Escalabilidad Horizontal**: Con herramientas como **KEDA**, se pueden disparar miles de pruebas automáticamente ante eventos específicos.
 
-    Aislamiento: Cada prueba corre en su propio Pod, evitando contaminación de estado entre pruebas.
+## Selenium Grid en Kubernetes
 
-    Escalabilidad horizontal: Con herramientas como KEDA o Jobs programados, se pueden disparar miles de pruebas automáticamente ante eventos.
+Desplegar un Grid escalable es posible mediante el *Helm Chart* oficial de Selenium, que incluye:
+1.  **Hub**: Publicado mediante un Service y Deployment.
+2.  **Nodos**: Pods que se autoregistran dinámicamente en el Hub.
+3.  **Ingress**: Para acceder a la consola del Hub desde fuera del clúster.
 
-Selenium Grid en Kubernetes:
-Desplegar un Grid escalable en K8s usando el Helm Chart oficial de Selenium. Incluye:
+## Entornos Efímeros (Ephemeral Environments)
 
-    Hub (Service y Deployment)
+Kubernetes permite crear `namespaces` temporales que contienen todo el stack (App + DB + Mocks + Tests). Al finalizar la ejecución, se destruye el namespace completo, garantizando un entorno inmaculado para cada regresión.
 
-    Nodos como pods que se autoregistran.
+## Consideraciones para el SDET
 
-    Ingress para acceder al Hub desde fuera del clúster.
-    El SDET lanza las pruebas desde un Pod del mismo namespace, apuntando a http://selenium-hub:4444. Las sesiones se distribuyen entre los nodos disponibles.
+*   **Gestión de Recursos**: Definir siempre `limits` y `requests` de CPU/RAM. Un test sin límites puede ser eliminado inesperadamente por el *OOM Killer*.
+*   **Probes**: Configurar `readinessProbe` y `livenessProbe` en la aplicación bajo prueba para que los tests esperen a que el sistema esté realmente disponible.
+*   **Configuración**: Usar `ConfigMaps` para URLs y timeouts, y `Secrets` para credenciales sensibles.
 
-Ephemeral test environments:
-Con K8s, se pueden crear namespaces temporales que contengan la app bajo test, bases de datos, mocks, y el job de pruebas. Una vez finalizado, se destruye todo. Esto garantiza un entorno inmaculado para cada ejecución de regresión.
+---
 
-Pruebas de rendimiento en Kubernetes:
-Herramientas como k6 operator ejecutan scripts de carga definiendo un recurso TestRun. El operador crea pods con k6 que inyectan carga y publican métricas.
-
-Consideraciones para el SDET:
-
-    Definir resources (CPU/memoria) tanto para los tests como para los servicios; un test que consume demasiada RAM puede ser matado por el scheduler.
-
-    readinessProbe y livenessProbe en la app bajo prueba para que el Job de test espere hasta que el sistema esté disponible.
-
-    Usar ConfigMaps para datos de configuración de pruebas (URLs, timeouts) y Secrets para credenciales.
-
-El manejo de pruebas en Kubernetes cierra el círculo de la automatización moderna: desde el commit de código hasta la ejecución de suites en un entorno aislado, escalable y autogestionado.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Kubernetes y pruebas](./index.md) | [Home](../../../index.md) | [Rendimiento y Seguridad](../05-Rendimiento-Seguridad/index.md) |

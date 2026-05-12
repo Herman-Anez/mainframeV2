@@ -1,10 +1,10 @@
-Workflows y acciones para testing
+# Workflows y acciones para testing
 
-Un workflow se compone de uno o más jobs con pasos que ejecutan acciones (scripts, comandos, o acciones reutilizables). El SDET lo ve como la herramienta para ejecutar baterías de test automáticas en cada push, PR y programación.
+Un **workflow** en GitHub Actions se compone de uno o más *jobs* con pasos que ejecutan acciones (scripts, comandos o acciones reutilizables). Para un SDET, es la herramienta ideal para orquestar baterías de pruebas automáticas en cada `push`, `pull_request` o de forma programada.
 
-Estructura de un workflow de pruebas típico:
-yaml
+## Estructura de un workflow de pruebas típico
 
+```yaml
 name: Test Suite
 on:
   push:
@@ -12,7 +12,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: '0 6 * * 1-5'  # ejecución diaria a las 6 AM
+    - cron: '0 6 * * 1-5'  # Ejecución diaria de lunes a viernes a las 6 AM
 
 env:
   NODE_VERSION: 18
@@ -69,25 +69,26 @@ jobs:
         with:
           name: playwright-report-${{ matrix.browser }}
           path: playwright-report/
+```
 
-Características destacadas para el SDET:
+## Características destacadas para el SDET
 
-    Matrix strategy: permite ejecutar tests en combinaciones de sistema operativo, versión de lenguaje, navegador. Ideal para cross-browser y cross-platform con un solo job.
+*   **Matrix Strategy**: Permite ejecutar tests en combinaciones de sistema operativo, versión de lenguaje o navegadores.
+    > [!TIP]
+    > Es ideal para garantizar compatibilidad *cross-browser* y *cross-platform* con un solo job.
+*   **Service Containers**: Bases de datos, Selenium Hub o Wiremock se definen directamente en el workflow, facilitando entornos de integración reales sin infraestructura externa.
+*   **Caching**: El uso de `actions/cache` para dependencias (Maven, npm) acelera significativamente las ejecuciones.
+*   **Artifacts y Reports**: `actions/upload-artifact` permite guardar reportes, logs y screenshots para su revisión tras un fallo.
+*   **Reusabilidad**: Se pueden crear acciones compuestas y workflows reusables para encapsular pasos comunes (ej. "run-api-tests" con inputs de entorno).
+*   **Condiciones y Gates**: Mediante `if`, se pueden filtrar ejecuciones (ej. saltar suites si el commit solo afecta a la documentación).
 
-    Service containers: bases de datos, Selenium Hub, wiremock. Se definen directamente en el workflow, facilitando entornos de integración reales sin necesidad de hosts externos.
+## Consideraciones de Seguridad
 
-    Caching: actions/cache para dependencias (Maven, npm) acelera las ejecuciones.
+1.  **Secretos**: Las credenciales (`secrets.BROWSERSTACK_KEY`) se configuran en GitHub y nunca se exponen en los logs.
+2.  **Pull Requests de Forks**: Los workflows de forks externos pueden tener acceso limitado a secretos por seguridad. Se debe diseñar la suite para manejar estos casos o usar `pull_request_target` con extrema precaución.
 
-    Artifacts y reports: actions/upload-artifact permite guardar reportes, logs, screenshots para su revisión en caso de fallo.
+---
 
-    Reusabilidad: se pueden escribir acciones compuestas y workflows reusables que encapsulan pasos comunes (ej. "run-api-tests" que recibe como input el entorno).
-
-    Condiciones y gates: con if se pueden ejecutar pruebas de rendimiento solo en horarios específicos, o saltar suites si el commit solo cambia documentación.
-
-Consideraciones de seguridad:
-
-    Los secretos (secrets.BROWSERSTACK_KEY) se configuran en GitHub y se evita exponerlos en logs.
-
-    Los workflows que vienen de forks de PR pueden no tener acceso a secretos; se debe diseñar la suite para que no dependa de datos confidenciales en esos casos, o usar pull_request_target con precaución.
-
-Para el SDET, Actions facilita la integración temprana de pruebas; permite que cualquier desarrollador pueda ver el resultado de los tests directamente en el PR, fomentando la propiedad compartida de calidad.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [GitHub Actions para SDET](./index.md) | [Home](../../../index.md) | [Docker para Testing](../Docker/index.md) |

@@ -1,15 +1,10 @@
-Selenium Grid con Docker
+# Selenium Grid con Docker
 
-Ejecutar pruebas UI en paralelo requiere una granja de navegadores. Selenium Grid se puede desplegar con Docker de forma oficial y robusta.
+Ejecutar pruebas UI en paralelo requiere una granja de navegadores eficiente. **Selenium Grid 4** se puede desplegar de forma robusta utilizando Docker, permitiendo escalar la ejecución según las necesidades de la suite.
 
-Selenium Grid 4 con Docker (hub + nodos):
+## Despliegue con Docker Compose
 
-    Imagen oficial: selenium/hub:4.0 y selenium/node-chrome:4.0, etc.
-
-    Docker Compose clásico (Grid independiente):
-
-yaml
-
+```yaml
 version: '3'
 services:
   selenium-hub:
@@ -33,29 +28,33 @@ services:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+```
 
-    El test se conecta a http://localhost:4444 usando RemoteWebDriver y especificando capacidades del navegador.
+El código de automatización se conecta al Hub mediante `RemoteWebDriver` apuntando a `http://localhost:4444`.
 
-Modo dinámico (Selenium Grid 4): No se necesita declarar los nodos; los nodos se registran automáticamente en el hub usando el mismo network. Se puede usar el docker-compose de la documentación oficial.
+## Alternativas avanzadas
 
-Alternativas avanzadas:
+*   **Selenoid**: Utiliza contenedores efímeros por sesión, lo que ofrece mayor velocidad y menor consumo de recursos. Incluye una interfaz visual para ver las sesiones en vivo y grabar vídeos de las ejecuciones.
+*   **Zalenium**: (Deprecado) Fue el precursor de Selenoid; hoy se recomienda migrar a Selenium Grid 4 o Selenoid.
+*   **Moon**: Solución comercial para clústeres de Kubernetes con balanceo de carga y gestión de cuotas.
 
-    Selenoid: contenedores efímeros por sesión, velocidad y menor consumo de recursos. Tiene UI para ver las sesiones y grabar vídeo.
+## Integración en CI/CD
 
-    Zalenium (deprecado): fue precursor, hoy reemplazado por Selenoid/Selenium Grid 4.
+En plataformas como GitHub Actions, se puede levantar el Grid como un servicio secundario:
 
-    Moon (comercial): para clústeres Kubernetes, con balanceo y gestión de cuotas.
-
-Integración en CI:
-En GitHub Actions o Jenkins, se levanta el Grid como services o en un stage previo. Luego la suite usa RemoteWebDriver para ejecutar en remoto. Ejemplo con GitHub Actions services:
-yaml
-
+```yaml
 services:
   selenium:
     image: selenium/standalone-chrome
     ports:
       - 4444:4444
+```
 
-Luego el código apunta a http://localhost:4444/wd/hub.
+> [!NOTE]
+> El SDET es responsable de configurar y escalar esta infraestructura. Si se requieren 50 o más sesiones concurrentes, la estrategia debe evolucionar hacia clústeres de **Docker Swarm** o **Kubernetes**.
 
-El SDET configura la infraestructura de Grid y se encarga de la escalabilidad: si se necesitan 50 sesiones concurrentes, diseñará la estrategia de nodos y recursos en el clúster (Docker Swarm o Kubernetes).
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Dockerfiles para testing](./Dockerfiles-testing.md) | [Home](../../../index.md) | [Kubernetes y Pruebas](../Kubernetes/index.md) |

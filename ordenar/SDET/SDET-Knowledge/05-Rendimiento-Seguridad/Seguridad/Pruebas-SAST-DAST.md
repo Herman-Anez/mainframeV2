@@ -1,52 +1,56 @@
-Pruebas SAST y DAST (Conceptos y estrategia)
+# Pruebas SAST y DAST (Conceptos y Estrategia)
 
 Estas pruebas cubren dos enfoques complementarios de seguridad que el SDET debe orquestar en el pipeline.
 
-SAST (Static Application Security Testing) – "Caja blanca"
+## SAST (Static Application Security Testing) – "Caja Blanca"
 
-    Analiza el código fuente o bytecode sin ejecutar la aplicación. Detecta patrones de vulnerabilidades (inyecciones, mal manejo de errores, configuraciones inseguras) desde las fases tempranas.
+Analiza el código fuente o bytecode sin ejecutar la aplicación. Detecta patrones de vulnerabilidades (inyecciones, mal manejo de errores, configuraciones inseguras) desde las fases tempranas.
 
-    Herramientas:
+- **Herramientas**:
+    - **SonarQube / SonarCloud**: Con reglas de seguridad OWASP, detecta fallos de seguridad en el código. Se integra en PR con quality gates.
+    - **Snyk Code / Semgrep / Checkmarx**: Soluciones específicas de SAST.
+    - **Linters de Seguridad**: `bandit` para Python, `eslint-plugin-security` para JS.
 
-        SonarQube / SonarCloud: Con reglas de seguridad OWASP, detecta fallos de seguridad en el código. Se integra en PR con quality gates.
+> [!TIP]
+> El SDET colabora configurando los umbrales de calidad (ej. no permitir nuevos issues de severidad *Blocker*) y asegurándose de que el escaneo se ejecuta en CI como un paso más.
 
-        Snyk Code / Semgrep / Checkmarx: Soluciones específicas de SAST.
+**Ventajas**: Feedback inmediato, no requiere despliegue, cubre todo el código.
 
-        Linters de seguridad: bandit para Python, eslint-plugin-security para JS.
+## DAST (Dynamic Application Security Testing) – "Caja Negra"
 
-    El SDET colabora configurando los umbrales de calidad (ej. no permitir nuevos issues de severidad Blocker) y asegurándose de que el escaneo se ejecuta en CI como un paso más.
+Ataca la aplicación en ejecución, simulando a un atacante externo. Generalmente utiliza un proxy (ZAP, Burp Suite Enterprise) o escáneres especializados (Nikto).
 
-    Ventajas: feedback inmediato, no requiere despliegue, cubre todo el código.
+Detecta vulnerabilidades en tiempo de ejecución: XSS, SQLi, CSRF, errores de configuración del servidor.
 
-DAST (Dynamic Application Security Testing) – "Caja negra"
+> [!IMPORTANT]
+> El SDET lo integra usando herramientas como **OWASP ZAP** o **Burp Suite CI**. Se requiere un entorno de pruebas estable y no productivo (staging).
 
-    Ataca la aplicación en ejecución, simulando a un atacante externo. Generalmente utiliza un proxy (ZAP, Burp Suite Enterprise) o escáneres especializados (Nikto).
+## Triángulo de Pruebas de Seguridad en DevOps
 
-    Detecta vulnerabilidades en tiempo de ejecución: XSS, SQLi, CSRF, errores de configuración del servidor.
+1. **SAST** en el IDE (pre-commit) y en el build CI (post-commit).
+2. **Análisis de dependencias (SCA)**: `npm audit`, `Snyk`, `OWASP Dependency Check`. Detectar vulnerabilidades en librerías. El SDET lo incluye en el pipeline y rompe el build si hay vulnerabilidades críticas con fix disponible.
+3. **DAST** sobre la aplicación desplegada en staging (diario o en PR).
+4. **Pruebas de penetración manuales**: Realizadas por expertos externos, fuera del alcance del SDET pero aprovechando los datos de automatización.
 
-    El SDET lo integra usando herramientas como OWASP ZAP (ver anterior) o Burp Suite CI.
+## Pipeline Integrado de Seguridad
 
-    Se requiere un entorno de pruebas estable y no productivo. Por eso se lanza sobre entornos de staging.
-
-Triángulo de pruebas de seguridad en DevOps:
-
-    SAST en el IDE (pre-commit) y en el build CI (post-commit).
-
-    Análisis de dependencias (SCA): npm audit, Snyk, OWASP Dependency Check. Detectar vulnerabilidades en librerías. El SDET lo incluye en el pipeline y rompe el build si hay vulnerabilidades críticas con fix disponible.
-
-    DAST sobre la aplicación desplegada en staging (diario o en PR).
-
-    Pruebas de penetración manuales: realizadas por expertos externos, fuera del alcance del SDET pero aprovechando los datos de automatización.
-
-Pipeline integrado de seguridad:
-yaml
-
+```yaml
 stages:
   - build
   - sast
   - test
   - dast
+```
 
-O más granular, con herramientas como Snyk, SonarQube, ZAP. El SDET puede configurar que la etapa dast se ejecute después del despliegue automático en el namespace de testing (K8s).
+O más granular, con herramientas como Snyk, SonarQube, ZAP. El SDET puede configurar que la etapa `dast` se ejecute después del despliegue automático en el namespace de testing (K8s).
 
-Métricas y umbrales: Definir con el equipo de seguridad un número máximo de vulnerabilidades permitidas por nivel (High, Medium). Por ejemplo, bloqueante: >0 High en DAST o SAST, >0 Critical en SCA. Este gating educa y acelera la corrección.
+## Métricas y Umbrales
+
+Definir con el equipo de seguridad un número máximo de vulnerabilidades permitidas por nivel (High, Medium). Por ejemplo, bloqueante: `>0 High` en DAST o SAST, `>0 Critical` en SCA. Este gating educa y acelera la corrección.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Seguridad Index](./index.md) | [Home](../../../index.md) | [OWASP ZAP Automation](./OWASP-ZAP-automation.md) |
+

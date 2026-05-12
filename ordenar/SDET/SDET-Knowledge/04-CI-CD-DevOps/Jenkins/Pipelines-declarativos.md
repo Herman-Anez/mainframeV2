@@ -1,15 +1,14 @@
-Pipelines declarativos
+# Pipelines declarativos en Jenkins
 
-Frente a los pipelines scripted (Groovy puro), el declarativo impone una estructura más predecible y fácil de mantener. Se define en un Jenkinsfile dentro del repositorio.
+Frente a los pipelines scripted (Groovy puro), el modelo **declarativo** impone una estructura más predecible, legible y fácil de mantener. Se define en un archivo llamado `Jenkinsfile` que reside en la raíz del repositorio.
 
-Estructura básica de un pipeline de pruebas declarativo:
-groovy
+## Estructura básica de un pipeline de pruebas
 
+```groovy
 pipeline {
-    agent any  // o un nodo con etiqueta como 'linux && docker'
+    agent any  // Define el nodo de ejecución (puede ser una etiqueta como 'linux && docker')
     
     environment {
-        // Variables globales
         MAVEN_HOME = tool 'Maven 3.8'
         TEST_ENV = 'staging'
     }
@@ -59,44 +58,46 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: '**/reports/**', allowEmptyArchive: true
-            // limpiar espacio de trabajo si es necesario
-            cleanWs()
+            cleanWs() // Limpiar el espacio de trabajo
         }
         success {
-            echo 'Todos los tests han pasado.'
+            echo 'Todos los tests han pasado satisfactoriamente.'
         }
         failure {
-            echo 'Hay fallos en la suite.'
+            echo 'Se detectaron fallos en la suite de pruebas.'
         }
     }
 }
+```
 
-Elementos clave:
+## Elementos clave para el SDET
 
-    agent: define dónde se ejecuta. Puede ser any, un nodo Docker, una etiqueta específica, o incluso none para asignar agentes por stage.
+*   **`agent`**: Define dónde se ejecuta el pipeline. Puede ser `any`, un contenedor Docker, una etiqueta de nodo específica o `none` (para asignar agentes por stage).
+*   **`tools`**: Referencias a herramientas preconfiguradas en el sistema (Maven, JDK, Gradle, Node).
+*   **`environment`**: Gestión de variables de entorno. Soporta inyección de secretos mediante `credentials('id')`.
+*   **`when`**: Condiciona la ejecución de un `stage` según la rama (`branch 'main'`), parámetros o estado previo de la construcción.
+*   **`parallel`**: Permite ejecutar sub-stages simultáneamente.
+    > [!TIP]
+    > Ideal para ejecutar suites de UI en diferentes navegadores al mismo tiempo para reducir el tiempo total de feedback.
 
-    tools: referencias a herramientas configuradas en Jenkins (Maven, JDK, Gradle, Node).
-
-    environment: variables de entorno, soporta credenciales con credentials('id').
-
-    when: condiciona la ejecución de un stage según rama (branch 'main'), parámetros o estado de la construcción.
-
-    parallel: dentro de un stage se puede definir un bloque parallel con sub-stages. Así se ejecutan suites de UI en distintos navegadores simultáneamente:
-    groovy
-
-    stage('Cross-Browser Tests') {
-        parallel {
-            stage('Chrome') { steps { sh 'mvn test -Dbrowser=chrome' } }
-            stage('Firefox') { steps { sh 'mvn test -Dbrowser=firefox' } }
-        }
+```groovy
+stage('Cross-Browser Tests') {
+    parallel {
+        stage('Chrome') { steps { sh 'mvn test -Dbrowser=chrome' } }
+        stage('Firefox') { steps { sh 'mvn test -Dbrowser=firefox' } }
     }
+}
+```
 
-Buenas prácticas:
+## Buenas prácticas
 
-    Mantener el Jenkinsfile en el repositorio (Pipeline as Code).
+1.  **Pipeline as Code**: Mantener siempre el `Jenkinsfile` en el repositorio de código.
+2.  **Externalización de Lógica**: Evitar incrustar lógica compleja en el pipeline; es preferible llamar a scripts externos (`./run_tests.sh`).
+3.  **Shared Libraries**: Reutilizar funciones comunes (notificaciones, subida a S3, etc.) mediante librerías compartidas de Jenkins.
+4.  **Gestión de Datos**: Usar `stash`/`unstash` para pasar archivos de resultados entre diferentes nodos de ejecución.
 
-    Externalizar scripts complejos a sh que llamen a un script específico (./run_tests.sh) para no incrustar lógica en el pipeline.
+---
 
-    Usar shared libraries para reutilizar funciones frecuentes como sendSlackNotification, uploadToS3, etc.
-
-    Gestionar los datos de prueba con stash/unstash cuando necesitas pasar archivos entre stages en diferentes nodos.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Jenkins para SDET](./index.md) | [Home](../../../index.md) | [Integración con Slack](./Integracion-Slack.md) |

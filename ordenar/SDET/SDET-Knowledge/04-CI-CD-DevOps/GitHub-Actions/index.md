@@ -1,3 +1,14 @@
-GitHub Actions
+# GitHub Actions para SDET
 
-GitHub Actions es la opción nativa de CI/CD integrada en GitHub que ha ganado mucha tracción porque el pipeline se define como código en .github/workflows/*.yml y se gestiona todo desde el repositorio.
+GitHub Actions es la solución nativa de CI/CD integrada en GitHub. Permite automatizar todo el flujo de vida del software directamente desde el repositorio, utilizando archivos YAML para definir pipelines como código.
+
+## Contenido de la sección
+
+### 1. [Workflows y acciones para testing](./Workflows-acciones.md)
+Diseño de flujos de trabajo automatizados, estrategias de ejecución paralela y gestión de artefactos de prueba.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Jenkins para SDET](../Jenkins/index.md) | [Home](../../../index.md) | [Workflows y acciones](./Workflows-acciones.md) |

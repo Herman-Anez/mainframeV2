@@ -1,10 +1,10 @@
-Dockerfiles para testing
+# Dockerfiles para testing
 
-Un Dockerfile define la imagen que contiene todas las dependencias necesarias para ejecutar las pruebas. El SDET lo crea para encapsular la suite de automatización y sus herramientas.
+Un **Dockerfile** define la imagen que contiene todas las dependencias necesarias para ejecutar las pruebas. El SDET diseña estas imágenes para encapsular la suite de automatización, garantizando que se ejecute siempre bajo las mismas condiciones.
 
-Ejemplo de Dockerfile para un proyecto Java + Selenium:
-dockerfile
+## Ejemplo: Java + Selenium en Docker
 
+```dockerfile
 FROM maven:3.9-eclipse-temurin-17
 
 # Instalar dependencias de sistema para navegadores headless
@@ -12,35 +12,32 @@ RUN apt-get update && apt-get install -y \
     wget gnupg unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Chrome y ChromeDriver (usando script oficial)
+# Instalar Chrome y ChromeDriver
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update && apt-get install -y google-chrome-stable
-
-# Descargar ChromeDriver compatible (se puede automatizar con WebDriverManager en el código de test)
 
 # Copiar el código de pruebas
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src
 
-# Por defecto, ejecutar la suite completa
+# Por defecto, ejecutar la suite completa en modo headless
 CMD ["mvn", "test", "-Denv=staging", "-Dheadless=true"]
+```
 
-Buenas prácticas para SDET:
+## Buenas prácticas para el SDET
 
-    Multi-stage builds: Construir artefactos en una stage y copiar solo lo necesario a la imagen final, reduciendo tamaño y superficie de ataque.
+*   **Multi-stage Builds**: Construir los artefactos en una etapa inicial y copiar solo lo estrictamente necesario a la imagen final para reducir el tamaño y mejorar la seguridad.
+*   **Ejecución como non-root**: Crear un usuario específico (ej. `tester`) con permisos limitados dentro del contenedor.
+*   **Manejo de Secretos**: Nunca incluir contraseñas en la imagen. Deben pasarse como variables de entorno en tiempo de ejecución (`-e DB_PASS=$DB_PASS`).
+*   **Tagging**: Versionar las imágenes con el `commit SHA` o la versión de la suite para auditar qué versión exacta de las pruebas se ejecutó.
 
-    Ejecutar como non-root: crear un usuario tester con permisos limitados.
+## Docker Compose para entornos completos
 
-    Manejo de secretos: no incluir contraseñas en la imagen; pasarlas como variables de entorno en tiempo de ejecución (-e DB_PASS=$DB_PASS).
+Un archivo `docker-compose.test.yml` permite levantar la aplicación bajo prueba, sus bases de datos y el contenedor de tests de forma interconectada.
 
-    Tagging: versionar las imágenes con el commit SHA o la versión de la suite, para auditar qué versión de pruebas se ejecutó.
-
-Docker Compose para entornos de testing completos:
-Un archivo docker-compose.test.yml puede levantar la aplicación bajo test, la base de datos, un mock de terceros, y el contenedor de pruebas, todo interconectado. El SDET lo usa para pruebas de integración que requieren todo el stack.
-yaml
-
+```yaml
 version: '3'
 services:
   app:
@@ -62,5 +59,13 @@ services:
       - db
     volumes:
       - ./reports:/app/reports
+```
 
-El comando docker-compose -f docker-compose.test.yml run tests ejecuta las pruebas y extrae los reportes al host. En CI esto se convierte en un paso simple.
+> [!TIP]
+> El comando `docker-compose -f docker-compose.test.yml run tests` ejecuta las pruebas y mapea los reportes generados directamente a tu máquina host para su análisis.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Docker para entornos](./index.md) | [Home](../../../index.md) | [Selenium Grid con Docker](./Selenium-Grid-Docker.md) |
