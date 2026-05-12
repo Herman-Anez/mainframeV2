@@ -1,107 +1,82 @@
-# enlaces_utiles.md
-Herramientas y aprendizaje interactivo
+# Enlaces Útiles y Recursos Externos
 
-    Regex101 – Probador multilenguaje con debugger.
+Esta página recopila una colección curada de herramientas, documentación y comunidades para profundizar en el mundo de las expresiones regulares.
 
-    Regexr – Aprendizaje visual con referencias.
+## Herramientas y aprendizaje interactivo
 
-    Debuggex – Diagramas de ferrocarril.
+*   [**Regex101**](https://regex101.com): Probador multilenguaje con debugger paso a paso.
+*   [**Regexr**](https://regexr.com): Aprendizaje visual con referencias integradas.
+*   [**Debuggex**](https://debuggex.com): Generador de diagramas de ferrocarril.
+*   [**Regulex**](https://jex.im/regulex): Diagramas personalizables y exportables.
+*   [**RegexOne**](https://regexone.com): Lecciones interactivas para todos los niveles.
+*   [**RegexLearn**](https://regexlearn.com): Plataforma moderna de ejercicios prácticos.
+*   [**Pythex**](https://pythex.org): Probador específico para el motor de Python.
+*   [**iHateRegex**](https://ihateregex.io): Repositorio de patrones comunes con explicaciones visuales.
+*   [**ExtendsClass Regex Tester**](https://extendsclass.com/regex-tester.html): Probador multimotor online.
 
-    Regulex – Diagramas personalizables.
+## Documentación oficial por lenguaje
 
-    RegexOne – Lecciones interactivas.
+*   **Python (`re`):** [docs.python.org/3/library/re.html](https://docs.python.org/3/library/re.html)
+*   **Python (`regex`):** [pypi.org/project/regex/](https://pypi.org/project/regex/)
+*   **JavaScript (MDN):** [developer.mozilla.org](https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Regular_expressions)
+*   **PHP (PCRE):** [php.net/manual/es/book.pcre.php](https://php.net/manual/es/book.pcre.php)
+*   **Java:** [docs.oracle.com/javase/tutorial/essential/regex/](https://docs.oracle.com/javase/tutorial/essential/regex/)
+*   **.NET:** [docs.microsoft.com](https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions)
 
-    RegexLearn – Plataforma de ejercicios.
+## Bibliotecas y motores alternativos
 
-    Pythex – Probador Python.
+*   **RE2 (Google):** Motor de tiempo lineal sin backtracking (C++, Python, Go, Node). [github.com/google/re2](https://github.com/google/re2)
+*   **Hyperscan (Intel):** Motor de altísimo rendimiento para escanear múltiples patrones simultáneos.
+*   **Node.js re2:** Binding de alto rendimiento de RE2 para JavaScript.
+*   **XRegExp (JavaScript):** Extensión que añade soporte para grupos atómicos, posesivos y comentarios. [xregexp.com](https://xregexp.com)
 
-    iHateRegex – Patrones comunes con explicaciones.
+## Comunidades y foros
 
-    ExtendsClass Regex Tester – Multimotor.
+*   **Stack Overflow (tag `[regex]`):** [stackoverflow.com/questions/tagged/regex](https://stackoverflow.com/questions/tagged/regex)
+*   **Reddit (r/regex):** [reddit.com/r/regex](https://reddit.com/r/regex)
+*   **Regex101 Community Patterns:** Sección de patrones públicos para estudio y reutilización.
 
-Documentación oficial por lenguaje
+## Cheatsheets imprimibles
 
-    Python re: docs.python.org/3/library/re.html
+*   **QuickRef.me – Regex:** Referencia rápida y moderna.
+*   **RexEgg:** El sitio de referencia más exhaustivo sobre trucos avanzados.
+*   **Cheatography:** Generador de hojas de trucos en formato PDF.
 
-    Python regex: pypi.org/project/regex/
+## Vídeos y cursos destacados
 
-    JavaScript (MDN): developer.mozilla.org/es/docs/Web/JavaScript/Guide/Regular_expressions
+*   *"Learn Regular Expressions In 20 Minutes"* (Web Dev Simplified, YouTube).
+*   *"Regular Expressions (Regex) Tutorial"* (Simplilearn, YouTube).
+*   *"Regular Expressions in Python"* (Real Python, YouTube).
+*   Curso de **FreeCodeCamp** *"Regular Expressions"* (YouTube, 1 hora).
 
-    PHP (PCRE): php.net/manual/es/book.pcre.php
+## Libros recomendados
 
-    Java: docs.oracle.com/javase/tutorial/essential/regex/
+*   *Mastering Regular Expressions* – Jeffrey Friedl (O'Reilly).
+*   *Regular Expressions Cookbook* – Jan Goyvaerts & Steven Levithan (O'Reilly).
+*   *Introducing Regular Expressions* – Michael Fitzgerald (O'Reilly).
 
-    .NET: docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions
+## Herramientas de generación de código
 
-Bibliotecas y motores alternativos
+*   **Regex101 Code Generator:** Genera snippets listos para usar en JS, Python, PHP, etc.
+*   **RegexBuddy:** Software profesional para exportar y traducir patrones entre lenguajes.
 
-    RE2 (C++, Python, Go, Node): Motor de tiempo lineal sin backtracking. github.com/google/re2
+## Artículos y blogs destacados
 
-    Hyperscan (Intel): Motor de alto rendimiento para múltiples patrones simultáneos.
+*   [**RexEgg (rexegg.com)**](https://rexegg.com): La web técnica más completa sobre recursión, balanceo y optimización.
+*   *"Regex tutorial — A quick cheatsheet by examples"* (Medium).
+*   *"Regular Expressions: Now You Have Two Problems"* (Coding Horror): Reflexión clásica sobre el uso responsable de regex.
+*   *"Catastrophic backtracking"*: Explicación detallada en [regular-expressions.info](https://www.regular-expressions.info/catastrophic.html).
 
-    Node.js re2: Binding de RE2 para JavaScript.
+## Aplicaciones y extensiones con soporte Regex
 
-    XRegExp (JavaScript): Extensión que añade soporte para grupos atómicos, posesivos, comentarios, etc. xregexp.com
+*   **Editores:** VS Code, Notepad++, Sublime Text.
+*   **Línea de comandos:** `grep`, `sed`, `awk` (Estándares POSIX).
+*   **Browser DevTools:** Consola del desarrollador para pruebas rápidas en vivo.
 
-Comunidades y foros
+---
 
-    Stack Overflow (regex): stackoverflow.com/questions/tagged/regex
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Cheat Sheet Python](03_cheatsheets/python_cheatsheet.md) | [🏠 Inicio](../../README.md) | [Fundamentos ▶](../01_fundamentos/01_que_es_una_regex.md) |
 
-    Reddit r/regex: reddit.com/r/regex
-
-    Regex101 Community Patterns: Sección de patrones públicos dentro de la herramienta.
-
-Cheatsheets imprimibles
-
-    QuickRef.me – Regex
-
-    RexEgg – Sitio con referencias exhaustivas y trucos avanzados.
-
-    Cheatography – Regex Cheat Sheet
-
-Videos y cursos
-
-    "Learn Regular Expressions In 20 Minutes" (Web Dev Simplified, YouTube).
-
-    "Regular Expressions (Regex) Tutorial" (Simplilearn, YouTube).
-
-    "Regular Expressions in Python" (Real Python, YouTube).
-
-    Curso de FreeCodeCamp "Regular Expressions" (YouTube, 1 hora).
-
-Libros (Amazon / editoriales)
-
-    Mastering Regular Expressions – Jeffrey Friedl (O'Reilly).
-
-    Regular Expressions Cookbook – Jan Goyvaerts & Steven Levithan (O'Reilly).
-
-    Introducing Regular Expressions – Michael Fitzgerald (O'Reilly).
-
-Herramientas de generación de código
-
-    Regex101 Code Generator: Dentro de la herramienta, genera snippet en JavaScript, Python, PHP, etc.
-
-    RegexBuddy: Exporta a muchos lenguajes.
-
-Artículos y blogs destacados
-
-    RexEgg (rexegg.com): La web más completa sobre regex, con tutoriales avanzados (recursión, balanceo, retroreferencias).
-
-    "Regex tutorial — A quick cheatsheet by examples" (Factory Mind, medium.com).
-
-    "Regular Expressions: Now You Have Two Problems" (blog.codinghorror.com): Reflexión clásica de Jeff Atwood sobre cuándo usar (y no usar) regex.
-
-    "Catastrophic backtracking" (regular-expressions.info): Explicación con ejemplos y soluciones.
-
-Aplicaciones y extensiones
-
-    VS Code – Soporte nativo para regex en búsqueda/reemplazo.
-
-    Notepad++ – Regex en buscar y reemplazar.
-
-    grep, sed, awk – Herramientas de línea de comandos (POSIX).
-
-    Sublime Text – Búsqueda con regex.
-
-    Browser DevTools – La consola permite ejecutar regex en JS.
 

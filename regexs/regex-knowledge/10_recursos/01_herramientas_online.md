@@ -1,126 +1,118 @@
-# herramientas_online.md
-¿Por qué usar herramientas online?
+# Herramientas Online para Expresiones Regulares
 
 Las herramientas web para expresiones regulares permiten escribir, probar, depurar y compartir patrones de manera interactiva. Son imprescindibles tanto para principiantes como para expertos, ya que visualizan paso a paso el funcionamiento del motor, muestran coincidencias, grupos capturados y advierten sobre posibles problemas de rendimiento.
-Las mejores herramientas online
-1. Regex101 (regex101.com)
 
-    Descripción: La navaja suiza de las regex. Soporta múltiples sabores (PCRE2, PCRE, JavaScript, Python, Golang, Java, .NET, Rust).
+## ¿Por qué usar herramientas online?
 
-    Características:
+El uso de estas plataformas facilita enormemente el desarrollo de patrones complejos. Al proporcionar retroalimentación visual inmediata, ayudan a identificar errores de lógica y cuellos de botella en el rendimiento antes de integrar el código en una aplicación.
 
-        Explicación automática de cada token del patrón.
+## Las mejores herramientas online
 
-        Panel de coincidencias con resaltado de grupos.
+### 1. Regex101 ([regex101.com](https://regex101.com))
 
-        Debugger: muestra paso a paso las operaciones del motor (ideal para entender greedy/lazy y backtracking).
+> [!NOTE]
+> Considerada la "navaja suiza" de las regex. Soporta múltiples sabores como PCRE2, PCRE, JavaScript, Python, Golang, Java, .NET y Rust.
 
-        Análisis de rendimiento: número de pasos, advertencia de backtracking catastrófico.
+**Características:**
+*   **Explicación automática:** Detalla el significado de cada token del patrón.
+*   **Panel de coincidencias:** Resaltado visual de grupos y capturas.
+*   **Debugger:** Muestra paso a paso las operaciones del motor (ideal para entender greedy/lazy y backtracking).
+*   **Análisis de rendimiento:** Indica el número de pasos y advierte sobre backtracking catastrófico.
+*   **Generador de código:** Exporta el patrón a diferentes lenguajes de programación.
+*   **Compartir:** Posibilidad de guardar y compartir patrones mediante URL únicas.
+*   **Unit Tests:** Opción de añadir casos de prueba unitarios para validación continua.
 
-        Posibilidad de generar código para diferentes lenguajes.
+**Uso recomendado:** Prototipado de patrones complejos, aprendizaje interactivo, validación de estructuras críticas (como contraseñas o emails) y depuración profunda de fallos.
 
-        Posibilidad de guardar y compartir patrones mediante URL.
+### 2. Regexr ([regexr.com](https://regexr.com))
 
-        Opción de añadir casos de prueba unitarios.
+> [!TIP]
+> Herramienta visual con un fuerte enfoque educativo, basada principalmente en el motor de JavaScript.
 
-    Uso recomendado: Prototipado de patrones complejos, aprendizaje interactivo, validación de contraseñas/emails, depuración de fallos.
+**Características:**
+*   **Interfaz limpia:** Diseño intuitivo con una *cheat sheet* integrada de fácil acceso.
+*   **Resaltado en tiempo real:** Muestra todas las coincidencias mientras se escribe el patrón.
+*   **Panel de referencia:** Acceso rápido a tokens, clases de caracteres y ejemplos prácticos.
+*   **Comunidad:** Posibilidad de votar, buscar y compartir patrones con otros usuarios.
+*   **Editor versátil:** Incluye editor de texto de muestra y configuración de banderas (*flags*).
 
-2. Regexr (regexr.com)
+**Uso recomendado:** Aprender expresiones regulares desde cero, probar rápidamente patrones para JavaScript y explorar soluciones creadas por la comunidad.
 
-    Descripción: Herramienta visual con enfoque educativo. Basada en el motor de JavaScript.
+### 3. Debuggex ([debuggex.com](https://debuggex.com))
 
-    Características:
+> [!IMPORTANT]
+> Se destaca por su visualización gráfica mediante diagramas de ferrocarril (*railroad diagrams*). Soporta JavaScript, PCRE y Python.
 
-        Interfaz limpia con cheat sheet integrada.
+**Características:**
+*   **Representación visual:** Muestra el flujo lógico de la expresión regular de forma gráfica.
+*   **Seguimiento de ruta:** Resalta el camino seguido en el diagrama al probar una cadena específica.
+*   **Claridad estructural:** Aunque es menos detallado en sintaxis que Regex101, es excelente para comprender la arquitectura de patrones complejos.
 
-        Resalta todas las coincidencias mientras escribes.
+**Uso recomendado:** Comprender visualmente patrones anidados y utilizarlo como apoyo didáctico en presentaciones o documentación.
 
-        Panel de referencia con tokens, clases y ejemplos.
+### 4. Pythex ([pythex.org](https://pythex.org))
 
-        Posibilidad de votar y compartir patrones en la comunidad.
+**Descripción:** Probador de regex específico para el módulo `re` de Python. Posee una interfaz minimalista y directa.
 
-        Incluye editor de texto de muestra y banderas configurables.
+**Características:**
+*   **Validación Python:** Indica si el patrón es sintácticamente correcto para Python.
+*   **Resultados claros:** Muestra coincidencias y grupos capturados de forma sencilla.
+*   **Banderas:** Permite elegir y probar banderas como `IGNORECASE`, `MULTILINE`, entre otras.
 
-    Uso recomendado: Aprender regex desde cero, probar rápidamente patrones en JavaScript, explorar ejemplos comunitarios.
+**Uso recomendado:** Verificar la compatibilidad estricta con Python y probar el comportamiento de escapes y *raw strings*.
 
-3. Debuggex (debuggex.com)
+### 5. RegExLib ([regexlib.com](https://regexlib.com))
 
-    Descripción: Visualización gráfica mediante diagramas de ferrocarril (railroad diagrams). Soporta JavaScript, PCRE y Python.
+**Descripción:** Repositorio masivo de patrones enviados por usuarios, que incluye votaciones y comentarios de la comunidad.
 
-    Características:
+**Características:**
+*   **Buscador categorizado:** Localiza patrones por tipo (email, teléfono, código postal, etc.).
+*   **Pruebas integradas:** Permite probar los patrones encontrados directamente en la web.
 
-        Representación visual del flujo de la expresión regular.
+**Uso recomendado:** Encontrar inspiración o soluciones predefinidas para problemas comunes (se recomienda revisar siempre la calidad y seguridad del patrón).
 
-        Resalta el camino seguido en el diagrama al probar una cadena.
+### 6. ExtendsClass Regex Tester ([extendsclass.com](https://extendsclass.com/regex-tester.html))
 
-        No tan detallado en la sintaxis como Regex101, pero excelente para entender la estructura.
+**Descripción:** Herramienta en línea compatible con múltiples motores (Python, JavaScript, PHP, Java, etc.) y capacidad de generación de código.
 
-    Uso recomendado: Comprender visualmente patrones anidados, enseñar regex en presentaciones.
+**Uso recomendado:** Funciona como una alternativa sólida a Regex101, especialmente cuando se requiere generar rápidamente código de reemplazo.
 
-4. Pythex (pythex.org)
+### 7. Scriptular ([scriptular.com](https://scriptular.com))
 
-    Descripción: Probador de regex específico para Python (módulo re). Interfaz minimalista.
+**Descripción:** Probador orientado específicamente a JavaScript con una interfaz simplificada y referencias rápidas de consulta.
 
-    Características:
+**Uso recomendado:** Realización de pruebas rápidas y ligeras para desarrollos frontend.
 
-        Indica si el patrón es válido en Python.
+### 8. iHateRegex ([ihateregex.io](https://ihateregex.io))
 
-        Muestra coincidencias y grupos.
+**Descripción:** Buscador visual de regex con un enfoque moderno y amigable. Presenta patrones comunes acompañados de diagramas y explicaciones claras.
 
-        Permite elegir banderas (IGNORECASE, MULTILINE, etc.).
+**Uso recomendado:** Localizar rápidamente patrones para casos de uso típicos sin necesidad de escribirlos desde cero.
 
-    Uso recomendado: Verificar compatibilidad con Python, probar escapes y raw strings.
+### 9. Regulex ([jex.im/regulex](https://jex.im/regulex))
 
-5. RegExLib (regexlib.com)
+**Descripción:** Generador de diagramas de ferrocarril similar a Debuggex, pero con mayores opciones de personalización y exportación.
 
-    Descripción: Repositorio de patrones enviados por usuarios, con votaciones y comentarios.
+**Uso recomendado:** Creación de imágenes técnicas de patrones para incluir en documentación o presentaciones.
 
-    Características:
+## Aplicaciones de escritorio
 
-        Buscador de patrones por categoría (email, teléfono, código postal…).
+*   **RegexBuddy (Comercial, Windows):** Entorno extremadamente potente con depuración avanzada, generación de código y traducción entre sabores de regex. Es considerada la herramienta profesional por excelencia.
+*   **Kodos (Python):** Aunque es una herramienta más antigua, sigue siendo funcional para testear regex directamente en el entorno de Python de forma gráfica.
+*   **Expressions (macOS):** Una aplicación con diseño minimalista y elegante para usuarios de Mac que buscan rapidez y simplicidad.
 
-        Permite probar los patrones directamente.
+## Consejos de uso
 
-    Uso recomendado: Encontrar inspiración o soluciones predefinidas (pero siempre revisar la calidad).
+> [!WARNING]
+> No confíes ciegamente en patrones obtenidos de repositorios públicos sin entenderlos completamente; siempre adapta y valida según tus necesidades.
 
-6. ExtendsClass Regex Tester (extendsclass.com/regex-tester.html)
+*   **Motor de producción:** Asegúrate de probar siempre el patrón en el mismo motor que utilizarás en el entorno real de ejecución.
+*   **Pruebas de regresión:** Aprovecha las herramientas de *unit testing* (como las de Regex101) para verificar casos límite y evitar errores inesperados.
+*   **Compatibilidad:** Si desarrollas para JavaScript, recuerda que el soporte para funciones avanzadas (como *lookbehind* o Unicode) depende de la versión del motor; verifica siempre en el navegador o entorno de destino.
 
-    Descripción: Herramienta en línea para múltiples motores (Python, JavaScript, PHP, Java, etc.), con capacidad de generar código.
+---
 
-    Uso recomendado: Alternativa a Regex101 cuando se necesita generar rápidamente código de reemplazo.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Ejercicios Avanzados](../09_ejercicios/03_avanzados.md) | [🏠 Inicio](../../README.md) | [Libros y Guías ▶](02_libros_y_guias.md) |
 
-7. Scriptular (scriptular.com)
-
-    Descripción: Probador orientado a JavaScript con una interfaz sencilla y referencias rápidas.
-
-    Uso recomendado: Pruebas rápidas para frontend.
-
-8. iHateRegex (ihateregex.io)
-
-    Descripción: Buscador visual de regex con un enfoque amigable. Presenta patrones comunes con diagramas y explicaciones.
-
-    Uso recomendado: Encontrar patrones para casos de uso típicos sin tener que escribirlos desde cero.
-
-9. Regulex (jex.im/regulex)
-
-    Descripción: Generador de diagramas de ferrocarril similar a Debuggex, pero con más opciones de personalización y exportación.
-
-    Uso recomendado: Crear imágenes de patrones para documentación.
-
-Aplicaciones de escritorio
-
-    RegexBuddy (comercial, Windows): Potente entorno con depuración, generación de código para múltiples lenguajes, y traducción entre sabores. La opción profesional por excelencia.
-
-    Kodos (Python, obsoleto pero funcional): Herramienta gráfica para testear regex en Python.
-
-    Expressions (macOS): Aplicación minimalista para Mac.
-
-Consejos de uso
-
-    Siempre prueba el patrón en el mismo motor que usarás en producción.
-
-    Aprovecha los tests unitarios de Regex101 para verificar casos límite.
-
-    Si usas JavaScript, recuerda que el soporte de lookbehind y Unicode depende de la versión; compruébalo en el navegador o con Node.js.
-
-    No confíes ciegamente en patrones de repositorios públicos sin entenderlos; adapta y valida.

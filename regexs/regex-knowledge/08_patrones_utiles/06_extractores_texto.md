@@ -1,124 +1,125 @@
-# extractores_texto.md
-Extracción de hashtags (#etiqueta)
-regex
+# Extractores de Texto con Regex
 
+## Redes Sociales: Hashtags y Menciones
+
+### 1. Hashtags (`#etiqueta`)
+
+```regex
 (?<![^\s])#[a-zA-Z0-9_áéíóúüñ]+
+```
 
-O con soporte Unicode (\p{L}):
-regex
-
+**Soporte Unicode (`\p{L}`):**
+```regex
 (?<!\S)#[\p{L}\p{N}_]+
+```
 
-    El lookbehind (?<!\S) o (?<=\s|^) asegura que la almohadilla esté al inicio o precedida de espacio.
+*   **Lookbehind (`(?<!\S)`)**: Asegura que la almohadilla esté al inicio de la línea o precedida por un espacio en blanco.
+*   **Contenido**: Permite letras, números y guiones bajos.
 
-    Permite letras, números y guiones bajos; ajusta según el caso.
+### 2. Menciones (`@usuario`)
 
-Menciones @usuario
-regex
-
+```regex
 (?<!\S)@[a-zA-Z0-9_]+
+```
 
-Puede refinarse para aceptar puntos o guiones según la red social.
-Extracción de palabras entre comillas
+> [!TIP]
+> Este patrón puede refinarse para aceptar puntos o guiones medios según los requisitos específicos de cada red social.
 
-Para obtener texto dentro de comillas dobles, respetando escapes básicos:
-regex
+## Delimitadores y Contenedores
 
-"((?:[^"\\]|\\.)*)"
+### 1. Texto entre Comillas
 
-Para comillas simples:
-regex
+Para obtener el contenido dentro de comillas, respetando escapes básicos:
 
-'((?:[^'\\]|\\.)*)'
+*   **Comillas dobles**: `"((?:[^"\\]|\\.)*)"`
+*   **Comillas simples**: `'((?:[^'\\]|\\.)*)'`
 
-El grupo 1 contiene el texto interior.
-Extracción de URLs (visto anteriormente)
+> [!NOTE]
+> En ambos casos, el **Grupo 1** contiene el texto interior capturado.
 
-Recapitulando:
-regex
+## Datos de Contacto y Referencias
 
-https?://[^\s/$.?#].[^\s]*
+### 1. URLs (Recapitulando)
 
-Con lookbehind para evitar capturar desde mitad de palabra:
-regex
-
+```regex
 (?<!\S)(https?://[^\s]+)
+```
 
-Direcciones de correo electrónico en texto
-regex
+### 2. Direcciones de Email
 
+```regex
 [a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
+```
 
-Números de teléfono (formato genérico)
-regex
+### 3. Números de Teléfono (Genérico)
 
-(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4
+```regex
+(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}
+```
 
-Captura formatos como 123-456-7890, (123) 456-7890, +1-123-456-7890.
-Extracción de fechas (sencilla)
-regex
+> [!NOTE]
+> Captura formatos comunes como `123-456-7890`, `(123) 456-7890` o `+1-123-456-7890`.
 
+## Otros Extractores Útiles
+
+### 1. Fechas Sencillas
+```regex
 \b\d{1,2}/\d{1,2}/\d{4}\b|\b\d{4}-\d{1,2}-\d{1,2}\b
+```
 
-Extracción de palabras clave que empiezan con mayúscula (posibles nombres propios)
-regex
-
+### 2. Nombres Propios (Mayúsculas)
+```regex
 \b\p{Lu}\p{L}*\b
+```
+*(Requiere flag `u` en JavaScript, y soporte para `\p{Lu}` en el motor)*.
 
-Requiere flag u en JavaScript, y \p{Lu} en PCRE/Python regex.
-Patrones para logs comunes
+### 3. Códigos Postales
+*   **España (5 dígitos)**: `\b\d{5}\b`
+*   **EE.UU. (5 o 5+4 dígitos)**: `\b\d{5}(?:-\d{4})?\b`
+*   **Reino Unido**: `\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b`
 
-Log de Apache (formato común)
-regex
+## Análisis de Logs e HTML
 
+### 1. Log de Apache (Formato Común)
+```regex
 ^(\S+) (\S+) (\S+) \[([^\]]+)\] "([^"]*)" (\d+) (\d+|-)
+```
+**Grupos**: `1. IP`, `2. Ident`, `3. Usuario`, `4. Fecha`, `5. Petición`, `6. Código`, `7. Tamaño`.
 
-Grupos: IP, ident, usuario, fecha, petición, código, tamaño.
-Extracción de código postal de varios países
-
-    España (5 dígitos): \b\d{5}\b
-
-    EE.UU. (5 dígitos o 5+4): \b\d{5}(?:-\d{4})?\b
-
-    Reino Unido (formato complejo): \b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b
-
-Extracción de etiquetas HTML simples
-regex
-
+### 2. Etiquetas HTML
+```regex
 <\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>
+```
+*Captura el nombre de la etiqueta en el **Grupo 1**.*
 
-Obtiene la etiqueta en el grupo 1.
-Extracción de contenido entre tags específicos
-
-Para extraer el texto dentro de <title>...</title>:
-regex
-
+### 3. Contenido entre Tags Específicos (ej. `<title>`)
+```regex
 <title[^>]*>(.*?)</title>
+```
 
-Extracción de todos los números decimales de un texto
-regex
+## Estrategias para Extractores Eficientes
 
-\d+\.\d+|\d+
+1.  **Clases Negadas**: Siempre que sea posible, usa clases negadas en lugar de cuantificadores perezosos (`.*?`). Ejemplo: `<tag([^>]*)>` es más eficiente que `<tag.*?>`.
+2.  **Aislamiento**: Utiliza lookaheads y lookbehinds para aislar el objetivo sin consumir el contexto circundante.
+3.  **Divide y Vencerás**: En procesamientos pesados, a veces es más rápido dividir el texto con `split()` y aplicar regex simples que intentar usar una única expresión extremadamente compleja.
 
-Pero cuidado, porque capturaría fechas como 2023.10.05 como dos números. Se puede afinar con límites.
-Consejos para extractores eficientes
+## Ejemplo Combinado (JavaScript)
 
-    Siempre usar clases negadas en lugar de .*? cuando sea posible: <tag([^>]*)> en lugar de <tag.*?>.
-
-    Utilizar lookaheads/lookbehinds para aislar sin consumir contexto.
-
-    En procesamiento pesado, dividir el texto con split y aplicar regex simples es más rápido que una super-regex.
-
-Ejemplo combinado: extraer enlaces, menciones y hashtags de un tweet
-javascript
-
+```javascript
 let tweet = "Aprendiendo #regex con @usuario visita https://regex101.com";
 let patterns = {
     hashtag: /#[\w]+/g,
     mention: /@[\w]+/g,
     url: /https?:\/\/[^\s]+/g
 };
+
 console.log(tweet.match(patterns.hashtag)); // ["#regex"]
 console.log(tweet.match(patterns.mention)); // ["@usuario"]
 console.log(tweet.match(patterns.url));     // ["https://regex101.com"]
+```
+
+---
+
+[« Anterior](05_contrasenas.md) | [Siguiente »](../09_ejercicios/01_basicos.md)
+
 

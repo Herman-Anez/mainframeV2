@@ -1,79 +1,90 @@
-# numeros_y_monedas.md
-Números enteros y decimales básicos
+# Validación de Números y Monedas con Regex
 
-    Entero (positivo y negativo): ^-?\d+$
+## Números Enteros y Decimales Básicos
 
-    Decimal con punto: ^-?\d+\.\d+$
+Los siguientes patrones cubren los casos de uso numéricos más fundamentales:
 
-    Decimal con posible parte decimal opcional: ^-?\d+(?:\.\d+)?$
+*   **Entero (positivo y negativo)**: `^-?\d+$`
+*   **Decimal con punto**: `^-?\d+\.\d+$`
+*   **Decimal con parte opcional**: `^-?\d+(?:\.\d+)?$`
+*   **Notación científica**: `^-?\d+(?:\.\d+)?[eE][+-]?\d+$`
 
-    Notación científica: ^-?\d+(?:\.\d+)?[eE][+-]?\d+$
+## Números con Separadores de Miles
 
-Números con separadores de miles
-
-Formato estándar con coma para miles y punto decimal (ej. 1,234.56):
-regex
-
+### 1. Formato Anglosajón
+Coma para miles y punto para decimales (ej. `1,234.56`):
+```regex
 ^-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?$
+```
 
-Variante con espacio como separador de miles y coma decimal (ej. 1 234,56):
-regex
-
+### 2. Formato Europeo/Internacional
+Espacio como separador de miles y coma para decimales (ej. `1 234,56`):
+```regex
 ^-?\d{1,3}(?:[ ]\d{3})*(?:,\d{2})?$
+```
 
-Combinando ambos (poco común) se puede permitir tanto coma como punto mediante un patrón más complejo.
-Monedas con símbolo
+> [!NOTE]
+> Combinar ambos en un solo patrón es posible pero poco común, ya que suele preferirse establecer un estándar por aplicación o región.
 
-    Dólar/euro con símbolo prefijo: ^\$\s?-?\d+(?:\.\d{2})?$ o ^[€$]\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?$
+## Monedas con Símbolo
 
-    Símbolo al final (ej. 100€): ^\d+(?:\.\d{2})?\s?[€$]$
+Dependiendo de la ubicación del símbolo y el formato del número:
 
-    Con código de moneda: ^[A-Z]{3}\s?\d+(?:\.\d{2})?$
+*   **Símbolo prefijo (Dólar/Euro)**: `^\$\s?-?\d+(?:\.\d{2})?$` o `^[€$]\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?$`
+*   **Símbolo sufijo (ej. 100€)**: `^\d+(?:\.\d{2})?\s?[€$]$`
+*   **Código de moneda (ISO)**: `^[A-Z]{3}\s?\d+(?:\.\d{2})?$`
 
-Extracción flexible de cantidades monetarias en texto
-regex
+## Extracción Flexible de Cantidades en Texto
 
+Para capturar precios dentro de un párrafo ignorando la ambigüedad inicial:
+
+```regex
 (?:[\$\€\£]|USD|EUR)?\s?\d{1,3}(?:[,.]\d{3})*(?:\.\d{2})?(?:\s?(?:€|USD))?
+```
 
-Esto captura cantidades como $1,000.50, 2000 EUR, 3.500,75 € (con formato europeo, pero se confundiría con separador de miles). La ambigüedad entre millares y decimales puede resolverse con un patrón más inteligente que detecte el último punto/coma como decimal.
+> [!CAUTION]
+> Esto captura cantidades como `$1,000.50`, `2000 EUR`, o `3.500,75 €`. La ambigüedad entre millares y decimales puede ser un problema si el texto mezcla formatos regionales.
 
+### Estrategia de "Último Separador"
 Patrón que supone que el último separador especial es el decimal:
-regex
-
+```regex
 [-+]?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\b
+```
 
-Pero fallaría si no hay decimales. Para cantidades sin decimales: \b\d{1,3}(?:[.,]\d{3})+\b (sin decimales).
-Porcentajes
-regex
+## Porcentajes
 
+```regex
 ^-?\d+(?:\.\d+)?%$
+```
 
-O con restricción de rango 0-100: no es práctico con regex pura; mejor validar después.
-Validaciones adicionales
+> [!TIP]
+> Si necesitas restringir el rango (ej. 0-100), no es práctico hacerlo con regex pura; es mucho más eficiente validar el formato con regex y el rango con lógica de programación.
 
-    No permitir ceros a la izquierda (excepto el número 0 o 0.xx): ^(?:0|[1-9]\d*)(?:\.\d+)?$
+## Validaciones Adicionales y Buenas Prácticas
 
-    Números negativos precisos: el signo menos solo al inicio.
+*   **Evitar ceros a la izquierda**: `^(?:0|[1-9]\d*)(?:\.\d+)?$` (Permite `0` o `0.xx`, pero no `0123`).
+*   **Precisión de Negativos**: Asegúrate de que el signo menos solo se permita al inicio absoluto de la cadena.
 
-Optimizaciones y compatibilidad
+> [!IMPORTANT]
+> **Regla de Oro**: No utilices regex para realizar cálculos, comparaciones de magnitud o sumas. Úsalas exclusivamente para validar el **formato visual** y extraer los datos.
 
-    Todos estos patrones funcionan en cualquier motor con pequeñas adaptaciones (escapado de $, uso de \d).
+## Ejemplos Prácticos
 
-    Para aplicaciones financieras, valida la cantidad con regex y después conviértela a un tipo numérico para comprobar límites.
-
-    No uses regex para sumas o comparaciones, solo para formato.
-
-Ejemplos prácticos
-
-Python: extraer todos los precios en euros de un texto
-python
-
+### Python: Extraer precios en euros
+```python
 import re
+
 pat = r'(\d{1,3}(?:\.\d{3})*,\d{2})\s?€|\d{1,3}(?:,\d{3})*\.\d{2}\s?EUR'
 precios = re.findall(pat, texto)
+```
 
-JavaScript: validar número de teléfono (aunque no es moneda) y monedas
-javascript
-
+### JavaScript: Validar moneda
+```javascript
 const moneyRegex = /^\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?$/;
 moneyRegex.test("$1,234.56"); // true
+```
+
+---
+
+[« Anterior](03_fechas_y_horas.md) | [Siguiente »](05_contrasenas.md)
+

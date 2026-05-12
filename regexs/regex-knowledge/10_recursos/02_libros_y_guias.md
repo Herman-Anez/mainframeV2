@@ -1,57 +1,60 @@
-# libros_y_guias.md
-Libros imprescindibles
-Mastering Regular Expressions (Jeffrey E. F. Friedl)
+# Libros y Guías de Referencia
 
-    Edición: 3ª edición (2006). Sigue siendo la referencia definitiva.
+Contar con fuentes de información confiables es fundamental para dominar las expresiones regulares. A continuación, se presenta una selección de los mejores recursos impresos y digitales para todos los niveles de experiencia.
 
-    Contenido: Cubre a fondo el funcionamiento de los motores NFA/DFA, dialéctos (Perl, Java, .NET, PHP, etc.), técnicas de optimización, y ejemplos prácticos.
+## Libros imprescindibles
 
-    Por qué leerlo: Proporciona una comprensión mental del backtracking y cómo escribir patrones eficientes. Es el "libro de cabecera" para cualquiera que use regex de forma intensiva.
+### 1. Mastering Regular Expressions (Jeffrey E. F. Friedl)
 
-Regular Expressions Cookbook (Jan Goyvaerts & Steven Levithan)
+> [!NOTE]
+> **Edición:** 3ª edición (2006). Sigue siendo la referencia definitiva y el libro más respetado en la materia.
 
-    Edición: 2ª edición (2012).
+*   **Contenido:** Cubre a fondo el funcionamiento interno de los motores NFA/DFA, dialectos (Perl, Java, .NET, PHP, etc.), técnicas avanzadas de optimización y casos de estudio reales.
+*   **Por qué leerlo:** Proporciona el modelo mental necesario para entender el backtracking y cómo escribir patrones de alto rendimiento. Es la base teórica indispensable.
 
-    Contenido: Recetario con cientos de soluciones para problemas comunes en 8 lenguajes (Perl, PCRE, Python, JavaScript, Java, .NET, Ruby, etc.). Cada receta explica el patrón y las diferencias entre sabores.
+### 2. Regular Expressions Cookbook (Jan Goyvaerts & Steven Levithan)
 
-    Por qué leerlo: Ideal para consultar rápidamente cómo validar un email, extraer datos o manipular cadenas en el lenguaje deseado.
+> [!TIP]
+> **Edición:** 2ª edición (2012). Un enfoque eminentemente práctico.
 
-Introducing Regular Expressions (Michael Fitzgerald)
+*   **Contenido:** Un recetario con cientos de soluciones para problemas comunes en 8 lenguajes (Perl, PCRE, Python, JavaScript, Java, .NET, Ruby, etc.). Cada solución incluye una explicación detallada del patrón y las variantes según el motor.
+*   **Por qué leerlo:** Es ideal para consulta rápida: desde validar emails complejos hasta manipulación avanzada de cadenas en un lenguaje específico.
 
-    Edición: 2012.
+### 3. Introducing Regular Expressions (Michael Fitzgerald)
 
-    Contenido: Introducción amigable para principiantes. Cubre lo esencial con ejemplos claros.
+*   **Edición:** 2012. Una puerta de entrada accesible.
+*   **Contenido:** Introducción amigable que cubre los fundamentos esenciales con ejemplos claros y directos.
+*   **Por qué leerlo:** Es el punto de partida recomendado si nunca has utilizado regex; prioriza la práctica sobre la teoría académica densa.
 
-    Por qué leerlo: Buen comienzo si nunca has usado regex; más práctico que académico.
+## Guías y tutoriales online gratuitos
 
-Guías y tutoriales online gratuitos
+*   **MDN Web Docs – Regular Expressions:** [developer.mozilla.org](https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Regular_expressions). La guía oficial de JavaScript, extremadamente completa y actualizada con las últimas especificaciones de ECMAScript.
+*   **RegexOne:** [regexone.com](https://regexone.com). Ofrece lecciones interactivas paso a paso. Ideal para aprender haciendo, aumentando la complejidad de forma gradual.
+*   **RegexLearn:** [regexlearn.com](https://regexlearn.com). Plataforma interactiva con un diseño moderno que cubre desde conceptos básicos hasta técnicas avanzadas.
+*   **RegExr Cheatsheet:** [regexr.com](https://regexr.com). Dentro de la herramienta RegExr, la pestaña de referencia rápida es una de las mejores guías visuales disponibles.
+*   **Documentación oficial por lenguaje:**
+    *   **Python:** [Módulo re](https://docs.python.org/3/library/re.html).
+    *   **PHP:** [Funciones PCRE](https://php.net/manual/es/book.pcre.php).
+    *   **Java:** [Java Tutorials - Regex](https://docs.oracle.com/javase/tutorial/essential/regex/).
 
-    MDN Web Docs – Regular Expressions (developer.mozilla.org/es/docs/Web/JavaScript/Guide/Regular_expressions): Guía oficial de JavaScript. Muy completa y actualizada con ES2022+.
+## Cursos y material audiovisual
 
-    RegexOne (regexone.com): Lecciones interactivas paso a paso. Empieza desde cero y añade complejidad gradualmente. Ideal para principiantes.
+*   **YouTube:** Canales como **Derek Banas**, **The Coding Train** y **FreeCodeCamp** ofrecen cursos completos de regex aplicados a distintos lenguajes.
+*   **Plataformas especializadas:** Sitios como Udemy, Pluralsight o LinkedIn Learning cuentan con cursos dedicados al motor específico de JavaScript o Python.
+*   **Real Python:** [realpython.com](https://realpython.com). Posee tutoriales de alta calidad centrados en el uso práctico de expresiones regulares en el ecosistema Python.
 
-    RegexLearn (regexlearn.com): Plataforma interactiva con ejercicios, desde lo básico hasta avanzado. Similar a RegexOne pero con una interfaz moderna.
+## Comunidades y foros
 
-    RegExr Cheatsheet (regexr.com): Dentro de la propia herramienta, la pestaña "Cheatsheet" es una guía de referencia rápida muy útil.
+> [!IMPORTANT]
+> Al participar en comunidades, intenta siempre proporcionar el texto de ejemplo y el motor de regex que estás utilizando.
 
-    Python docs – re module (docs.python.org/3/library/re.html): Documentación oficial del módulo re. Incluye ejemplos y limitaciones. Para regex, consulta su documentación en PyPI.
+*   **Stack Overflow (etiqueta `[regex]`):** El repositorio de preguntas y respuestas más grande del mundo. Es fundamental buscar antes de preguntar, ya que la mayoría de los problemas comunes ya han sido resueltos.
+*   **Reddit (r/regex):** Un espacio para discusiones técnicas, compartir patrones ingeniosos y mantenerse al tanto de nuevas herramientas.
+*   **Comunidad Regex101:** Permite explorar miles de patrones públicos creados por otros usuarios para aprender de su lógica.
 
-    PHP.net – PCRE (php.net/manual/es/book.pcre.php): Documentación de las funciones preg y patrones soportados.
+---
 
-    Java Tutorials – Regular Expressions (docs.oracle.com/javase/tutorial/essential/regex/): Guía oficial de Oracle.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Herramientas Online](01_herramientas_online.md) | [🏠 Inicio](../../README.md) | [Cheat Sheets ▶](03_cheatsheets/index.md) |
 
-Cursos y vídeos
-
-    "Regular Expressions for Dummies" (YouTube): Muchos canales de programación dedican listas de reproducción. Busca Derek Banas, The Coding Train, FreeCodeCamp.
-
-    "Mastering Regular Expressions in JavaScript" (Udemy / Pluralsight): Varios cursos pagos, pero con profundidad en el motor JS.
-
-    "Regular Expressions in Python" (Real Python, realpython.com): Tutorial excelente con ejemplos prácticos.
-
-Comunidades y foros
-
-    Stack Overflow (etiqueta [regex]): Miles de preguntas y respuestas. Ideal para ver soluciones a problemas específicos. Aprovecha también la etiqueta del lenguaje correspondiente.
-
-    Reddit (r/regex): Comunidad activa donde se comparten patrones y se discuten técnicas.
-
-    Regex101 Community: Dentro de la herramienta, se pueden buscar patrones públicos y ver cómo otros resolvieron problemas.
