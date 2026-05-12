@@ -1,0 +1,61 @@
+docker-knowledge/
+├── 01-fundamentos/
+│   ├── que-es-docker.md
+│   ├── imagenes-y-capas.md
+│   ├── contenedores-vs-vm.md
+│   └── arquitectura-interna.md
+├── 02-comandos/
+│   ├── imagenes.md          (pull, build, tag, push, rmi, history...)
+│   ├── contenedores.md      (run, exec, logs, inspect, cp, stats...)
+│   ├── redes.md
+│   ├── volumenes.md
+│   └── sistema.md           (info, version, prune, system df)
+├── 03-dockerfiles/
+│   ├── instrucciones.md     (explicación detallada de cada una)
+│   ├── buenas-practicas.md
+│   ├── multistage-builds.md
+│   └── ejemplos/
+│       ├── nodejs/
+│       │   ├── Dockerfile
+│       │   └── README.md
+│       ├── python/
+│       │   └── Dockerfile
+│       └── go/
+│           └── Dockerfile
+├── 04-compose/
+│   ├── sintaxis-compose.md
+│   ├── redes-y-volumenes.md
+│   └── ejemplos/
+│       ├── wordpress/
+│       │   ├── compose.yaml
+│       │   └── README.md
+│       └── microservicios/
+│           ├── compose.yaml
+│           └── README.md
+├── 05-redes/
+│   ├── bridge-personalizada.md
+│   ├── overlay-swarm.md
+│   └── troubleshooting.md
+├── 06-volumenes-datos/
+│   ├── volumes-vs-bind.md
+│   ├── backup-restore.md
+│   └── ejemplos/
+│       └── postgres-persistente/
+│           └── compose.yaml
+├── 07-swarm/
+│   ├── init-cluster.md
+│   ├── servicios.md
+│   ├── stacks.md
+│   └── secrets-configs.md
+├── 08-seguridad/
+│   ├── rootless.md
+│   ├── user-namespaces.md
+│   └── image-scanning.md
+├── 09-optimizacion/
+│   ├── imagenes-minimas.md
+│   └── build-cache.md
+├── 10-referencias/
+│   ├── cheatsheet.pdf        (o enlaces)
+│   ├── dockerfile-boilerplates.md
+│   └── links-utiles.md
+└── README.md                 (índice general y cómo usar el repositorio)
