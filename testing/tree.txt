@@ -1,0 +1,107 @@
+testing-knowledge/
+│
+├── 00-fundamentos/
+│   ├── 01-que-es-testing.md
+│   ├── 02-principios-del-testing.md
+│   ├── 03-objetivos-y-beneficios.md
+│   ├── 04-mitos-y-falacias.md
+│   └── 05-ciclo-de-vida-del-testing.md
+│
+├── 01-tipos-de-pruebas/
+│   ├── caja-blanca-negra-gris.md
+│   ├── funcionales/
+│   │   ├── unitarias.md
+│   │   ├── integracion.md
+│   │   ├── sistema.md
+│   │   ├── aceptacion.md
+│   │   ├── regresion.md
+│   │   ├── smoke-sanity.md
+│   │   └── exploratorias.md
+│   ├── no-funcionales/
+│   │   ├── rendimiento/
+│   │   │   ├── carga.md
+│   │   │   ├── estres.md
+│   │   │   ├── estabilidad.md
+│   │   │   └── escalabilidad.md
+│   │   ├── seguridad.md
+│   │   ├── usabilidad.md
+│   │   ├── compatibilidad.md
+│   │   └── fiabilidad.md
+│   └── según-nivel/
+│       └── piramide-testing.md
+│
+├── 02-tecnicas-de-diseno-de-pruebas/
+│   ├── caja-negra/
+│   │   ├── particion-equivalencia.md
+│   │   ├── valores-limite.md
+│   │   ├── tablas-de-decision.md
+│   │   ├── transicion-estados.md
+│   │   └── casos-de-uso.md
+│   ├── caja-blanca/
+│   │   ├── cobertura-sentencias.md
+│   │   ├── cobertura-ramas.md
+│   │   └── pruebas-de-bucles.md
+│   └── basadas-en-experiencia/
+│       ├── error-guessing.md
+│       └── pruebas-exploratorias.md
+│
+├── 03-enfoques-de-desarrollo/
+│   ├── tdd.md
+│   ├── bdd.md
+│   ├── atdd.md
+│   └── otros-enfoques/
+│       └── acceptance-testing.md
+│
+├── 04-automatizacion/
+│   ├── 01-introduccion-automatizacion.md
+│   ├── 02-piramide-automatizacion.md
+│   ├── 03-testing-trophy.md
+│   ├── 04-frameworks-por-tecnologia.md
+│   ├── 05-pruebas-api.md
+│   ├── 06-pruebas-ui-e2e.md
+│   ├── 07-mocks-stubs-fakes.md
+│   ├── 08-integracion-continua.md
+│   └── 09-buenas-practicas-codigo-test.md
+│
+├── 05-gestion-de-pruebas/
+│   ├── plan-de-pruebas.md
+│   ├── casos-de-prueba.md
+│   ├── suites-y-datos-de-prueba.md
+│   ├── ciclo-de-vida-defecto.md
+│   ├── herramientas-gestion.md
+│   ├── metricas-y-kpis/
+│   │   ├── cobertura.md
+│   │   ├── defectos.md
+│   │   └── efectividad.md
+│   └── informes-y-comunicacion.md
+│
+├── 06-cultura-y-procesos/
+│   ├── shift-left-shift-right.md
+│   ├── integracion-agil.md
+│   ├── calidad-continua.md
+│   ├── psico-testing.md
+│   └── colaboracion-qa-dev.md
+│
+├── 07-herramientas/
+│   ├── gestion-de-pruebas.md
+│   ├── automatizacion-ui.md
+│   ├── automatizacion-api.md
+│   ├── rendimiento.md
+│   ├── seguridad.md
+│   ├── accesibilidad.md
+│   └── comparativas.md
+│
+├── 08-checklists-y-plantillas/
+│   ├── plantilla-plan-pruebas.md
+│   ├── plantilla-caso-de-prueba.md
+│   ├── checklist-smoke.md
+│   ├── checklist-regresion.md
+│   └── checklist-exploratoria.md
+│
+├── 09-referencias-y-recursos/
+│   ├── libros.md
+│   ├── blogs-y-podcasts.md
+│   ├── certificaciones.md
+│   └── glosario.md
+│
+└── README.md

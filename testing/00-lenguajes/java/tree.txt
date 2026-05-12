@@ -1,0 +1,63 @@
+testing-java/
+│
+├── teoria/
+│   ├── 01-fundamentos.md
+│   ├── 02-tipos-de-pruebas.md
+│   ├── 03-pruebas-unitarias.md
+│   ├── 04-pruebas-integracion.md
+│   ├── 05-mocking.md
+│   ├── 06-JUnit5.md
+│   ├── 07-TestNG.md
+│   ├── 08-SpringBoot-Testing.md
+│   ├── 09-buenas-practicas.md
+│   ├── 10-TDD.md
+│   ├── 11-BDD.md
+│   └── 12-cobertura-y-calidad.md
+│
+├── ejemplos/
+│   ├── junit5-basics/
+│   │   ├── src/test/java/folder/calculadora/
+│   │   │   └── CalculadoraTest.java
+│   │   └── pom.xml
+│   ├── mockito/
+│   │   ├── src/test/java/folder/servicio/
+│   │   │   └── ServicioTest.java
+│   │   └── pom.xml
+│   ├── spring-boot-test/
+│   │   ├── src/test/java/folder/controlador/
+│   │   │   └── UsuarioControllerTest.java
+│   │   └── pom.xml
+│   ├── testcontainers/
+│   │   ├── src/test/java/folder/repositorio/
+│   │   │   └── UsuarioRepositoryTest.java
+│   │   └── pom.xml
+│   ├── cucumber-bdd/
+│   │   ├── features/login.feature
+│   │   ├── stepdefs/LoginSteps.java
+│   │   └── pom.xml
+│   └── rest-assured/
+│       ├── src/test/java/folder/api/
+│       │   └── ApiTest.java
+│       └── pom.xml
+│
+├── recursos/
+│   ├── libros-recomendados.md
+│   ├── enlaces-utiles.md
+│   ├── herramientas.md
+│   └── plantillas/
+│       ├── test-unitario-template.java
+│       └── test-integracion-template.java
+│
+├── katas-tdd/
+│   ├── fizzbuzz/
+│   ├── string-calculator/
+│   ├── password-validator/
+│   └── banking-kata/
+│
+├── proyectos-demostracion/
+│   └── app-biblioteca/
+│       ├── src/main/java/
+│       ├── src/test/java/
+│       └── README.md
+│
+└── README.md
