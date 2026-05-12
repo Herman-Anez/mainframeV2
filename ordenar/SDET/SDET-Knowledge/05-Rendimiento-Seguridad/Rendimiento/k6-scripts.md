@@ -1,11 +1,13 @@
-# k6 Scripts
+# 📁 Rendimiento: k6 Scripts
 
 k6 (Grafana k6) es una herramienta moderna de código abierto, escrita en Go, con scripting en JavaScript. Su filosofía se alinea perfectamente con los SDET que ya programan JS/TS. Ofrece rendimiento superior con menos recursos que JMeter y está diseñada para CI/CD.
 
 > [!NOTE]
 > **Instalación (Linux)**: `sudo apt install k6`, o usando Docker.
 
-## Script Básico (script.js)
+---
+
+## 📌 Script Básico (`script.js`)
 
 ```javascript
 import http from 'k6/http';
@@ -33,21 +35,27 @@ export default function () {
 }
 ```
 
-## Conceptos Fundamentales desde la Óptica del SDET
+---
 
-- **options.stages**: Define el perfil de carga fácilmente (ramp-up, sostenido, bajada). No necesita lógica de bucles; k6 maneja el control de concurrencia.
-- **thresholds**: Son las aserciones de rendimiento. Si se superan, k6 termina con código de salida distinto de cero, lo que permite romper el pipeline CI.
+## 📌 Conceptos Fundamentales desde la Óptica del SDET
+
+- **`options.stages`**: Define el perfil de carga fácilmente (ramp-up, sostenido, bajada). No necesita lógica de bucles; k6 maneja el control de concurrencia.
+- **`thresholds`**: Son las aserciones de rendimiento. Si se superan, k6 termina con código de salida distinto de cero, lo que permite romper el pipeline CI.
 - **Checks**: Validaciones por petición (funcionalidad/rendimiento). Se pueden usar para verificar el cuerpo de la respuesta y que no haya errores de negocio.
 - **Métricas**: k6 recolecta automáticamente métricas como `http_req_duration`, `data_received`, `vus` (usuarios virtuales activos), etc. Además, se pueden definir métricas personalizadas con *Trend*, *Counter*, *Gauge*.
 - **Ejecución local vs. nube**: `k6 run script.js` para local, o `k6 cloud script.js` para ejecución en k6 Cloud con más capacidad.
 
-## Casos de Uso SDET
+---
+
+## 📌 Casos de Uso SDET
 
 - **Pruebas de regresión de rendimiento**: En el pipeline de CI, tras cada merge a main, ejecutar un script k6 con carga baja (prueba de humo de rendimiento) que verifique que los tiempos no se disparan.
 - **Pruebas de estrés de un endpoint**: Ejecución manual o en horarios programados.
 - **Pruebas continuas en staging**: Workflow diario que corre k6 con 500 usuarios y almacena las métricas en InfluxDB para visualizar en Grafana.
 
-## Integración en GitHub Actions
+---
+
+## 📌 Integración en GitHub Actions
 
 ```yaml
 - name: Run k6 performance test
@@ -65,7 +73,9 @@ export default function () {
 > [!TIP]
 > También se puede ejecutar directamente con el comando `k6 run` en un runner que tenga k6 instalado.
 
-## Comparativa con JMeter
+---
+
+## 📌 Comparativa con JMeter
 
 k6 tiene una menor curva de aprendizaje para desarrolladores, es más ligero y está orientado a "infraestructura como código". JMeter sigue siendo más adecuado para protocolos no web (JDBC, FTP) o cuando se requiere un modelo de concurrencia muy específico, aunque k6 también permite `constant-arrival-rate` en el executor.
 

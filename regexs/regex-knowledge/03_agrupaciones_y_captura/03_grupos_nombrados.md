@@ -1,160 +1,111 @@
-# grupos_nombrados.md
-Concepto
+# 📁 Agrupación y Captura: Grupos Nombrados
 
-Los grupos con nombre asignan un identificador textual a un grupo de captura, en lugar de depender de un número. Esto mejora la legibilidad y evita problemas cuando se modifica la expresión añadiendo o quitando grupos.
-Variantes de sintaxis según motor
+## 📌 Concepto
 
-Lamentablemente no hay un estándar único, pero los más comunes son:
-Motor / Lenguaje	Sintaxis de definición	Retroreferencia interna	Uso en reemplazo
-Python (re)	(?P<nombre>...)	(?P=nombre)	\g<nombre> en reemplazo
-PCRE / Perl	(?<nombre>...) o (?'nombre'...)	\k<nombre> o \k'nombre'	$+{nombre} (Perl) o \g<nombre>
-JavaScript (ES2018+)	(?<nombre>...)	\k<nombre>	$<nombre> en reemplazo
-.NET	(?<nombre>...) o (?'nombre'...)	\k<nombre>	${nombre} en reemplazo
-Java (Java 7+)	(?<nombre>...)	\k<nombre>	${nombre} en reemplazo
+Los **grupos con nombre** permiten asignar un identificador textual a un grupo de captura, en lugar de depender únicamente de su índice numérico. Esto mejora drásticamente la legibilidad del código y hace que las expresiones regulares sean más resistentes a cambios estructurales (como añadir o quitar grupos).
 
-Nota: En Python, el módulo re solo soporta (?P<nombre>). El módulo externo regex soporta ambas.
-Ejemplo con diferentes sintaxis
+---
 
-Python:
-python
+## 📌 Variantes de sintaxis según motor
 
+Lamentablemente, no existe un estándar único para definir grupos nombrados, aunque las variantes más comunes son las siguientes:
+
+| Motor / Lenguaje | Sintaxis de definición | Retroreferencia interna | Uso en reemplazo |
+| :--- | :--- | :--- | :--- |
+| **Python (`re`)** | `(?P<nombre>...)` | `(?P=nombre)` | `\g<nombre>` |
+| **PCRE / Perl** | `(?<nombre>...)` o `(?'nombre'...)` | `\k<nombre>` o `\k'nombre'` | `$+{nombre}` (Perl) o `\g<nombre>` |
+| **JavaScript (ES2018+)** | `(?<nombre>...)` | `\k<nombre>` | `$<nombre>` |
+| **.NET** | `(?<nombre>...)` o `(?'nombre'...)` | `\k<nombre>` | `${nombre}` |
+| **Java (Java 7+)** | `(?<nombre>...)` | `\k<nombre>` | `${nombre}` |
+
+> [!NOTE]
+> En Python, el módulo estándar `re` solo soporta la sintaxis `(?P<nombre>)`. El módulo externo `regex` soporta tanto la sintaxis de Python como la de PCRE.
+
+---
+
+## 📌 Ejemplo con diferentes sintaxis
+
+### 🔹 Python
+```python
 import re
 patron = r'(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})'
 m = re.search(patron, '2024-12-25')
-m.group('year')   # '2024'
-m.group('month')  # '12'
-m.group('day')    # '25'
 
-Retroreferencia dentro del patrón: (?P=year) para casar el mismo año.
+print(m.group('year'))   # '2024'
+print(m.group('month'))  # '12'
+print(m.group('day'))    # '25'
+```
 
-JavaScript:
-javascript
-
+### 🔹 JavaScript
+```javascript
 let regex = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/;
 let match = regex.exec('2024-12-25');
-match.groups.year   // '2024'
-match.groups.month  // '12'
-match.groups.day    // '25'
 
-Java:
-java
+console.log(match.groups.year);   // '2024'
+console.log(match.groups.month);  // '12'
+console.log(match.groups.day);    // '25'
+```
 
+### 🔹 Java
+```java
 Pattern p = Pattern.compile("(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})");
 Matcher m = p.matcher("2024-12-25");
+
 if (m.find()) {
-    m.group("year"); // "2024"
-    m.group("month"); // "12"
-    m.group("day"); // "25"
+    System.out.println(m.group("year"));  // "2024"
+    System.out.println(m.group("month")); // "12"
+    System.out.println(m.group("day"));   // "25"
 }
+```
 
-Ventajas de los nombres
+---
 
-    Código más legible: m.group('year') vs m.group(1).
+## 📌 Ventajas de los nombres
 
-    Resistente a cambios: si insertas un nuevo grupo antes, la numeración cambia, pero los nombres permanecen intactos.
+1.  **Código más legible:** Es mucho más claro leer `m.group('year')` que `m.group(1)`.
+2.  **Resistencia a cambios:** Si insertas un nuevo grupo de captura al inicio de la regex, la numeración de los grupos posteriores cambiará, pero las referencias por nombre seguirán funcionando sin cambios en el código.
+3.  **Autodocumentación:** El propio patrón describe qué información está intentando extraer, actuando como documentación interna.
 
-    Documentación interna: el propio patrón describe lo que captura.
+---
 
-Reglas y compatibilidades
+## 📌 Reglas y compatibilidades
 
-    Los nombres deben ser identificadores válidos (letras, dígitos, guiones bajos, sin empezar por dígito en la mayoría de motores).
+- **Identificadores válidos:** Los nombres deben ser identificadores válidos (letras, dígitos y guiones bajos en la mayoría de motores, y generalmente no pueden empezar por un dígito).
+- **Nombres únicos:** Por lo general, no puede haber dos grupos con el mismo nombre dentro del mismo patrón.
+    - *Excepción:* Motores como .NET permiten nombres duplicados, compartiendo la captura. En PCRE y JavaScript esto resultará en un error de sintaxis.
+- **Retrocompatibilidad:** Los grupos nombrados también conservan su índice numérico; puedes seguir accediendo a ellos mediante números si es necesario.
 
-    No puede haber dos grupos con el mismo nombre dentro del mismo patrón (aunque algunos motores como .NET permiten grupos con el mismo nombre, compartiendo la captura; en PCRE/JS es error).
+---
 
-    Si un motor no soporta grupos nombrados, hay que limitarse a la numeración clásica.
+## 📌 Uso en reemplazos
 
-Uso en reemplazos
-
-Python:
-python
-
-re.sub(r'(?P<nombre>\w+)', r'\g<nombre>', texto)
-
-JavaScript:
-javascript
-
-texto.replace(/(?<nombre>\w+)/g, '$<nombre>')
-
-Compatibilidad con cuantificadores y anidamiento
-
-Los grupos con nombre pueden anidarse y combinarse con grupos sin nombre. La numeración de todos los grupos sigue el orden de apertura; los nombres no alteran la numeración. Se puede referenciar un grupo por número aunque tenga nombre.
-# grupos_nombrados.md
-Concepto
-
-Los grupos con nombre asignan un identificador textual a un grupo de captura, en lugar de depender de un número. Esto mejora la legibilidad y evita problemas cuando se modifica la expresión añadiendo o quitando grupos.
-Variantes de sintaxis según motor
-
-Lamentablemente no hay un estándar único, pero los más comunes son:
-Motor / Lenguaje	Sintaxis de definición	Retroreferencia interna	Uso en reemplazo
-Python (re)	(?P<nombre>...)	(?P=nombre)	\g<nombre> en reemplazo
-PCRE / Perl	(?<nombre>...) o (?'nombre'...)	\k<nombre> o \k'nombre'	$+{nombre} (Perl) o \g<nombre>
-JavaScript (ES2018+)	(?<nombre>...)	\k<nombre>	$<nombre> en reemplazo
-.NET	(?<nombre>...) o (?'nombre'...)	\k<nombre>	${nombre} en reemplazo
-Java (Java 7+)	(?<nombre>...)	\k<nombre>	${nombre} en reemplazo
-
-Nota: En Python, el módulo re solo soporta (?P<nombre>). El módulo externo regex soporta ambas.
-Ejemplo con diferentes sintaxis
-
-Python:
-python
-
+### 🔹 Python
+```python
 import re
-patron = r'(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})'
-m = re.search(patron, '2024-12-25')
-m.group('year')   # '2024'
-m.group('month')  # '12'
-m.group('day')    # '25'
+texto = "Juan Perez"
+# Intercambiar nombre y apellido usando nombres de grupo
+re.sub(r'(?P<nombre>\w+) (?P<apellido>\w+)', r'\g<apellido>, \g<nombre>', texto)
+# Resultado: "Perez, Juan"
+```
 
-Retroreferencia dentro del patrón: (?P=year) para casar el mismo año.
+### 🔹 JavaScript
+```javascript
+let texto = "Juan Perez";
+texto.replace(/(?<nombre>\w+) (?<apellido>\w+)/, '$<apellido>, $<nombre>');
+// Resultado: "Perez, Juan"
+```
 
-JavaScript:
-javascript
+---
 
-let regex = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/;
-let match = regex.exec('2024-12-25');
-match.groups.year   // '2024'
-match.groups.month  // '12'
-match.groups.day    // '25'
+## 📌 Compatibilidad con cuantificadores y anidamiento
 
-Java:
-java
+Los grupos con nombre pueden anidarse y combinarse libremente con grupos sin nombre y grupos sin captura. La numeración de todos los grupos (nombrados o no) sigue el orden de apertura de los paréntesis.
 
-Pattern p = Pattern.compile("(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})");
-Matcher m = p.matcher("2024-12-25");
-if (m.find()) {
-    m.group("year"); // "2024"
-    m.group("month"); // "12"
-    m.group("day"); // "25"
-}
+> [!TIP]
+> Puedes referenciar un grupo por número incluso si tiene un nombre asignado. El nombre es simplemente un alias adicional para facilitar el acceso.
 
-Ventajas de los nombres
+---
 
-    Código más legible: m.group('year') vs m.group(1).
-
-    Resistente a cambios: si insertas un nuevo grupo antes, la numeración cambia, pero los nombres permanecen intactos.
-
-    Documentación interna: el propio patrón describe lo que captura.
-
-Reglas y compatibilidades
-
-    Los nombres deben ser identificadores válidos (letras, dígitos, guiones bajos, sin empezar por dígito en la mayoría de motores).
-
-    No puede haber dos grupos con el mismo nombre dentro del mismo patrón (aunque algunos motores como .NET permiten grupos con el mismo nombre, compartiendo la captura; en PCRE/JS es error).
-
-    Si un motor no soporta grupos nombrados, hay que limitarse a la numeración clásica.
-
-Uso en reemplazos
-
-Python:
-python
-
-re.sub(r'(?P<nombre>\w+)', r'\g<nombre>', texto)
-
-JavaScript:
-javascript
-
-texto.replace(/(?<nombre>\w+)/g, '$<nombre>')
-
-Compatibilidad con cuantificadores y anidamiento
-
-Los grupos con nombre pueden anidarse y combinarse con grupos sin nombre. La numeración de todos los grupos sigue el orden de apertura; los nombres no alteran la numeración. Se puede referenciar un grupo por número aunque tenga nombre.
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Grupos sin Captura](02_grupos_sin_captura.md) | [Índice](../README.md) | [Retroreferencias](04_retroreferencias.md) |

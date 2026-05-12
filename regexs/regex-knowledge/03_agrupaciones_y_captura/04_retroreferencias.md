@@ -1,71 +1,120 @@
-# retroreferencias.md
-Definición
+# 📁 Agrupación y Captura: Retroreferencias
 
-Una retroreferencia es una construcción que hace referencia a un grupo de captura previamente encontrado en el mismo patrón. Permite exigir que el texto actual coincida exactamente con lo capturado por ese grupo.
-Sintaxis básica
+## 📌 Definición
 
-    \1, \2, ... \9 (y en algunos motores \10 o más usando \10 como referencia al grupo 10, pero puede ser ambiguo; en PCRE se usa \g{10} o \10 solo si hay al menos 10 grupos, sino se interpreta como backreference 1 seguido de '0'. Mejor usar \g{n} para números grandes.)
+Una **retroreferencia** (*backreference*) es una construcción que permite hacer referencia a un grupo de captura previamente encontrado dentro del mismo patrón. En lugar de repetir la lógica del patrón, la retroreferencia exige que el texto actual coincida **exactamente** con la subcadena capturada por dicho grupo.
 
-Para grupos con nombre:
+---
 
-    Python (?P=name)
+## 📌 Sintaxis básica
 
-    PCRE/JS/Java/.NET: \k<name> o \k'name'
+### 🔹 Para grupos numerados
+- **`\1`, `\2`, ... `\9`**: Referencia a los grupos del 1 al 9.
+- **`\10` o superior**: Puede ser ambiguo. En motores como PCRE, `\10` se interpreta como el grupo 10 si este existe; de lo contrario, se interpreta como el grupo 1 seguido del carácter `"0"`.
 
-Ejemplo clásico: palabras repetidas
-regex
+> [!TIP]
+> Para evitar ambigüedades con números de dos dígitos, se recomienda usar la notación `\g{n}` (si el motor la soporta, como en PCRE o Python `regex`).
 
+### 🔹 Para grupos con nombre
+- **Python:** `(?P=nombre)`
+- **PCRE / JS / Java / .NET:** `\k<nombre>` o `\k'nombre'`
+
+---
+
+## 📌 Ejemplo clásico: Palabras repetidas
+
+```regex
 \b(\w+)\s+\1\b
+```
 
-Coincidencia: "hola hola", "mundo mundo". Explicación:
+Este patrón coincide con palabras duplicadas como `"hola hola"` o `"mundo mundo"`.
 
-    (\w+) captura una palabra.
+1.  **`(\w+)`**: Captura la primera palabra en el **Grupo 1**.
+2.  **`\s+`**: Coincide con uno o más espacios.
+3.  **`\1`**: Exige que el siguiente bloque de texto sea idéntico al capturado en el Paso 1.
 
-    \s+ espacios.
+---
 
-    \1 forzosamente debe ser la misma palabra capturada.
+## 📌 Coincidencia de comillas y delimitadores
 
-Coincidencia de comillas y delimitadores
-regex
-
+```regex
 (["'])(.*?)\1
+```
 
-En "una frase" o 'otra', captura la frase dentro de comillas iguales. El grupo 1 captura la comilla de apertura y \1 fuerza la misma de cierre.
-Numeración y retroreferencias en grupos anidados
+Este patrón es ideal para capturar texto entre comillas, asegurando que la comilla de cierre sea la misma que la de apertura.
+- En `"una frase"`, el Grupo 1 captura `"` y `\1` busca `"`.
+- En `'otra frase'`, el Grupo 1 captura `'` y `\1` busca `'`.
+- En `"frase mal cerrada'`, el patrón fallará porque `\1` esperará una comilla doble.
 
-Dado ((a)(b(c)))d, las referencias:
+---
 
-    \1 → abc
+## 📌 Numeración en grupos anidados
 
-    \2 → a
+Dado el patrón `((a)(b(c)))d`, las retroreferencias corresponden a:
+- **`\1`** → `"abc"` (primer paréntesis de apertura)
+- **`\2`** → `"a"`
+- **`\3`** → `"bc"`
+- **`\4`** → `"c"`
 
-    \3 → bc
+> [!IMPORTANT]
+> Lo habitual es que el grupo referenciado esté a la **izquierda** de la retroreferencia. Intentar referenciar un grupo que aún no ha sido procesado (retroreferencia hacia adelante) suele fallar o tener un comportamiento indefinido según el motor.
 
-    \4 → c
+---
 
-Las retroreferencias pueden referirse a grupos que aparecen después (en motores que permiten backreferences hacia adelante, aunque son muy raras y generalmente no se recomiendan). Lo normal es que el grupo referenciado esté a la izquierda de la retroreferencia.
-Referencias en cadenas de reemplazo
+## 📌 Referencias en cadenas de reemplazo
 
-Muchas herramientas usan $1, $2 o \1, \2 en la cadena de sustitución, refiriéndose a los grupos capturados en la búsqueda. Por ejemplo:
+Aunque se llaman igual, las referencias en la cadena de sustitución funcionan de forma distinta:
+- **Propósito:** Insertar el contenido capturado en el nuevo texto.
+- **Sintaxis:**
+    - **sed / Perl:** `$1`, `$2`.
+    - **Python:** `\1`, `\2`.
+    - **JavaScript:** `$1`, `$2`.
 
-    s/(\w+)\s+(\w+)/$2 $1/ en sed/Perl invierte dos palabras.
+### 🔹 Ejemplo de inversión de palabras en Python
+```python
+import re
+texto = "Juan Perez"
+# Intercambiar palabras
+resultado = re.sub(r'(\w+)\s+(\w+)', r'\2 \1', texto)
+# resultado: "Perez Juan"
+```
 
-    En Python: re.sub(r'(\w+)\s+(\w+)', r'\2 \1', texto).
+---
 
-Atención: Las retroreferencias en la cadena de reemplazo no son iguales a las del patrón. En el patrón se usa \1 (sólo motores), en reemplazo depende del motor; en Python se usa \1, en JavaScript $1. Las retroreferencias en el patrón exigen coincidencia exacta de la subcadena capturada.
-Retroreferencias a grupos no existentes o que no participaron
+## 📌 Retroreferencias a grupos opcionales
 
-Si un grupo es opcional y no casa, la retroreferencia puede considerarse un carácter vacío y casará con el vacío (en muchos motores) o fallará. Ejemplo: (a)? \1 en "b b". El grupo 1 no casa, entonces \1 intenta casar con vacío; normalmente no hay casamiento porque espera algo. En la práctica, una referencia a un grupo que no participó hace fallar la expresión. Específicamente, en PCRE una backreference a un grupo que no capturó provoca un fallo de coincidencia a menos que se permita referencia vacía. En Python re, si el grupo no participó, la backreference falla (no coincide con nada). Por eso es aconsejable que el grupo sea obligatorio si se va a referenciar.
-Retroreferencias y recursión / subrutinas
+Si un grupo es opcional (seguido de `?` o `*`) y no coincide con nada, la retroreferencia suele comportarse de la siguiente manera:
+- **Python `re`:** La retroreferencia fallará (no coincide con nada).
+- **PCRE:** La coincidencia fallará a menos que se trate de una referencia vacía permitida.
+- **En general:** Es una mala práctica referenciar grupos que podrían no capturar nada, ya que el comportamiento varía entre motores.
 
-En motores con soporte avanzado (PCRE, Perl), se puede usar (?1), (?&nombre) para llamar a un subpatrón como subrutina (no solo comparar con lo capturado, sino re-ejecutar el subpatrón). Esto es distinto a las retroreferencias, que simplemente comparan con la cadena literal previamente capturada. Las retroreferencias comprueban igualdad de texto, no repetición del patrón.
+---
 
-Ejemplo: (\d{3})-\1 obliga a que los dos bloques de dígitos sean idénticos. Si quisieras repetir el patrón (tres dígitos cualesquiera), simplemente repetirías \d{3}.
-Número máximo de retroreferencias
+## 📌 Retroreferencias vs. Subrutinas
 
-En la mayoría de motores, \1 a \9 están disponibles. Para números de dos dígitos, se usa \10 o \g{10} para evitar ambigüedad. En PCRE, \10 se interpreta como backreference 10 si hay al menos 10 grupos, sino como backreference 1 seguido de '0'. La notación \g{10} es segura para cualquier número. Python re no soporta \g{n} estándar, pero en la práctica con números mayores de 99 es extremadamente raro.
-Limitaciones y riesgos
+En motores avanzados (PCRE, Perl), es importante no confundir una retroreferencia con una **subrutina** `(?1)`.
+- **Retroreferencia (`\1`)**: Compara con el **texto literal** ya capturado. Exige igualdad de contenido.
+- **Subrutina (`(?1)`)**: Ejecuta el **patrón** del grupo 1 nuevamente. No exige que el contenido sea el mismo, solo que cumpla la misma regla.
 
-    Las retroreferencias pueden causar backtracking intenso porque el motor debe volver a intentar la captura de la referencia si hay múltiples posibilidades. Ejemplo: ^(a+)\1$ sobre "aaaa" funciona bien, pero si se extiende, puede degradar.
+### 🔹 Ejemplo de diferencia
+- `(\d{3})-\1`: Coincide con `123-123`, pero NO con `123-456`.
+- `(\d{3})-(?1)`: Coincide con `123-123` Y con `123-456`.
 
-    No son implementables en autómatas finitos puros; los motores híbridos (DFA) no las soportan.
+---
+
+## 📌 Número máximo de retroreferencias
+
+La mayoría de los motores permiten hasta 99 retroreferencias. Si necesitas más de 9 grupos, utiliza la notación segura `\g{n}` para evitar que `\10` sea interpretado como el grupo 1 seguido de un cero literal.
+
+---
+
+## 📌 Limitaciones y riesgos
+
+1.  **Backtracking intenso:** El uso de retroreferencias impide que el motor de regex utilice optimizaciones basadas en autómatas finitos (DFA), lo que puede llevar a un rendimiento pobre en casos complejos.
+2.  **Incompatibilidad:** Los motores que se basan estrictamente en expresiones regulares matemáticas (como el DFA de awk o grep estándar) no soportan retroreferencias, ya que estas técnicamente convierten el lenguaje en uno no regular.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Grupos Nombrados](03_grupos_nombrados.md) | [Índice](../README.md) | [Grupos Atómicos](05_grupos_atomicos.md) |

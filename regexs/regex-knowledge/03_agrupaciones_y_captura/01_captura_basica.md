@@ -1,43 +1,51 @@
-# captura_basica.md
-¿Qué es un grupo de captura?
+# 📁 Agrupación y Captura: Captura Básica
 
-Un grupo de captura es una subexpresión encerrada entre paréntesis (...). Cumple dos funciones:
+## 📌 ¿Qué es un grupo de captura?
 
-    Agrupar partes del patrón para aplicar cuantificadores, alternancia o anidamiento.
+Un grupo de captura es una subexpresión encerrada entre paréntesis `(...)`. Cumple dos funciones principales:
 
-    Capturar la subcadena que coincide con esa subexpresión, permitiendo recuperarla después (en código, reemplazos o mediante retroreferencias).
+1.  **Agrupar** partes del patrón para aplicar cuantificadores, alternancia o anidamiento de forma conjunta.
+2.  **Capturar** la subcadena que coincide con esa subexpresión, permitiendo recuperarla posteriormente (en el código, en operaciones de reemplazo o mediante retroreferencias).
 
-Ejemplo sencillo:
-regex
+### 🔹 Ejemplo sencillo
 
+```regex
 (\d{3})-(\d{2})-(\d{4})
+```
 
-Aplicado a "123-45-6789", los paréntesis capturan tres partes: "123", "45" y "6789".
-Numeración de los grupos
+Aplicado al texto `"123-45-6789"`, los paréntesis capturan tres partes: `"123"`, `"45"` y `"6789"`.
 
-Los grupos de captura se numeran de izquierda a derecha según el orden del paréntesis de apertura. El grupo 0 es siempre la coincidencia completa, y los grupos 1, 2, 3... corresponden a cada paréntesis.
-regex
+---
 
+## 📌 Numeración de los grupos
+
+Los grupos de captura se numeran de izquierda a derecha según el orden del paréntesis de apertura. 
+
+- El **Grupo 0** es siempre la coincidencia completa del patrón.
+- Los **Grupos 1, 2, 3...** corresponden a cada par de paréntesis en orden de aparición.
+
+### 🔹 Ejemplo de numeración
+
+```regex
 (a(b)c)d
+```
 
-Coincidencia sobre "abcd":
+Coincidencia sobre `"abcd"`:
+- **Grupo 0:** `"abcd"`
+- **Grupo 1:** `"abc"` (primer paréntesis de apertura)
+- **Grupo 2:** `"b"` (segundo paréntesis, anidado)
 
-    Grupo 0: "abcd"
+> [!NOTE]
+> La numeración es fija y no depende de si el grupo participó o no en la coincidencia. Un grupo opcional que no casó tendrá un valor `null`, `None` o una cadena vacía, dependiendo del motor de regex utilizado.
 
-    Grupo 1: "abc" (primer paréntesis)
+---
 
-    Grupo 2: "b" (segundo paréntesis, anidado)
+## 📌 Cómo acceder a las capturas desde código
 
-    Grupo 3: no existe.
+La forma de obtener el contenido de los grupos varía según el lenguaje de programación:
 
-La numeración es fija y no depende de si el grupo participó o no en la coincidencia. Un grupo opcional que no casó tendrá un valor None o vacío según el motor.
-Cómo acceder a las capturas desde código
-
-La forma de obtener los grupos varía según el lenguaje:
-
-Python:
-python
-
+### 🔹 Python
+```python
 import re
 m = re.search(r'(\d{3})-(\d{2})-(\d{4})', '123-45-6789')
 m.group(0)  # '123-45-6789'
@@ -45,20 +53,20 @@ m.group(1)  # '123'
 m.group(2)  # '45'
 m.group(3)  # '6789'
 m.groups()  # ('123', '45', '6789')
+```
 
-JavaScript:
-javascript
-
+### 🔹 JavaScript
+```javascript
 let regex = /(\d{3})-(\d{2})-(\d{4})/;
 let match = '123-45-6789'.match(regex);
 match[0]; // '123-45-6789'
 match[1]; // '123'
 match[2]; // '45'
 match[3]; // '6789'
+```
 
-Java:
-java
-
+### 🔹 Java
+```java
 Pattern p = Pattern.compile("(\\d{3})-(\\d{2})-(\\d{4})");
 Matcher m = p.matcher("123-45-6789");
 if (m.find()) {
@@ -66,53 +74,76 @@ if (m.find()) {
     m.group(2); // "45"
     m.group(3); // "6789"
 }
+```
 
-Grupos anidados
+---
 
-Los paréntesis se pueden anidar; la numeración sigue el orden de apertura. Ejemplo:
-regex
+## 📌 Grupos anidados
 
+Los paréntesis se pueden anidar libremente; la numeración siempre sigue el orden de apertura de los paréntesis.
+
+### 🔹 Ejemplo de anidamiento
+```regex
 ((a)(b(c)))d
+```
 
-Texto: "abcd"
+Texto: `"abcd"`
+- **Grupo 1:** `"abc"` (abre primero)
+- **Grupo 2:** `"a"` (abre segundo)
+- **Grupo 3:** `"bc"` (abre tercero, corresponde a `b(c)`)
+- **Grupo 4:** `"c"` (abre cuarto)
 
-    Grupo 1: "abc" (abre primero)
+---
 
-    Grupo 2: "a" (segundo)
+## 📌 Grupos opcionales y valor nulo
 
-    Grupo 3: "bc" (tercero, b(c))
+Un grupo puede ser condicional gracias a cuantificadores como `?` o `*`. Si la parte del patrón no coincide, el grupo sigue existiendo pero su valor queda vacío o indefinido.
 
-    Grupo 4: "c" (cuarto)
-
-Grupos opcionales y valor nulo
-
-Un grupo puede ser condicional gracias a ? o *. Si la parte no casa, el grupo queda vacío o indefinido.
-regex
-
+### 🔹 Ejemplo
+```regex
 (a(\d)?b)
+```
 
-En "ab": Grupo 1 "ab", grupo 2 None (o vacío). En "a5b": Grupo 2 "5".
-Uso de grupos para aplicar cuantificadores a partes complejas
+- En `"ab"`: Grupo 1 es `"ab"`, Grupo 2 es `None` (o vacío).
+- En `"a5b"`: Grupo 2 es `"5"`.
 
-Sin captura nos sirve para agrupar, por ejemplo:
-regex
+---
 
+## 📌 Uso de grupos para aplicar cuantificadores
+
+Los grupos nos permiten aplicar repeticiones a secuencias complejas, no solo a caracteres individuales.
+
+```regex
 (https?:\/\/)?(www\.)?example\.com
+```
 
-Los grupos capturan el protocolo y el subdominio si existen, permitiendo extraerlos después.
-Captura y alternancia
-regex
+Los grupos capturan el protocolo y el subdominio si existen, permitiendo extraerlos o validarlos opcionalmente.
 
+### 🔹 Captura y alternancia
+```regex
 (jpg|png|gif)$
+```
+Este patrón captura la extensión del archivo. Solo se captura la alternativa que finalmente coincide con el texto.
 
-Captura la extensión del archivo. Sólo se captura la alternativa que coincide.
-Eficiencia y memoria
+---
 
-Cada grupo de captura consume memoria porque se almacena la subcadena capturada. En patrones de gran escala puede ralentizar. Si no necesitas las capturas, considera usar grupos sin captura (?:...) (ver siguiente sección).
-Buenas prácticas
+## 📌 Eficiencia y memoria
 
-    Usa nombres de grupo (siguiente sección) para mejorar la legibilidad.
+Cada grupo de captura consume recursos de memoria porque el motor debe almacenar la subcadena capturada para su uso posterior. 
 
-    Cierra siempre los paréntesis; un paréntesis no balanceado genera error.
+> [!IMPORTANT]
+> En patrones de gran escala o procesamiento masivo de datos, el uso excesivo de capturas puede ralentizar la ejecución. Si solo necesitas agrupar pero no capturar la información, utiliza **grupos sin captura** `(?:...)`.
 
-    Escapa los paréntesis literales: \( y \).
+---
+
+## 📌 Buenas prácticas
+
+- **Usa nombres de grupo:** Para mejorar la legibilidad en patrones complejos (ver sección de Grupos Nombrados).
+- **Equilibra paréntesis:** Asegúrate siempre de cerrar todos los paréntesis abiertos para evitar errores de sintaxis.
+- **Escapa caracteres literales:** Si necesitas buscar un paréntesis literal en el texto, usa `\(` y `\)`.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Ejemplos Prácticos](../02_cuantificadores/03_ejemplos_practicos.md) | [Índice](../README.md) | [Grupos sin Captura](02_grupos_sin_captura.md) |

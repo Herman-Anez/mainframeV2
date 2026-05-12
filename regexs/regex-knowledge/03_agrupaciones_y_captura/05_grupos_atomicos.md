@@ -1,76 +1,100 @@
-# grupos_atomicos.md
-Definición
+# 📁 Agrupación y Captura: Grupos Atómicos
 
-Un grupo atómico es una agrupación que, una vez que ha coincidido, no permite backtracking hacia su interior. Su sintaxis es (?> ... ). Está disponible en PCRE, Perl, Java, .NET, Python con el módulo regex externo. No está presente en JavaScript ni en el módulo re estándar de Python.
-Comportamiento
+## 📌 Definición
 
-Cuando el motor entra en un grupo atómico (?>subexpresión), intenta casar la subexpresión. Si tiene éxito, sale del grupo y descarta todos los estados internos de backtracking. Si posteriormente el resto del patrón falla, el motor no reintentará con menos repeticiones ni otras alternativas dentro del grupo atómico. Simplemente fallará la coincidencia global desde esa posición y buscará en otro lugar (si procede).
+Un **grupo atómico** es una agrupación que, una vez que ha coincidido con una parte del texto, "bloquea" esa coincidencia y no permite que el motor de búsqueda realice backtracking (retroceso) hacia su interior.
 
-Esto es muy similar a los cuantificadores posesivos (un cuantificador posesivo es equivalente a un grupo atómico que envuelve un elemento con cuantificador). Por ejemplo:
-a++ es equivalente a (?>a+).
-Ejemplo de funcionamiento
-regex
+Su sintaxis es `(?> ... )`.
 
-(?>a+)b
+> [!NOTE]
+> Los grupos atómicos están disponibles en motores como PCRE, Perl, Java y .NET. En Python, solo están disponibles mediante el módulo externo `regex` (el módulo estándar `re` no los soporta). JavaScript no cuenta con soporte nativo para esta funcionalidad.
 
-Texto: "aaaab"
+---
 
-    Entra en el grupo, a+ consume todas las as (4). Sale del grupo atómico.
+## 📌 Comportamiento
 
-    Luego intenta casar b con el siguiente carácter. Como es posesivo, no retrocede para ceder as. En "aaaab" el siguiente es b, éxito, capture "aaaab".
+Cuando el motor entra en un grupo atómico `(?>subexpresión)`, intenta encontrar una coincidencia para dicha subexpresión de la forma habitual. Sin embargo, si tiene éxito y sale del grupo, **descarta todos los estados internos de retroceso**.
 
-Texto: "aaaa"
+Si el resto del patrón (lo que está fuera del grupo) falla posteriormente, el motor no intentará volver al grupo atómico para probar con menos repeticiones o alternativas diferentes; simplemente fallará la coincidencia global desde esa posición.
 
-    a+ consume las 4 as. Sale del grupo atómico.
+### 🔹 Similitud con cuantificadores posesivos
+Un cuantificador posesivo (como `++` o `*+`) es funcionalmente equivalente a un grupo atómico que envuelve a un elemento cuantificado:
+- `a++` es equivalente a `(?>a+)`.
+- `.*+` es equivalente a `(?>.*)`.
 
-    Intenta b pero no hay más caracteres. Falla global sin backtracking interior. Habría fallado igual que con a++b.
+---
 
-Diferencia crucial con grupo normal (no atómico)
+## 📌 Ejemplo de funcionamiento
 
-Con un grupo normal (a+)b en "aaaa":
+### 🔹 Patrón: `(?>a+)b`
 
-    a+ consume todas las as.
+**Caso 1: Texto `"aaaab"`**
+1.  El motor entra en el grupo, `a+` consume las 4 letras `"a"`.
+2.  Sale del grupo atómico.
+3.  Intenta casar la `b` final. Como el siguiente carácter es efectivamente `b`, la coincidencia es exitosa: `"aaaab"`.
 
-    Intenta b, falla.
+**Caso 2: Texto `"aaaa"`**
+1.  `a+` consume las 4 letras `"a"`.
+2.  Sale del grupo atómico.
+3.  Intenta casar la `b` final, pero la cadena se ha terminado.
+4.  **Resultado:** El motor falla inmediatamente. No intenta retroceder para ver si `a+` podría haber tomado solo 3 letras `"a"` para dejar paso a la `b`.
 
-    Backtrack: a+ cede una a, ahora tiene 3 as. Intenta b, aún falla, cede otra, etc., hasta agotar. Esto genera varios pasos de retroceso, pero en este caso simple no es grave. En patrones complejos con anidamientos, la ausencia de backtracking mejora enormemente el rendimiento.
+---
 
-Usos principales
+## 📌 Diferencia con grupos normales
 
-    Optimización: Evitar backtracking catastrófico. Si sabemos que dentro del grupo no necesitamos que el motor reconsidere cuántos caracteres tomó, lo encerramos en un grupo atómico. Ejemplo clásico: (?>.*?) no tiene sentido porque .*? es perezoso, pero un grupo atómico con .* puede ser útil para capturar hasta un delimitador sin retroceder: (?>[^"]*) para contenido sin comillas, aunque una clase negada no provoca backtracking de todas formas.
+Comparemos con un grupo normal `(a+)b` sobre el texto `"aaaa"`:
+1.  `a+` toma las 4 letras `"a"`.
+2.  Intenta casar `b`, falla.
+3.  **Backtrack:** `a+` cede una `"a"`, quedándose con 3. Intenta `b`, falla.
+4.  El proceso se repite (cede otra `"a"`, etc.) hasta que se agotan las posibilidades.
 
-    Patrones de desastre: (a+)*b con entrada "aaaa..." causa backtracking exponencial. Si transformamos a (?>a+)*b o (a++)*b, eliminamos el problema.
+> [!TIP]
+> En patrones muy complejos o con anidamientos de cuantificadores, eliminar estos pasos de retroceso innecesarios mediante grupos atómicos mejora drásticamente el rendimiento y evita el **backtracking catastrófico**.
 
-    Garantizar que una palabra completa se capture sin retroceder: \b(?>\w+)\b asegura que una vez que se toma una palabra no se suelte parte para intentar un casamiento más largo (útil si hay alternancia que podría casar con prefijos). Pero normalmente las clases negadas o cuantificadores greedys sin opciones no causan problema; el grupo atómico es relevante cuando hay alternancia interior.
+---
 
-Simulación en motores sin soporte
+## 📌 Usos principales
 
-En JavaScript (sin grupos atómicos ni posesivos), se puede simular un grupo atómico con un lookahead y una retroreferencia:
-javascript
+1.  **Optimización de rendimiento:** Evitar que el motor explore caminos que sabemos de antemano que no conducirán a una coincidencia exitosa.
+2.  **Prevención de desastres:** Patrones como `(a+)*b` son extremadamente peligrosos con entradas largas que no coinciden. Transformarlo a `(?>a+)*b` elimina el riesgo de cuelgue por recursividad infinita.
+3.  **Captura de palabras completas:** Asegurar que una vez que se toma una palabra, el motor no intente "soltar" el final de la misma para intentar casar con un prefijo de otra regla.
 
-// Simular (?>a+)b
+---
+
+## 📌 Simulación en motores sin soporte
+
+En JavaScript, se puede simular un grupo atómico utilizando un **lookahead positivo** y una **retroreferencia**:
+
+```javascript
+// Simulación de (?>a+)b
 /(?=(a+))\1b/
+```
 
-El lookahead captura a+ de forma greedy, la retroreferencia \1 consume exactamente esa captura sin posibilidad de backtracking. Así se evita que el motor ceda as. Pero hay limitaciones: no se puede simular un grupo atómico complejo con múltiples alternativas si hay solapamientos. Otra técnica en JS: usar (?:a+)(?!...) no es igual.
+1.  `(?=(a+))`: El lookahead captura `a+` de forma greedy pero no consume el texto.
+2.  `\1`: La retroreferencia consume exactamente lo que el lookahead acaba de capturar. Como las retroreferencias son fijas, no permiten backtracking, logrando el mismo efecto que un grupo atómico.
 
-En Python re estándar, no hay grupos atómicos; se puede recurrir al módulo regex.
-Combinación con otros constructos
+---
 
-Los grupos atómicos pueden contener otras agrupaciones y cuantificadores.
+## 📌 Precauciones
 
-Ejemplo avanzado: validar un número racional con formato \d+(\.\d+)? sin permitir retroceso en la parte entera si la parte decimal falla:
-regex
+Un grupo atómico no debe usarse si la coincidencia global **realmente requiere** retroceder dentro de él para tener éxito. 
 
-(?> \d+ ) (?: \. \d+ )?
+> [!CAUTION]
+> Si utilizas un grupo atómico y el motor "bloquea" una coincidencia que impedía ver la solución global correcta, la regex fallará aunque el texto sea válido para el patrón lógico. Úsalo solo cuando estés seguro de que la subexpresión interior no necesita ser reconsiderada.
 
-Aunque en este caso el backtracking no sería perjudicial, es un ejemplo.
-Precauciones
+---
 
-Un grupo atómico no debe usarse si la coincidencia global puede requerir retroceder dentro de él. Por ejemplo, (?>".*?") para buscar cadenas entre comillas fallará con "hola" y "mundo" porque .*? dentro del grupo atómico consume lo mínimo y nunca retrocede, pero en realidad necesitamos que el grupo abarque "hola". Si ponemos (?>".*?"), en "hola" y "mundo" la primera comilla se empareja, .*? toma cero caracteres, luego espera la comilla final, encuentra " inmediatamente (porque "hola" tiene una comilla tras "). En realidad (?>".*?") sí podría funcionar porque .*? se expande como parte de su propia lógica perezosa, pero el grupo es atómico y eso impediría que una vez que el grupo encontró una coincidencia válida (una cadena mínima), si luego falla el resto del patrón, no se reconsideren más cadenas más largas. Podría no ser lo deseado. La regla: úsalo cuando la subexpresión interior no necesita ser ajustada para dar paso a la coincidencia global tras la salida del grupo.
-Ejemplo de optimización real: números con miles separados
-regex
+## 📌 Ejemplo de optimización real: Números con separadores
 
+```regex
 (?> \d{1,3} (?: , \d{3} )* ) (?: \. \d+ )?
+```
 
-Agrupar la parte entera en grupo atómico evita que el motor intente distribuciones alternativas de comas si la entrada es inválida, acelerando el fallo.
-/////////////////////////////////////////////////////////////////////////////
+Agrupar la lógica de la parte entera en un grupo atómico evita que el motor intente distribuciones alternativas de comas si la entrada es inválida (por ejemplo, si faltan dígitos al final), acelerando significativamente el fallo del patrón.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Retroreferencias](04_retroreferencias.md) | [Índice](../README.md) | [Lookahead (Aserciones)](../04_aserciones/01_lookahead.md) |
