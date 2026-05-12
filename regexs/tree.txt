@@ -1,0 +1,74 @@
+regex-knowledge/
+│
+├── 01_fundamentos/
+│   ├── 01_que_es_regex.md
+│   ├── 02_metacaracteres.md
+│   ├── 03_literales_y_escape.md
+│   ├── 04_anclas_y_limites.md
+│   └── 05_clases_de_caracteres.md
+│
+├── 02_cuantificadores/
+│   ├── 01_greedy_lazy.md
+│   ├── 02_posesivos.md
+│   └── 03_ejemplos_practicos.md
+│
+├── 03_agrupaciones_y_captura/
+│   ├── 01_captura_basica.md
+│   ├── 02_grupos_sin_captura.md
+│   ├── 03_grupos_nombrados.md
+│   ├── 04_retroreferencias.md
+│   └── 05_grupos_atomicos.md
+│
+├── 04_aserciones/
+│   ├── 01_lookahead.md
+│   ├── 02_lookbehind.md
+│   └── 03_ejemplos_validacion.md
+│
+├── 05_flags_y_modos/
+│   ├── 01_flags_comunes.md
+│   ├── 02_modo_verboso.md
+│   └── 03_unicode.md
+│
+├── 06_motores_y_dialectos/
+│   ├── 01_comparativa_general.md
+│   ├── 02_PCRE.md
+│   ├── 03_JavaScript.md
+│   ├── 04_Python.md
+│   ├── 05_Java.md
+│   ├── 06_NET.md
+│   └── 07_POSIX.md
+│
+├── 07_temas_avanzados/
+│   ├── 01_recursion_y_subrutinas.md
+│   ├── 02_condicionales.md
+│   ├── 03_propiedades_unicode.md
+│   ├── 04_backtracking_catastrofico.md
+│   └── 05_optimizacion.md
+│
+├── 08_patrones_utiles/
+│   ├── 01_validacion_emails.md
+│   ├── 02_urls.md
+│   ├── 03_fechas_y_horas.md
+│   ├── 04_numeros_y_monedas.md
+│   ├── 05_contrasenas.md
+│   └── 06_extractores_texto.md
+│
+├── 09_ejercicios/
+│   ├── 01_basicos.md
+│   ├── 02_intermedios.md
+│   ├── 03_avanzados.md
+│   └── soluciones/
+│       ├── 01_basicos_sol.md
+│       ├── 02_intermedios_sol.md
+│       └── 03_avanzados_sol.md
+│
+├── 10_recursos/
+│   ├── 01_herramientas_online.md
+│   ├── 02_libros_y_guias.md
+│   ├── 03_cheatsheets/
+│   │   ├── pcre_cheatsheet.pdf
+│   │   ├── python_cheatsheet.pdf
+│   │   └── javascript_cheatsheet.pdf
+│   └── 04_enlaces_utiles.md
+│
+└── README.md  (índice general y bienvenida)
