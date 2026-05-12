@@ -1,28 +1,41 @@
-Waits-esperas
+# Waits & Esperas
 
-Las esperas son el mecanismo más crítico para evitar flaky tests. Selenium ejecuta comandos tan rápido como el código; si la UI no ha cargado el elemento, lanza NoSuchElementException.
+Las esperas son el mecanismo más crítico para evitar flaky tests. Selenium ejecuta comandos tan rápido como el código; si la UI no ha cargado el elemento, lanza `NoSuchElementException`.
 
-    Esperas implícitas:
-    driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-    Se configura una sola vez y aplica a todas las búsquedas de elementos. Si el driver no encuentra el elemento de inmediato, espera un tiempo máximo antes de lanzar la excepción.
+### Esperas implícitas
 
-        Desventaja: No es flexible; a veces se necesita esperar a que un elemento sea clickable o visible, no solo a que exista en el DOM. Combinar implícitas con explícitas puede causar comportamientos extraños.
+```java
+driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+```
 
-    Esperas explícitas (la práctica recomendada por Selenium):
-    Con WebDriverWait y ExpectedConditions se espera una condición concreta con un timeout dado.
-    java
+Se configura una sola vez y aplica a todas las búsquedas de elementos. Si el driver no encuentra el elemento de inmediato, espera un tiempo máximo antes de lanzar la excepción.
 
-    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-    WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id("submit")));
-    element.click();
+> [!CAUTION]
+> **Desventaja**: No es flexible; a veces se necesita esperar a que un elemento sea clickable o visible, no solo a que exista en el DOM. Combinar implícitas con explícitas puede causar comportamientos extraños.
 
-        Condiciones predefinidas: visibilityOf, presenceOfElementLocated, invisibilityOf, textToBe, etc.
+### Esperas explícitas
 
-        Permite ignorar excepciones específicas durante la espera.
+La práctica recomendada por Selenium. Con `WebDriverWait` y `ExpectedConditions` se espera una condición concreta con un timeout dado.
 
-        Son dinámicas: si la condición se cumple antes, la ejecución continúa.
+```java
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id("submit")));
+element.click();
+```
 
-    Esperas fluidas (FluentWait):
-    Variante más configurable: se define el tiempo máximo, frecuencia de sondeo y qué excepciones ignorar. Útil cuando un elemento puede tardar debido a animaciones o peticiones AJAX.
+- **Condiciones predefinidas**: `visibilityOf`, `presenceOfElementLocated`, `invisibilityOf`, `textToBe`, etc.
+- **Flexibilidad**: Permite ignorar excepciones específicas durante la espera.
+- **Dinámicas**: Son dinámicas; si la condición se cumple antes, la ejecución continúa.
 
-Principio del SDET: Las esperas explícitas encapsuladas dentro de los Page Objects garantizan robustez y ocultan la complejidad.
+### Esperas fluidas (FluentWait)
+
+Variante más configurable: se define el tiempo máximo, frecuencia de sondeo y qué excepciones ignorar. Útil cuando un elemento puede tardar debido a animaciones o peticiones AJAX.
+
+> [!IMPORTANT]
+> **Principio del SDET**: Las esperas explícitas encapsuladas dentro de los Page Objects garantizan robustez y ocultan la complejidad.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [WebDriver Basics](./WebDriver-basics.md) | [Home](../../../index.md) | [Page Object Model](./PageObjectModel.md) |
