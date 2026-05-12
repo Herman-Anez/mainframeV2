@@ -274,6 +274,7 @@ Aplicación práctica para el SDET
 
 ///////////////////////////////////////////////////////////////////////
 
+
 /2///////////////////////////////////////////////////////////////////////
 02-Programacion / Lenguajes / Java
 
@@ -2458,6 +2459,261 @@ Si deseas que amplíe con ejemplos concretos de configuración de ReportPortal e
 ///////////////////////////////////////////////////////////////////////
 
 /8///////////////////////////////////////////////////////////////////////
+Abordamos el módulo 08-Herramientas-Complementarias. Estas herramientas no son el centro de la automatización, pero potencian el día a día de un SDET al facilitar la trazabilidad, la comunicación, la depuración y la colaboración. Profundizamos en cada una.
+Jira y TestRail (Gestión de pruebas y trazabilidad)
+
+Un SDET no solo escribe código, también se integra en el flujo de gestión de proyectos y calidad. Jira para la gestión de incidencias e historias, y TestRail (o similares) para la gestión de casos de prueba, son herramientas que el SDET configura y conecta para que la automatización aporte trazabilidad de extremo a extremo.
+Jira desde la óptica del SDET
+
+Jira de Atlassian es el estándar de facto para seguimiento de proyectos ágiles. El SDET interactúa con Jira de varias formas:
+
+    Automatización de la creación de bugs: Cuando una prueba automatizada falla, el pipeline puede crear automáticamente un issue en Jira (o reabrir uno existente si tiene un ID asociado en el test).
+
+        Uso de la API REST de Jira: POST /rest/api/2/issue con un payload JSON que define proyecto, tipo, resumen, descripción y etiquetas.
+
+        Ejemplo usando curl o node-fetch dentro de un paso de CI. El SDET cuida que no se creen duplicados; para ello, cada test fallido incluye un identificador único (testCaseId) que se mapea a un campo personalizado o a la etiqueta. Antes de crear, se busca si ya existe un issue abierto con esa etiqueta.
+
+        Buenas prácticas: incluir en la descripción el enlace al reporte de Allure, el log relevante y el entorno.
+
+    Conexión de commits y PRs: Los desarrolladores vinculan sus commits a issues de Jira mediante la sintaxis PROJ-123. El SDET se asegura de que las pruebas también estén vinculadas a la historia correspondiente, utilizando @Issue("PROJ-456") en Allure o anotaciones equivalentes. Esto permite que, al revisar una funcionalidad, se pueda ver qué pruebas la cubren y cuándo se ejecutaron.
+
+    Dashboards de calidad: Jira puede mostrar gadgets con resultados de pruebas si se integra con plugins como Zephyr Scale o Xray. El SDET puede alimentar un panel ejecutivo con gráficos de ejecución, número de bugs abiertos/cerrados y cobertura, extrayendo métricas desde herramientas externas mediante la API de Jira.
+
+    Integración con flujos de CI/CD: Un Jenkinsfile o GitHub Action puede transicionar issues automáticamente. Por ejemplo, al finalizar una regresión exitosa en main, se transicionan las historias a "Listo para demo" usando la API de Jira. O si una prueba de regresión falla, se bloquea la transición de una release.
+
+TestRail y la gestión estructurada de casos de prueba
+
+TestRail (o Zephyr Scale, Allure TestOps, Xray) organiza los casos de prueba en suites, secciones y permite ejecutar planes de pruebas y registrar resultados manuales. El SDET conecta la automatización con estas herramientas para mantener una única fuente de verdad.
+
+Estrategia de integración:
+
+    Repositorio de casos manuales: Los QA analistas documentan los casos en TestRail con un identificador único (p.ej., C12345). A cada caso se le puede asignar un tipo (manual, automatizado) o una prioridad.
+
+    Mapeo en la automatización: En el código de la prueba automatizada, se incluye el ID del caso de TestRail mediante una anotación (por ejemplo, @TestCaseId("C12345")). En Java se puede implementar con TestNG o JUnit5 mediante extensiones/spies.
+
+    Actualización automática de resultados: Al finalizar la suite, un script consulta los resultados del framework de pruebas (JUnit XML, resultados de TestNG, Allure) y mediante la API de TestRail:
+
+        Crea una nueva ejecución de pruebas (test run) o usa una existente.
+
+        Actualiza cada caso mapeado con el resultado (Passed, Failed, Retest) y adjunta comentarios (enlace al reporte, mensaje de error).
+
+        Así, desde TestRail se puede ver en tiempo real qué casos están automatizados y cuál fue su última ejecución.
+
+    Ventajas: Los stakeholders no técnicos pueden ver el progreso de la automatización y el estado de la calidad sin acceder al pipeline. Además, se identifica fácilmente qué casos manuales aún no tienen cobertura automática.
+
+Desafíos y buenas prácticas:
+
+    Mantener sincronizados los casos de TestRail con el código: si se modifica o elimina un caso, debe reflejarse en las anotaciones. Se pueden usar herramientas de validación en el build que fallen si hay casos en la suite que ya no existen en TestRail.
+
+    Evitar duplicar descripciones: el código de prueba ya debe ser legible. En TestRail puede bastar con un título y un resumen, ya que el detalle está en el script.
+
+    Para SDET, es crucial elegir el nivel adecuado: no cada script atómico necesita un caso en TestRail; se puede mapear un escenario de alto nivel que corresponda a una clase de test.
+
+Ejemplo básico con Python/pytest y TestRail API:
+python
+
+import requests
+def update_test_run(test_run_id, results):
+    url = f'https://testrail.example.com/index.php?/api/v2/add_results/{test_run_id}'
+    response = requests.post(url, json={'results': results}, auth=(USER, APIKEY))
+
+Y en el hook pytest_terminal_summary se recolectan los resultados y se realiza la llamada.
+Swagger / OpenAPI
+
+OpenAPI Specification (antes Swagger) es un estándar para describir APIs RESTful. Para un SDET, una especificación OpenAPI es una fuente de verdad que permite automatizar pruebas de contrato, generar clientes de prueba y validar la consistencia de la implementación.
+Uso de Swagger UI y Swagger Editor
+
+    Swagger UI: Interfaz web interactiva que lee un archivo openapi.yaml y permite hacer peticiones a la API directamente desde el navegador. El SDET la usa para explorar rápidamente los endpoints y entender la estructura de las peticiones/respuestas antes de codificar las pruebas.
+
+    Swagger Editor: Herramienta web para editar y visualizar en vivo el YAML/JSON. Ayuda a revisar la especificación o incluso a escribir ejemplos que luego se usarán en las pruebas.
+
+Validación de implementación contra la especificación
+
+El SDET configura pruebas que verifican que la API real cumple lo prometido en el contrato OpenAPI. Esto se puede hacer de varias formas:
+
+    Respuestas contra esquema JSON: Cada respuesta de un endpoint se valida contra el esquema definido en la especificación. Librerías como openapi4j (Java) o openapi-schema-validator (Python, Node) leen el archivo OpenAPI y permiten validar cuerpos y cabeceras.
+    java
+
+    // Con openapi4j
+    OpenApi3 api = new OpenApi3Parser().parse(new File("api.yaml"), false);
+    SchemaValidator val = new SchemaValidator("openapi.yaml");
+    val.validate(resp.getBody(), "/users/{id}", "get", 200);
+
+    Pruebas de contrato basadas en OpenAPI: Herramientas como Dredd o Schemathesis toman el archivo OpenAPI y generan solicitudes automáticas (incluso con datos aleatorios) para probar que la API responde según lo documentado. El SDET las integra en el pipeline de CI para detectar inconsistencias rápidamente. Schemathesis, por ejemplo, ejecuta pruebas de fuzzing basadas en la especificación.
+
+    Comparación de documentación y realidad: En algunos entornos, se puede invertir el flujo: la prueba captura las peticiones/respuestas de la API real y las compara con la especificación, asegurando que no haya cambios no documentados.
+
+Generación de código de cliente de pruebas
+
+A partir de un openapi.yaml se puede generar automáticamente un cliente HTTP tipado que el SDET utiliza en sus pruebas, eliminando la necesidad de construir manualmente URLs y payloads.
+
+    OpenAPI Generator: Herramienta CLI que genera clientes en Java, Python, TypeScript, etc.
+    Ejemplo: openapi-generator-cli generate -i api.yaml -g java -o ./client.
+    El código generado incluye métodos como getUserById(id) que ya devuelven objetos deserializados. El SDET integra este cliente en el proyecto de pruebas, lo que acelera el desarrollo y reduce errores de tipeo en las rutas.
+
+    Mantenimiento: Las pruebas dependen de la especificación. Si la API cambia, se regenera el cliente y el compilador indicará qué pruebas necesitan actualizarse, garantizando que la suite esté siempre sincronizada con el contrato.
+
+API-first y participación del SDET
+
+En un enfoque API-first, el equipo escribe la especificación OpenAPI antes del código. El SDET puede:
+
+    Participar en la revisión de la especificación para asegurar que es testeable (por ejemplo, que incluye IDs únicos, que las respuestas de error están estandarizadas).
+
+    Crear stubs del servidor a partir de la especificación para que el equipo de frontend y los testers tengan un mock realista mientras se desarrolla el backend.
+
+    Automatizar pruebas de integración contra el mock y luego, una vez el backend está listo, contra la implementación real sin cambiar los tests (solo cambiar la URL).
+
+Fiddler y Charles Proxy (Depuración de tráfico)
+
+Como SDET, a menudo necesitas ver exactamente qué está pasando entre el cliente (navegador, móvil, script de automatización) y el servidor. Los proxies de depuración como Fiddler y Charles son herramientas imprescindibles.
+Funcionalidades comunes y uso en automatización
+
+    Intercepción de tráfico HTTP/HTTPS: Ambos se sitúan como intermediarios y registran todas las peticiones y respuestas, incluyendo cabeceras, cuerpos, códigos de estado y tiempos. Esto es vital cuando una prueba falla y necesitas saber si el frontend envió los datos incorrectos o el backend respondió con un error inesperado.
+
+    Inspección de tráfico cifrado (MITM): Para HTTPS, instalan un certificado raíz en el dispositivo/emulador/navegador y descifran el tráfico. Crucial para probar APIs con SSL/TLS.
+
+    Modificación de peticiones/respuestas (Breakpoints y AutoResponder):
+
+        Breakpoints: Se puede pausar una petición antes de que salga y modificarla (cambiar un parámetro) o pausar la respuesta antes de que llegue al cliente y alterarla. Esto permite simular condiciones de error del servidor, inyección de datos o tiempos de respuesta lentos, sin cambiar el código del backend.
+
+        AutoResponder (Fiddler) / Map Local / Map Remote (Charles): Redirige una petición a un archivo local o a otra URL. Así se puede reemplazar un script, una imagen o incluso una respuesta de API completa. El SDET usa esto para aislar el frontend y probar cómo responde la UI ante distintos mensajes del backend, o para saltar fases de autenticación.
+
+    Simulación de latencia y ancho de banda: Ambos permiten throttling de red (lentitud, pérdida de paquetes) para probar cómo se comporta la aplicación en condiciones de red adversas. Esto es especialmente útil en pruebas móviles.
+
+    Composición de solicitudes (Fiddler Composer): Permite construir manualmente peticiones HTTP y enviarlas, probando rápidamente sin necesidad de escribir un script completo.
+
+Fiddler vs Charles: diferencias relevantes
+
+    Fiddler (Classic y Everywhere):
+
+        Originalmente para Windows (.NET); Fiddler Everywhere es multiplataforma.
+
+        Muy potente en entornos Windows, con un gran ecosistema de extensiones.
+
+        Puede actuar como proxy inverso y capturar tráfico de prácticamente cualquier aplicación que soporte proxy.
+
+        FiddlerScript (en Classic) permite automatizar reglas de modificación mediante JavaScript/C#.
+
+    Charles Proxy:
+
+        Nativo multiplataforma, muy popular en macOS.
+
+        Excelente soporte para depurar tráfico de dispositivos móviles (iOS y Android) mediante proxy WiFi.
+
+        Funciones como Map Remote y Rewrite son muy intuitivas.
+
+        Grabación de sesiones y exportación en varios formatos (HAR, etc.).
+
+Integración en automatización:
+
+    Aunque la automatización diaria no usa Fiddler/Charles directamente, el SDET los emplea durante el desarrollo y depuración de scripts.
+
+    En pruebas de seguridad, se pueden configurar como proxy upstream de OWASP ZAP para análisis adicional.
+
+    Las sesiones grabadas se pueden exportar como archivos .har y luego transformarlas en scripts de prueba con herramientas de generación, o simplemente documentar el comportamiento esperado.
+
+Ejemplo de uso para depurar un fallo en Selenium:
+
+    Configurar el navegador de Selenium para usar el proxy (por ejemplo, --proxy-server=127.0.0.1:8888).
+
+    Ejecutar la prueba que falla.
+
+    En Charles, buscar la petición que retornó un código inesperado, inspeccionar su carga y comparar con la especificación.
+
+    Usar Rewrite para modificar un parámetro y volver a ejecutar, confirmando la hipótesis.
+
+Escritura Gherkin (BDD efectivo)
+
+Gherkin es el lenguaje de dominio específico que utiliza Cucumber (y otras herramientas BDD) para describir el comportamiento del sistema. La calidad de la automatización BDD depende directamente de lo bien escritos que estén los escenarios. El SDET es a menudo el guardián de esas prácticas.
+Principios de un buen escenario
+
+    Declarativo, no imperativo: Un escenario debe describir qué comportamiento se espera, no cómo se implementa la interacción.
+
+        Malo (imperativo):
+        gherkin
+
+        When hago clic en el botón con ID "login"
+        And escribo "admin" en el campo ID "user"
+
+        Bueno (declarativo):
+        gherkin
+
+        When inicio sesión con credenciales válidas
+
+    Esto oculta los detalles de la UI y permite que el paso se reutilice aunque cambie la tecnología.
+
+    Una sola responsabilidad: Cada escenario verifica una única regla de negocio. Si falla, debe ser obvio por qué. Evitar largas secuencias de acciones mezcladas con múltiples aserciones.
+
+    Independencia: Los escenarios no deben depender unos de otros. Deben poder ejecutarse en cualquier orden. Las dependencias crean fragilidad y falsos positivos.
+
+    Datos relevantes y contextuales: Usar Background para pasos comunes, y Scenario Outline para ejecutar el mismo escenario con múltiples conjuntos de datos usando Examples. Ejemplo:
+    gherkin
+
+    Scenario Outline: Validación de edad mínima
+      Given un usuario con fecha de nacimiento <fecha>
+      When intenta registrarse
+      Then el sistema <resultado>
+
+      Examples:
+        | fecha       | resultado                          |
+        | 2010-01-01  | permite el registro                |
+        | 2019-01-01  | muestra error "Debe ser mayor de 13" |
+
+    Evitar incluir datos de implementación en los Examples (IDs internos). Usar lenguaje de negocio.
+
+Roles y colaboración
+
+    Product Owner / Negocio: Define las características y puede escribir o revisar los escenarios. El SDET facilita workshops de "Example Mapping" para refinar las reglas y convertirlas en escenarios Gherkin.
+
+    Desarrolladores: Pueden contribuir con los pasos, asegurando que el sistema es testeable.
+
+    SDET: Implementa los "step definitions" (el pegamento entre Gherkin y la automatización). Se encarga de que los pasos sean reutilizables y modulares, refactorizando continuamente.
+
+Mantenimiento del vocabulario ubicuo
+
+    Crear un glosario de términos (las palabras entre comillas en los pasos) para que todo el equipo use el mismo lenguaje. Por ejemplo, decidir si se dice "Usuario" o "Cliente", "Carrito" o "Cesta".
+
+    Usar Data Tables para datos estructurados en lugar de listas largas de parámetros. Por ejemplo, al verificar una tabla de resultados:
+    gherkin
+
+    Then debería ver la siguiente lista de productos:
+      | Nombre    | Precio |
+      | Manzanas  | 2.50   |
+      | Peras     | 3.00   |
+
+Anti-patrones a evitar
+
+    "Escenarios de tren": Escenarios con 20 pasos When-Then. Son difíciles de mantener y lentos.
+
+    Lenguaje técnico: Insertar términos como "API", "base de datos", "clic". El Gherkin es para comunicar comportamiento de negocio.
+
+    Escenarios triviales: No automatizar con BDD validaciones que ya cubren las pruebas unitarias. No todo necesita un archivo .feature. Cucumber es para conversaciones de negocio.
+
+Integración con el pipeline
+
+    Los archivos .feature se versionan junto al código de prueba. El SDET configura el runner para que falle el build si existen pasos sin implementar (@Pending).
+
+    Los reportes Cucumber (integrándose con Allure o usando el reporte HTML de Cucumber) dan visibilidad al negocio de los escenarios que no pasan.
+
+Ejemplo completo de ciclo de un escenario
+
+    Negocio: "Quiero que un usuario no pueda comprar si no tiene saldo".
+
+    Refinamiento: se crea el escenario:
+    gherkin
+
+    Scenario: Pago rechazado por saldo insuficiente
+      Given un cliente con saldo "10€"
+      And tiene en el carrito un producto de "15€"
+      When intenta pagar
+      Then el pago es rechazado
+      And se muestra el mensaje "Saldo insuficiente"
+
+    SDET desarrolla los steps: Given un cliente con saldo... que prepara datos (API o BD), When intenta pagar que invoca el endpoint de pago, y los Then que validan la respuesta.
+
+    La prueba pasa en CI y el PO ve en el reporte el escenario verde.
+
+Estas herramientas complementarias redondean el perfil del SDET, conectando el código de pruebas con la gestión del ciclo de vida del software, la documentación viva y la depuración efectiva. Si deseas ampliar algún aspecto práctico, como la configuración de un proxy para capturar tráfico móvil o la creación de un pipeline que sincronice resultados con TestRail, estoy a tu disposición.
 
 ///////////////////////////////////////////////////////////////////////
 
