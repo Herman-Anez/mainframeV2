@@ -9,7 +9,7 @@ La fase de reportes y observabilidad es crucial para transformar los resultados 
 ### 1. [Allure Framework](allure.md)
 Framework flexible y multi-lenguaje que genera reportes enriquecidos con gráficos de tendencias, pasos detallados y evidencia multimedia.
 
-### 2. [ExtentReports](extent-reports.md)
+### 2. [ExtentReports](extentReports.md)
 Librería específica para Java/.NET que permite crear dashboards HTML personalizados directamente desde el código, ideal para control total en tiempo de ejecución.
 
 ### 3. [Logging y Métricas](logging-metricas.md)
@@ -32,4 +32,5 @@ Estrategias para implementar observabilidad real: logs estructurados, métricas 
 | Anterior | Inicio | Siguiente |
 | :--- | :---: | ---: |
 | [⬅️ Bases de Datos](../06-Bases-Datos/index.md) | [🏠 Inicio](../../index.md) | [Herramientas Complementarias ➡️](../08-Herramientas-Complementarias/Swagger-OpenAPI.md) |
+
 
