@@ -1,165 +1,3 @@
-# ejemplos_validacion.md
-
-Aquí se presentan casos reales de validación y extracción que combinan lookahead y lookbehind, destacando trucos y soluciones prácticas.
-1. Contraseña segura con múltiples requisitos
-
-Requisitos: al menos 8 caracteres, una mayúscula, una minúscula, un dígito y un carácter especial.
-regex
-
-^
-(?=.*[a-z])      # al menos una minúscula
-(?=.*[A-Z])      # al menos una mayúscula
-(?=.*\d)         # al menos un dígito
-(?=.*[#?!@$%^&*-]) # al menos un especial (lista ampliable)
-.{8,}
-$
-
-Cada lookahead se ejecuta desde el inicio y verifica la presencia de cada tipo de carácter en cualquier parte de la cadena. La parte final .{8,} consume la contraseña completa.
-2. Validar que una cadena NO contiene ciertas palabras prohibidas
-
-Evitar que aparezca "admin" o "root" en un nombre de usuario, en cualquier posición.
-regex
-
-^(?!.*\badmin\b)(?!.*\broot\b)\w+$
-
-Explicación: desde el inicio, (?!.*\badmin\b) asegura que en ningún lugar (gracias a .*) se encuentra la palabra completa admin. El segundo lookahead hace lo propio con root. Si ambos son negativos, la cadena es válida.
-3. Buscar números que no formen parte de una fecha
-
-Supongamos que queremos números que no estén precedidos por 20 ni seguidos por /. Entrada: "20/23 es diferente a 23".
-regex
-
-(?<!20\/)\d+(?!\/)
-
-El (?<!20\/) exige que no esté precedido por 20/. El (?!\/) que no esté seguido de /. Así en 20/23, no coincidirá 23. En 23 aislado, sí.
-4. Extraer monedas con símbolo y formato flotante
-
-Texto: "El precio es $12.50, pero con descuento €9.99 y $10."
-
-Extraer la cantidad numérica detrás del símbolo de moneda (sin capturar el símbolo) usando lookbehind positivo:
-regex
-
-(?<=[$€])\d+(?:\.\d{2})?
-
-En motores con lookbehind variable (JS, .NET, regex Python), esto funciona sin problema. En Python re, si solo tenemos longitud fija, [$€] es un único carácter (longitud 1), así que también es válido. Coincide con 12.50, 9.99, 10.
-5. Validar formato de usuario con restricciones en extremos
-
-Un nombre de usuario debe tener entre 3 y 16 caracteres alfanuméricos y guiones, pero no puede empezar ni terminar con guión.
-regex
-
-^(?!-)[a-zA-Z0-9-]{3,16}(?<!-)$
-
-El lookahead al inicio (?!-) prohíbe que el primer carácter sea un guión. El lookbehind al final (?<!-) prohíbe que el último carácter sea un guión. La parte central [a-zA-Z0-9-]+ permite combinaciones válidas.
-6. Cadenas entre comillas con escapado interno
-
-Buscar textos entrecomillados que soporten \" dentro:
-regex
-
-(?<!\\)"((?:[^"\\]|\\.)*)(?<!\\)"
-
-    (?<!\\)" : comilla de apertura no escapada.
-
-    (?:[^"\\]|\\.)* : contenido: o bien caracteres que no son comillas ni barras, o bien secuencias de escape.
-
-    (?<!\\)" : comilla de cierre no escapada.
-
-Este patrón utiliza dos lookbehinds negativos, útiles para ignorar comillas precedidas por barra invertida.
-7. Números de teléfono con formato libre pero longitud exacta
-
-Validar un teléfono de 10 dígitos, que pueda tener espacios o guiones separadores, pero al extraer ignoramos los no dígitos.
-regex
-
-^(?=.{10,15}$)\d[\d\s-]*\d$
-
-El lookahead (?=.{10,15}$) impone un largo total entre 10 y 15 caracteres (para dar cabida a separadores). Luego \d al inicio y \d al final aseguran que extremos son dígitos. Finalmente, extraer solo dígitos con programación adicional.
-8. Encontrar palabras que no estén precedidas por un punto (en código fuente)
-
-En código, queremos seleccionar identificadores sueltos que no sean acceso a propiedad (ej: obj.metodo). Palabras que no van precedidas de punto.
-regex
-
-(?<!\.)\b[a-zA-Z_]\w*\b
-
-El (?<!\.) garantiza que no haya un punto justo antes del identificador. El \b luego asegura que sea una palabra completa. Así obj.metodo no casará con metodo, pero metodo aislado sí.
-9. Detectar números de tarjeta de crédito sin capturar el contexto
-
-Extraer números de 16 dígitos (posiblemente separados en grupos de 4 con espacios o guiones) usando lookbehind y lookahead para asegurar que no están pegados a más dígitos.
-regex
-
-(?<!\d)(\d{4}[-\s]?){3}\d{4}(?!\d)
-
-El (?<!\d) y (?!\d) funcionan como límites de dígito, garantizando que el número esté aislado.
-10. Validar una IP v4 sin grupos de captura complicados
-
-Podemos comprobar que cada octeto esté en el rango 0-255 usando lookbehind embebido? Mejor usar expresión normal, pero con lookahead podemos validar estructura:
-regex
-
-^(?=\d+\.\d+\.\d+\.\d+$)((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$
-
-El lookahead inicial (?=\d+\.\d+\.\d+\.\d+$) solo verifica que haya 4 bloques numéricos separados por puntos, sin evaluar rangos. Luego la regex principal impone los rangos. Esto separa la validación de formato de la de valor.
-
-Con estos contenidos, el bloque 04_aserciones queda completamente documentado, con explicaciones paso a paso y un banco de ejemplos prácticos para referencia inmediata.
-Profundiza en estos temas
-├── 05_flags_y_modos/
-│   ├── 01_flags_comunes.md
-│   ├── 02_modo_verboso.md
-│   └── 03_unicode.md
-
-We need to provide detailed content for the three files in the "05_flags_y_modos" block: 01_flags_comunes.md, 02_modo_verboso.md, and 03_unicode.md. The user expects thorough, in-depth explanations similar to the previous responses. We'll cover common flags (global, case-insensitive, multiline, dotall, etc.), verbose mode (extended), and Unicode handling (unicode flag, properties, scripts, normalization, etc.). We'll structure each file with definitions, examples, cross-engine differences, and practical uses.
-
-Let's craft the content.
-
-First, 01_flags_comunes.md:
-
-    What are flags/modifiers? How they change regex behavior.
-
-    List common flags: g (global), i (case-insensitive), m (multiline), s (dotall/single line), x (extended/verbose), u (unicode), A (ascii only in Python).
-
-    For each flag, explain its effect, examples, how it's specified in different languages, and important considerations.
-
-    Possibly mention flags that are engine-specific (like PCRE's J, X, etc., but we'll stick to widely available ones).
-
-Second, 02_modo_verboso.md:
-
-    What is verbose mode (flag x)? Allows whitespace and comments in regex.
-
-    Syntax in various engines: Python re.X, JavaScript? JS does not have a native flag, but workarounds. PCRE uses (?x) or /x.
-
-    Benefits: readability, documentation, breaking complex patterns into lines.
-
-    Examples: complex pattern broken down with comments.
-
-    How to match literal whitespace when using x: escape or use \s, put in character class.
-
-    Mention global vs local (inline) mode: (?x) within pattern.
-
-Third, 03_unicode.md:
-
-    Unicode as a flag and as a mode.
-
-    Unicode basics: code points, characters beyond ASCII.
-
-    The 'u' flag: ECMAScript 2015, Python 3 default (str patterns), PCRE (?u) or PCRE2_U.
-
-    How u flag affects \w, \d, \s, \b (word boundaries) to include Unicode letters/digits/whitespace.
-
-    Case-insensitive matching with Unicode.
-
-    Unicode property escapes: \p{...} and \P{...}, supported with u flag in JS, PCRE, .NET, Java, Python regex module. Categories (L, N, S, P, etc.), Script (Greek, Cyrillic, Han), Block (Basic_Latin).
-
-    Normalization issues (NFC, NFD) and regex matching.
-
-    Python's re module default behavior (Unicode by default in Python 3, but \w matches only ASCII letters unless re.UNICODE/re.ASCII flags are used). We'll clarify.
-
-    Example of Unicode-aware word matching.
-
-    Surrogate pairs in JavaScript (ES2015+ 'u' flag handles them properly).
-
-    Performance considerations.
-
-I'll structure each .md with headers and subheaders, code blocks, and tables as needed. The response will be the content for these three markdown files, just as before.
-
-Let's write.
-
-A continuación se desarrollan en profundidad los tres temas del bloque 05_flags_y_modos, con explicaciones, sintaxis según el motor y ejemplos de uso.
 # flags_comunes.md
 ¿Qué son las flags (modificadores)?
 
@@ -308,6 +146,7 @@ hola (?i:mundo) cruel
 Coincidirá con "hola Mundo cruel" y "hola MUNDO cruel", pero hola y cruel mantienen su sensibilidad normal.
 
 Soporte en JavaScript: NO soporta flags inline. Solo se aplican globalmente en el constructor o literal.
+
 # modo_verboso.md
 ¿Qué es el modo verboso?
 
@@ -432,6 +271,7 @@ let patrón = [
 let regex = new RegExp(patrón);
 
 No es tan limpio como los comentarios, pero ayuda a estructurar.
+
 # unicode.md
 Unicode y las expresiones regulares
 

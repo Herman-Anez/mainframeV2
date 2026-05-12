@@ -1,3 +1,167 @@
+# lookahead.md
+Definición
+
+Un lookahead (inspección hacia adelante) es una aserción de ancho cero que verifica si una subexpresión coincide (o no coincide) inmediatamente después de la posición actual, sin consumir caracteres.
+
+Existen dos tipos:
+
+    Lookahead positivo (?= … ) : comprueba que lo que sigue SÍ coincida.
+
+    Lookahead negativo (?! … ) : comprueba que lo que sigue NO coincida.
+
+En ambos casos, tras evaluar la aserción, el cursor regresa a la posición donde se encontraba. El texto inspeccionado no forma parte de la coincidencia final.
+Mecanismo de funcionamiento
+
+    El motor alcanza la posición donde aparece el lookahead.
+
+    Intenta emparejar la subexpresión interna contra el texto desde esa posición.
+
+    Si tiene éxito (lookahead positivo) o fracaso (lookahead negativo), la aserción se considera satisfecha; en caso contrario, falla y la coincidencia global retrocede.
+
+    El puntero de búsqueda vuelve exactamente a la posición inicial.
+
+Ejemplo:
+regex
+
+X(?=Y)
+
+    Busca X solo si a continuación viene Y.
+
+    En "XY", la coincidencia es únicamente "X" (la Y no se consume).
+
+    En "XZ", falla.
+
+Lookahead positivo: (?=patrón)
+
+Coincide en una posición si desde ahí se puede casar patrón.
+
+Casos de uso:
+
+    Imponer condiciones sin consumir. Validar contraseña: ^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$.
+    Cada lookahead verifica la presencia de una categoría en cualquier lugar de la cadena.
+
+    Overlapping matches (solapadas). Para encontrar todas las apariciones de "ana" dentro de "banana": (?=ana) devolverá coincidencias de longitud cero en las posiciones 1 y 3 (en motores que permiten matches vacíos con findall/match). Luego se puede extraer manualmente.
+
+    Asegurar un delimitador pero no incluirlo. Extraer texto antes de un punto: \w+(?=\.) coincide con la palabra antes del punto sin incluir el punto.
+
+Lookahead negativo: (?!patrón)
+
+Coincide en una posición si desde ahí NO se puede casar patrón.
+
+Casos de uso:
+
+    Excluir patrones: (?!unwanted)\w+ encuentra palabras que no son "unwanted".
+
+    Negaciones complejas: ^(?!.*\.\.).*$ prohíbe dos puntos seguidos en una cadena (se evita el backtracking catastrófico frente a otros enfoques).
+
+    Limitar cuantificadores: \b(?!\d+\b)\w+\b encuentra palabras que no están compuestas exclusivamente por dígitos.
+
+Combinación de varios lookaheads
+
+Se pueden poner varios seguidos; todos deben cumplirse en la misma posición.
+regex
+
+(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[#?!@$%^&*-])\S{8,}
+
+Cada lookahead inspecciona desde el principio de la cadena, pero como son de ancho cero, se superponen. Así exigimos que la cadena contenga al menos una mayúscula, una minúscula, un dígito y un carácter especial.
+Lookaheads anidados
+
+Es posible anidar lookaheads, aunque no es muy frecuente. Ejemplo: (?=(?=\d)\w{3}) verificar que la posición siguiente cumple dos condiciones simultáneas (aquí, que empieza con dígito y tiene 3 caracteres de palabra).
+Compatibilidad entre motores
+
+Los lookaheads están soportados en todos los motores modernos: JavaScript, Python (re), Java, .NET, PCRE, Perl, etc. La sintaxis es universal. La única diferencia es que en motores que no permiten lookbehind, a veces hay que simularlos (pero lookahead siempre funciona).
+Consideraciones de rendimiento
+
+    Los lookaheads pueden ralentizar si contienen cuantificadores codiciosos que examinan gran parte de la cadena, pues se ejecutan en cada posición potencial.
+
+    Sin embargo, un lookahead puede actuar como un grupo atómico en algunos contextos. Por ejemplo, (?=a*)\1 es una forma de simular un grupo atómico (en JS) porque el lookahead no retrocede; (?=(a*))\1 captura todas las a y luego \1 las consume sin posibilidad de cesión.
+
+    Poner (?=.*palabra) al inicio de una cadena puede ralentizar si la cadena es muy larga y no contiene "palabra", ya que .* recorre todo el texto.
+
+# lookbehind.md
+Definición
+
+Un lookbehind (inspección hacia atrás) comprueba si una subexpresión coincide inmediatamente antes de la posición actual. Tampoco consume caracteres.
+
+    Lookbehind positivo: (?<= … ) → la posición está precedida por el patrón.
+
+    Lookbehind negativo: (?<! … ) → la posición NO está precedida por el patrón.
+
+El cursor está en la posición de interés; el motor “mira hacia atrás” para ver si se cumple la condición. La longitud del texto inspeccionado no se incluye en el match.
+Limitaciones históricas y actuales
+
+La implementación del lookbehind es la parte más heterogénea entre motores:
+Motor	Longitud fija / variable	Observaciones
+Perl 5.30+	Variable (experimental)	Antes solo fija.
+PCRE2 (PHP >=7.3)	Variable (con restricciones)	Debe poder determinar una longitud máxima (no permite * o + sin límite superior). Alternativamente se puede usar \K.
+PCRE (antiguo) / Perl antiguo	Sólo fija	Patrón debe tener longitud exacta (por ejemplo: (?<=abc|def) ambas opciones deben misma longitud).
+JavaScript (ES2018+)	Variable	Sin restricciones de longitud.
+Python re (estándar)	Sólo fija	Sin cuantificadores variables; cada alternativa debe tener la misma longitud.
+Python regex (externo)	Variable	Soporte completo.
+Java	Longitud máxima limitada	Se permiten cuantificadores con límite superior finito: {0,n}. * y + no permitidos a menos que tengan un máximo explícito. Debe poder calcularse el máximo de caracteres que puede consumir.
+.NET	Variable	Sin restricciones. Soporta incluso patrones complejos sin límite.
+
+Cuando un motor exige longitud fija, el patrón dentro del lookbehind no puede contener *, +, ? ni {n,}. Solo puede tener literales, clases de caracteres, grupos y alternancias con todas las ramas de igual longitud.
+
+Ejemplo válido en Python re:
+regex
+
+(?<=abc|def)X
+# Ambas opciones tienen longitud 3.
+
+Ejemplo inválido en Python re:
+regex
+
+(?<=a+)X   # error: look-behind requiere patrón de ancho fijo
+
+Lookbehind positivo: (?<=patrón)
+
+Coincide en una posición si justo antes se encuentra patrón.
+
+Casos de uso:
+
+    Extraer un valor precedido por un prefijo: (?<=\$)\d+\.\d{2} captura números decimales después de un dólar, sin incluir el signo $.
+
+    Asegurar un contexto previo: (?<=@)\w+ extrae el nombre de usuario en un correo electrónico después de la @.
+
+    Evitar capturar el delimitador: en (?<=\/)\w+ para obtener la última parte de una URL.
+
+Lookbehind negativo: (?<!patrón)
+
+Coincide si la posición NO está precedida por patrón.
+
+Uso típico: cadenas entre comillas escapadas.
+regex
+
+(?<!\\)".*?"
+
+Encuentra comillas dobles que no están precedidas por una barra invertida. Si una comilla va precedida de \, el lookbehind negativo falla, evitando que se tome como delimitador.
+Anclas dentro de lookbehind
+
+^ y $ dentro de un lookbehind no tienen un significado global; se refieren a la posición relativa a la actual. En general, no se usan porque no tienen sentido: ^ dentro de un lookbehind positivo (?<=^) significaría "la posición actual es justo después del inicio de la cadena", lo cual es equivalente a \A o similar. (?<=^)X es igual a ^X, pero con lookbehind. Sin embargo, ^ en lookbehind no está permitido en muchos motores o puede no funcionar como se espera. Es más claro usar anclas normales.
+Soporte en reemplazos
+
+A veces se usan lookbehinds para reemplazar patrones que están precedidos por algo, sin eliminar ese prefijo. Ejemplo Python:
+python
+
+import re
+text = "Price $100, discount $20"
+re.sub(r'(?<=\$)\d+', 'XXX', text)
+# "Price $XXX, discount $XXX"
+
+Alternativa con \K
+
+En PCRE y Perl (y en el módulo regex de Python), \K descarta lo coincidido hasta ese punto, logrando un efecto similar a lookbehind positivo de longitud variable. Ejemplo: \$\K\d+ equivale a (?<=\$)\d+ pero mucho más eficiente y sin restricciones de longitud fija. Tras \K, la parte izquierda no forma parte del match.
+Simulación y workarounds en motores limitados
+
+Si tu motor no soporta lookbehind (por ej. JavaScript antiguo), puedes:
+
+    Invertir la cadena y aplicar lookahead.
+
+    Capturar la parte previa y luego usar código para descartarla.
+
+    En validaciones, usar (?:patrón_previo)(lo_que_quiero) y luego comprobar el grupo capturado.
+
 # ejemplos_validacion.md
 
 Aquí se presentan casos reales de validación y extracción que combinan lookahead y lookbehind, destacando trucos y soluciones prácticas.
