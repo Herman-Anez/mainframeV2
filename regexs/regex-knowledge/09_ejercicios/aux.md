@@ -1,3 +1,183 @@
+
+# basicos.md
+Instrucciones
+
+Escribe una expresión regular para cada uno de los siguientes problemas. Si el motor lo requiere, especifica las banderas. Prueba tus patrones en un probador online (regex101.com, pythex.org) con los casos de ejemplo.
+
+1. Buscar la palabra "gato"
+Encuentra todas las apariciones de la palabra "gato" en una frase, sin distinguir mayúsculas/minúsculas. Debe coincidir como palabra completa.
+text
+
+Test: "El gato y el GATO gatean"
+Coincidencias esperadas: "gato", "GATO"
+
+2. Validar un código de área de EE.UU.
+Formato: tres dígitos entre paréntesis (seguidos de espacio y tres dígitos adicionales, pero solo valida el código de área). Por ejemplo, "(123) " debe coincidir.
+text
+
+Test: "(123) 456-7890"  -> match "(123) "
+Test: "(12) 345"        -> no match
+
+3. Encontrar todas las palabras que terminan en "ción"
+Coincide con palabras completas que tengan la terminación "ción" (ej. "canción", "acción"). Ignora mayúsculas/minúsculas.
+text
+
+Test: "La canción y la ACCIÓN fueron bien."
+Coincidencias: "canción", "ACCIÓN"
+
+4. Validar una fecha en formato DD/MM/AAAA
+Día de 01 a 31, mes de 01 a 12, año de 4 dígitos. No hace falta validar días por mes (p.ej. 31/02/2023 es válido para este ejercicio).
+text
+
+Test: "15/08/2024" -> match
+Test: "5/8/2024"   -> no match (exige dos dígitos)
+
+5. Encontrar todas las vocales
+Extrae todas las vocales (tanto mayúsculas como minúsculas) de un texto.
+text
+
+Test: "Hola Mundo" -> ["o", "a", "u", "o"]
+
+6. Reemplazar múltiples espacios por uno solo
+Escribe un patrón que capture cualquier secuencia de uno o más espacios en blanco (espacio, tabulador, salto de línea) para luego reemplazarlas por un solo espacio.
+text
+
+Test: "Hola    mundo.\t\tAdiós"
+Después del reemplazo: "Hola mundo. Adiós"
+
+7. Validar un nombre de usuario alfanumérico
+Debe tener entre 4 y 16 caracteres, compuestos únicamente por letras (mayúsculas y minúsculas) y dígitos. No puede contener espacios ni símbolos.
+text
+
+Test: "usuario123" -> válido
+Test: "user name"  -> inválido
+
+8. Extraer extensiones de archivo
+De una lista de nombres de archivo, extrae la extensión (sin el punto). Solo debe capturar extensiones de letras (no números al final). Por ejemplo: "imagen.jpg", "documento.pdf", "script.js".
+text
+
+Test: "foto.png"     -> extensión "png"
+Test: "archivo.tar.gz" -> extensión "gz" (la última)
+
+9. Buscar líneas que comienzan con "Error"
+Procesa un texto multilínea y selecciona todas las líneas que empiezan por la palabra "Error" (sin importar mayúsculas/minúsculas). La palabra debe estar al inicio de la línea.
+text
+
+Test:
+Todo bien
+Error: fallo crítico
+WARNING: revisar
+error menor
+Se espera coincidencia en la segunda línea: "Error: fallo crítico"
+
+10. Validar un número decimal simple
+Formato: puede tener un signo negativo opcional, dígitos enteros obligatorios, y opcionalmente un punto seguido de uno o más dígitos decimales. Ej: "-3.14", "10", "0.5". No permite múltiples puntos ni caracteres extra.
+text
+
+Test: "42"        -> válido
+Test: "-.5"       -> inválido (falta entero)
+Test: "1.2.3"     -> inválido
+
+# intermedios.md
+Instrucciones
+
+Estos ejercicios profundizan en cuantificadores perezosos, grupos de captura, lookahead/lookbehind, y patrones prácticos. Proporciona la regex y una breve explicación de su funcionamiento.
+
+1. Extraer el texto dentro de etiquetas HTML <strong>
+Dado un fragmento HTML, captura el contenido que está entre <strong> y </strong>, incluyendo posibles espacios y otras etiquetas internas, pero usando cuantificador perezoso para obtener cada bloque por separado.
+text
+
+Test: "<strong>Nota:</strong> esto es <strong>importante</strong>"
+Coincidencia 1: "Nota:"  Coincidencia 2: "importante"
+
+2. Validar un email con el patrón mejorado
+Escribe una regex que valide un correo electrónico con las siguientes reglas:
+
+    Parte local: caracteres alfanuméricos, puntos, guiones bajos, guiones, porcentajes y signos más. No puede empezar ni terminar con punto ni tener dos puntos consecutivos.
+
+    Dominio: letras, dígitos, guiones; separado por puntos; el TLD debe tener al menos dos letras.
+
+(Usa el patrón mejorado visto en los apuntes, no el básico.)
+text
+
+Test: "usuario@dominio.com"       -> válido
+Test: "usuario@sub.dom.co.uk"    -> válido
+Test: "usuario@dominio..com"     -> inválido
+Test: ".usuario@dominio.com"     -> inválido
+
+3. Buscar palabras que no están precedidas por el signo @
+Encuentra palabras completas (secuencias de letras) que no formen parte de una mención (@usuario). Es decir, la palabra no debe estar inmediatamente después de un @.
+text
+
+Test: "@user hola mundo"
+Debe coincidir "hola", "mundo", pero NO "user".
+
+4. Extraer el nombre de un archivo sin extensión
+Dado un nombre de archivo (ej. "documento.pdf"), captura solo el nombre sin la extensión. El archivo puede tener múltiples puntos (ej. "archivo.backup.tar.gz"); en ese caso extrae el nombre completo hasta el último punto.
+text
+
+Test: "foto.png"           -> "foto"
+Test: "archivo.backup.gz"  -> "archivo.backup"
+
+5. Validar una contraseña segura con lookaheads
+Construye una regex que exija:
+
+    Al menos 8 caracteres de longitud.
+
+    Al menos una letra mayúscula.
+
+    Al menos una letra minúscula.
+
+    Al menos un dígito.
+
+    Al menos un carácter especial de la lista !@#$%^&*.
+
+text
+
+Test: "Clave123!"  -> válido
+Test: "clave123!"  -> inválido (sin mayúscula)
+Test: "CLAVE123!"  -> inválido (sin minúscula)
+
+6. Capturar los tres primeros grupos de un número de teléfono internacional
+Formato: +XX (XXX) XXX-XXXX o +XX.XXX.XXX-XXXX. Los separadores pueden ser espacio, punto o guión. Captura por separado: código de país, código de área y número local (todo junto sin separadores, solo dígitos).
+text
+
+Test: "+1 (123) 456-7890"
+Grupo 1: "1", Grupo 2: "123", Grupo 3: "4567890"
+Test: "+34.666.777.888"
+Grupo 1: "34", Grupo 2: "666", Grupo 3: "777888"
+
+7. Reemplazar fechas de formato MM/DD/AAAA a DD/MM/AAAA
+Usa una regex con grupos de captura para intercambiar el mes y el día en fechas del tipo 12/25/2024 a 25/12/2024. Escribe el patrón y la cadena de sustitución.
+text
+
+Entrada: "12/25/2024"
+Salida: "25/12/2024"
+
+8. Seleccionar líneas que contienen una palabra repetida dos veces consecutivas
+En un texto multilínea, encuentra líneas donde una palabra (secuencia de letras) se repite exactamente, separada por un espacio: "hola hola". La coincidencia debe capturar la palabra repetida.
+text
+
+Test:
+hola hola mundo
+adiós adiós
+bien bien bien
+En la primera línea captura "hola", segunda "adiós", tercera no.
+
+9. Validar una cadena que no contenga la palabra "prohibido"
+Escribe un patrón que solo case si la cadena completa falla en contener la palabra "prohibido" en cualquier parte.
+text
+
+Test: "Este texto está bien"           -> match
+Test: "Este texto está prohibido aquí" -> no match
+
+10. Extraer hashtags de un tweet, ignorando signos de puntuación pegados
+Encuentra todos los hashtags del estilo #regex o #OpenSource. Un hashtag comienza con # y continúa con caracteres de palabra (letras, números, guiones bajos). No debe incluir caracteres de puntuación como , o . si están pegados al final.
+text
+
+Test: "Aprendiendo #regex, #OpenSource y #python3."
+Coincidencias: "#regex", "#OpenSource", "#python3"
+
 # avanzados.md
 Instrucciones
 
