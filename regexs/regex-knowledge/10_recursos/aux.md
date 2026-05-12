@@ -186,6 +186,8 @@ Comunidades y foros
 # cheatsheets/
 
 A continuación se detalla el contenido textual que deberían incluir las hojas de trucos (en formato Markdown, que luego puedes exportar a PDF). Las secciones se presentan en tablas y listas para una consulta rápida.
+
+
 pcre_cheatsheet.pdf (contenido)
 Metacaracteres básicos
 Símbolo	Significado
@@ -256,6 +258,8 @@ Secuencia	Significado
 \t	Tabulador
 \x{2020}	Carácter Unicode (hex)
 \Q...\E	Literal entre medias
+
+
 python_cheatsheet.pdf (contenido)
 
 Incluye las mismas secciones de metacaracteres, clases, anclas, etc., pero resaltando las diferencias:
@@ -455,3 +459,4 @@ Aplicaciones y extensiones
     Sublime Text – Búsqueda con regex.
 
     Browser DevTools – La consola permite ejecutar regex en JS.
+
