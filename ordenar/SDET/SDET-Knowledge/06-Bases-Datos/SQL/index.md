@@ -1,3 +1,22 @@
+# SQL (Bases de Datos Relacionales)
+
+El dominio de SQL permite al SDET verificar escenarios de negocio complejos directamente en la base de datos, asegurando que la persistencia de los datos sea correcta y eficiente.
+
+## Temas de SQL
+
+### 1. [Consultas Avanzadas](./Consultas-avanzadas.md)
+JOINs, subconsultas, funciones de ventana (Window Functions) y CTEs para validaciones complejas.
+
+### 2. [Procedimientos Almacenados](./Procedimientos-almacenados.md)
+Estrategias para probar lógica de negocio encapsulada en la base de datos y validación de transacciones.
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Bases de Datos Index](../index.md) | [Home](../../index.md) | [Consultas Avanzadas](./Consultas-avanzadas.md) |
+
+
 Pruebas SAST y DAST (Conceptos y estrategia)
 
 Estas pruebas cubren dos enfoques complementarios de seguridad que el SDET debe orquestar en el pipeline.

@@ -1,24 +1,21 @@
-Seeds y migraciones para testing
+# Seeds y Migraciones para Testing
 
-El término “seeds” a menudo se refiere a datos de referencia que pueblan la base de datos antes de la ejecución de pruebas (catálogos, tipos de cuenta). El SDET los gestiona con herramientas de migración.
+El término "seeds" se refiere a datos de referencia que pueblan la base de datos antes de la ejecución de pruebas (catálogos, tipos de cuenta, roles). El SDET los gestiona con herramientas de migración.
 
-Flyway / Liquibase:
+## Flyway / Liquibase
 
-    Se pueden aplicar migraciones que inserten datos de prueba en entornos de testing (V1__insert_categories.sql). Pero cuidado: estas migraciones solo deben ejecutarse en entornos no productivos, mediante perfiles de Spring o configuraciones condicionales.
+- **Migraciones de Datos**: Se pueden aplicar migraciones que inserten datos de prueba en entornos de testing (`V1__insert_categories.sql`).
+- **Control de Entorno**: Estas migraciones solo deben ejecutarse en entornos no productivos, mediante perfiles de Spring o configuraciones condicionales.
+- **Alternativa**: Usar scripts SQL en la carpeta `test/resources/db/testdata` que se ejecutan antes de cada suite con anotaciones `@Sql` (Spring) o manualmente en el `setUp`.
 
-    Alternativa: usar scripts SQL en la carpeta test/resources/db/testdata que se ejecutan antes de cada suite con @Sql annotations (Spring) o manualmente en setUp.
+## Estrategias de Limpieza
 
-Estrategia de limpieza:
+1.  **Borrado selectivo**: Al finalizar cada clase de test, se eliminan los datos creados por ID.
+2.  **Borrado total y recreación**: Para suites pequeñas, se puede recalcular toda la BD desde cero con Flyway/Liquibase y luego insertar seeds. Es más lento pero garantiza un estado 100% limpio.
+3.  **Base de datos por sesión**: Usar Docker para crear una base de datos nueva y destruirla al final. Con **Testcontainers** esto es transparente.
 
-    Borrado selectivo al finalizar cada clase de test: Si se conocen los datos creados, se eliminan por ID.
-
-    Borrado total y recreación de esquema: Para suites pequeñas, se puede recalcular toda la BD desde cero con Flyway/Liquibase y luego insertar seeds. Es más lento pero garantiza estado limpio.
-
-    Base de datos por sesión de prueba: Usar Docker para crear una base de datos nueva y destruirla al final. Con Testcontainers (Java, Python, Node) esto es transparente: cada suite levanta un contenedor de DB, ejecuta migraciones y se detiene al acabar.
-
-Ejemplo con Testcontainers (Java):
-java
-
+### Ejemplo con Testcontainers (Java)
+```java
 @Container
 static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
     .withDatabaseName("test")
@@ -33,17 +30,22 @@ static void init() {
         .password(postgres.getPassword())
         .build();
     Flyway.configure().dataSource(ds).load().migrate();
-    // Insertar seeds adicionales
+    // Insertar seeds adicionales aquí
 }
+```
 
-Data Factories y paralelismo:
-Cuando las pruebas se ejecutan en paralelo (TestNG con varios hilos, JUnit5 en paralelo), las fábricas deben manejar concurrencia. Estrategias:
+> [!IMPORTANT]
+> **Data Factories y Paralelismo**: Cuando las pruebas se ejecutan en paralelo, las fábricas deben manejar la concurrencia. Se recomienda usar `ThreadLocal` para el listado de objetos creados o asegurar valores únicos (UUID) para evitar colisiones.
 
-    Cada hilo usa su propio conjunto de IDs u objetos (usando ThreadLocal para el listado de objetos creados).
+## Conclusión
 
-    Asegurar que los valores únicos (email, username) generados por Faker no colisionen; usar UUID o marcas de tiempo.
+Dominar la interacción con bases de datos, ya sean relacionales o NoSQL, y la creación sistemática de datos permite al SDET escribir pruebas robustas, rápidas y altamente fiables.
 
-    Aislar completamente los datos por worker: ejecutar cada worker contra una base de datos diferente o schemas separados.
+> [!TIP]
+> La clave es tratar los datos como parte del código de prueba, aplicando las mismas buenas prácticas de diseño que en el código de producción.
 
-Dominar la interacción con bases de datos, ya sean relacionales o NoSQL, y la creación sistemática de datos permite al SDET escribir pruebas robustas, rápidas y altamente fiables. La clave es tratar los datos como parte del código de prueba, aplicando las mismas buenas prácticas de diseño.
+---
 
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [Data Factories](./Data-factories.md) | [Home](../../index.md) | [Próximo Módulo](../../07-Temas-Avanzados/index.md) |
