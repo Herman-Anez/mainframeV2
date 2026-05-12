@@ -1,0 +1,105 @@
+SDET-Knowledge/
+│
+├── 01-Fundamentos/
+│   ├── 01-Que-es-SDET.md
+│   ├── 02-Diferencias-roles.md
+│   ├── 03-Piramide-testing.md
+│   ├── 04-Ciclo-vida-software.md
+│   └── 05-Tecnicas-diseno-pruebas.md
+│
+├── 02-Programacion/
+│   ├── Lenguajes/
+│   │   ├── Java/
+│   │   │   ├── Sintaxis-basica.md
+│   │   │   ├── POO-avanzado.md
+│   │   │   └── Manejo-excepciones.md
+│   │   ├── Python/
+│   │   │   ├── Fundamentos-pytest.md
+│   │   │   └── Bibliotecas-testing.md
+│   │   └── TypeScript-JavaScript/
+│   │       ├── Asincronia.md
+│   │       └── Testing-con-Jest.md
+│   ├── Patrones-diseno/
+│   │   ├── Singleton-Factory.md
+│   │   └── Screenplay-fluent.md
+│   └── Buenas-practicas/
+│       ├── Codigo-limpio-tests.md
+│       └── SOLID-para-testing.md
+│
+├── 03-Automatizacion/
+│   ├── UI-Web/
+│   │   ├── Selenium/
+│   │   │   ├── WebDriver-basics.md
+│   │   │   ├── Waits-esperas.md
+│   │   │   └── PageObjectModel.md
+│   │   ├── Cypress/
+│   │   │   ├── Primeros-pasos.md
+│   │   │   └── Component-testing.md
+│   │   └── Playwright/
+│   │       ├── Codegen-grabacion.md
+│   │       └── Testing-paralelo.md
+│   ├── API/
+│   │   ├── REST-Assured/
+│   │   ├── Postman-Newman/
+│   │   ├── GraphQL-testing.md
+│   │   └── Contract-testing-Pact.md
+│   ├── Mobile/
+│   │   ├── Appium/
+│   │   └── Detox.md
+│   └── Frameworks/
+│       ├── JUnit5-TestNG.md
+│       ├── Cucumber-BDD.md
+│       └── Data-driven-keyword.md
+│
+├── 04-CI-CD-DevOps/
+│   ├── Git/
+│   │   ├── Comandos-esenciales.md
+│   │   └── Estrategias-ramas.md
+│   ├── Jenkins/
+│   │   ├── Pipelines-declarativos.md
+│   │   └── Integracion-Slack.md
+│   ├── GitHub-Actions/
+│   │   └── Workflows-acciones.md
+│   ├── Docker/
+│   │   ├── Dockerfiles-testing.md
+│   │   └── Selenium-Grid-Docker.md
+│   └── Kubernetes/
+│       └── Pods-para-pruebas.md
+│
+├── 05-Rendimiento-Seguridad/
+│   ├── Rendimiento/
+│   │   ├── JMeter-basico.md
+│   │   └── k6-scripts.md
+│   └── Seguridad/
+│       ├── OWASP-ZAP-automation.md
+│       └── Pruebas-SAST-DAST.md
+│
+├── 06-Bases-Datos/
+│   ├── SQL/
+│   │   ├── Consultas-avanzadas.md
+│   │   └── Procedimientos-almacenados.md
+│   ├── NoSQL/
+│   │   └── MongoDB-agregaciones.md
+│   └── Seeds-fixtures/
+│       └── Data-factories.md
+│
+├── 07-Reportes-Observabilidad/
+│   ├── Allure/
+│   ├── ExtentReports/
+│   └── Logging-metricas.md
+│
+├── 08-Herramientas-Complementarias/
+│   ├── Jira-TestRail.md
+│   ├── Swagger-OpenAPI.md
+│   ├── Fiddler-Charles-proxy.md
+│   └── Gherkin-escritura.md
+│
+├── 09-Proyectos-Ejemplo/
+│   ├── Proyecto-web-Selenium-Java/
+│   ├── API-testing-Python/
+│   └── Cypress-frontend/
+│
+└── 10-Carrera-Entrevistas/
+    ├── Roadmap-SDET.md
+    ├── Preguntas-frecuentes.md
+    └── Plan-estudio-3-meses.md
