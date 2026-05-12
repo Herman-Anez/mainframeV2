@@ -111,3 +111,10 @@ string pattern = @"<a\s[^>]*>.*?</a>(*SKIP)(*FAIL)|https?://[^\s""']+";
 | [01_comparativa_general.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/01_comparativa_general.md) | Comparativa entre motores |
 | [05_Java.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/05_Java.md) | Regex en Java |
 | [02_PCRE.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/02_PCRE.md) | Detalles de PCRE |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Java](05_Java.md) | [🏠 Inicio](../../README.md) | [Posix ▶](07_POSIX.md) |

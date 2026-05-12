@@ -100,3 +100,10 @@ $cp = '/^(\d{5})(?:-(\d{4}))?$/';
 | [01_comparativa_general.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/01_comparativa_general.md) | Comparativa entre motores |
 | [03_JavaScript.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/03_JavaScript.md) | Regex en el ecosistema ECMAScript |
 | [04_Python.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/04_Python.md) | El módulo re y regex de Python |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Comparativa General](01_comparativa_general.md) | [🏠 Inicio](../../README.md) | [Javascript ▶](03_JavaScript.md) |

@@ -105,3 +105,10 @@ emailRegex.test("jörn@müller.de"); // true
 | [01_comparativa_general.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/01_comparativa_general.md) | Comparativa entre motores |
 | [02_PCRE.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/02_PCRE.md) | Detalles del motor PCRE |
 | [04_Python.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/04_Python.md) | El módulo re y regex de Python |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Pcre](02_PCRE.md) | [🏠 Inicio](../../README.md) | [Python ▶](04_Python.md) |

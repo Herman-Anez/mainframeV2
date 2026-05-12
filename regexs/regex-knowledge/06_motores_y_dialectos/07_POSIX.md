@@ -92,3 +92,10 @@ sed -E 's/[[:space:]]+/ /g' archivo.txt
 | :--- | :--- |
 | [01_comparativa_general.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/01_comparativa_general.md) | Comparativa entre motores |
 | [02_PCRE.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/02_PCRE.md) | Detalles de PCRE |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Net](06_NET.md) | [🏠 Inicio](../../README.md) | ➖ |

@@ -104,3 +104,10 @@ Para encontrar fechas en formato "DD de Mes de YYYY" (español):
 
 [« Anterior](02_urls.md) | [Siguiente »](04_numeros_y_monedas.md)
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Urls](02_urls.md) | [🏠 Inicio](../../README.md) | [Numeros Y Monedas ▶](04_numeros_y_monedas.md) |

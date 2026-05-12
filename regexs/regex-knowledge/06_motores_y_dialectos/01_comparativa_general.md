@@ -60,3 +60,10 @@ No existe una única implementación de expresiones regulares. Cada lenguaje de 
 | [05_Java.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/05_Java.md) | Implementación de java.util.regex |
 | [06_NET.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/06_NET.md) | Potencia de regex en .NET |
 | [07_POSIX.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/07_POSIX.md) | Estándares BRE y ERE |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| ➖ | [🏠 Inicio](../../README.md) | [Pcre ▶](02_PCRE.md) |

@@ -109,3 +109,10 @@ Coincidencias: "#regex", "#OpenSource", "#python3"
 
 | [Anterior (Básicos)](01_basicos.md) | [Inicio](../../index.md) | [Siguiente (Avanzados)](03_avanzados.md) |
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Basicos](01_basicos.md) | [🏠 Inicio](../../README.md) | [Avanzados ▶](03_avanzados.md) |

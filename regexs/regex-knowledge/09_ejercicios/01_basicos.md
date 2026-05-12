@@ -93,3 +93,10 @@ Test: "1.2.3"     -> inválido
 
 | [Anterior (08_patrones_utiles)](../08_patrones_utiles/06_extractores_texto.md) | [Inicio](../../index.md) | [Siguiente (Intermedios)](02_intermedios.md) |
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| ➖ | [🏠 Inicio](../../README.md) | [Intermedios ▶](02_intermedios.md) |

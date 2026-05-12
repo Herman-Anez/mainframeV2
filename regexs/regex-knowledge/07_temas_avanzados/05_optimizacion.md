@@ -128,3 +128,10 @@ Los límites de palabra fallan rápidamente si la posición no es la adecuada, a
 | [06_motores_y_dialectos](../06_motores_y_dialectos/01_comparativa_general.md) | Diferencias de rendimiento por motor |
 | [01_fundamentos](../01_fundamentos/01_caracteres_literales.md) | Conceptos base de optimización |
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Backtracking Catastrofico](04_backtracking_catastrofico.md) | [🏠 Inicio](../../README.md) | ➖ |

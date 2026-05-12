@@ -248,3 +248,10 @@ Dado un patrón típico para analizar una línea de log de Apache: `^(\S+) (\S+)
 ---
 
 | [Anterior (Intermedios)](02_intermedios.md) | [Inicio](../../index.md) |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Intermedios](02_intermedios.md) | [🏠 Inicio](../../README.md) | ➖ |

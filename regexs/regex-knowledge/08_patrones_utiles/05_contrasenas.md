@@ -107,3 +107,10 @@ if patron.match(password):
 
 [« Anterior](04_numeros_y_monedas.md) | [Siguiente »](06_extractores_texto.md)
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Numeros Y Monedas](04_numeros_y_monedas.md) | [🏠 Inicio](../../README.md) | [Extractores Texto ▶](06_extractores_texto.md) |

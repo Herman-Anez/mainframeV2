@@ -113,3 +113,10 @@ re.match(pat, url) is not None
 
 [« Anterior](01_validacion_emails.md) | [Siguiente »](03_fechas_y_horas.md)
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Validacion Emails](01_validacion_emails.md) | [🏠 Inicio](../../README.md) | [Fechas Y Horas ▶](03_fechas_y_horas.md) |

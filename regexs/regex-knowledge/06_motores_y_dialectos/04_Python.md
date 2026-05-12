@@ -124,3 +124,10 @@ El módulo `regex` maneja Unicode de forma excelente; `\w` reconoce caracteres d
 | [01_comparativa_general.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/01_comparativa_general.md) | Comparativa entre motores |
 | [03_JavaScript.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/03_JavaScript.md) | Regex en JavaScript |
 | [05_Java.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/06_motores_y_dialectos/05_Java.md) | Regex en Java |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Javascript](03_JavaScript.md) | [🏠 Inicio](../../README.md) | [Java ▶](05_Java.md) |

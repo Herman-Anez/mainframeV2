@@ -88,3 +88,10 @@ En .NET, los grupos balanceados sustituyen la recursión con una pila explícita
 | [02_condicionales.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/07_temas_avanzados/02_condicionales.md) | Uso de lógica condicional en patrones |
 | [04_backtracking_catastrofico.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/07_temas_avanzados/04_backtracking_catastrofico.md) | Riesgos de rendimiento y cómo evitarlos |
 | [06_motores_y_dialectos](../06_motores_y_dialectos/01_comparativa_general.md) | Soporte según el lenguaje |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| ➖ | [🏠 Inicio](../../README.md) | [Condicionales ▶](02_condicionales.md) |

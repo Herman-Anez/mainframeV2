@@ -77,3 +77,10 @@ Si necesitas soporte para comentarios (RFC 5322) o *quoted strings*, la regex se
 
 [« Anterior](../07_temas_avanzados/05_optimizacion.md) | [Siguiente »](02_urls.md)
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| ➖ | [🏠 Inicio](../../README.md) | [Urls ▶](02_urls.md) |

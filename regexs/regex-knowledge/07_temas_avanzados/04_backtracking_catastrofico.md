@@ -78,3 +78,10 @@ El conocimiento del backtracking catastrófico es vital para la seguridad. Ante 
 | [05_optimizacion.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/07_temas_avanzados/05_optimizacion.md) | Técnicas avanzadas de rendimiento |
 | [01_recursion_y_subrutinas.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/07_temas_avanzados/01_recursion_y_subrutinas.md) | Complejidad en patrones recursivos |
 | [06_motores_y_dialectos](../06_motores_y_dialectos/01_comparativa_general.md) | Motores seguros vs NFA |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Propiedades Unicode](03_propiedades_unicode.md) | [🏠 Inicio](../../README.md) | [Optimizacion ▶](05_optimizacion.md) |

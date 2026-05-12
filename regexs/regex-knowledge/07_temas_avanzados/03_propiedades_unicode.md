@@ -149,3 +149,10 @@ Con la flag `i` (case-insensitive) y Unicode activado, algunas implementaciones 
 | [01_recursion_y_subrutinas.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/07_temas_avanzados/01_recursion_y_subrutinas.md) | Patrones recursivos |
 | [05_optimizacion.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/07_temas_avanzados/05_optimizacion.md) | Mejora de rendimiento |
 | [06_motores_y_dialectos](../06_motores_y_dialectos/01_comparativa_general.md) | Soporte por motor |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Condicionales](02_condicionales.md) | [🏠 Inicio](../../README.md) | [Backtracking Catastrofico ▶](04_backtracking_catastrofico.md) |

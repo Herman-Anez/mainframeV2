@@ -88,3 +88,10 @@ moneyRegex.test("$1,234.56"); // true
 
 [« Anterior](03_fechas_y_horas.md) | [Siguiente »](05_contrasenas.md)
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Fechas Y Horas](03_fechas_y_horas.md) | [🏠 Inicio](../../README.md) | [Contrasenas ▶](05_contrasenas.md) |

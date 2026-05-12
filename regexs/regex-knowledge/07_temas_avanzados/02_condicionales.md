@@ -99,3 +99,10 @@ Sin embargo, se pierde la capacidad de referir dinámicamente a la captura. Para
 | [01_recursion_y_subrutinas.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/07_temas_avanzados/01_recursion_y_subrutinas.md) | Patrones recursivos y subrutinas |
 | [04_backtracking_catastrofico.md](file:///home/hermandev/Documents/proyectos/1Profecional/mainframeV2/regexs/regex-knowledge/07_temas_avanzados/04_backtracking_catastrofico.md) | Riesgos de rendimiento |
 | [06_motores_y_dialectos](../06_motores_y_dialectos/01_comparativa_general.md) | Comparativa de soporte |
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Recursion Y Subrutinas](01_recursion_y_subrutinas.md) | [🏠 Inicio](../../README.md) | [Propiedades Unicode ▶](03_propiedades_unicode.md) |

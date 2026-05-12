@@ -123,3 +123,10 @@ console.log(tweet.match(patterns.url));     // ["https://regex101.com"]
 [« Anterior](05_contrasenas.md) | [Siguiente »](../09_ejercicios/01_basicos.md)
 
 
+
+
+---
+
+| Anterior | Inicio | Siguiente |
+| :--- | :---: | ---: |
+| [◀ Contrasenas](05_contrasenas.md) | [🏠 Inicio](../../README.md) | ➖ |
