@@ -1,4 +1,4 @@
-# El secreto para extender el contenedor: BeanPostProcessor
+# BeanPostProcessor y Interfaces Aware
 
 Un `BeanPostProcessor` permite ejecutar lógica antes y después de la inicialización de cada bean. No solo es un mecanismo para observar, sino para modificar o envolver beans. Todos los comportamientos transversales (inyección de dependencias, proxies transaccionales, seguridad, programación de tareas) se implementan a través de ellos.
 
@@ -24,7 +24,9 @@ public interface BeanPostProcessor {
 > [!NOTE]
 > Ambos pueden devolver el mismo bean o uno diferente (un wrapper). Si devuelves `null`, el bean no se registrará.
 
-Ejemplo básico: logging de beans
+---
+
+## Ejemplo básico: Logging de beans
 
 ```java
 @Component
@@ -39,6 +41,8 @@ public class LoggingBeanPostProcessor implements BeanPostProcessor {
 }
 ```
 
+---
+
 ## BeanFactoryPostProcessor vs BeanPostProcessor
 
 No confundir estas dos interfaces:
@@ -49,12 +53,16 @@ No confundir estas dos interfaces:
 > [!WARNING]
 > Ambos son extensiones muy potentes y se aplican a todos los beans, por lo que hay que filtrar cuidadosamente para no dañar infraestructura interna.
 
+---
+
 ## Ejemplos reales de BeanPostProcessor en Spring
 
 - `AutowiredAnnotationBeanPostProcessor`: procesa `@Autowired` y `@Value`.
 - `CommonAnnotationBeanPostProcessor`: maneja `@PostConstruct`, `@PreDestroy`, `@Resource`.
 - `AbstractAutoProxyCreator` (como `InfrastructureAdvisorAutoProxyCreator`): crea los proxies AOP para `@Transactional`, `@Cacheable`, etc., en `postProcessAfterInitialization`.
 - `ServletContextAwareProcessor` y similares: invocan las interfaces Aware.
+
+---
 
 ## Crear un BeanPostProcessor personalizado
 
@@ -82,14 +90,16 @@ public class PerformanceBeanPostProcessor implements BeanPostProcessor {
 }
 ```
 
-## Interfaces Aware: darle al bean acceso al contenedor
+---
 
-Un bean puede querer conocer su nombre, el `ApplicationContext` o el `BeanFactory`. Spring lo consigue mediante interfaces “Aware”. Cuando el contenedor detecta que un bean implementa alguna de estas interfaces, inyecta la dependencia correspondiente en el momento adecuado.
+## Interfaces Aware: Darle al bean acceso al contenedor
 
-Principales interfaces Aware:
+Un bean puede querer conocer su nombre, el `ApplicationContext` o el `BeanFactory`. Spring lo consigue mediante interfaces "Aware". Cuando el contenedor detecta que un bean implementa alguna de estas interfaces, inyecta la dependencia correspondiente en el momento adecuado.
+
+### Principales interfaces Aware
 
 | Interfaz | Descripción | Método |
-|---|---|---|
+| :--- | :--- | :--- |
 | `BeanNameAware` | Recibe su nombre dentro del contenedor | `setBeanName(String name)` |
 | `BeanFactoryAware` | Accede al BeanFactory que lo contiene | `setBeanFactory(BeanFactory factory)` |
 | `ApplicationContextAware` | El contexto completo | `setApplicationContext(ApplicationContext ctx)` |
@@ -99,7 +109,9 @@ Principales interfaces Aware:
 | `ResourceLoaderAware` | Para cargar recursos del classpath, etc. | `setResourceLoader(ResourceLoader loader)` |
 | `ServletContextAware` (web) | El ServletContext de la aplicación web | `setServletContext(ServletContext context)` |
 
-Ejemplo: un bean que necesita publicar eventos sin inyectar el publicador (aunque siempre es preferible la inyección):
+### Ejemplo de uso
+
+Un bean que necesita publicar eventos sin inyectar el publicador (aunque siempre es preferible la inyección):
 
 ```java
 @Component
@@ -117,19 +129,22 @@ public class MiComponente implements ApplicationEventPublisherAware {
 > [!TIP]
 > ¿Son buenas prácticas? En general, preferimos la inyección de dependencias explícita (`@Autowired` o constructor). Las interfaces Aware acoplan tu código al framework más de lo necesario, pero son útiles en casos de infraestructura o cuando se está desarrollando una librería que necesita interactuar con Spring sin recibir inyecciones tradicionales.
 
+---
+
 ## Orden de ejecución combinado
 
 El contenedor sigue un orden preciso cuando crea un bean:
 
-1. Instanciación (constructor o factory method).
-2. Inyección de dependencias (campo/setter) – manejada por `AutowiredAnnotationBeanPostProcessor`.
-3. Llamada a Aware interfaces en orden: `BeanNameAware` → `BeanClassLoaderAware` → `BeanFactoryAware` → `ApplicationContextAware` → otros.
-4. `BeanPostProcessor.postProcessBeforeInitialization(...)` (puede modificar el bean).
-5. Inicialización: `@PostConstruct` → `afterPropertiesSet()` → `init-method` personalizado.
-6. `BeanPostProcessor.postProcessAfterInitialization(...)` (creación de proxies, aspectos).
-7. El bean ya está listo para su uso.
+1. **Instanciación:** (constructor o factory method).
+2. **Inyección de dependencias:** (campo/setter) – manejada por `AutowiredAnnotationBeanPostProcessor`.
+3. **Interfaces Aware:** Llamada a interfaces en orden: `BeanNameAware` → `BeanClassLoaderAware` → `BeanFactoryAware` → `ApplicationContextAware` → otros.
+4. **Pre-inicialización:** `BeanPostProcessor.postProcessBeforeInitialization(...)`.
+5. **Inicialización:** `@PostConstruct` → `afterPropertiesSet()` → `init-method` personalizado.
+6. **Post-inicialización:** `BeanPostProcessor.postProcessAfterInitialization(...)` (creación de proxies, aspectos).
+7. **Listo:** El bean ya está disponible para su uso.
 
-Conocer este orden te permite depurar problemas de inyección, proxies o valores `null` en métodos init.
+> [!IMPORTANT]
+> Conocer este orden permite depurar problemas de inyección, proxies o valores `null` en métodos init.
 
 ---
 
